@@ -242,7 +242,10 @@ class ColorWheel:
         radius = (self.size - 20) // 2 - 15  # Position on wheel
         
         # Calculate position based on current hue
-        angle = math.radians(self.hue)
+        # Apply the same offset as the wheel drawing: subtract 180 degrees
+        # to match the visual position on the wheel
+        display_hue = (self.hue - 180) % 360
+        angle = math.radians(display_hue)
         x = center_x + radius * math.cos(angle)
         y = center_y + radius * math.sin(angle)
         
@@ -383,6 +386,7 @@ class ColorWheel:
         radius = (self.size - 20) // 2
         if 15 <= distance <= radius:  # Within wheel bounds
             angle = math.atan2(dy, dx)
+            # Match the drawing calculation: use +180 to align with wheel
             self.hue = (math.degrees(angle) + 180) % 360
             self._update_displays()
     

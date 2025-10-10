@@ -1,8 +1,8 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.02  
-**Last Updated**: October 10, 2024 - Build System Added
+**Version**: 1.06  
+**Last Updated**: January 2025 - Color Wheel Hue Alignment Fixed
 
 ## Overview
 Pixel Perfect is a **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets. Inspired by classic SNES-era games like Curse of Aros, it provides a complete, production-ready tool for sprite, tile, and animation creation with preset sizes and SNES-style color palettes.
@@ -15,6 +15,7 @@ Pixel Perfect is a **fully functional** desktop pixel art editor designed for cr
 - **Project Structure**: Complete directory layout with comprehensive documentation
 - **Canvas System**: Pixel-perfect grid rendering with zoom (1x-32x) - **GRID NOW VISIBLE ON STARTUP**
 - **Color Palettes**: 6 preset palettes including Curse of Aros, SNES Classic, Heartwood Online, Definya, Kakele Online, Rucoy Online
+- **Color Wheel**: HSV color picker with accurate hue selection and visual indicator alignment
 - **Drawing Tools**: Complete tool set (9 tools) with modular architecture - **ALL TESTED & WORKING**
 - **Layer System**: Full layer management with UI integration
 - **Undo/Redo System**: 50+ state management with full history tracking

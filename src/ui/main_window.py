@@ -550,26 +550,10 @@ class MainWindow:
         self.color_wheel._replace_color = self._replace_color_in_palette
     
     def _on_color_wheel_changed(self, rgb_color):
-        """Handle color wheel color change"""
-        # Update the current drawing color to the color wheel selection
-        if hasattr(self, 'color_wheel') and self.color_wheel:
-            rgb_color = self.color_wheel.get_color()
-            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-            
-            # Directly update canvas color - this is the key fix!
-            if hasattr(self, 'canvas') and self.canvas:
-                self.canvas.current_color = rgba_color
-                print(f"Canvas color updated to: {rgba_color}")
-            
-            # Also update the current tool's color if it has one
-            if hasattr(self, 'current_tool') and self.current_tool:
-                if hasattr(self.current_tool, 'color'):
-                    self.current_tool.color = rgba_color
-            
-            # Update color display in UI
-            self._update_color_display()
-            
-            print(f"Color wheel color applied directly to canvas: {rgba_color}")
+        """Handle color wheel color change - now just for UI updates"""
+        # Update color display in UI
+        self._update_pixel_display()
+        print(f"Color wheel color changed: {rgb_color}")
     
     def _add_color_to_palette(self):
         """Add current color wheel color to palette"""
@@ -936,7 +920,13 @@ class MainWindow:
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             # Get current tool and color
             tool = self.tools[self.current_tool]
-            color = self.palette.get_primary_color()
+            
+            # Use color wheel color if available, otherwise use palette
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                rgb_color = self.color_wheel.get_color()
+                color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            else:
+                color = self.palette.get_primary_color()
 
             # Save state for undo
             active_layer = self.layer_manager.get_active_layer()
@@ -1007,7 +997,13 @@ class MainWindow:
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             tool = self.tools[self.current_tool]
-            color = self.palette.get_primary_color()
+            
+            # Use color wheel color if available, otherwise use palette
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                rgb_color = self.color_wheel.get_color()
+                color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            else:
+                color = self.palette.get_primary_color()
 
             tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
     

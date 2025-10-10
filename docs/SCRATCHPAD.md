@@ -1,5 +1,21 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.05 - GitHub Release
+**Date**: October 10, 2024  
+**Status**: Project pushed to GitHub with production executable
+
+### GitHub Setup
+- Created comprehensive README.md with full feature documentation
+- Updated docs/README.md with build system details
+- Created .gitignore file for clean repository
+- Initialized Git repository and configured user credentials
+- Added all project files including production executable (35MB)
+- Created initial commit with version 1.04
+- Successfully pushed to https://github.com/AfyKirby1/Pixel-Perfect
+- Repository includes standalone executable ready for download
+- Updated SBOM with accurate Python 3.13.6 version information
+- Second commit pushed: SBOM verification update
+
 ## Version 1.04 - Build Cleanup
 **Date**: October 10, 2024  
 **Status**: Cleaned up build process and automated cleanup
@@ -7,7 +23,6 @@
 ### Build Improvements
 - Removed temporary build files (build/, PixelPerfect.spec)
 - Updated build.bat to automatically clean up after each build
-- Added cleanup.bat for manual cleanup if needed
 - Build process now runs 5 steps instead of 4 (includes cleanup)
 - Only essential files remain: build.bat, README.md, dist/, release/
 
@@ -207,3 +222,28 @@ All comprehensive tests passed successfully:
 - Keyboard shortcuts for efficiency
 - Clean, retro-inspired UI
 - Easy template and preset system
+
+---
+
+## Version 1.06 - Color Wheel Hue Alignment Fix (January 2025)
+
+### Issues Fixed
+- **CRITICAL**: Color wheel white dot indicator was 180 degrees offset from actual selected color
+- **CRITICAL**: Clicking on color wheel selected opposite color due to hue calculation mismatch
+- Fixed `_update_hue_from_position` method to match `_draw_hue_wheel` calculation
+- Fixed `_draw_hue_indicator` method to properly display white dot position
+- All three calculations now use consistent coordinate system
+- Color wheel now correctly selects the color where the white dot is positioned
+
+### Technical Details
+- Drawing code: `hue = (math.degrees(angle) + 180) % 360` 
+- Click handler: `self.hue = (math.degrees(angle) + 180) % 360`
+- Indicator display: `display_hue = (self.hue - 180) % 360`
+- All three calculations now properly aligned for consistent behavior
+- Maintains proper HSV color wheel orientation (red at top)
+
+### User Experience Improvements
+- White dot indicator now accurately shows selected color position
+- Clicking on any color wheel position selects that exact color
+- Eliminates confusion between visual indicator and actual selection
+- Color wheel behavior now matches user expectations
