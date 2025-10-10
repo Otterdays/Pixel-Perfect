@@ -923,7 +923,7 @@ class MainWindow:
             
             # Use color wheel color if in color wheel mode, otherwise use palette
             if (hasattr(self, 'color_wheel') and self.color_wheel and 
-                self.view_mode_var.get() == "color_wheel"):
+                self.view_mode_var.get() == "wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
@@ -984,7 +984,7 @@ class MainWindow:
             
             # Use color wheel color if in color wheel mode, otherwise use palette
             if (hasattr(self, 'color_wheel') and self.color_wheel and 
-                self.view_mode_var.get() == "color_wheel"):
+                self.view_mode_var.get() == "wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
@@ -1008,7 +1008,7 @@ class MainWindow:
             
             # Use color wheel color if in color wheel mode, otherwise use palette
             if (hasattr(self, 'color_wheel') and self.color_wheel and 
-                self.view_mode_var.get() == "color_wheel"):
+                self.view_mode_var.get() == "wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
