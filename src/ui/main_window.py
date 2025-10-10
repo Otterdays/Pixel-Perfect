@@ -224,17 +224,46 @@ class MainWindow:
         )
         self.palette_menu.pack(pady=5)
         
-        # Color grid
-        self.color_frame = ctk.CTkFrame(self.palette_frame)
-        self.color_frame.pack(pady=10)
+        # View mode selector
+        view_mode_frame = ctk.CTkFrame(self.palette_frame)
+        view_mode_frame.pack(fill="x", padx=10, pady=5)
         
+        self.view_mode_var = ctk.StringVar(value="grid")
+        self.grid_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Grid",
+            variable=self.view_mode_var,
+            value="grid",
+            command=self._on_view_mode_change
+        )
+        self.grid_view_btn.pack(side="left", padx=5)
+        
+        self.wheel_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Color Wheel",
+            variable=self.view_mode_var,
+            value="wheel",
+            command=self._on_view_mode_change
+        )
+        self.wheel_view_btn.pack(side="left", padx=5)
+        
+        # Color display container
+        self.color_display_frame = ctk.CTkFrame(self.palette_frame)
+        self.color_display_frame.pack(fill="both", expand=True, pady=10)
+        
+        # Initialize with grid view
         self._create_color_grid()
+        self.color_wheel = None
     
     def _create_color_grid(self):
         """Create color palette grid"""
-        # Clear existing color buttons
-        for widget in self.color_frame.winfo_children():
+        # Clear existing widgets
+        for widget in self.color_display_frame.winfo_children():
             widget.destroy()
+        
+        # Create grid frame
+        self.color_frame = ctk.CTkFrame(self.color_display_frame)
+        self.color_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         colors = self.palette.colors
         cols = 4
@@ -492,7 +521,64 @@ class MainWindow:
     def _on_palette_change(self, palette_name: str):
         """Handle palette change"""
         self.palette.load_preset(palette_name)
-        self._create_color_grid()
+        if self.view_mode_var.get() == "grid":
+            self._create_color_grid()
+        else:
+            self._create_color_wheel()
+    
+    def _on_view_mode_change(self):
+        """Handle view mode change between grid and color wheel"""
+        mode = self.view_mode_var.get()
+        if mode == "grid":
+            self._create_color_grid()
+        else:
+            self._create_color_wheel()
+    
+    def _create_color_wheel(self):
+        """Create color wheel view"""
+        # Clear existing widgets
+        for widget in self.color_display_frame.winfo_children():
+            widget.destroy()
+        
+        # Import and create color wheel
+        from src.ui.color_wheel import ColorWheel
+        self.color_wheel = ColorWheel(self.color_display_frame)
+        self.color_wheel.on_color_changed = self._on_color_wheel_changed
+        
+        # Connect color wheel buttons to palette management
+        self.color_wheel._add_to_palette = self._add_color_to_palette
+        self.color_wheel._replace_color = self._replace_color_in_palette
+    
+    def _on_color_wheel_changed(self, rgb_color):
+        """Handle color wheel color change"""
+        # Update current color preview (could be used for real-time preview)
+        pass
+    
+    def _add_color_to_palette(self):
+        """Add current color wheel color to palette"""
+        if self.color_wheel and len(self.palette.colors) < 16:
+            rgb_color = self.color_wheel.get_color()
+            # Convert to RGBA format
+            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            self.palette.add_color(rgba_color)
+            
+            # Update display if in grid mode
+            if self.view_mode_var.get() == "grid":
+                self._create_color_grid()
+    
+    def _replace_color_in_palette(self):
+        """Replace selected palette color with color wheel color"""
+        if self.color_wheel:
+            rgb_color = self.color_wheel.get_color()
+            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            
+            # Replace primary color
+            if self.palette.primary_color < len(self.palette.colors):
+                self.palette.set_color(self.palette.primary_color, rgba_color)
+                
+                # Update display if in grid mode
+                if self.view_mode_var.get() == "grid":
+                    self._create_color_grid()
     
     def _toggle_grid(self):
         """Toggle grid visibility"""
