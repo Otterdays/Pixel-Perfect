@@ -556,8 +556,13 @@ class MainWindow:
             rgb_color = self.color_wheel.get_color()
             rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             
-            # Set as primary color
-            self.palette.set_primary_color(rgba_color)
+            # Add color to palette if not already present
+            if rgba_color not in self.palette.colors:
+                self.palette.add_color(rgba_color)
+            
+            # Find the index of this color and set as primary
+            color_index = self.palette.colors.index(rgba_color)
+            self.palette.set_primary_color(color_index)
             
             # Update color display
             self._update_color_display()
