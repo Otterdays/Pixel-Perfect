@@ -1,6 +1,6 @@
 # Pixel Perfect - Retro Pixel Art Editor
 
-![Pixel Perfect Logo](assets/icons/logo.png) <!-- Placeholder -->
+![Pixel Perfect Header](header.png)
 
 A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable and complete color wheel system** - no Python installation required!
 
