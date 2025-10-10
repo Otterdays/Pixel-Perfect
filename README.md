@@ -2,7 +2,7 @@
 
 ![Pixel Perfect Logo](assets/icons/logo.png) <!-- Placeholder -->
 
-A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
+A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable and complete color wheel system** - no Python installation required!
 
 ## 🚀 Quick Start
 
@@ -48,7 +48,7 @@ build.bat
 - **Custom Backgrounds**: Checkerboard transparency pattern
 - **Mouse Integration**: Click and drag to draw pixels
 
-### 🎨 **Color Management** (6 Complete Palettes)
+### 🎨 **Color Management** (6 Complete Palettes + Color Wheel)
 - **SNES Classic**: 16 colors matching original SNES palette
 - **Curse of Aros**: Muted, earthy tones matching the game aesthetic
 - **Heartwood Online**: Forest-themed palette
@@ -57,6 +57,8 @@ build.bat
 - **Rucoy Online**: Grayscale palette with earth tones
 - **Custom Palettes**: Create and save your own color sets
 - **Primary/Secondary**: Quick color switching with visual feedback
+- **HSV Color Wheel**: Complete color picker with hue, saturation, and value controls
+- **Mode Switching**: Seamlessly switch between palette grid and color wheel modes
 
 ### 📚 **Layer System**
 - **Multiple Layers**: Up to 10 layers per project
