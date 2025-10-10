@@ -556,22 +556,20 @@ class MainWindow:
             rgb_color = self.color_wheel.get_color()
             rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             
-            # Add color to palette if not already present
-            if rgba_color not in self.palette.colors:
-                self.palette.add_color(rgba_color)
-            
-            # Find the index of this color and set as primary
-            color_index = self.palette.colors.index(rgba_color)
-            self.palette.set_primary_color(color_index)
-            
-            # Update color display
-            self._update_color_display()
-            
-            # Update canvas to use new color
+            # Directly update canvas color - this is the key fix!
             if hasattr(self, 'canvas') and self.canvas:
                 self.canvas.current_color = rgba_color
+                print(f"Canvas color updated to: {rgba_color}")
             
-            print(f"Color wheel color applied: {rgba_color}")
+            # Also update the current tool's color if it has one
+            if hasattr(self, 'current_tool') and self.current_tool:
+                if hasattr(self.current_tool, 'color'):
+                    self.current_tool.color = rgba_color
+            
+            # Update color display in UI
+            self._update_color_display()
+            
+            print(f"Color wheel color applied directly to canvas: {rgba_color}")
     
     def _add_color_to_palette(self):
         """Add current color wheel color to palette"""
