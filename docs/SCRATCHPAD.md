@@ -231,12 +231,15 @@ All comprehensive tests passed successfully:
 - **CRITICAL**: Color wheel white dot indicator was 180 degrees offset from actual selected color
 - **CRITICAL**: Clicking on color wheel selected opposite color due to hue calculation mismatch
 - **CRITICAL**: Color wheel color only applied to first pixel, then reverted to palette color during mouse drag
+- **CRITICAL**: Palette colors not working when Grid mode selected - always used color wheel colors
 - Fixed `_update_hue_from_position` method to match `_draw_hue_wheel` calculation
 - Fixed `_draw_hue_indicator` method to properly display white dot position
 - Fixed `_on_tkinter_canvas_mouse_drag` to use color wheel color consistently during drawing
+- Fixed all mouse event handlers to respect view mode selection (Grid vs Color Wheel)
 - All three calculations now use consistent coordinate system
 - Color wheel now correctly selects the color where the white dot is positioned
 - Continuous drawing now maintains color wheel color throughout the entire stroke
+- Grid mode now properly uses palette colors instead of color wheel colors
 
 ### Technical Details
 - Drawing code: `hue = (math.degrees(angle) + 180) % 360` 
@@ -253,3 +256,6 @@ All comprehensive tests passed successfully:
 - Continuous drawing strokes maintain consistent color wheel color
 - No more color switching mid-stroke when using color wheel
 - Seamless drawing experience with color wheel selection
+- Grid mode now properly uses selected palette colors
+- View mode selection (Grid/Color Wheel) now correctly controls color source
+- Both color selection modes work independently as expected

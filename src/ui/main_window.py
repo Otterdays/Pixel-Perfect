@@ -921,8 +921,9 @@ class MainWindow:
             # Get current tool and color
             tool = self.tools[self.current_tool]
             
-            # Use color wheel color if available, otherwise use palette
-            if hasattr(self, 'color_wheel') and self.color_wheel:
+            # Use color wheel color if in color wheel mode, otherwise use palette
+            if (hasattr(self, 'color_wheel') and self.color_wheel and 
+                self.view_mode_var.get() == "color_wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
@@ -981,8 +982,9 @@ class MainWindow:
 
             tool = self.tools[self.current_tool]
             
-            # Use color wheel color if available, otherwise use palette
-            if hasattr(self, 'color_wheel') and self.color_wheel:
+            # Use color wheel color if in color wheel mode, otherwise use palette
+            if (hasattr(self, 'color_wheel') and self.color_wheel and 
+                self.view_mode_var.get() == "color_wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
@@ -1004,8 +1006,9 @@ class MainWindow:
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             tool = self.tools[self.current_tool]
             
-            # Use color wheel color if available, otherwise use palette
-            if hasattr(self, 'color_wheel') and self.color_wheel:
+            # Use color wheel color if in color wheel mode, otherwise use palette
+            if (hasattr(self, 'color_wheel') and self.color_wheel and 
+                self.view_mode_var.get() == "color_wheel"):
                 rgb_color = self.color_wheel.get_color()
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
