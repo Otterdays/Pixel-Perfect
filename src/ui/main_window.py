@@ -980,7 +980,13 @@ class MainWindow:
             self.is_drawing = True
 
             tool = self.tools[self.current_tool]
-            color = self.palette.get_primary_color()
+            
+            # Use color wheel color if available, otherwise use palette
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                rgb_color = self.color_wheel.get_color()
+                color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            else:
+                color = self.palette.get_primary_color()
 
             # Store the previous pixel color for efficient updating
             old_color = self.canvas.get_pixel(canvas_x, canvas_y)
