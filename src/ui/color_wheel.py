@@ -397,6 +397,7 @@ class ColorWheel:
         self.saturation = x / (square_size - 1)
         self.value = 1.0 - (y / (square_size - 1))  # Invert Y for value
         
+        # Update displays and trigger callback
         self._update_displays()
     
     def _on_brightness_change(self, value):

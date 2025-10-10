@@ -551,8 +551,22 @@ class MainWindow:
     
     def _on_color_wheel_changed(self, rgb_color):
         """Handle color wheel color change"""
-        # Update current color preview (could be used for real-time preview)
-        pass
+        # Update the current drawing color to the color wheel selection
+        if hasattr(self, 'color_wheel') and self.color_wheel:
+            rgb_color = self.color_wheel.get_color()
+            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+            
+            # Set as primary color
+            self.palette.set_primary_color(rgba_color)
+            
+            # Update color display
+            self._update_color_display()
+            
+            # Update canvas to use new color
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.current_color = rgba_color
+            
+            print(f"Color wheel color applied: {rgba_color}")
     
     def _add_color_to_palette(self):
         """Add current color wheel color to palette"""
