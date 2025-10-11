@@ -29,13 +29,16 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - 8-16 color limitation for authentic retro feel
 
 ### Layer Manager (`src/core/layer_manager.py`)
-- **Purpose**: Handles multiple drawing layers with full UI integration
+- **Purpose**: Handles multiple drawing layers with full UI integration and immediate visual updates
 - **Key Features**:
-  - Layer visibility and opacity controls
-  - Layer reordering and management
-  - Layer merging and duplication
+  - Layer visibility and opacity controls with instant canvas refresh
+  - Layer reordering and management with proper drawing integration
+  - Layer merging and duplication with full UI feedback
   - Layer naming and organization
   - Alpha blending for smooth layer composition
+  - "Show all layers" mode for viewing combined layers
+  - Drawing layer auto-selection when no layer is specifically selected
+  - Canvas interface compatibility for seamless tool integration
 
 ### Project System (`src/core/project.py`)
 - **Purpose**: Save/load project files with metadata

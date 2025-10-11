@@ -21,7 +21,7 @@ from tools.eyedropper import EyedropperTool
 from tools.selection import SelectionTool, MoveTool
 from tools.shapes import LineTool, RectangleTool, CircleTool
 from core.layer_manager import LayerManager
-from core.undo_manager import UndoManager
+from core.undo_manager import UndoManager, UndoState
 from ui.layer_panel import LayerPanel
 from animation.timeline import AnimationTimeline
 from ui.timeline_panel import TimelinePanel
@@ -104,17 +104,17 @@ class MainWindow:
         self.content_frame = ctk.CTkFrame(self.main_frame)
         self.content_frame.pack(fill="both", expand=True, pady=(10, 0))
         
-        # Left panel (tools and palette)
-        self.left_panel = ctk.CTkFrame(self.content_frame)
-        self.left_panel.pack(side="left", fill="y", padx=(0, 10))
+        # Left panel (tools and palette) - with scrollbar
+        self.left_panel = ctk.CTkScrollableFrame(self.content_frame, width=250)
+        self.left_panel.pack(side="left", fill="both", padx=(0, 10))
         
         # Canvas area
         self.canvas_frame = ctk.CTkFrame(self.content_frame)
         self.canvas_frame.pack(side="left", fill="both", expand=True)
         
-        # Right panel (layers, etc.)
-        self.right_panel = ctk.CTkFrame(self.content_frame)
-        self.right_panel.pack(side="right", fill="y", padx=(10, 0))
+        # Right panel (layers, etc.) - with scrollbar
+        self.right_panel = ctk.CTkScrollableFrame(self.content_frame, width=250)
+        self.right_panel.pack(side="right", fill="both", padx=(10, 0))
         
         # Create panels
         self._create_tool_panel()
@@ -165,11 +165,61 @@ class MainWindow:
         )
         self.zoom_menu.pack(side="left", padx=5)
         
+        # Undo/Redo buttons
+        self._create_undo_redo_buttons()
+        
         # Grid toggle
         self.grid_button = ctk.CTkButton(self.toolbar, text="Grid", width=60)
         self.grid_button.pack(side="right", padx=5)
         self.grid_button.configure(command=self._toggle_grid)
         self._update_grid_button_text()
+    
+    def _create_undo_redo_buttons(self):
+        """Create stylized undo/redo buttons with arrows"""
+        # Undo/Redo button frame
+        undo_redo_frame = ctk.CTkFrame(self.toolbar)
+        undo_redo_frame.pack(side="left", padx=(20, 0))
+        
+        # Undo button with left arrow
+        self.undo_button = ctk.CTkButton(
+            undo_redo_frame,
+            text="↶",  # Left curved arrow
+            width=40,
+            height=30,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            command=self._undo,
+            fg_color=("gray75", "gray25")
+        )
+        self.undo_button.pack(side="left", padx=2)
+        
+        # Redo button with right arrow
+        self.redo_button = ctk.CTkButton(
+            undo_redo_frame,
+            text="↷",  # Right curved arrow
+            width=40,
+            height=30,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            command=self._redo,
+            fg_color=("gray75", "gray25")
+        )
+        self.redo_button.pack(side="left", padx=2)
+        
+        # Connect undo manager callback
+        self.undo_manager.on_state_changed = self._update_undo_redo_buttons
+    
+    def _update_undo_redo_buttons(self):
+        """Update undo/redo button states"""
+        if hasattr(self, 'undo_button') and hasattr(self, 'redo_button'):
+            # Update button colors based on availability
+            if self.undo_manager.can_undo():
+                self.undo_button.configure(fg_color=("blue", "blue"))
+            else:
+                self.undo_button.configure(fg_color=("gray75", "gray25"))
+            
+            if self.undo_manager.can_redo():
+                self.redo_button.configure(fg_color=("blue", "blue"))
+            else:
+                self.redo_button.configure(fg_color=("gray75", "gray25"))
     
     def _create_tool_panel(self):
         """Create tool selection panel"""
@@ -229,6 +279,8 @@ class MainWindow:
         view_mode_frame.pack(fill="x", padx=10, pady=5)
         
         self.view_mode_var = ctk.StringVar(value="grid")
+        
+        # Create a grid layout for radio buttons to ensure they all fit
         self.grid_view_btn = ctk.CTkRadioButton(
             view_mode_frame,
             text="Grid",
@@ -236,16 +288,25 @@ class MainWindow:
             value="grid",
             command=self._on_view_mode_change
         )
-        self.grid_view_btn.pack(side="left", padx=5)
+        self.grid_view_btn.grid(row=0, column=0, padx=2, pady=2, sticky="w")
+        
+        self.primary_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Primary",
+            variable=self.view_mode_var,
+            value="primary",
+            command=self._on_view_mode_change
+        )
+        self.primary_view_btn.grid(row=0, column=1, padx=2, pady=2, sticky="w")
         
         self.wheel_view_btn = ctk.CTkRadioButton(
             view_mode_frame,
-            text="Color Wheel",
+            text="Wheel",
             variable=self.view_mode_var,
             value="wheel",
             command=self._on_view_mode_change
         )
-        self.wheel_view_btn.pack(side="left", padx=5)
+        self.wheel_view_btn.grid(row=1, column=0, columnspan=2, padx=2, pady=2, sticky="w")
         
         # Color display container
         self.color_display_frame = ctk.CTkFrame(self.palette_frame)
@@ -254,6 +315,10 @@ class MainWindow:
         # Initialize with grid view
         self._create_color_grid()
         self.color_wheel = None
+        
+        # Primary colors state
+        self.primary_colors_mode = "primary"  # "primary" or "variations"
+        self.selected_primary_color = None
     
     def _create_color_grid(self):
         """Create color palette grid"""
@@ -265,6 +330,12 @@ class MainWindow:
         self.color_frame = ctk.CTkFrame(self.color_display_frame)
         self.color_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
+        # Store color button references for easy updating
+        if not hasattr(self, 'color_buttons'):
+            self.color_buttons = []
+        else:
+            self.color_buttons.clear()
+        
         colors = self.palette.colors
         cols = 4
         rows = (len(colors) + cols - 1) // cols
@@ -273,16 +344,25 @@ class MainWindow:
             row = i // cols
             col = i % cols
             
-            # Create color button
+            # Create color button with hover effects
             btn = ctk.CTkButton(
                 self.color_frame,
                 text="",
                 width=30,
                 height=30,
                 fg_color=f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}",
+                hover_color=f"#{min(255, color[0] + 30):02x}{min(255, color[1] + 30):02x}{min(255, color[2] + 30):02x}",
+                border_width=0,
                 command=lambda idx=i: self._select_color(idx)
             )
             btn.grid(row=row, column=col, padx=2, pady=2)
+            
+            # Store button reference
+            self.color_buttons.append(btn)
+            
+            # Add hover effects
+            btn.bind("<Enter>", lambda e, b=btn: self._on_color_hover_enter(b))
+            btn.bind("<Leave>", lambda e, b=btn: self._on_color_hover_leave(b))
             
             # Highlight primary/secondary colors
             if i == self.palette.primary_color:
@@ -290,6 +370,323 @@ class MainWindow:
             elif i == self.palette.secondary_color:
                 btn.configure(border_width=2, border_color="gray")
     
+    def _create_primary_colors(self):
+        """Create primary colors view with variations"""
+        # Clear existing widgets
+        for widget in self.color_display_frame.winfo_children():
+            widget.destroy()
+        
+        if self.primary_colors_mode == "primary":
+            self._create_primary_colors_grid()
+        else:  # variations mode
+            self._create_color_variations_grid()
+    
+    def _create_primary_colors_grid(self):
+        """Create the main primary colors grid"""
+        # Title frame
+        title_frame = ctk.CTkFrame(self.color_display_frame)
+        title_frame.pack(fill="x", padx=10, pady=(10, 5))
+        
+        title_label = ctk.CTkLabel(title_frame, text="Primary Colors", font=ctk.CTkFont(size=14, weight="bold"))
+        title_label.pack(pady=5)
+        
+        # Primary colors grid
+        self.primary_frame = ctk.CTkFrame(self.color_display_frame)
+        self.primary_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Define primary colors (bright, vibrant colors)
+        primary_colors = [
+            ("Red", (255, 0, 0, 255)),
+            ("Blue", (0, 0, 255, 255)),
+            ("Green", (0, 255, 0, 255)),
+            ("Yellow", (255, 255, 0, 255)),
+            ("Orange", (255, 165, 0, 255)),
+            ("Purple", (128, 0, 128, 255)),
+            ("Cyan", (0, 255, 255, 255)),
+            ("Pink", (255, 192, 203, 255)),
+            ("Black", (0, 0, 0, 255)),
+            ("White", (255, 255, 255, 255)),
+            ("Brown", (139, 69, 19, 255)),
+            ("Gray", (128, 128, 128, 255))
+        ]
+        
+        cols = 3
+        for i, (name, color) in enumerate(primary_colors):
+            row = i // cols
+            col = i % cols
+            
+            # Create primary color button
+            btn = ctk.CTkButton(
+                self.primary_frame,
+                text=name,
+                width=60,
+                height=35,
+                fg_color=f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}",
+                text_color="white" if color[0] + color[1] + color[2] < 400 else "black",
+                font=ctk.CTkFont(size=10, weight="bold"),
+                command=lambda c=color: self._select_primary_color(c)
+            )
+            btn.grid(row=row, column=col, padx=3, pady=3)
+    
+    def _create_color_variations_grid(self):
+        """Create color variations grid for selected primary color"""
+        if not self.selected_primary_color:
+            return
+            
+        # Back button frame
+        back_frame = ctk.CTkFrame(self.color_display_frame)
+        back_frame.pack(fill="x", padx=10, pady=(10, 5))
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="✕ Back to Primary",
+            width=120,
+            height=30,
+            fg_color="gray",
+            command=self._back_to_primary_colors
+        )
+        back_btn.pack(pady=5)
+        
+        # Color name label
+        color_name = self._get_color_name(self.selected_primary_color)
+        title_label = ctk.CTkLabel(back_frame, text=f"{color_name} Variations", font=ctk.CTkFont(size=14, weight="bold"))
+        title_label.pack(pady=(0, 5))
+        
+        # Variations grid
+        self.variations_frame = ctk.CTkFrame(self.color_display_frame)
+        self.variations_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Generate color variations
+        variations = self._generate_color_variations(self.selected_primary_color)
+        
+        # Store buttons for hover effects
+        if not hasattr(self, 'variation_buttons'):
+            self.variation_buttons = []
+        else:
+            self.variation_buttons.clear()
+        
+        # Only create buttons for actual color variations (no grey placeholders)
+        if variations:
+            cols = 4
+            for i, color in enumerate(variations):
+                row = i // cols
+                col = i % cols
+                
+                # Create variation button with proper styling
+                btn = ctk.CTkButton(
+                    self.variations_frame,
+                    text="",
+                    width=30,
+                    height=30,
+                    fg_color=f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}",
+                    hover_color=f"#{min(255, color[0] + 30):02x}{min(255, color[1] + 30):02x}{min(255, color[2] + 30):02x}",
+                    border_width=0,
+                    command=lambda c=color: self._select_color_variation(c)
+                )
+                btn.grid(row=row, column=col, padx=2, pady=2)
+                
+                # Store button reference with its color for hover effects
+                self.variation_buttons.append({'button': btn, 'color': color})
+                
+                # Add hover effects
+                btn.bind("<Enter>", lambda e, b=btn: self._on_variation_hover_enter(b))
+                btn.bind("<Leave>", lambda e, b=btn: self._on_variation_hover_leave(b))
+    
+    def _get_color_name(self, color):
+        """Get color name from RGB values"""
+        r, g, b = color[0], color[1], color[2]
+        
+        if r > 200 and g < 100 and b < 100:
+            return "Red"
+        elif r < 100 and g < 100 and b > 200:
+            return "Blue"
+        elif r < 100 and g > 200 and b < 100:
+            return "Green"
+        elif r > 200 and g > 200 and b < 100:
+            return "Yellow"
+        elif r > 200 and g > 100 and b < 100:
+            return "Orange"
+        elif r > 100 and g < 100 and b > 100:
+            return "Purple"
+        elif r < 100 and g > 200 and b > 200:
+            return "Cyan"
+        elif r > 200 and g > 150 and b > 150:
+            return "Pink"
+        elif r < 50 and g < 50 and b < 50:
+            return "Black"
+        elif r > 200 and g > 200 and b > 200:
+            return "White"
+        elif r > 100 and g < 100 and b < 100:
+            return "Brown"
+        else:
+            return "Gray"
+    
+    def _generate_color_variations(self, base_color):
+        """Generate color variations for a primary color"""
+        r, g, b, a = base_color
+        variations = []
+        seen_colors = set()
+        
+        # Helper function to add unique colors with minimum difference check
+        def add_unique_color(color_tuple):
+            # Check if color is significantly different from existing colors
+            is_unique = True
+            for existing_color in seen_colors:
+                # Calculate color difference (simple RGB distance)
+                diff = abs(color_tuple[0] - existing_color[0]) + abs(color_tuple[1] - existing_color[1]) + abs(color_tuple[2] - existing_color[2])
+                if diff < 30:  # Minimum difference threshold
+                    is_unique = False
+                    break
+            
+            if is_unique:
+                variations.append(color_tuple)
+                seen_colors.add(color_tuple)
+                return True
+            return False
+        
+        # Add original color first
+        add_unique_color((r, g, b, a))
+        
+        # Generate lighter variations (tints)
+        for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+            new_r = min(255, int(r + (255 - r) * i))
+            new_g = min(255, int(g + (255 - g) * i))
+            new_b = min(255, int(b + (255 - b) * i))
+            add_unique_color((new_r, new_g, new_b, a))
+        
+        # Generate darker variations (shades)
+        for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+            new_r = max(0, int(r * (1 - i)))
+            new_g = max(0, int(g * (1 - i)))
+            new_b = max(0, int(b * (1 - i)))
+            add_unique_color((new_r, new_g, new_b, a))
+        
+        # Generate saturation variations (more/less saturated versions)
+        import colorsys
+        h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+        
+        # More saturated versions
+        for sat_mult in [1.2, 1.4, 1.6]:
+            new_s = min(1.0, s * sat_mult)
+            new_r, new_g, new_b = colorsys.hsv_to_rgb(h, new_s, v)
+            new_r = max(0, min(255, int(new_r * 255)))
+            new_g = max(0, min(255, int(new_g * 255)))
+            new_b = max(0, min(255, int(new_b * 255)))
+            add_unique_color((new_r, new_g, new_b, a))
+        
+        # Less saturated versions (more grayish)
+        for sat_mult in [0.8, 0.6, 0.4]:
+            new_s = max(0.0, s * sat_mult)
+            new_r, new_g, new_b = colorsys.hsv_to_rgb(h, new_s, v)
+            new_r = max(0, min(255, int(new_r * 255)))
+            new_g = max(0, min(255, int(new_g * 255)))
+            new_b = max(0, min(255, int(new_b * 255)))
+            add_unique_color((new_r, new_g, new_b, a))
+        
+        # Generate brightness variations (same hue and saturation, different brightness)
+        for bright_mult in [0.8, 0.6, 0.4, 1.2, 1.4]:
+            new_v = max(0.0, min(1.0, v * bright_mult))
+            new_r, new_g, new_b = colorsys.hsv_to_rgb(h, s, new_v)
+            new_r = max(0, min(255, int(new_r * 255)))
+            new_g = max(0, min(255, int(new_g * 255)))
+            new_b = max(0, min(255, int(new_b * 255)))
+            add_unique_color((new_r, new_g, new_b, a))
+        
+        # Return only the unique variations we generated (no padding with blank spots)
+        return variations
+    
+    def _select_primary_color(self, color):
+        """Handle primary color selection"""
+        self.selected_primary_color = color
+        self.primary_colors_mode = "variations"
+        self._create_primary_colors()
+    
+    def _back_to_primary_colors(self):
+        """Return to primary colors grid"""
+        self.primary_colors_mode = "primary"
+        self.selected_primary_color = None
+        self._create_primary_colors()
+    
+    def _on_variation_hover_enter(self, button):
+        """Handle hover enter on variation button"""
+        # Find the button data to check if it's selected
+        button_data = None
+        if hasattr(self, 'variation_buttons'):
+            for btn_data in self.variation_buttons:
+                if btn_data['button'] == button:
+                    button_data = btn_data
+                    break
+        
+        # Only add hover effects if button is not currently selected
+        if button_data is not None:
+            btn_color = button_data['color']
+            # Check if this color is currently selected
+            current_color = self.palette.get_primary_color()
+            if not (btn_color[0] == current_color[0] and btn_color[1] == current_color[1] and btn_color[2] == current_color[2]):
+                button.configure(border_width=2, border_color="white")
+                button.configure(width=32, height=32)
+    
+    def _on_variation_hover_leave(self, button):
+        """Handle hover leave on variation button"""
+        # Find the button data to check if it's selected
+        button_data = None
+        if hasattr(self, 'variation_buttons'):
+            for btn_data in self.variation_buttons:
+                if btn_data['button'] == button:
+                    button_data = btn_data
+                    break
+        
+        # Only remove hover effects if button is not selected
+        if button_data is not None:
+            btn_color = button_data['color']
+            # Check if this color is currently selected
+            current_color = self.palette.get_primary_color()
+            if not (btn_color[0] == current_color[0] and btn_color[1] == current_color[1] and btn_color[2] == current_color[2]):
+                button.configure(border_width=0, border_color="")
+                button.configure(width=30, height=30)
+    
+    def _select_color_variation(self, color):
+        """Handle color variation selection"""
+        # Set this color as the primary color in the palette
+        self.palette.set_primary_color_by_rgba(color)
+        
+        # Update canvas color
+        self.canvas.current_color = color
+        
+        # Update current tool color
+        if hasattr(self, 'current_tool') and self.current_tool:
+            if hasattr(self.current_tool, 'color'):
+                self.current_tool.color = color
+        
+        # Highlight the selected variation button
+        self._highlight_selected_variation(color)
+        
+        # Update pixel display
+        self._update_pixel_display()
+        
+        print(f"Selected color variation: {color}")
+    
+    def _highlight_selected_variation(self, selected_color):
+        """Highlight the selected variation button"""
+        if hasattr(self, 'variation_buttons'):
+            # First, remove all highlights
+            for btn_data in self.variation_buttons:
+                btn = btn_data['button']
+                btn.configure(border_width=0, border_color="")
+                btn.configure(width=30, height=30)
+            
+            # Find and highlight the selected button using stored color data
+            for btn_data in self.variation_buttons:
+                btn = btn_data['button']
+                btn_color = btn_data['color']
+                # Direct color comparison using stored color data
+                if (btn_color[0] == selected_color[0] and 
+                    btn_color[1] == selected_color[1] and 
+                    btn_color[2] == selected_color[2]):
+                    # Highlight this button
+                    btn.configure(border_width=3, border_color="white")
+                    break
+
     def _create_canvas_panel(self):
         """Create canvas display panel"""
         canvas_label = ctk.CTkLabel(self.canvas_frame, text="Canvas", font=ctk.CTkFont(size=16, weight="bold"))
@@ -427,7 +824,29 @@ class MainWindow:
         self.root.bind("<Key>", self._on_key_press)
         self.root.focus_set()
         
+        # Bind window resize event to fix grid centering
+        self.root.bind("<Configure>", self._on_window_resize)
+        
         # Mouse events are now bound to the tkinter drawing canvas
+    
+    def _on_window_resize(self, event):
+        """Handle window resize events to maintain grid centering"""
+        # Only handle main window resize, not child widget events
+        if event.widget == self.root:
+            # Schedule a delayed redraw to avoid excessive updates during resize
+            if hasattr(self, '_resize_timer'):
+                self.root.after_cancel(self._resize_timer)
+            
+            self._resize_timer = self.root.after(100, self._redraw_canvas_after_resize)
+    
+    def _redraw_canvas_after_resize(self):
+        """Redraw canvas after window resize to maintain grid centering"""
+        try:
+            if hasattr(self, 'drawing_canvas') and self.drawing_canvas:
+                # Force a complete redraw of the canvas
+                self._initial_draw()
+        except Exception as e:
+            print(f"Error redrawing canvas after resize: {e}")
     
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""
@@ -452,6 +871,12 @@ class MainWindow:
             self._select_tool("rectangle")
         elif key == 'c':
             self._select_tool("circle")
+        
+        # Undo/Redo shortcuts
+        elif key == 'z' and event.state & 0x4:  # Ctrl+Z
+            self._undo()
+        elif (key == 'y' and event.state & 0x4) or (key == 'z' and event.state & 0x6):  # Ctrl+Y or Ctrl+Shift+Z
+            self._redo()
         
         # Canvas shortcuts
         elif key == 'g':
@@ -488,10 +913,57 @@ class MainWindow:
             else:
                 btn.configure(fg_color="gray")
     
+    def _on_color_hover_enter(self, button):
+        """Handle hover enter on color button"""
+        # Find the button index to check if it's selected
+        button_index = None
+        if hasattr(self, 'color_buttons'):
+            for i, btn in enumerate(self.color_buttons):
+                if btn == button:
+                    button_index = i
+                    break
+        
+        # Only add hover effects if button is not currently selected
+        if button_index is not None:
+            if button_index != self.palette.primary_color and button_index != self.palette.secondary_color:
+                button.configure(border_width=2, border_color="white")
+                button.configure(width=32, height=32)
+    
+    def _on_color_hover_leave(self, button):
+        """Handle hover leave on color button"""
+        # Find the button index to check if it's selected
+        button_index = None
+        if hasattr(self, 'color_buttons'):
+            for i, btn in enumerate(self.color_buttons):
+                if btn == button:
+                    button_index = i
+                    break
+        
+        # Only remove hover effects if button is not selected
+        if button_index is not None:
+            if button_index != self.palette.primary_color and button_index != self.palette.secondary_color:
+                button.configure(border_width=0, border_color="")
+                button.configure(width=30, height=30)
+    
     def _select_color(self, color_index: int):
         """Select a color from the palette"""
         self.palette.set_primary_color(color_index)
-        self._create_color_grid()
+        
+        # Update the color grid to show new selection
+        if hasattr(self, 'color_frame'):
+            self._update_color_grid_selection()
+    
+    def _update_color_grid_selection(self):
+        """Update color grid selection without recreating the grid"""
+        if hasattr(self, 'color_buttons'):
+            # Update all button borders based on current selection
+            for i, btn in enumerate(self.color_buttons):
+                if i == self.palette.primary_color:
+                    btn.configure(border_width=3, border_color="white")
+                elif i == self.palette.secondary_color:
+                    btn.configure(border_width=2, border_color="gray")
+                else:
+                    btn.configure(border_width=0, border_color="")
     
     def _on_size_change(self, size_str: str):
         """Handle canvas size change"""
@@ -527,11 +999,13 @@ class MainWindow:
             self._create_color_wheel()
     
     def _on_view_mode_change(self):
-        """Handle view mode change between grid and color wheel"""
+        """Handle view mode change between grid, primary colors, and color wheel"""
         mode = self.view_mode_var.get()
         if mode == "grid":
             self._create_color_grid()
-        else:
+        elif mode == "primary":
+            self._create_primary_colors()
+        else:  # wheel
             self._create_color_wheel()
     
     def _create_color_wheel(self):
@@ -868,32 +1342,112 @@ class MainWindow:
 
     def _on_layer_changed(self):
         """Handle layer changes"""
-        # Update canvas to show current layer
+        # Update canvas to show all visible layers combined
+        self._update_canvas_from_layers()
+    
+    def _update_canvas_from_layers(self):
+        """Update canvas to show all visible layers combined"""
+        # Always show all visible layers combined
+        flattened_pixels = self.layer_manager.flatten_layers()
+        
+        # Update canvas with the flattened result
+        self.canvas.pixels = flattened_pixels
+        self.canvas._redraw_surface()
+        
+        # Refresh the tkinter display
+        self._initial_draw()
+    
+    def _get_drawing_layer(self):
+        """Get the layer to draw on (active layer or topmost visible layer)"""
         active_layer = self.layer_manager.get_active_layer()
-        if active_layer:
-            # Update canvas pixels from active layer
-            self.canvas.pixels = active_layer.pixels.copy()
-            self.canvas._redraw_surface()
+        if active_layer is None:
+            # No layer selected (all layers view) - find topmost visible layer
+            for i in range(len(self.layer_manager.layers) - 1, -1, -1):
+                layer = self.layer_manager.layers[i]
+                if layer.visible:
+                    return layer
+        return active_layer
+    
+    def _handle_eyedropper_click(self, canvas_x: int, canvas_y: int, button: int):
+        """Handle eyedropper tool click to sample colors"""
+        # Sample color from the canvas
+        sampled_color = self.canvas.get_pixel(canvas_x, canvas_y)
+        
+        # Convert to RGB (remove alpha for comparison)
+        rgb_color = sampled_color[:3]
+        
+        if button == 1:  # Left click - set primary color
+            self._set_color_from_eyedropper(rgb_color, is_primary=True)
+        elif button == 3:  # Right click - set secondary color
+            self._set_color_from_eyedropper(rgb_color, is_primary=False)
+    
+    def _set_color_from_eyedropper(self, rgb_color: tuple, is_primary: bool = True):
+        """Set color from eyedropper, either in palette or color wheel"""
+        # First, try to find the color in the current palette
+        found_in_palette = False
+        
+        for i, palette_color in enumerate(self.palette.colors):
+            # Compare RGB values (ignore alpha)
+            if palette_color[:3] == rgb_color:
+                if is_primary:
+                    self.palette.set_primary_color(i)
+                else:
+                    self.palette.set_secondary_color(i)
+                found_in_palette = True
+                break
+        
+        if found_in_palette:
+            # Color found in palette, update UI
+            self._update_color_grid_selection()
+            print(f"Color found in palette: {rgb_color}")
+        else:
+            # Color not in palette, switch to color wheel mode
+            self.view_mode_var.set("wheel")
+            self._create_color_wheel()
+            
+            # Set the color in the color wheel
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                # Set the color directly in the color wheel
+                self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
+                print(f"Color set in color wheel: {rgb_color}")
     
     def _undo(self):
         """Undo last action"""
-        state = self.undo_manager.undo()
+        # Get current state before undoing
+        active_layer = self.layer_manager.get_active_layer()
+        current_pixels = active_layer.pixels.copy() if active_layer else None
+        current_layer_index = self.layer_manager.active_layer_index
+        
+        state = self.undo_manager.undo(current_pixels, current_layer_index)
         if state:
             # Restore layer state
             layer = self.layer_manager.get_layer(state.layer_index)
             if layer:
                 layer.pixels = state.pixels
                 self._on_layer_changed()
+                # Force immediate tkinter canvas update for instant visual feedback
+                self._force_tkinter_canvas_update()
+                # Force immediate GUI refresh for instant response
+                self.root.update_idletasks()
     
     def _redo(self):
         """Redo last undone action"""
-        state = self.undo_manager.redo()
+        # Get current state before redoing
+        active_layer = self.layer_manager.get_active_layer()
+        current_pixels = active_layer.pixels.copy() if active_layer else None
+        current_layer_index = self.layer_manager.active_layer_index
+        
+        state = self.undo_manager.redo(current_pixels, current_layer_index)
         if state:
             # Restore layer state
             layer = self.layer_manager.get_layer(state.layer_index)
             if layer:
                 layer.pixels = state.pixels
                 self._on_layer_changed()
+                # Force immediate tkinter canvas update for instant visual feedback
+                self._force_tkinter_canvas_update()
+                # Force immediate GUI refresh for instant response
+                self.root.update_idletasks()
     
     def _add_layer(self):
         """Add a new layer"""
@@ -918,8 +1472,13 @@ class MainWindow:
         canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords(event.x, event.y)
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-            # Get current tool and color
+            # Get current tool
             tool = self.tools[self.current_tool]
+            
+            # Special handling for eyedropper tool
+            if self.current_tool == "eyedropper":
+                self._handle_eyedropper_click(canvas_x, canvas_y, event.num)
+                return
             
             # Use color wheel color if in color wheel mode, otherwise use palette
             if (hasattr(self, 'color_wheel') and self.color_wheel and 
@@ -929,10 +1488,12 @@ class MainWindow:
             else:
                 color = self.palette.get_primary_color()
 
+            # Get the layer to draw on
+            draw_layer = self._get_drawing_layer()
+            
             # Save state for undo
-            active_layer = self.layer_manager.get_active_layer()
-            if active_layer:
-                self.undo_manager.save_state(active_layer.pixels.copy(),
+            if draw_layer:
+                self.undo_manager.save_state(draw_layer.pixels.copy(),
                                            self.layer_manager.active_layer_index)
 
             # Store old color for efficient updating
@@ -942,14 +1503,20 @@ class MainWindow:
             # Set drawing state
             self.is_drawing = True
 
-            # Use tool
-            tool.on_mouse_down(self.canvas, canvas_x, canvas_y, 1, color)
-
-            # Update layer with canvas changes
-            self._update_layer_from_canvas()
-
-            # Update only the pixel that was drawn
-            self._update_single_pixel(canvas_x, canvas_y, old_color)
+            # Apply the tool to the drawing layer
+            if draw_layer:
+                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
+                
+                # Also update the current frame with the layer changes
+                current_frame = self.timeline.get_current_frame()
+                if current_frame:
+                    current_frame.pixels = draw_layer.pixels.copy()
+                
+                # Update canvas to show all visible layers
+                self._update_canvas_from_layers()
+                
+                # Update only the pixel that was drawn
+                self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
@@ -962,12 +1529,21 @@ class MainWindow:
             # Store old color for efficient updating
             old_color = self.canvas.get_pixel(canvas_x, canvas_y)
 
-            # Use tool
-            tool.on_mouse_up(self.canvas, canvas_x, canvas_y, 1, color)
-            self._update_layer_from_canvas()
+            # Apply tool to drawing layer
+            draw_layer = self._get_drawing_layer()
+            if draw_layer:
+                tool.on_mouse_up(draw_layer, canvas_x, canvas_y, 1, color)
+                
+                # Also update the current frame with the layer changes
+                current_frame = self.timeline.get_current_frame()
+                if current_frame:
+                    current_frame.pixels = draw_layer.pixels.copy()
+                
+                # Update canvas to show all visible layers
+                self._update_canvas_from_layers()
 
-            # Update only the pixel that was affected
-            self._update_single_pixel(canvas_x, canvas_y, old_color)
+                # Update only the pixel that was affected
+                self._update_single_pixel(canvas_x, canvas_y, old_color)
 
             # Clear drawing state
             self.is_drawing = False
@@ -993,11 +1569,21 @@ class MainWindow:
             # Store the previous pixel color for efficient updating
             old_color = self.canvas.get_pixel(canvas_x, canvas_y)
 
-            tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
-            self._update_layer_from_canvas()
+            # Apply tool to drawing layer
+            draw_layer = self._get_drawing_layer()
+            if draw_layer:
+                tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
+                
+                # Also update the current frame with the layer changes
+                current_frame = self.timeline.get_current_frame()
+                if current_frame:
+                    current_frame.pixels = draw_layer.pixels.copy()
+                
+                # Update canvas to show all visible layers
+                self._update_canvas_from_layers()
 
-            # Only update the specific pixel that changed for better performance
-            self._update_single_pixel(canvas_x, canvas_y, old_color)
+                # Only update the specific pixel that changed for better performance
+                self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas"""
@@ -1040,19 +1626,6 @@ class MainWindow:
 
         return canvas_coord_x, canvas_coord_y
     
-    def _update_layer_from_canvas(self):
-        """Update active layer with canvas changes"""
-        active_layer = self.layer_manager.get_active_layer()
-        if active_layer:
-            active_layer.pixels = self.canvas.pixels.copy()
-
-            # Also update the current frame with the new pixels
-            current_frame = self.timeline.get_current_frame()
-            if current_frame:
-                current_frame.pixels = self.canvas.pixels.copy()
-
-            # Update the tkinter display to show the pixel changes
-            self._update_pixel_display()
 
     def _update_pixel_display(self):
         """Update tkinter display to show all pixel changes (full redraw)"""

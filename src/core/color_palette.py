@@ -242,6 +242,18 @@ class ColorPalette:
         if 0 <= index < len(self.colors):
             self.secondary_color = index
     
+    def set_primary_color_by_rgba(self, rgba_color: Tuple[int, int, int, int]):
+        """Set primary color by RGBA value (add to palette if not exists)"""
+        # Check if color already exists in palette
+        for i, color in enumerate(self.colors):
+            if color == rgba_color:
+                self.primary_color = i
+                return
+        
+        # Color doesn't exist, add it to palette
+        self.colors.append(rgba_color)
+        self.primary_color = len(self.colors) - 1
+    
     def swap_colors(self):
         """Swap primary and secondary colors"""
         self.primary_color, self.secondary_color = self.secondary_color, self.primary_color

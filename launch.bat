@@ -38,7 +38,10 @@ exit /b 1
 
 :success
 echo.
-echo Pixel Perfect started successfully!
-echo Your color wheel feature is ready to use!
+echo ========================================
+echo  Pixel Perfect closed successfully!
+echo ========================================
 echo.
-pause
+echo Window will auto-close in 2 seconds...
+timeout /t 2 /nobreak >nul
+exit /b 0

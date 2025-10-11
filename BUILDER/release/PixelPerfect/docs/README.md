@@ -2,7 +2,7 @@
 
 ![Pixel Perfect Logo](assets/icons/logo.png) <!-- Placeholder -->
 
-A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Grid visibility issue has been fixed** - you can now draw properly!
+A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
 
 ## ✅ Complete Feature Set
 
@@ -118,6 +118,9 @@ The build script automatically:
 - Bundles all dependencies
 - Includes assets and documentation
 - Creates a ready-to-distribute package
+- Cleans up temporary files
+
+**Pre-built executable available**: Download `BUILDER/release/PixelPerfect/PixelPerfect.exe` for instant use!
 
 See `BUILDER/README.md` for detailed build documentation.
 

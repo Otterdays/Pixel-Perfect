@@ -14,15 +14,9 @@ class EyedropperTool(Tool):
         super().__init__("Eyedropper")
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
-        """Sample color from canvas"""
-        if button == 1:  # Left mouse button - set primary color
-            sampled_color = canvas.get_pixel(x, y)
-            # This would need to communicate with the palette system
-            # For now, we'll just return the sampled color
-            return sampled_color
-        elif button == 3:  # Right mouse button - set secondary color
-            sampled_color = canvas.get_pixel(x, y)
-            return sampled_color
+        """Sample color from canvas - handled by main window"""
+        # The main window handles color sampling
+        pass
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """No action needed"""

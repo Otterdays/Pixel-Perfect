@@ -41,14 +41,18 @@ class UndoManager:
         if self.on_state_changed:
             self.on_state_changed()
     
-    def undo(self) -> Optional[UndoState]:
+    def undo(self, current_pixels: np.ndarray = None, current_layer_index: int = None) -> Optional[UndoState]:
         """Undo the last action"""
         if not self.undo_stack:
             return None
         
-        # Move state from undo to redo stack
+        # Save current state for redo if provided
+        if current_pixels is not None and current_layer_index is not None:
+            current_state = UndoState(current_pixels, current_layer_index)
+            self.redo_stack.append(current_state)
+        
+        # Get the state to restore (previous state)
         state = self.undo_stack.pop()
-        self.redo_stack.append(state)
         
         # Notify UI of state change
         if self.on_state_changed:
@@ -56,14 +60,18 @@ class UndoManager:
         
         return state
     
-    def redo(self) -> Optional[UndoState]:
+    def redo(self, current_pixels: np.ndarray = None, current_layer_index: int = None) -> Optional[UndoState]:
         """Redo the last undone action"""
         if not self.redo_stack:
             return None
         
-        # Move state from redo to undo stack
+        # Save current state for undo if provided
+        if current_pixels is not None and current_layer_index is not None:
+            current_state = UndoState(current_pixels, current_layer_index)
+            self.undo_stack.append(current_state)
+        
+        # Get the state to restore (the state we undid)
         state = self.redo_stack.pop()
-        self.undo_stack.append(state)
         
         # Notify UI of state change
         if self.on_state_changed:

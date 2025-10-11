@@ -61,34 +61,42 @@ class TimelinePanel:
         self.prev_btn = ctk.CTkButton(
             button_frame,
             text="◀",
-            width=30,
+            width=28,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._previous_frame
         )
-        self.prev_btn.pack(side="left", padx=(0, 5))
+        self.prev_btn.pack(side="left", padx=(0, 3))
         
         self.play_btn = ctk.CTkButton(
             button_frame,
             text="▶",
-            width=30,
+            width=28,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._toggle_playback
         )
-        self.play_btn.pack(side="left", padx=(0, 5))
+        self.play_btn.pack(side="left", padx=(0, 3))
         
         self.next_btn = ctk.CTkButton(
             button_frame,
             text="▶",
-            width=30,
+            width=28,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._next_frame
         )
-        self.next_btn.pack(side="left", padx=(0, 5))
+        self.next_btn.pack(side="left", padx=(0, 3))
         
         self.stop_btn = ctk.CTkButton(
             button_frame,
             text="⏹",
-            width=30,
+            width=28,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._stop_animation
         )
-        self.stop_btn.pack(side="left", padx=(0, 5))
+        self.stop_btn.pack(side="left")
         
         # Frame controls
         frame_control_frame = ctk.CTkFrame(self.playback_controls)
@@ -97,23 +105,29 @@ class TimelinePanel:
         self.add_frame_btn = ctk.CTkButton(
             frame_control_frame,
             text="Add Frame",
-            width=80,
+            width=75,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._add_frame
         )
-        self.add_frame_btn.pack(side="left", padx=(0, 5))
+        self.add_frame_btn.pack(side="left", padx=(0, 3))
         
         self.duplicate_frame_btn = ctk.CTkButton(
             frame_control_frame,
             text="Duplicate",
-            width=80,
+            width=75,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._duplicate_frame
         )
-        self.duplicate_frame_btn.pack(side="left", padx=(0, 5))
+        self.duplicate_frame_btn.pack(side="left", padx=(0, 3))
         
         self.delete_frame_btn = ctk.CTkButton(
             frame_control_frame,
             text="Delete",
-            width=80,
+            width=65,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._delete_frame
         )
         self.delete_frame_btn.pack(side="left")

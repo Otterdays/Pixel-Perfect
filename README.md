@@ -11,22 +11,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 2. Extract the folder
 3. Double-click `PixelPerfect.exe` to start creating pixel art!
 
-### Build from Source
-```bash
-# Clone the repository
-git clone https://github.com/AfyKirby1/Pixel-Perfect.git
-cd Pixel-Perfect
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run directly
-python main.py
-
-# Or build executable
-cd BUILDER
-build.bat
-```
+**That's it!** No Python installation, no dependencies, no setup required.
 
 ## ✅ Complete Feature Set
 
@@ -111,12 +96,14 @@ build.bat
 
 ## 🛠️ Technology Stack
 
-- **Language**: Python 3.13.6 (3.11+ compatible)
+Built with modern Python technologies and packaged as a standalone executable:
+- **Language**: Python 3.13.6
 - **Graphics**: Pygame 2.6.1 (SDL 2.28.4)
 - **UI**: CustomTkinter 5.2.0+ with Tkinter Canvas integration
 - **Image Processing**: Pillow 10.0.0+
 - **Numerical Computing**: NumPy 1.24.0+
 - **Platform**: Windows 11 (Primary), cross-platform compatible
+- **Packaging**: PyInstaller for standalone executable
 
 ## 📋 System Requirements
 
@@ -154,6 +141,7 @@ Pixel Perfect/
 │   ├── build.bat          # Build script
 │   ├── dist/              # Built executable
 │   └── release/           # Distribution package
+│       └── PixelPerfect/  # Standalone executable folder
 └── test_*.py              # Test suites
 ```
 

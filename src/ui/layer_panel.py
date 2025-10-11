@@ -46,8 +46,8 @@ class LayerPanel:
         )
         self.add_layer_btn.pack(side="right", padx=(5, 0))
         
-        # Layer list frame
-        self.list_frame = ctk.CTkScrollableFrame(self.layer_frame)
+        # Layer list frame (regular frame since parent is already scrollable)
+        self.list_frame = ctk.CTkFrame(self.layer_frame)
         self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Layer controls frame
@@ -62,25 +62,32 @@ class LayerPanel:
             button_frame,
             text="Duplicate",
             width=80,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._duplicate_layer
         )
-        self.duplicate_btn.pack(side="left", padx=(0, 5))
+        self.duplicate_btn.pack(side="left", padx=(0, 3))
         
         self.delete_btn = ctk.CTkButton(
             button_frame,
             text="Delete",
-            width=80,
+            width=70,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._delete_layer
         )
-        self.delete_btn.pack(side="left", padx=(0, 5))
+        self.delete_btn.pack(side="left", padx=(0, 3))
         
         self.merge_btn = ctk.CTkButton(
             button_frame,
             text="Merge Down",
-            width=80,
+            width=85,
+            height=28,
+            font=ctk.CTkFont(size=12),
             command=self._merge_layer
         )
         self.merge_btn.pack(side="left")
+        
     
     def _update_display(self):
         """Update the layer display"""
@@ -106,12 +113,17 @@ class LayerPanel:
         
         # Visibility toggle
         visibility_var = ctk.BooleanVar(value=layer.visible)
+        def on_visibility_change():
+            """Handle visibility checkbox change"""
+            self._toggle_visibility(index, visibility_var.get())
+        
         visibility_cb = ctk.CTkCheckBox(
             layer_btn_frame,
             text="",
-            width=20,
+            width=18,
+            height=18,
             variable=visibility_var,
-            command=lambda: self._toggle_visibility(index, visibility_var.get())
+            command=on_visibility_change
         )
         visibility_cb.pack(side="left", padx=(5, 0))
         
@@ -119,8 +131,9 @@ class LayerPanel:
         layer_btn = ctk.CTkButton(
             layer_btn_frame,
             text=layer.name,
-            height=30,
+            height=28,
             anchor="w",
+            font=ctk.CTkFont(size=12),
             command=lambda: self._select_layer(index)
         )
         layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5))
@@ -128,6 +141,9 @@ class LayerPanel:
         # Active indicator
         if index == self.layer_manager.active_layer_index:
             layer_btn.configure(fg_color="blue")
+        elif self.layer_manager.active_layer_index == -1:
+            # No layer selected (show all) - make all layers slightly highlighted
+            layer_btn.configure(fg_color="darkblue")
         else:
             layer_btn.configure(fg_color="gray")
         
@@ -155,8 +171,13 @@ class LayerPanel:
         self.merge_btn.configure(state="normal" if active_index > 0 else "disabled")
     
     def _select_layer(self, index: int):
-        """Select a layer"""
-        self.layer_manager.set_active_layer(index)
+        """Select a layer (or deselect if clicking on active layer)"""
+        # If clicking on the active layer, deselect it (show all layers)
+        if index == self.layer_manager.active_layer_index:
+            self.layer_manager.active_layer_index = -1  # -1 means no layer selected (show all)
+        else:
+            self.layer_manager.set_active_layer(index)
+        
         self._update_display()
         
         if self.on_layer_changed:
@@ -209,3 +230,4 @@ class LayerPanel:
     def refresh(self):
         """Refresh the layer display"""
         self._update_display()
+    

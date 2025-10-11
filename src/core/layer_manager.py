@@ -15,6 +15,38 @@ class Layer:
     visible: bool = True
     opacity: float = 1.0
     locked: bool = False
+    
+    def __post_init__(self):
+        """Initialize layer properties after dataclass creation"""
+        if len(self.pixels.shape) == 3:
+            self.height, self.width, _ = self.pixels.shape
+        else:
+            self.width = 0
+            self.height = 0
+    
+    def set_pixel(self, x: int, y: int, color):
+        """Set pixel at given coordinates"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.pixels[y, x] = color
+    
+    def get_pixel(self, x: int, y: int):
+        """Get pixel color at given coordinates"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return tuple(self.pixels[y, x])
+        return (0, 0, 0, 0)
+    
+    def clear(self):
+        """Clear all pixels"""
+        self.pixels.fill(0)
+    
+    @property
+    def zoom(self):
+        """Dummy zoom property for tool compatibility"""
+        return 1.0
+    
+    def _redraw_surface(self):
+        """Dummy method for tool compatibility"""
+        pass
 
 class LayerManager:
     """Manages multiple drawing layers"""
