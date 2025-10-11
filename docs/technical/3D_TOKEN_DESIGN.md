@@ -884,3 +884,6 @@ This specification provides:
 2. **Production-ready renderer** using ModernGL with instanced rendering
 3. **Qt integration** for desktop application
 4. **Configurable parameters**: thickness, beveling
+
+
+user: we should consider the route of being able to export files for 3d modeling and 3d printing
