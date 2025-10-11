@@ -1,8 +1,8 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.12  
-**Last Updated**: October 11, 2025 - Custom Colors System Complete
+**Version**: 1.13  
+**Last Updated**: October 11, 2025 - UI Improvements & Complete Palette System
 
 ## Overview
 Pixel Perfect is a **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets. Inspired by classic SNES-era games like Curse of Aros, it provides a complete, production-ready tool for sprite, tile, and animation creation with preset sizes and SNES-style color palettes.

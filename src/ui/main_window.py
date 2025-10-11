@@ -5,6 +5,7 @@ Coordinates all UI components and handles events
 
 import pygame
 import customtkinter as ctk
+import tkinter as tk
 from typing import Optional, Tuple
 import sys
 import os
@@ -104,21 +105,40 @@ class MainWindow:
         # Top toolbar
         self._create_toolbar()
         
-        # Main content area
-        self.content_frame = ctk.CTkFrame(self.main_frame)
-        self.content_frame.pack(fill="both", expand=True, pady=(10, 0))
+        # Main content area with resizable panes
+        self.paned_window = tk.PanedWindow(
+            self.main_frame, 
+            orient=tk.HORIZONTAL, 
+            sashwidth=8, 
+            bg="#2b2b2b",
+            sashrelief=tk.RAISED,
+            bd=0
+        )
+        self.paned_window.pack(fill="both", expand=True, pady=(10, 0))
+        
+        # Left panel container (wrapper for CTk widget)
+        left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.paned_window.add(left_container, minsize=220, width=500, stretch="never")
         
         # Left panel (tools and palette) - with scrollbar
-        self.left_panel = ctk.CTkScrollableFrame(self.content_frame, width=250)
-        self.left_panel.pack(side="left", fill="both", padx=(0, 10))
+        self.left_panel = ctk.CTkScrollableFrame(left_container, width=500)
+        self.left_panel.pack(fill="both", expand=True)
+        
+        # Canvas area container
+        canvas_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.paned_window.add(canvas_container, minsize=400, stretch="always")
         
         # Canvas area
-        self.canvas_frame = ctk.CTkFrame(self.content_frame)
-        self.canvas_frame.pack(side="left", fill="both", expand=True)
+        self.canvas_frame = ctk.CTkFrame(canvas_container)
+        self.canvas_frame.pack(fill="both", expand=True)
+        
+        # Right panel container (wrapper for CTk widget)
+        right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.paned_window.add(right_container, minsize=220, width=300, stretch="never")
         
         # Right panel (layers, etc.) - with scrollbar
-        self.right_panel = ctk.CTkScrollableFrame(self.content_frame, width=250)
-        self.right_panel.pack(side="right", fill="both", padx=(10, 0))
+        self.right_panel = ctk.CTkScrollableFrame(right_container, width=300)
+        self.right_panel.pack(fill="both", expand=True)
         
         # Create panels
         self._create_tool_panel()
@@ -228,12 +248,16 @@ class MainWindow:
     def _create_tool_panel(self):
         """Create tool selection panel"""
         self.tool_frame = ctk.CTkFrame(self.left_panel)
-        self.tool_frame.pack(fill="x", padx=10, pady=10)
+        self.tool_frame.pack(fill="none", padx=10, pady=(5, 5))
         
         tool_label = ctk.CTkLabel(self.tool_frame, text="Tools", font=ctk.CTkFont(size=16, weight="bold"))
-        tool_label.pack(pady=(10, 5))
+        tool_label.pack(pady=(5, 3))
         
-        # Tool buttons
+        # Tool buttons container for grid layout
+        tool_grid = ctk.CTkFrame(self.tool_frame)
+        tool_grid.pack(pady=(0, 5), padx=5)
+        
+        # Tool buttons in 3x3 grid for compact layout
         self.tool_buttons = {}
         tools = [
             ("brush", "Brush"),
@@ -243,19 +267,28 @@ class MainWindow:
             ("selection", "Select"),
             ("move", "Move"),
             ("line", "Line"),
-            ("rectangle", "Rect"),
+            ("rectangle", "Rectangle"),
             ("circle", "Circle")
         ]
         
-        for tool_id, tool_name in tools:
+        # Arrange in 3 columns
+        for idx, (tool_id, tool_name) in enumerate(tools):
+            row = idx // 3
+            col = idx % 3
+            
             btn = ctk.CTkButton(
-                self.tool_frame,
+                tool_grid,
                 text=tool_name,
-                width=100,
+                width=85,
+                height=28,
                 command=lambda t=tool_id: self._select_tool(t)
             )
-            btn.pack(pady=2)
+            btn.grid(row=row, column=col, padx=2, pady=2)
             self.tool_buttons[tool_id] = btn
+        
+        # Configure grid columns - buttons stay fixed size
+        for col in range(3):
+            tool_grid.grid_columnconfigure(col, weight=0)
         
         # Highlight current tool
         self._update_tool_selection()
@@ -263,10 +296,10 @@ class MainWindow:
     def _create_palette_panel(self):
         """Create color palette panel"""
         self.palette_frame = ctk.CTkFrame(self.left_panel)
-        self.palette_frame.pack(fill="x", padx=10, pady=10)
+        self.palette_frame.pack(fill="x", padx=10, pady=(3, 5))
         
         palette_label = ctk.CTkLabel(self.palette_frame, text="Palette", font=ctk.CTkFont(size=16, weight="bold"))
-        palette_label.pack(pady=(10, 5))
+        palette_label.pack(pady=(5, 3))
         
         # Palette selector
         self.palette_var = ctk.StringVar(value="SNES Classic")
@@ -276,11 +309,11 @@ class MainWindow:
             values=list(self.palette.get_preset_palettes().keys()),
             command=self._on_palette_change
         )
-        self.palette_menu.pack(pady=5)
+        self.palette_menu.pack(pady=3)
         
         # View mode selector
         view_mode_frame = ctk.CTkFrame(self.palette_frame)
-        view_mode_frame.pack(fill="x", padx=10, pady=5)
+        view_mode_frame.pack(fill="x", padx=10, pady=3)
         
         self.view_mode_var = ctk.StringVar(value="grid")
         

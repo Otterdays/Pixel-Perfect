@@ -1,5 +1,44 @@
 # Pixel Perfect - Changelog
 
+## Version 1.13 - UI Improvements & Complete Palette System (October 11, 2025) ✅
+
+### New Features
+- **Resizable Side Panels**: Drag dividers to resize left/right panels horizontally
+- **All 6 Palettes Available**: Added 4 missing palette JSON files to distribution
+
+### UI Improvements
+1. **Compact 3×3 Tool Grid**: Reorganized tools from vertical stack to grid layout
+   - Saves ~130+ pixels of vertical space
+   - Fixed button sizes (85px × 28px)
+   - Centered Tools section with proper frame wrapping
+
+2. **Reduced Vertical Spacing**: Tightened padding throughout panels
+   - Tools panel padding reduced by ~50%
+   - Palette panel padding reduced by ~50-65%
+   - Total space saved: ~180+ pixels
+
+3. **Resizable Panel System**: Implemented tkinter PanedWindow
+   - Left panel: 500px default (min 220px)
+   - Right panel: 300px default (min 220px)
+   - Canvas: 400px minimum, always expands
+   - 8px raised sash handles for easy resizing
+
+### Bug Fixes
+- **Missing Palette Files**: Created 4 missing palette JSON files
+  - heartwood_online.json (forest theme)
+  - definya.json (bright, vibrant colors)
+  - kakele_online.json (warm, golden palette)
+  - rucoy_online.json (grayscale with earth tones)
+- **Tool Button Text**: Changed "Rect" to "Rectangle" for clarity
+
+### Files Modified
+- `src/ui/main_window.py` - Resizable panels, compact tool grid
+- `assets/palettes/` - Added 4 missing palette JSON files
+- `src/core/color_palette.py` - Verified KAKELE enum type
+- `BUILDER/build.bat` - Updated with custom_colors module
+
+---
+
 ## Version 1.11 - 64x64 Canvas Size Addition (October 11, 2025) ✅
 
 ### New Features

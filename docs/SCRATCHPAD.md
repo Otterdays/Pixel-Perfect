@@ -2,7 +2,33 @@
 
 ## Version 1.13 - Documentation Organization & Updates
 **Date**: October 11, 2025
-**Status**: Documentation Overhaul Complete
+**Status**: Documentation Overhaul Complete + UI Improvements + Missing Palettes Fixed
+
+### UI Improvements:
+1. **Compact Tools Panel** - Reorganized tool buttons from vertical stack to 3×3 grid layout
+   - Saves ~130+ pixels of vertical space
+   - 3 columns: (Brush, Eraser, Fill) | (Eyedropper, Select, Move) | (Line, Rectangle, Circle)
+   - Button width set to 105px with grid minsize
+   - Better visual organization and more space for canvas
+2. **Reduced Vertical Spacing** - Tightened padding throughout left panel
+   - Tools panel padding reduced by ~50%
+   - Palette panel padding reduced by ~50-65%
+   - Total space saved: ~50-60 additional pixels
+3. **Resizable Side Panels** - Replaced fixed-width panels with tkinter PanedWindow
+   - Left panel (Tools/Palette): Starts at 280px, min 220px
+   - Right panel (Layers/Animation): Starts at 280px, min 220px
+   - Canvas area: Minimum 400px, always expands
+   - Drag dividers to resize panels horizontally
+   - Tool buttons now expand with panel width
+
+### Bug Fixes:
+1. **Missing Palette Files** - Created 4 missing palette JSON files
+   - heartwood_online.json (forest theme)
+   - definya.json (bright, vibrant colors)
+   - kakele_online.json (warm, golden palette)
+   - rucoy_online.json (grayscale with earth tones)
+   - All 6 palettes now available in assets/palettes/
+   - Fixed PaletteType enum to include KAKELE type
 
 ### Documentation Updates:
 1. **SCRATCHPAD.md** - Updated with Version 1.13 entry (this entry)

@@ -7,12 +7,13 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ## 🆕 Latest Updates
 
 ### Version 1.13 (October 2025)
-📚 **Documentation Organization & Improvements**
-- Comprehensive REQUIREMENTS.md documenting all functional requirements
-- Organized documentation into `features/` and `technical/` subdirectories
-- Complete project requirements and acceptance criteria
-- Improved documentation navigation and maintenance
-- Updated all core documentation to current version
+🎨 **UI Improvements & Complete Palette System**
+- **Resizable side panels** - Drag dividers to adjust panel widths
+- **Compact 3×3 tool grid** - Saves 180+ pixels of vertical space, centered layout
+- **All 6 palettes available** - Added 4 missing palette JSON files to distribution
+- **Reduced spacing** - Tighter, more efficient UI throughout
+- **Documentation organized** - New `features/` and `technical/` subdirectories
+- **REQUIREMENTS.md** - Comprehensive project requirements document
 
 ### Version 1.12 (October 2025)
 🎨 **Custom Colors System**
