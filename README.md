@@ -8,6 +8,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### Version 1.13 (October 2025)
 🎨 **UI Improvements & Complete Palette System**
+- **Custom application icon** - Colorful 4×4 pixel grid logo in window, taskbar, and EXE
 - **Resizable side panels** - Drag dividers to adjust panel widths
 - **Compact 3×3 tool grid** - Saves 180+ pixels of vertical space, centered layout
 - **All 6 palettes available** - Added 4 missing palette JSON files to distribution
@@ -36,10 +37,12 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### Download & Run (No Installation Required)
 1. Download the latest release from `BUILDER/release/PixelPerfect/`
-2. Extract the folder
+2. Extract the **entire folder** (includes EXE + assets + palettes + docs)
 3. Double-click `PixelPerfect.exe` to start creating pixel art!
 
 **That's it!** No Python installation, no dependencies, no setup required.
+
+**Important:** Distribute the entire `PixelPerfect` folder, not just the EXE. The application needs the `assets/` folder for palettes and icons.
 
 ## ✅ Complete Feature Set
 

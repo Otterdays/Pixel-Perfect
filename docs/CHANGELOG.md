@@ -3,6 +3,11 @@
 ## Version 1.13 - UI Improvements & Complete Palette System (October 11, 2025) ✅
 
 ### New Features
+- **Custom Application Icon**: Colorful 4×4 pixel grid logo
+  - Displays in EXE file icon, window title bar, and Windows taskbar
+  - Proper Windows ICO format with 7 icon sizes (16×16 to 256×256)
+  - Fixed runtime icon loading for PyInstaller bundled executables
+  - Uses `sys.frozen` detection to locate assets correctly when bundled
 - **Resizable Side Panels**: Drag dividers to resize left/right panels horizontally
 - **All 6 Palettes Available**: Added 4 missing palette JSON files to distribution
 
