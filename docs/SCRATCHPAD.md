@@ -2,7 +2,7 @@
 
 ## Version 1.13 - Documentation Organization & Updates
 **Date**: October 11, 2025
-**Status**: Documentation Overhaul Complete + UI Improvements + Missing Palettes Fixed
+**Status**: Documentation Overhaul Complete + UI Improvements + Missing Palettes Fixed + App Icon Fully Working
 
 ### UI Improvements:
 1. **Compact Tools Panel** - Reorganized tool buttons from vertical stack to 3×3 grid layout
@@ -20,6 +20,15 @@
    - Canvas area: Minimum 400px, always expands
    - Drag dividers to resize panels horizontally
    - Tool buttons now expand with panel width
+
+### New Features:
+1. **Application Icon** - Added colorful pixel art monitor logo (4×4 grid design)
+   - Converted PNG to ICO format for Windows compatibility (7 sizes: 16-256px)
+   - Shows in window title bar and Windows taskbar
+   - Embedded in executable via PyInstaller
+   - Windows-specific taskbar icon handling with App User Model ID
+   - Fixed runtime icon loading to work with PyInstaller bundled executable
+   - Uses sys.frozen detection to locate icon in correct path
 
 ### Bug Fixes:
 1. **Missing Palette Files** - Created 4 missing palette JSON files

@@ -43,6 +43,49 @@ class MainWindow:
         self.root.title("Pixel Perfect - Retro Pixel Art Editor")
         self.root.geometry("1200x800")
         
+        # Set window icon
+        try:
+            # Get the correct base path (works for both dev and PyInstaller)
+            if getattr(sys, 'frozen', False):
+                # Running as compiled EXE
+                base_path = os.path.dirname(sys.executable)
+            else:
+                # Running as script
+                base_path = os.path.join(os.path.dirname(__file__), "..", "..")
+            
+            # Try ICO format first (best for Windows)
+            icon_path = os.path.join(base_path, "assets", "icons", "app_icon.ico")
+            icon_path = os.path.abspath(icon_path)
+            
+            if os.path.exists(icon_path):
+                # Set window icon
+                self.root.iconbitmap(icon_path)
+                
+                # Windows-specific: Set taskbar icon using Windows API
+                if os.name == 'nt':
+                    try:
+                        import ctypes
+                        # Set app user model ID for Windows taskbar grouping
+                        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('PixelPerfect.PixelArtEditor.1.13')
+                        # Force update the icon
+                        self.root.after(100, lambda: self.root.iconbitmap(icon_path))
+                    except:
+                        pass
+                
+                print(f"✓ Icon loaded: {icon_path}")
+            else:
+                # Fallback to PNG
+                png_path = os.path.join(base_path, "assets", "icons", "app_icon.png")
+                png_path = os.path.abspath(png_path)
+                if os.path.exists(png_path):
+                    icon_photo = tk.PhotoImage(file=png_path)
+                    self.root.iconphoto(True, icon_photo)
+                    print(f"✓ Icon loaded (PNG): {png_path}")
+                else:
+                    print(f"⚠ Icon not found at: {icon_path} or {png_path}")
+        except Exception as e:
+            print(f"⚠ Could not load icon: {e}")
+        
         # Initialize core systems
         self.canvas = Canvas(32, 32, zoom=16)  # Higher zoom for better grid visibility
         self.palette = ColorPalette()
