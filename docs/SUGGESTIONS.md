@@ -12,3 +12,12 @@ eye dropper
 collapse menus on right
 
 companian app that's barebones.
+
+TOUCH CONTROLS or dpad
+
+product page for pixel perfect
+
+2.5d-3d tokens
+
+mobile version with 180 flip (test mobile conversion using local tunnel)
+

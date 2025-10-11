@@ -1,5 +1,164 @@
 # Pixel Perfect - Development Scratchpad
 
+9## Version 1.13 - Documentation Organization & Updates
+**Date**: October 11, 2025
+**Status**: Documentation Overhaul Complete
+
+### Documentation Updates:
+1. **SCRATCHPAD.md** - Updated with Version 1.13 entry (this entry)
+2. **SUMMARY.md** - Updated to reflect Version 1.12 and current date
+3. **SBOM.md** - Updated with current date (October 11, 2025)
+4. **REQUIREMENTS.md** - Created comprehensive project requirements document (NEW)
+
+### Documentation Organization:
+- Created `docs/features/` subdirectory for feature-specific documentation
+- Created `docs/technical/` subdirectory for technical implementation notes
+- Moved 9 feature/technical docs to appropriate subdirectories:
+  - **Features**: CUSTOM_COLORS_FEATURE_SUMMARY.md, CUSTOM_COLORS_STORAGE.md, CUSTOM_COLORS_TROUBLESHOOTING.md, CUSTOM_COLORS_USER_GUIDE.md, COLOR_WHEEL_BUTTONS.md, VERSION_1.12_RELEASE_NOTES.md
+  - **Technical**: 64x64_IMPLEMENTATION_NOTES.md, 3D_TOKEN_DESIGN.md
+- Core docs remain at root: ARCHITECTURE.md, README.md, SBOM.md, SCRATCHPAD.md, SUMMARY.md, REQUIREMENTS.md, CHANGELOG.md, style_guide.md, SUGGESTIONS.md
+
+### Files Modified:
+- `docs/SCRATCHPAD.md` (updated)
+- `docs/SUMMARY.md` (updated)
+- `docs/SBOM.md` (updated)
+- `docs/REQUIREMENTS.md` (NEW)
+- Documentation structure reorganized for better maintainability
+
+### Benefits:
+- Cleaner root documentation folder
+- Better organization for feature-specific docs
+- Easier to find technical implementation notes
+- Follows user rules for proper documentation
+
+---
+
+## Version 1.12 - Custom Colors System
+
+### New Feature: User-Specific Custom Colors
+**Date**: October 11, 2025
+
+Added persistent custom colors system with user-specific local storage.
+
+**Implementation Details:**
+1. **CustomColorManager** (`src/core/custom_colors.py`)
+   - User-specific storage path (Windows: `AppData\Local\PixelPerfect\custom_colors.json`)
+   - Maximum 32 custom colors per user
+   - Automatic persistence across sessions
+   - Prevents duplicates
+
+2. **Color Wheel UI Updates** (`src/ui/color_wheel.py`)
+   - Simplified to 2 buttons:
+     - **Save Custom Color** (green) - Saves current color permanently
+     - **Delete Color** (red) - Removes selected custom color
+   - Removed: "Add to Palette" and "Replace Color" buttons
+   - Added Custom Colors grid below buttons
+   - Visual selection indicator (white 3px border)
+   - 4-column scrollable grid layout
+
+3. **Integration** (`src/ui/main_window.py`)
+   - Connected CustomColorManager to color wheel
+   - Auto-load custom colors on startup
+   - Real-time grid updates on add/delete
+
+**User Experience:**
+- Click custom color → loads into wheel (white border shows selection)
+- Save button → adds to permanent library
+- Delete button → removes selected color
+- Empty on fresh install (user builds own library)
+
+**Files Modified:**
+- `src/core/custom_colors.py` (NEW)
+- `src/ui/color_wheel.py` (buttons simplified, grid added)
+- `src/ui/main_window.py` (CustomColorManager integration)
+- `.gitignore` (added custom_colors.json)
+
+**Documentation:**
+- `docs/CUSTOM_COLORS_STORAGE.md` (technical documentation)
+- `docs/CUSTOM_COLORS_USER_GUIDE.md` (user guide)
+- `docs/COLOR_WHEEL_BUTTONS.md` (button reference)
+
+**Bug Fixes:**
+- Fixed callback initialization in ColorWheel class (on_save_custom_color, on_remove_custom_color)
+- Fixed Unicode encoding errors in Windows console (replaced emoji with [OK], [WARN], [DELETE], [SELECT])
+- Confirmed duplicate detection only checks custom colors, not palette colors
+
+**Testing Status:**
+- ✅ Storage path creation
+- ✅ JSON file persistence
+- ✅ UI interaction (save, delete, select)
+- ✅ Callback connections working
+- ✅ Duplicate detection working correctly
+- ✅ Cross-session persistence verified
+
+---
+
+## Version 1.11 - 64x64 Canvas Size Addition ✅ COMPLETE
+**Date**: October 11, 2025  
+**Status**: Feature Added + Multiple Critical Bug Fixes - FULLY WORKING
+
+### New Feature: 64x64 Canvas Size
+- Added XLARGE preset to CanvasSize enum (64x64 pixels)
+- Added "64x64" option to UI size dropdown
+- Updated size change handler to support new preset
+- Documentation updated (README.md, ARCHITECTURE.md)
+
+### Bug Fix: Canvas Resize Synchronization
+- **Issue**: IndexError when drawing after changing canvas size to 64x64
+- **Root Cause**: Layer manager and timeline not resizing with canvas
+- **Symptoms**: "index 40 is out of bounds for axis 0 with size 32" errors when drawing
+- **Solution**: Updated `_on_size_change()` to call `resize_layers()` and `resize_frames()`
+- **Result**: All systems (canvas, layers, timeline) now stay synchronized during size changes
+
+### Bug Fix: Mouse Coordinate Conversion
+- **Issue**: Drawing only worked in upper-left portion of 64x64 canvas
+- **Root Cause**: Coordinate conversion was subtracting canvas widget position incorrectly
+- **Symptoms**: Unable to draw in most areas of larger canvases (32x64, 64x64)
+- **Solution**: Removed incorrect `winfo_x()` and `winfo_y()` subtraction from coordinate calculation
+- **Technical**: `event.x` and `event.y` are already widget-relative, no need to subtract widget position
+- **Result**: Drawing now works across entire canvas area for all sizes
+
+### Bug Fix: Large Canvas Drawing Limited to 32x32 Area ⭐ CRITICAL
+- **Issue**: Could only draw in 32x32 area regardless of canvas size (32x64, 64x64)
+- **Root Cause**: Layer class caches `width` and `height` in `__post_init__` from pixels.shape
+  - When `resize_layers()` updated `layer.pixels` array, Layer's cached dimensions were never updated
+  - `layer.set_pixel()` bounds check used cached `self.width` (still 32) instead of actual array size (64)
+  - Drawing beyond x=32 or y=32 failed bounds check even though pixel array was larger
+- **Symptoms**: Drawing only worked in upper-left 32x32 region, clicks beyond that did nothing
+- **Solution**: Update `layer.width` and `layer.height` after resizing `layer.pixels` array
+- **Additional Fixes**:
+  - Auto-adjust zoom to 8x for large canvases (64x64, 32x64) to prevent negative offsets  
+  - Fix infinite redraw loop by using `_update_pixel_display()` instead of `_initial_draw()`
+  - Sync canvas pixels with layer data after resize via `_update_canvas_from_layers()`
+- **Result**: Full canvas drawable for all sizes, smooth performance, no redraw loops
+
+### Technical Details:
+```python
+# Now properly updates all three systems:
+self.canvas.set_preset_size(size_map[size_str])
+self.layer_manager.resize_layers(self.canvas.width, self.canvas.height)
+self.timeline.resize_frames(self.canvas.width, self.canvas.height)
+```
+
+### Files Modified:
+- `src/core/canvas.py`: Added XLARGE = (64, 64) enum
+- `src/core/layer_manager.py`: Fixed Layer width/height not updating on resize ⭐ CRITICAL FIX
+- `src/ui/main_window.py`: Added 64x64 to dropdown, fixed resize sync, auto-zoom, redraw loop
+- `docs/README.md`: Updated canvas size list
+- `docs/ARCHITECTURE.md`: Updated canvas size list
+- `docs/SCRATCHPAD.md`: Comprehensive bug fix documentation
+
+### Testing Status:
+✅ 16x16 - Working
+✅ 32x32 - Working  
+✅ 16x32 - Working
+✅ 32x64 - Working (with fixes)
+✅ 64x64 - Working (with fixes)
+
+All canvas sizes now fully functional with proper grid rendering and complete drawing area coverage.
+
+---
+
 ## Version 1.05 - GitHub Release
 **Date**: October 10, 2024  
 **Status**: Project pushed to GitHub with production executable
@@ -442,6 +601,15 @@ All comprehensive tests passed successfully:
 - **Optimized Button Widths**: Layer buttons (80px/70px/85px), Animation buttons (75px/75px/65px)
 - **Reduced Padding**: Changed from 5px to 3px padding between buttons for better space utilization
 - **Enhanced Visual Consistency**: All panels now have uniform button styling and spacing
+
+### Bug Fix Added:
+- **Eyedropper Tool Functionality**: Fixed eyedropper tool not working for color sampling
+- **Color Selection Integration**: Eyedropper now properly updates color selection highlights
+- **Smart Color Detection**: Checks if sampled color exists in current palette first
+- **Color Wheel Fallback**: Automatically switches to color wheel mode for non-palette colors
+- **Left/Right Click Support**: Left click sets primary color, right click sets secondary color
+- **UI Synchronization**: Color selection highlights update immediately after sampling
+- **Canvas Color Sampling**: Properly samples colors from the visible canvas (all layers combined)
 
 ---
 

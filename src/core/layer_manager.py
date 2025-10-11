@@ -271,6 +271,9 @@ class LayerManager:
             new_pixels[:copy_height, :copy_width] = layer.pixels[:copy_height, :copy_width]
             
             layer.pixels = new_pixels
+            # CRITICAL: Update layer's cached width/height after resizing pixels
+            layer.width = new_width
+            layer.height = new_height
     
     def get_layer_count(self) -> int:
         """Get number of layers"""

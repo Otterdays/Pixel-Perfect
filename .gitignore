@@ -145,3 +145,7 @@ Thumbs.db
 !assets/icons/logo.png
 !BUILDER/release/PixelPerfect/assets/
 !BUILDER/dist/assets/
+
+# User-specific custom colors (each user has their own)
+custom_colors.json
+**/custom_colors.json

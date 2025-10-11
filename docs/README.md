@@ -18,7 +18,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **Move Tool**: Move selected pixels around canvas
 
 ### 🖼️ **Canvas System** (Grid Fixed!)
-- **Preset Sizes**: 16x16, 32x32, 16x32, 32x64 pixels
+- **Preset Sizes**: 16x16, 32x32, 16x32, 32x64, 64x64 pixels
 - **Zoom Levels**: 1x to 32x with **visible pixel grid**
 - **Grid Overlay**: Toggleable grid for precise alignment (now working!)
 - **Custom Backgrounds**: Checkerboard transparency pattern

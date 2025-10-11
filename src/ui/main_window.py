@@ -49,6 +49,10 @@ class MainWindow:
         self.undo_manager = UndoManager()
         self.timeline = AnimationTimeline(32, 32)
         
+        # Initialize custom colors manager
+        from src.core.custom_colors import CustomColorManager
+        self.custom_colors = CustomColorManager()
+        
         # Initialize project and export managers
         from src.core.project import ProjectManager
         from src.utils.export import ExportManager
@@ -147,7 +151,7 @@ class MainWindow:
         self.size_menu = ctk.CTkOptionMenu(
             self.toolbar, 
             variable=self.size_var,
-            values=["16x16", "32x32", "16x32", "32x64"],
+            values=["16x16", "32x32", "16x32", "32x64", "64x64"],
             command=self._on_size_change
         )
         self.size_menu.pack(side="left", padx=5)
@@ -971,11 +975,39 @@ class MainWindow:
             "16x16": CanvasSize.SMALL,
             "32x32": CanvasSize.MEDIUM,
             "16x32": CanvasSize.WIDE,
-            "32x64": CanvasSize.LARGE
+            "32x64": CanvasSize.LARGE,
+            "64x64": CanvasSize.XLARGE
         }
         
         if size_str in size_map:
             self.canvas.set_preset_size(size_map[size_str])
+            
+            # Auto-adjust zoom for larger canvases to prevent negative offsets
+            if size_str in ["32x64", "64x64"]:
+                # Get available canvas area (approximate)
+                canvas_area_width = 864  # Typical width from debug logs
+                canvas_area_height = 963  # Typical height from debug logs
+                
+                # Calculate maximum zoom that fits
+                max_zoom_w = canvas_area_width // self.canvas.width
+                max_zoom_h = canvas_area_height // self.canvas.height
+                max_zoom = min(max_zoom_w, max_zoom_h)
+                
+                # Set to a reasonable zoom (8x or less for 64x64, 16x for 32x64)
+                if size_str == "64x64" and self.canvas.zoom > 8:
+                    self.canvas.set_zoom(8)
+                    self.zoom_var.set("8x")
+                elif size_str == "32x64" and self.canvas.zoom > 8:
+                    self.canvas.set_zoom(8)
+                    self.zoom_var.set("8x")
+            
+            # Update layer manager and timeline to match new canvas size
+            self.layer_manager.resize_layers(self.canvas.width, self.canvas.height)
+            self.timeline.resize_frames(self.canvas.width, self.canvas.height)
+            
+            # Sync canvas pixels with layer data after resize
+            self._update_canvas_from_layers()
+            
             # Update display immediately
             self._force_tkinter_canvas_update()
     
@@ -1019,9 +1051,12 @@ class MainWindow:
         self.color_wheel = ColorWheel(self.color_display_frame)
         self.color_wheel.on_color_changed = self._on_color_wheel_changed
         
-        # Connect color wheel buttons to palette management
-        self.color_wheel._add_to_palette = self._add_color_to_palette
-        self.color_wheel._replace_color = self._replace_color_in_palette
+        # Connect color wheel callbacks to custom colors management
+        self.color_wheel.on_save_custom_color = self._save_custom_color
+        self.color_wheel.on_remove_custom_color = self._remove_custom_color
+        
+        # Update custom colors grid with existing colors
+        self._update_custom_colors_display()
     
     def _on_color_wheel_changed(self, rgb_color):
         """Handle color wheel color change - now just for UI updates"""
@@ -1029,31 +1064,37 @@ class MainWindow:
         self._update_pixel_display()
         print(f"Color wheel color changed: {rgb_color}")
     
-    def _add_color_to_palette(self):
-        """Add current color wheel color to palette"""
-        if self.color_wheel and len(self.palette.colors) < 16:
-            rgb_color = self.color_wheel.get_color()
-            # Convert to RGBA format
+    def _save_custom_color(self, rgb_color):
+        """Save current color wheel color to custom colors"""
+        # Convert RGB tuple to RGBA
+        if len(rgb_color) == 3:
             rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-            self.palette.add_color(rgba_color)
-            
-            # Update display if in grid mode
-            if self.view_mode_var.get() == "grid":
-                self._create_color_grid()
+        else:
+            rgba_color = rgb_color
+        
+        # Add to custom colors
+        if self.custom_colors.add_color(rgba_color):
+            print(f"[OK] Saved custom color: {rgba_color}")
+            # Update the display
+            self._update_custom_colors_display()
+        else:
+            if self.custom_colors.has_color(rgba_color):
+                print(f"[WARN] Color already in custom colors: {rgba_color}")
+            elif self.custom_colors.is_full():
+                print(f"[WARN] Custom colors full (max {self.custom_colors.max_colors})")
     
-    def _replace_color_in_palette(self):
-        """Replace selected palette color with color wheel color"""
-        if self.color_wheel:
-            rgb_color = self.color_wheel.get_color()
-            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-            
-            # Replace primary color
-            if self.palette.primary_color < len(self.palette.colors):
-                self.palette.set_color(self.palette.primary_color, rgba_color)
-                
-                # Update display if in grid mode
-                if self.view_mode_var.get() == "grid":
-                    self._create_color_grid()
+    def _remove_custom_color(self, color):
+        """Remove a custom color"""
+        if self.custom_colors.remove_color_by_value(color):
+            print(f"[DELETE] Removed custom color: {color}")
+            # Update the display
+            self._update_custom_colors_display()
+    
+    def _update_custom_colors_display(self):
+        """Update the custom colors grid in color wheel"""
+        if hasattr(self, 'color_wheel') and self.color_wheel:
+            colors = self.custom_colors.get_colors()
+            self.color_wheel.update_custom_colors_grid(colors)
     
     def _toggle_grid(self):
         """Toggle grid visibility"""
@@ -1354,8 +1395,8 @@ class MainWindow:
         self.canvas.pixels = flattened_pixels
         self.canvas._redraw_surface()
         
-        # Refresh the tkinter display
-        self._initial_draw()
+        # Refresh the tkinter display (use update instead of initial draw to prevent loop)
+        self._update_pixel_display()
     
     def _get_drawing_layer(self):
         """Get the layer to draw on (active layer or topmost visible layer)"""
@@ -1604,9 +1645,7 @@ class MainWindow:
     
     def _tkinter_screen_to_canvas_coords(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
         """Convert tkinter screen coordinates to canvas coordinates"""
-        # Get drawing canvas bounds and dimensions
-        canvas_x = self.drawing_canvas.winfo_x()
-        canvas_y = self.drawing_canvas.winfo_y()
+        # Get drawing canvas dimensions
         canvas_width = self.drawing_canvas.winfo_width()
         canvas_height = self.drawing_canvas.winfo_height()
 
@@ -1617,8 +1656,9 @@ class MainWindow:
         y_offset = (canvas_height - canvas_pixel_height) // 2
 
         # Convert screen coordinates to canvas-relative coordinates
-        relative_x = screen_x - canvas_x - x_offset
-        relative_y = screen_y - canvas_y - y_offset
+        # event.x and event.y are already relative to the widget, so no need to subtract winfo_x/y
+        relative_x = screen_x - x_offset
+        relative_y = screen_y - y_offset
 
         # Convert to canvas pixel coordinates
         canvas_coord_x = relative_x // self.canvas.zoom

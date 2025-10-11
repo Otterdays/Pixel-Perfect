@@ -1,8 +1,8 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.11  
-**Last Updated**: October 2025 - Layer System Complete
+**Version**: 1.12  
+**Last Updated**: October 11, 2025 - Custom Colors System Complete
 
 ## Overview
 Pixel Perfect is a **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets. Inspired by classic SNES-era games like Curse of Aros, it provides a complete, production-ready tool for sprite, tile, and animation creation with preset sizes and SNES-style color palettes.
@@ -17,7 +17,7 @@ Pixel Perfect is a **fully functional** desktop pixel art editor designed for cr
 - **Color Palettes**: 6 preset palettes including Curse of Aros, SNES Classic, Heartwood Online, Definya, Kakele Online, Rucoy Online
 - **Color Wheel**: Complete HSV color picker with accurate hue selection, visual indicator alignment, and seamless mode switching
 - **Drawing Tools**: Complete tool set (9 tools) with modular architecture - **ALL TESTED & WORKING**
-- **Layer System**: Complete layer management with immediate visual updates, drawing integration, and "show all layers" mode
+- **Layer System**: Complete layer management with immediate visual updates, drawing integration, "show all layers" mode, and seamless tool integration
 - **Undo/Redo System**: 50+ state management with full history tracking
 - **Animation Timeline**: Frame-by-frame animation with playback controls
 - **Export System**: PNG, GIF, sprite sheet export with scaling (1x-8x)
@@ -48,9 +48,11 @@ Pixel Perfect is a **fully functional** desktop pixel art editor designed for cr
 19. ✅ **All Layers View Drawing** - Fixed drawing not working when no layer selected (show all layers mode)
 20. ✅ **Layer Drawing Error** - Fixed AttributeError when tools expected Canvas methods but received Layer objects
 21. ✅ **Layer Visibility Toggle** - Fixed canvas not updating immediately when unchecking layer checkboxes
+22. ✅ **Button Truncation Fix** - Fixed "Merge Down" and "Delete" buttons being cut off in layers and animation panels
+23. ✅ **Eyedropper Tool Functionality** - Fixed eyedropper tool not working for color sampling with smart palette/color wheel integration
 
 ### 📚 Documentation & Design
-22. ✅ **Comprehensive Style Guide** - Complete visual design system documentation with spacing, colors, typography, and component specifications
+24. ✅ **Comprehensive Style Guide** - Complete visual design system documentation with spacing, colors, typography, and component specifications
 
 ### 📋 Future Enhancements (Post-v1.0)
 - Onion skinning for animation
@@ -120,7 +122,7 @@ Pixel Perfect is a **fully functional** desktop pixel art editor designed for cr
 - **Complete Keyboard Shortcuts**: 20+ shortcuts for all major functions
 - **Tool Panel**: Visual tool selection
 - **Palette Panel**: Color selection and management
-- **Layer Panel**: Complete layer management with visibility toggles, drawing integration, and "show all layers" mode
+- **Layer Panel**: Complete layer management with visibility toggles, drawing integration, "show all layers" mode, and immediate visual updates
 - **Timeline Panel**: Animation controls
 - **Undo/Redo**: Ctrl+Z / Ctrl+Y with visual feedback
 

@@ -15,6 +15,8 @@ class ColorWheel:
         self.parent_frame = parent_frame
         self.size = size
         self.on_color_changed: Optional[Callable] = None
+        self.on_save_custom_color: Optional[Callable] = None  # Callback for saving custom color
+        self.on_remove_custom_color: Optional[Callable] = None  # Callback for removing custom color
         
         # Color state (HSV)
         self.hue = 0.0  # 0-360
@@ -50,128 +52,185 @@ class ColorWheel:
         )
         title_label.pack(pady=(10, 5))
         
-        # Color wheel and controls frame
-        controls_frame = ctk.CTkFrame(self.main_frame)
-        controls_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        # Top section - Color wheel and saturation square
+        top_frame = ctk.CTkFrame(self.main_frame)
+        top_frame.pack(fill="x", padx=10, pady=5)
         
-        # Left side - Color wheel
-        left_frame = ctk.CTkFrame(controls_frame)
-        left_frame.pack(side="left", fill="both", expand=True, padx=(10, 5), pady=10)
+        # Hue wheel (centered)
+        wheel_container = ctk.CTkFrame(top_frame)
+        wheel_container.pack(pady=10)
         
-        # Hue wheel
         self.wheel_canvas = ctk.CTkCanvas(
-            left_frame,
+            wheel_container,
             width=self.size,
             height=self.size,
             bg="black",
             highlightthickness=0
         )
-        self.wheel_canvas.pack(pady=10)
+        self.wheel_canvas.pack()
         self.wheel_canvas.bind("<Button-1>", self._on_wheel_click)
         self.wheel_canvas.bind("<B1-Motion>", self._on_wheel_drag)
         self.wheel_canvas.bind("<ButtonRelease-1>", self._on_wheel_release)
         
-        # Saturation/Value square
+        # Saturation/Value square (centered below wheel)
+        saturation_container = ctk.CTkFrame(top_frame)
+        saturation_container.pack(pady=5)
+        
         self.saturation_canvas = ctk.CTkCanvas(
-            left_frame,
+            saturation_container,
             width=150,
             height=150,
             bg="black",
             highlightthickness=0
         )
-        self.saturation_canvas.pack(pady=5)
+        self.saturation_canvas.pack()
         self.saturation_canvas.bind("<Button-1>", self._on_saturation_click)
         self.saturation_canvas.bind("<B1-Motion>", self._on_saturation_drag)
         self.saturation_canvas.bind("<ButtonRelease-1>", self._on_saturation_release)
         
-        # Right side - Controls
-        right_frame = ctk.CTkFrame(controls_frame)
-        right_frame.pack(side="right", fill="y", padx=(5, 10), pady=10)
+        # Bottom section - All controls below saturation square
+        bottom_frame = ctk.CTkFrame(self.main_frame)
+        bottom_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # Color preview
-        preview_label = ctk.CTkLabel(right_frame, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
-        preview_label.pack(pady=(10, 5))
+        # Controls in a horizontal layout
+        controls_row = ctk.CTkFrame(bottom_frame)
+        controls_row.pack(fill="x", pady=5)
         
-        self.color_preview = ctk.CTkFrame(right_frame, width=80, height=80)
+        # Left column - Preview and Brightness
+        left_col = ctk.CTkFrame(controls_row)
+        left_col.pack(side="left", padx=10, pady=5)
+        
+        preview_label = ctk.CTkLabel(left_col, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
+        preview_label.pack(pady=(0, 5))
+        
+        self.color_preview = ctk.CTkFrame(left_col, width=80, height=80)
         self.color_preview.pack(pady=5)
         
-        # Brightness slider
-        brightness_label = ctk.CTkLabel(right_frame, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
+        brightness_label = ctk.CTkLabel(left_col, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
         brightness_label.pack(pady=(10, 5))
         
         self.brightness_slider = ctk.CTkSlider(
-            right_frame,
+            left_col,
             from_=0,
             to=100,
             number_of_steps=100,
-            orientation="vertical",
-            height=150,
+            width=150,
             command=self._on_brightness_change
         )
         self.brightness_slider.pack(pady=5)
         self.brightness_slider.set(100)  # Start at full brightness
         
-        # HSV values display
-        self.hsv_labels = ctk.CTkFrame(right_frame)
-        self.hsv_labels.pack(fill="x", pady=10)
+        # Middle column - HSV values
+        middle_col = ctk.CTkFrame(controls_row)
+        middle_col.pack(side="left", padx=10, pady=5)
         
-        # H, S, V labels
-        h_label = ctk.CTkLabel(self.hsv_labels, text="H:", width=20, anchor="w")
-        h_label.pack(pady=2)
-        self.h_value_label = ctk.CTkLabel(self.hsv_labels, text="0°", width=40, anchor="w")
-        self.h_value_label.pack(pady=2)
+        hsv_title = ctk.CTkLabel(middle_col, text="HSV", font=ctk.CTkFont(size=12, weight="bold"))
+        hsv_title.pack(pady=(0, 5))
         
-        s_label = ctk.CTkLabel(self.hsv_labels, text="S:", width=20, anchor="w")
-        s_label.pack(pady=2)
-        self.s_value_label = ctk.CTkLabel(self.hsv_labels, text="100%", width=40, anchor="w")
-        self.s_value_label.pack(pady=2)
+        hsv_values_frame = ctk.CTkFrame(middle_col)
+        hsv_values_frame.pack()
         
-        v_label = ctk.CTkLabel(self.hsv_labels, text="V:", width=20, anchor="w")
-        v_label.pack(pady=2)
-        self.v_value_label = ctk.CTkLabel(self.hsv_labels, text="100%", width=40, anchor="w")
-        self.v_value_label.pack(pady=2)
+        # H label and value in same row
+        h_row = ctk.CTkFrame(hsv_values_frame)
+        h_row.pack(fill="x", pady=2)
+        h_label = ctk.CTkLabel(h_row, text="H:", width=25, anchor="w")
+        h_label.pack(side="left")
+        self.h_value_label = ctk.CTkLabel(h_row, text="0°", width=50, anchor="e")
+        self.h_value_label.pack(side="left")
         
-        # RGB values display
-        rgb_label = ctk.CTkLabel(right_frame, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
-        rgb_label.pack(pady=(10, 5))
+        # S label and value in same row
+        s_row = ctk.CTkFrame(hsv_values_frame)
+        s_row.pack(fill="x", pady=2)
+        s_label = ctk.CTkLabel(s_row, text="S:", width=25, anchor="w")
+        s_label.pack(side="left")
+        self.s_value_label = ctk.CTkLabel(s_row, text="100%", width=50, anchor="e")
+        self.s_value_label.pack(side="left")
         
-        self.rgb_labels = ctk.CTkFrame(right_frame)
-        self.rgb_labels.pack(fill="x", pady=5)
+        # V label and value in same row
+        v_row = ctk.CTkFrame(hsv_values_frame)
+        v_row.pack(fill="x", pady=2)
+        v_label = ctk.CTkLabel(v_row, text="V:", width=25, anchor="w")
+        v_label.pack(side="left")
+        self.v_value_label = ctk.CTkLabel(v_row, text="100%", width=50, anchor="e")
+        self.v_value_label.pack(side="left")
         
-        r_label = ctk.CTkLabel(self.rgb_labels, text="R:", width=20, anchor="w")
-        r_label.pack(pady=2)
-        self.r_value_label = ctk.CTkLabel(self.rgb_labels, text="255", width=40, anchor="w")
-        self.r_value_label.pack(pady=2)
+        # Right column - RGB values
+        right_col = ctk.CTkFrame(controls_row)
+        right_col.pack(side="left", padx=10, pady=5)
         
-        g_label = ctk.CTkLabel(self.rgb_labels, text="G:", width=20, anchor="w")
-        g_label.pack(pady=2)
-        self.g_value_label = ctk.CTkLabel(self.rgb_labels, text="0", width=40, anchor="w")
-        self.g_value_label.pack(pady=2)
+        rgb_title = ctk.CTkLabel(right_col, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
+        rgb_title.pack(pady=(0, 5))
         
-        b_label = ctk.CTkLabel(self.rgb_labels, text="B:", width=20, anchor="w")
-        b_label.pack(pady=2)
-        self.b_value_label = ctk.CTkLabel(self.rgb_labels, text="0", width=40, anchor="w")
-        self.b_value_label.pack(pady=2)
+        rgb_values_frame = ctk.CTkFrame(right_col)
+        rgb_values_frame.pack()
         
-        # Action buttons
-        button_frame = ctk.CTkFrame(right_frame)
-        button_frame.pack(fill="x", pady=10)
+        # R label and value in same row
+        r_row = ctk.CTkFrame(rgb_values_frame)
+        r_row.pack(fill="x", pady=2)
+        r_label = ctk.CTkLabel(r_row, text="R:", width=25, anchor="w")
+        r_label.pack(side="left")
+        self.r_value_label = ctk.CTkLabel(r_row, text="255", width=50, anchor="e")
+        self.r_value_label.pack(side="left")
         
-        self.add_to_palette_btn = ctk.CTkButton(
+        # G label and value in same row
+        g_row = ctk.CTkFrame(rgb_values_frame)
+        g_row.pack(fill="x", pady=2)
+        g_label = ctk.CTkLabel(g_row, text="G:", width=25, anchor="w")
+        g_label.pack(side="left")
+        self.g_value_label = ctk.CTkLabel(g_row, text="0", width=50, anchor="e")
+        self.g_value_label.pack(side="left")
+        
+        # B label and value in same row
+        b_row = ctk.CTkFrame(rgb_values_frame)
+        b_row.pack(fill="x", pady=2)
+        b_label = ctk.CTkLabel(b_row, text="B:", width=25, anchor="w")
+        b_label.pack(side="left")
+        self.b_value_label = ctk.CTkLabel(b_row, text="0", width=50, anchor="e")
+        self.b_value_label.pack(side="left")
+        
+        # Action buttons at bottom (full width)
+        button_frame = ctk.CTkFrame(bottom_frame)
+        button_frame.pack(fill="x", pady=10, padx=10)
+        
+        self.save_custom_btn = ctk.CTkButton(
             button_frame,
-            text="Add to Palette",
-            command=self._add_to_palette,
-            height=30
+            text="Save Custom Color",
+            command=self._save_custom_color,
+            height=30,
+            fg_color="green"
         )
-        self.add_to_palette_btn.pack(fill="x", pady=2)
+        self.save_custom_btn.pack(fill="x", pady=2)
         
-        self.replace_color_btn = ctk.CTkButton(
+        self.delete_color_btn = ctk.CTkButton(
             button_frame,
-            text="Replace Color",
-            command=self._replace_color,
-            height=30
+            text="Delete Color",
+            command=self._delete_selected_color,
+            height=30,
+            fg_color="red"
         )
-        self.replace_color_btn.pack(fill="x", pady=2)
+        self.delete_color_btn.pack(fill="x", pady=2)
+        
+        # Custom Colors Section
+        custom_colors_frame = ctk.CTkFrame(bottom_frame)
+        custom_colors_frame.pack(fill="both", expand=True, pady=10, padx=10)
+        
+        custom_title = ctk.CTkLabel(
+            custom_colors_frame,
+            text="Custom Colors",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        custom_title.pack(pady=(5, 10))
+        
+        # Scrollable frame for custom colors grid
+        self.custom_colors_container = ctk.CTkScrollableFrame(
+            custom_colors_frame,
+            height=150
+        )
+        self.custom_colors_container.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Grid will be populated dynamically
+        self.custom_color_buttons = []
+        self.selected_custom_color = None  # Track selected color for deletion
     
     def _draw_hue_wheel(self):
         """Draw the HSV hue wheel"""
@@ -409,17 +468,81 @@ class ColorWheel:
         self.value = float(value) / 100.0
         self._update_displays()
     
-    def _add_to_palette(self):
-        """Add current color to palette"""
-        rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
-        # This will be connected to the main palette system
-        print(f"Adding color to palette: {rgb}")
+    def _save_custom_color(self):
+        """Save current color to custom colors"""
+        if self.on_save_custom_color:
+            rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+            self.on_save_custom_color(rgb)
+        else:
+            print("[WARN] Custom colors not connected")
     
-    def _replace_color(self):
-        """Replace selected palette color with current color"""
-        rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
-        # This will be connected to the main palette system
-        print(f"Replacing color in palette: {rgb}")
+    def _delete_selected_color(self):
+        """Delete the currently selected custom color"""
+        if self.selected_custom_color:
+            if self.on_remove_custom_color:
+                self.on_remove_custom_color(self.selected_custom_color)
+            else:
+                print("[WARN] Custom colors not connected")
+        else:
+            print("[WARN] No custom color selected. Click a custom color first.")
+    
+    def update_custom_colors_grid(self, colors):
+        """Update the custom colors grid display"""
+        # Clear existing buttons
+        for btn in self.custom_color_buttons:
+            btn.destroy()
+        self.custom_color_buttons.clear()
+        
+        # Reset selection if current selected color is not in the list
+        if self.selected_custom_color and self.selected_custom_color not in colors:
+            self.selected_custom_color = None
+        
+        # Create grid of color buttons (4 columns)
+        for i, color in enumerate(colors):
+            r, g, b, a = color
+            row = i // 4
+            col = i % 4
+            
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            # Check if this color is selected
+            is_selected = (self.selected_custom_color == color)
+            border_width = 3 if is_selected else 0
+            border_color = "white" if is_selected else None
+            
+            btn = ctk.CTkButton(
+                self.custom_colors_container,
+                text="",
+                width=40,
+                height=40,
+                fg_color=hex_color,
+                hover_color=f"#{min(255, r+30):02x}{min(255, g+30):02x}{min(255, b+30):02x}",
+                border_width=border_width,
+                border_color=border_color
+            )
+            btn.grid(row=row, column=col, padx=3, pady=3)
+            
+            # Bind click to select this color
+            btn.bind("<Button-1>", lambda e, c=color, b=btn: self._select_custom_color(c, b))
+            
+            self.custom_color_buttons.append(btn)
+    
+    def _select_custom_color(self, color, button):
+        """Select a custom color from the grid"""
+        r, g, b, a = color
+        
+        # Update selected color
+        self.selected_custom_color = color
+        
+        # Update all button borders to show selection
+        for btn in self.custom_color_buttons:
+            btn.configure(border_width=0)
+        button.configure(border_width=3, border_color="white")
+        
+        # Load color into wheel
+        self.set_color(r, g, b)
+        print(f"[SELECT] Custom color: ({r}, {g}, {b})")
+    
     
     def set_color(self, r: int, g: int, b: int):
         """Set color from RGB values"""

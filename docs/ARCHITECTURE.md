@@ -1,11 +1,14 @@
 # Pixel Perfect - Architecture Documentation
 
 ## System Overview
-Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, and export capabilities.
+Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, custom colors, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
 **Version**: 1.12
 **Status**: All Features Complete - Production Ready with Full System Integration
+
+### Latest Update (v1.12)
+- **Custom Colors System**: User-specific persistent color library with local storage
 
 ## Core Components
 
@@ -13,7 +16,7 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
 - **Purpose**: Main drawing surface with pixel-perfect grid rendering
 - **Key Features**:
   - Zoom levels (1x to 32x) with visible grid overlay
-  - Preset canvas sizes (16x16, 32x32, 16x32, 32x64)
+  - Preset canvas sizes (16x16, 32x32, 16x32, 32x64, 64x64)
   - Grid overlay with toggle and proper visibility
   - Mouse position tracking and coordinate conversion
   - Real-time pixel manipulation with numpy arrays
@@ -27,6 +30,17 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - Primary/secondary color selection with UI integration
   - Palette persistence (JSON format)
   - 8-16 color limitation for authentic retro feel
+
+### Custom Colors Manager (`src/core/custom_colors.py`)
+- **Purpose**: User-specific persistent color library with local storage
+- **Key Features**:
+  - User-specific storage path (Windows: `AppData\Local\PixelPerfect`, Mac/Linux: `~/.pixelperfect`)
+  - Persistent across all sessions and projects
+  - Maximum 32 colors per user
+  - Duplicate prevention and limit protection
+  - JSON storage format (`custom_colors.json`)
+  - Not bundled with executable (empty for fresh installs)
+  - OS-independent path resolution
 
 ### Layer Manager (`src/core/layer_manager.py`)
 - **Purpose**: Handles multiple drawing layers with full UI integration and immediate visual updates
