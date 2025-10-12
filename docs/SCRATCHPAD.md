@@ -31,7 +31,13 @@
    - Uses sys.frozen detection to locate icon in correct path
 
 ### Bug Fixes:
-1. **Missing Palette Files** - Created 4 missing palette JSON files
+1. **Project Import Not Working** - Fixed critical bug in project loading
+   - `_open_project()` was only passing filename to `load_project()`
+   - Now passes all required parameters: canvas, palette, layer_manager, timeline
+   - Added UI refresh after loading (canvas redraw, layer panel, timeline, palette display)
+   - Added better error handling with traceback output
+   - Documented .pixpf format comprehensively
+2. **Missing Palette Files** - Created 4 missing palette JSON files
    - heartwood_online.json (forest theme)
    - definya.json (bright, vibrant colors)
    - kakele_online.json (warm, golden palette)

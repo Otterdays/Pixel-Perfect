@@ -103,7 +103,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **PNG Export**: Single frames with transparency (1x-8x scaling)
 - **GIF Export**: Animated sprite export with frame timing
 - **Sprite Sheets**: Horizontal, vertical, grid layouts with JSON metadata
-- **Project Files**: Custom .pixpf format with full project data
+- **Project Files**: Custom .pixpf format with full project data ([format documentation](docs/features/PIXPF_FORMAT.md))
 - **Auto-Save**: Automatic save functionality
 - **Recent Files**: Track and access recent projects
 

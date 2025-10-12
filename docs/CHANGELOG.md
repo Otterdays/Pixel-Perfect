@@ -29,6 +29,10 @@
    - 8px raised sash handles for easy resizing
 
 ### Bug Fixes
+- **Project Import Not Working**: Fixed `load_project()` call missing required parameters
+  - Now passes canvas, palette, layer_manager, and timeline objects
+  - Added UI updates after loading (canvas, layers, timeline, palette)
+  - Added better error handling and feedback
 - **Missing Palette Files**: Created 4 missing palette JSON files
   - heartwood_online.json (forest theme)
   - definya.json (bright, vibrant colors)

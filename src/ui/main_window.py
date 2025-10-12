@@ -1242,7 +1242,6 @@ class MainWindow:
         """Create a new project"""
         # Clear canvas
         self.canvas.clear()
-        self._force_tkinter_canvas_update()
         
         # Reset layers
         self.layer_manager.clear_layers()
@@ -1252,7 +1251,12 @@ class MainWindow:
         self.timeline.clear_frames()
         self.timeline.add_frame()
         
-        print("New project created")
+        # Force canvas redraw with grid and update UI
+        self._force_tkinter_canvas_update()
+        self.layer_panel.update_layer_list()
+        self.timeline_panel.update_timeline()
+        
+        print("✓ New project created")
     
     def _open_project(self):
         """Open an existing project"""
@@ -1264,14 +1268,28 @@ class MainWindow:
             )
             
             if file_path:
-                self.project.load_project(file_path)
-                # Update canvas with loaded data
-                if hasattr(self.project, 'canvas_data'):
-                    self.canvas.pixels = self.project.canvas_data
+                # Load project with all required parameters
+                success = self.project.load_project(
+                    file_path,
+                    self.canvas,
+                    self.palette,
+                    self.layer_manager,
+                    self.timeline
+                )
+                
+                if success:
+                    # Update UI components to reflect loaded project
                     self._force_tkinter_canvas_update()
-                print(f"Project opened: {file_path}")
+                    self.layer_panel.update_layer_list()
+                    self.timeline_panel.update_timeline()
+                    self._update_palette_display()
+                    print(f"✓ Project opened: {file_path}")
+                else:
+                    print(f"✗ Failed to open project: {file_path}")
         except Exception as e:
-            print(f"Error opening project: {e}")
+            print(f"✗ Error opening project: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _save_project(self):
         """Save current project"""
@@ -1454,6 +1472,8 @@ class MainWindow:
 
     def _force_tkinter_canvas_update(self):
         """Force immediate tkinter canvas display update"""
+        # Redraw the canvas surface (pixels + grid)
+        self.canvas._redraw_surface()
         # Update the tkinter canvas to show current grid state
         self._update_pixel_display()
 
