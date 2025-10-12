@@ -1,8 +1,8 @@
 # Pixel Perfect - Development Scratchpad
 
 ## Version 1.13 - Documentation Organization & Updates
-**Date**: October 11, 2025
-**Status**: Documentation Overhaul Complete + UI Improvements + Missing Palettes Fixed + App Icon Added
+**Date**: October 11-12, 2025
+**Status**: Documentation Overhaul Complete + UI Improvements + 7 Palettes + OSRS Theme
 
 ### UI Improvements:
 1. **Compact Tools Panel** - Reorganized tool buttons from vertical stack to 3×3 grid layout
@@ -22,14 +22,59 @@
    - Tool buttons now expand with panel width
 
 ### New Features:
-1. **Application Icon** - Added colorful pixel art monitor logo
-   - Converted PNG to ICO format for Windows compatibility
+1. **Application Icon** - Added colorful pixel art monitor logo (4×4 grid design)
+   - Converted PNG to ICO format for Windows compatibility (7 sizes: 16-256px)
    - Shows in window title bar and Windows taskbar
    - Embedded in executable via PyInstaller
    - Windows-specific taskbar icon handling with App User Model ID
+   - Fixed runtime icon loading to work with PyInstaller bundled executable
+   - Uses sys.frozen detection to locate icon in correct path
+2. **Old School RuneScape Palette** - New medieval fantasy color palette
+   - 16 colors based on OSRS visual aesthetic research
+   - Classic earthy tones, stone grays, gold, and interface colors
+   - Perfect for medieval fantasy and OSRS-style sprites
+3. **Centered Palette UI** - View mode buttons and color grid now centered
+   - Grid/Primary/Wheel buttons centered under dropdown
+   - Color display grid centered in container
+   - Matches Tools section aesthetic
+4. **Custom Colors Expansion** - Custom colors now fill entire container
+   - Grid columns configured to expand equally (4 columns)
+   - Buttons use sticky positioning to fill cells
+   - Increased button size from 40x40 to 50x50
+   - No more wasted space on right side
+5. **Custom .pixpf File Icon** - Purple diamond icon for project files
+   - Auto-registers on first launch (no admin needed)
+   - Uses Windows registry (HKEY_CURRENT_USER)
+   - Manual fallback with register_pixpf_icon.bat included
+   - All .pixpf files show custom icon in File Explorer
+6. **PNG Import Feature** - Load PNGs directly into canvas
+   - Import any 16x16, 32x32, or 64x64 PNG (or scaled versions)
+   - **Auto-downscaling**: Detects 8x/4x/2x scaled exports and downscales automatically
+   - Examples: 256x256→32x32, 128x128→16x16, 512x512→64x64
+   - **Direct loading**: No intermediate .pixpf file - loads straight to canvas
+   - Auto-resizes canvas to match PNG
+   - Creates "Imported" layer with pixel data
+   - Preserves exact pixel data (RGBA) using nearest-neighbor
+   - Save manually when ready
 
 ### Bug Fixes:
-1. **Missing Palette Files** - Created 4 missing palette JSON files
+1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)
+   - `_open_project()` was only passing filename to `load_project()`
+   - Now passes all required parameters: canvas, palette, layer_manager, timeline
+   - **Key fix:** Calls `_update_canvas_from_layers()` after loading to composite layers
+   - Layers were loading but pixels weren't being displayed on canvas
+   - Added UI refresh after loading (layer panel, timeline)
+   - Fixed method names: `refresh()` instead of `update_layer_list()` and `update_timeline()`
+   - Removed non-existent `_update_palette_display()` call
+   - Added `root.update()` calls for immediate display refresh
+   - Added better error handling with traceback output
+   - Documented .pixpf format comprehensively
+2. **Grid Not Displaying** - Fixed grid not showing when loading projects or creating new projects
+   - `_force_tkinter_canvas_update()` now calls `canvas._redraw_surface()` before display update
+   - Grid now properly redraws when loading saved projects
+   - Grid now properly displays when creating new projects
+   - Added forced tkinter event processing with `update_idletasks()` and `update()`
+3. **Missing Palette Files** - Created 4 missing palette JSON files
    - heartwood_online.json (forest theme)
    - definya.json (bright, vibrant colors)
    - kakele_online.json (warm, golden palette)

@@ -1212,6 +1212,9 @@ class MainWindow:
         open_btn = ctk.CTkButton(file_menu, text="Open Project", command=lambda: [self._open_project(), file_menu.destroy()])
         open_btn.pack(pady=5, padx=10, fill="x")
         
+        import_png_btn = ctk.CTkButton(file_menu, text="Import PNG", command=lambda: [self._import_png(), file_menu.destroy()])
+        import_png_btn.pack(pady=5, padx=10, fill="x")
+        
         save_btn = ctk.CTkButton(file_menu, text="Save Project", command=lambda: [self._save_project(), file_menu.destroy()])
         save_btn.pack(pady=5, padx=10, fill="x")
         
@@ -1341,6 +1344,118 @@ class MainWindow:
                 print(f"Project saved as: {file_path}")
         except Exception as e:
             print(f"Error saving project: {e}")
+    
+    def _import_png(self):
+        """Import PNG directly into current canvas"""
+        try:
+            from tkinter import filedialog, messagebox
+            from PIL import Image
+            import numpy as np
+            
+            # Open file dialog for PNG selection
+            png_path = filedialog.askopenfilename(
+                title="Import PNG Image",
+                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
+            )
+            
+            if not png_path:
+                return  # User cancelled
+            
+            # Load and validate PNG
+            from src.utils.import_png import PNGImporter
+            importer = PNGImporter()
+            is_valid, message, width, height = importer.validate_png_dimensions(png_path)
+            
+            if not is_valid:
+                messagebox.showerror(
+                    "Invalid PNG Dimensions",
+                    f"{message}\n\n"
+                    f"Valid sizes: 16x16, 32x32, or 64x64\n"
+                    f"(or scaled versions: 128x128, 256x256, 512x512)"
+                )
+                return
+            
+            # Load the PNG
+            image = Image.open(png_path)
+            original_width, original_height = image.size
+            
+            # Check if we need to downscale
+            needs_downscale = False
+            scale_factor = 1
+            
+            if original_width != width or original_height != height:
+                # Calculate scale factor
+                scale_factor = original_width // width
+                needs_downscale = True
+                
+                # Downscale using nearest neighbor
+                rgba_image = image.convert('RGBA')
+                rgba_image = rgba_image.resize((width, height), Image.NEAREST)
+                print(f"Auto-downscaled from {original_width}x{original_height} to {width}x{height} ({scale_factor}x)")
+            else:
+                rgba_image = image.convert('RGBA')
+            
+            # Convert to numpy array
+            pixels = np.array(rgba_image, dtype=np.uint8)
+            
+            # Update dimensions FIRST (before clearing layers)
+            self.canvas.width = width
+            self.canvas.height = height
+            self.layer_manager.width = width
+            self.layer_manager.height = height
+            
+            # Initialize canvas pixels array with correct dimensions
+            self.canvas.pixels = np.zeros((height, width, 4), dtype=np.uint8)
+            
+            # Now clear layers (this will create layers with the NEW dimensions)
+            self.layer_manager.clear_layers()
+            
+            # Set the imported pixels and layer name
+            self.layer_manager.layers[0].name = "Imported"
+            self.layer_manager.layers[0].pixels = pixels
+            
+            # Update canvas from layers (copies layer data to canvas.pixels)
+            self._update_canvas_from_layers()
+            
+            # NOW create the pygame surface with the correct pixel data
+            self.canvas._create_surface()
+            
+            # Clear animation frames
+            self.timeline.frames.clear()
+            self.timeline.current_frame = 0
+            
+            # Update UI
+            self.layer_panel.refresh()
+            self.timeline_panel.refresh()
+            self.root.update_idletasks()
+            self.root.update()
+            
+            # Clear project path (this is now a new unsaved project)
+            self.project.current_project_path = None
+            
+            # Show success message
+            if needs_downscale:
+                messagebox.showinfo(
+                    "Import Successful",
+                    f"Imported {original_width}x{original_height} PNG\n"
+                    f"(Auto-downscaled {scale_factor}x to {width}x{height})\n\n"
+                    f"Ready to edit! Use File → Save Project when ready."
+                )
+            else:
+                messagebox.showinfo(
+                    "Import Successful",
+                    f"Imported {width}x{height} PNG\n\n"
+                    f"Ready to edit! Use File → Save Project when ready."
+                )
+            
+            print(f"✓ Imported PNG to canvas: {os.path.basename(png_path)}")
+                
+        except Exception as e:
+            from tkinter import messagebox
+            messagebox.showerror("Import Error", f"An error occurred:\n{e}")
+            print(f"Error importing PNG: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _export_png(self):
         """Export canvas as PNG"""

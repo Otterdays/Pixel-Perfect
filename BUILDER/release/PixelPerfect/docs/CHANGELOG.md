@@ -1,8 +1,63 @@
 # Pixel Perfect - Changelog
 
+## Version 1.14 - PNG Import with Auto-Downscaling (October 12, 2025) ✅
+
+### New Features
+- **PNG Import System**: Load PNGs directly into canvas for immediate editing
+  - **Direct Canvas Loading**: No intermediate .pixpf file required
+  - **Auto-downscaling**: Detects and handles scaled exports (128x128, 256x256, 512x512)
+  - Validates PNG dimensions (16x16, 32x32, 64x64 or scaled versions)
+  - Loads exact pixel data as RGBA into "Imported" layer
+  - Auto-resizes canvas to match PNG dimensions
+  - Clears existing project for fresh start
+  - Save manually when ready (File → Save Project)
+  - Error handling with clear user feedback
+  - Created `src/utils/import_png.py` module with validation logic
+
+### UI Updates
+- Added "Import PNG" button to File menu (below "Open Project")
+- File dialog filters for .png files only
+- Dimension validation with scale detection
+- Success message shows original size and downscale info
+- Immediate canvas update - ready to edit right away
+
+### Auto-Downscaling Feature
+- **Detects scaled exports**: 8x, 4x, 2x, 1x scales
+- **Examples**:
+  - 256x256 PNG → Auto-downscales 8x to 32x32 canvas
+  - 128x128 PNG → Auto-downscales 8x to 16x16 canvas
+  - 512x512 PNG → Auto-downscales 8x to 64x64 canvas
+- Uses nearest-neighbor scaling to preserve pixel-perfect art
+- Console feedback shows detected scale and downscale action
+
+### Use Cases
+- **Re-edit exported PNG sprites** (most common workflow - export, edit externally, re-import)
+- Import pixel art from other tools (Aseprite, Photoshop, etc.)
+- Convert existing 16x16/32x32/64x64 PNGs to editable projects
+- Quick project creation from screenshots or images
+
+### Technical Details
+- Uses PIL/Pillow for PNG loading and scaling
+- Converts to RGBA numpy array
+- Generates valid .pixpf JSON structure
+- Includes metadata: import date, source filename, original size
+- Default zoom based on canvas size (16x for 16/32, 8x for 64)
+- Scale detection algorithm checks all common export scales
+
+### Files Modified
+- **NEW**: `src/utils/import_png.py` - PNG import utility with auto-downscaling (228 lines)
+- `src/ui/main_window.py` - Added `_import_png()` method and menu item (85 lines)
+
+---
+
 ## Version 1.13 - UI Improvements & Complete Palette System (October 11, 2025) ✅
 
 ### New Features
+- **Custom Application Icon**: Colorful 4×4 pixel grid logo
+  - Displays in EXE file icon, window title bar, and Windows taskbar
+  - Proper Windows ICO format with 7 icon sizes (16×16 to 256×256)
+  - Fixed runtime icon loading for PyInstaller bundled executables
+  - Uses `sys.frozen` detection to locate assets correctly when bundled
 - **Resizable Side Panels**: Drag dividers to resize left/right panels horizontally
 - **All 6 Palettes Available**: Added 4 missing palette JSON files to distribution
 
@@ -24,6 +79,13 @@
    - 8px raised sash handles for easy resizing
 
 ### Bug Fixes
+- **Project Import Not Working**: Fixed `load_project()` call missing required parameters
+  - Now passes canvas, palette, layer_manager, and timeline objects
+  - Calls `_update_canvas_from_layers()` to composite loaded layers to canvas
+  - Added immediate UI refresh with `root.update()` calls
+  - Pixels now display immediately when loading projects
+  - Fixed method names: `refresh()` for layer and timeline panels
+  - Added better error handling with traceback output
 - **Missing Palette Files**: Created 4 missing palette JSON files
   - heartwood_online.json (forest theme)
   - definya.json (bright, vibrant colors)
@@ -31,11 +93,38 @@
   - rucoy_online.json (grayscale with earth tones)
 - **Tool Button Text**: Changed "Rect" to "Rectangle" for clarity
 
+### UI Polish & Layout
+- **Centered Palette Layout**: View mode buttons and color grid now centered
+  - Grid/Primary/Wheel buttons centered under Palette dropdown  
+  - Color display grid centered in its container
+  - Matches the centered design of Tools section
+- **Custom Colors Expansion**: Color buttons expand to fill container width
+  - Grid columns configured with equal weights (4 columns)
+  - Buttons use `sticky="nsew"` to fill their grid cells
+  - Increased button size from 40x40 to 50x50 pixels
+  - Eliminates wasted space on the right side
+
+### Custom File Icon System
+- **Auto-Register .pixpf Icon**: Purple diamond icon for project files
+  - Automatically registers on first program launch
+  - Uses Windows registry (HKEY_CURRENT_USER) - no admin needed
+  - Created `src/utils/file_association.py` module
+  - Checks if already registered to avoid duplicate work
+  - Manual fallback: `register_pixpf_icon.bat` included in distribution
+  - All `.pixpf` files display custom icon in File Explorer
+  - Converted save.png to pixpf_icon.ico (256x256 max size)
+
 ### Files Modified
-- `src/ui/main_window.py` - Resizable panels, compact tool grid
-- `assets/palettes/` - Added 4 missing palette JSON files
-- `src/core/color_palette.py` - Verified KAKELE enum type
-- `BUILDER/build.bat` - Updated with custom_colors module
+- `src/ui/main_window.py` - Resizable panels, compact tool grid, centered palette
+- `src/ui/color_wheel.py` - Expanding custom colors grid
+- `src/core/color_palette.py` - OSRS palette + enum
+- `assets/palettes/` - Added OSRS + 4 missing palettes
+- `BUILDER/build.bat` - Updated with all new modules and icons
+- `main.py` - Added file association registration on startup
+- **NEW**: `src/utils/file_association.py` - Icon registration utility
+- **NEW**: `assets/icons/pixpf_icon.ico` - Custom file type icon
+- **NEW**: `register_pixpf_icon.bat` - Manual registration script
+- **NEW**: `docs/ADDING_PALETTES.md` - Palette creation guide
 
 ---
 

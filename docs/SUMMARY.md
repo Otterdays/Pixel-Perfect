@@ -1,10 +1,19 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.13  
-**Last Updated**: October 12, 2025 - Complete UI Polish + Custom File Icons
+**Version**: 1.14  
+**Last Updated**: October 12, 2025 - PNG Import Feature
 
-## Latest Updates (v1.13)
+## Latest Updates (v1.14)
+
+- **PNG Import**: Load PNGs directly into canvas for immediate editing
+- **Auto-downscaling**: Handles 128x128, 256x256, 512x512 scaled exports (8x/4x/2x)
+- Validates dimensions automatically (16x16, 32x32, 64x64)
+- Preserves exact pixel data using nearest-neighbor downscaling
+- Direct canvas loading - no intermediate files
+- Fixed canvas dimension synchronization bugs
+
+## Recent Updates (v1.13)
 
 - **7 Color Palettes**: SNES, Curse of Aros, Heartwood, Definya, Kakele, Rucoy, **Old School RuneScape**
 - **Custom File Icon**: Purple diamond icon auto-registers for `.pixpf` files

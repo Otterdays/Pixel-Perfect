@@ -1,5 +1,63 @@
 # Pixel Perfect - Changelog
 
+## Version 1.14 - PNG Import with Auto-Downscaling (October 12, 2025) ✅
+
+### New Features
+- **PNG Import System**: Load PNGs directly into canvas for immediate editing
+  - **Direct Canvas Loading**: No intermediate .pixpf file required
+  - **Auto-downscaling**: Detects and handles scaled exports (128x128, 256x256, 512x512)
+  - Validates PNG dimensions (16x16, 32x32, 64x64 or scaled versions)
+  - Loads exact pixel data as RGBA into "Imported" layer
+  - Auto-resizes canvas to match PNG dimensions
+  - Clears existing project for fresh start
+  - Save manually when ready (File → Save Project)
+  - Error handling with clear user feedback
+  - Created `src/utils/import_png.py` module with validation logic
+
+### UI Updates
+- Added "Import PNG" button to File menu (below "Open Project")
+- File dialog filters for .png files only
+- Dimension validation with scale detection
+- Success message shows original size and downscale info
+- Immediate canvas update - ready to edit right away
+
+### Auto-Downscaling Feature
+- **Detects scaled exports**: 8x, 4x, 2x, 1x scales
+- **Examples**:
+  - 256x256 PNG → Auto-downscales 8x to 32x32 canvas
+  - 128x128 PNG → Auto-downscales 8x to 16x16 canvas
+  - 512x512 PNG → Auto-downscales 8x to 64x64 canvas
+- Uses nearest-neighbor scaling to preserve pixel-perfect art
+- Console feedback shows detected scale and downscale action
+
+### Use Cases
+- **Re-edit exported PNG sprites** (most common workflow - export, edit externally, re-import)
+- Import pixel art from other tools (Aseprite, Photoshop, etc.)
+- Convert existing 16x16/32x32/64x64 PNGs to editable projects
+- Quick project creation from screenshots or images
+
+### Technical Details
+- Uses PIL/Pillow for PNG loading and scaling
+- Converts to RGBA numpy array
+- Generates valid .pixpf JSON structure
+- Includes metadata: import date, source filename, original size
+- Default zoom based on canvas size (16x for 16/32, 8x for 64)
+- Scale detection algorithm checks all common export scales
+
+### Bug Fixes
+- **Canvas Dimension Sync**: Fixed index out of bounds errors during import
+  - Properly initialize canvas.pixels array before layer operations
+  - Update dimensions before clearing layers
+  - Copy layer data to canvas before creating pygame surface
+  - Correct order: dimensions → canvas.pixels → layers → update → surface
+
+### Files Modified
+- **NEW**: `src/utils/import_png.py` - PNG import utility with auto-downscaling (228 lines)
+- `src/ui/main_window.py` - Added `_import_png()` method with proper dimension handling (105 lines)
+- Menu integration and canvas synchronization logic
+
+---
+
 ## Version 1.13 - UI Improvements & Complete Palette System (October 11, 2025) ✅
 
 ### New Features

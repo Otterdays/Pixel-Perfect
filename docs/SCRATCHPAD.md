@@ -47,8 +47,24 @@
    - Uses Windows registry (HKEY_CURRENT_USER)
    - Manual fallback with register_pixpf_icon.bat included
    - All .pixpf files show custom icon in File Explorer
+6. **PNG Import Feature** - Load PNGs directly into canvas
+   - Import any 16x16, 32x32, or 64x64 PNG (or scaled versions)
+   - **Auto-downscaling**: Detects 8x/4x/2x scaled exports and downscales automatically
+   - Examples: 256x256→32x32, 128x128→16x16, 512x512→64x64
+   - **Direct loading**: No intermediate .pixpf file - loads straight to canvas
+   - Auto-resizes canvas to match PNG
+   - Creates "Imported" layer with pixel data
+   - Preserves exact pixel data (RGBA) using nearest-neighbor
+   - Save manually when ready
 
-### Bug Fixes:
+### Bug Fixes (v1.14):
+1. **PNG Import Canvas Sync** - Fixed dimension mismatch during PNG import
+   - Initialize canvas.pixels array with correct dimensions before operations
+   - Update canvas/layer dimensions before clearing layers
+   - Proper operation order prevents index out of bounds errors
+   - Successfully tested with 256x256 PNG downscaling to 64x64 canvas
+
+### Bug Fixes (v1.13):
 1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)
    - `_open_project()` was only passing filename to `load_project()`
    - Now passes all required parameters: canvas, palette, layer_manager, timeline
