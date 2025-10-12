@@ -1282,7 +1282,6 @@ class MainWindow:
                     self._force_tkinter_canvas_update()
                     self.layer_panel.refresh()
                     self.timeline_panel.refresh()
-                    self._update_palette_display()
                     print(f"✓ Project opened: {file_path}")
                 else:
                     print(f"✗ Failed to open project: {file_path}")
