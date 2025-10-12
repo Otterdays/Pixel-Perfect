@@ -31,8 +31,11 @@
 ### Bug Fixes
 - **Project Import Not Working**: Fixed `load_project()` call missing required parameters
   - Now passes canvas, palette, layer_manager, and timeline objects
-  - Added UI updates after loading (canvas, layers, timeline, palette)
-  - Added better error handling and feedback
+  - Calls `_update_canvas_from_layers()` to composite loaded layers to canvas
+  - Added immediate UI refresh with `root.update()` calls
+  - Pixels now display immediately when loading projects
+  - Fixed method names: `refresh()` for layer and timeline panels
+  - Added better error handling with traceback output
 - **Missing Palette Files**: Created 4 missing palette JSON files
   - heartwood_online.json (forest theme)
   - definya.json (bright, vibrant colors)

@@ -1278,10 +1278,17 @@ class MainWindow:
                 )
                 
                 if success:
+                    # Update canvas from loaded layers (this composites all layers)
+                    self._update_canvas_from_layers()
+                    
                     # Update UI components to reflect loaded project
-                    self._force_tkinter_canvas_update()
                     self.layer_panel.refresh()
                     self.timeline_panel.refresh()
+                    
+                    # Force immediate display update
+                    self.root.update_idletasks()
+                    self.root.update()
+                    
                     print(f"✓ Project opened: {file_path}")
                 else:
                     print(f"✗ Failed to open project: {file_path}")

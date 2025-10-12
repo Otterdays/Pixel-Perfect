@@ -34,15 +34,19 @@
 1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)
    - `_open_project()` was only passing filename to `load_project()`
    - Now passes all required parameters: canvas, palette, layer_manager, timeline
-   - Added UI refresh after loading (canvas redraw, layer panel, timeline)
+   - **Key fix:** Calls `_update_canvas_from_layers()` after loading to composite layers
+   - Layers were loading but pixels weren't being displayed on canvas
+   - Added UI refresh after loading (layer panel, timeline)
    - Fixed method names: `refresh()` instead of `update_layer_list()` and `update_timeline()`
    - Removed non-existent `_update_palette_display()` call
+   - Added `root.update()` calls for immediate display refresh
    - Added better error handling with traceback output
    - Documented .pixpf format comprehensively
 2. **Grid Not Displaying** - Fixed grid not showing when loading projects or creating new projects
    - `_force_tkinter_canvas_update()` now calls `canvas._redraw_surface()` before display update
    - Grid now properly redraws when loading saved projects
    - Grid now properly displays when creating new projects
+   - Added forced tkinter event processing with `update_idletasks()` and `update()`
 3. **Missing Palette Files** - Created 4 missing palette JSON files
    - heartwood_online.json (forest theme)
    - definya.json (bright, vibrant colors)
