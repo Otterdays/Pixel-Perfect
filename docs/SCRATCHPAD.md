@@ -42,6 +42,11 @@
    - Buttons use sticky positioning to fill cells
    - Increased button size from 40x40 to 50x50
    - No more wasted space on right side
+5. **Custom .pixpf File Icon** - Purple diamond icon for project files
+   - Auto-registers on first launch (no admin needed)
+   - Uses Windows registry (HKEY_CURRENT_USER)
+   - Manual fallback with register_pixpf_icon.bat included
+   - All .pixpf files show custom icon in File Explorer
 
 ### Bug Fixes:
 1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)

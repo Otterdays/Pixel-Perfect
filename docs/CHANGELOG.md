@@ -54,11 +54,27 @@
   - Increased button size from 40x40 to 50x50 pixels
   - Eliminates wasted space on the right side
 
+### Custom File Icon System
+- **Auto-Register .pixpf Icon**: Purple diamond icon for project files
+  - Automatically registers on first program launch
+  - Uses Windows registry (HKEY_CURRENT_USER) - no admin needed
+  - Created `src/utils/file_association.py` module
+  - Checks if already registered to avoid duplicate work
+  - Manual fallback: `register_pixpf_icon.bat` included in distribution
+  - All `.pixpf` files display custom icon in File Explorer
+  - Converted save.png to pixpf_icon.ico (256x256 max size)
+
 ### Files Modified
-- `src/ui/main_window.py` - Resizable panels, compact tool grid
-- `assets/palettes/` - Added 4 missing palette JSON files
-- `src/core/color_palette.py` - Verified KAKELE enum type
-- `BUILDER/build.bat` - Updated with custom_colors module
+- `src/ui/main_window.py` - Resizable panels, compact tool grid, centered palette
+- `src/ui/color_wheel.py` - Expanding custom colors grid
+- `src/core/color_palette.py` - OSRS palette + enum
+- `assets/palettes/` - Added OSRS + 4 missing palettes
+- `BUILDER/build.bat` - Updated with all new modules and icons
+- `main.py` - Added file association registration on startup
+- **NEW**: `src/utils/file_association.py` - Icon registration utility
+- **NEW**: `assets/icons/pixpf_icon.ico` - Custom file type icon
+- **NEW**: `register_pixpf_icon.bat` - Manual registration script
+- **NEW**: `docs/ADDING_PALETTES.md` - Palette creation guide
 
 ---
 
