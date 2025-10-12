@@ -122,6 +122,11 @@ dmypy.json
 BUILDER/build/
 BUILDER/*.spec
 
+# Executables - exclude from git (too large)
+*.exe
+BUILDER/release/**/*.exe
+BUILDER/dist/**/*.exe
+
 # IDE
 .vscode/
 .idea/

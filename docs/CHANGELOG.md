@@ -43,6 +43,17 @@
   - rucoy_online.json (grayscale with earth tones)
 - **Tool Button Text**: Changed "Rect" to "Rectangle" for clarity
 
+### UI Polish & Layout
+- **Centered Palette Layout**: View mode buttons and color grid now centered
+  - Grid/Primary/Wheel buttons centered under Palette dropdown  
+  - Color display grid centered in its container
+  - Matches the centered design of Tools section
+- **Custom Colors Expansion**: Color buttons expand to fill container width
+  - Grid columns configured with equal weights (4 columns)
+  - Buttons use `sticky="nsew"` to fill their grid cells
+  - Increased button size from 40x40 to 50x50 pixels
+  - Eliminates wasted space on the right side
+
 ### Files Modified
 - `src/ui/main_window.py` - Resizable panels, compact tool grid
 - `assets/palettes/` - Added 4 missing palette JSON files

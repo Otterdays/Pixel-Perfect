@@ -16,6 +16,7 @@ class PaletteType(Enum):
     DEFINYA = "definya"
     KAKELE = "kakele"
     RUCOY = "rucoy"
+    OLD_SCHOOL_RUNESCAPE = "old_school_runescape"
     CUSTOM = "custom"
 
 class ColorPalette:
@@ -169,6 +170,25 @@ class ColorPalette:
                 (0, 128, 0, 255),     # Green
                 (0, 192, 0, 255),     # Light Green
                 (0, 0, 64, 255),      # Dark Blue
+            ],
+            
+            "Old School RuneScape": [
+                (0, 0, 0, 255),        # Black
+                (255, 255, 255, 255),  # White
+                (139, 69, 19, 255),    # Saddle Brown
+                (36, 97, 49, 255),     # Dark Green
+                (125, 102, 48, 255),   # Earthy Brown
+                (255, 215, 0, 255),    # Gold
+                (128, 0, 0, 255),      # Maroon
+                (1, 111, 189, 255),    # Deep Blue
+                (246, 103, 57, 255),   # Vibrant Orange
+                (225, 158, 37, 255),   # Goldenrod
+                (112, 128, 144, 255),  # Slate Gray
+                (101, 67, 33, 255),    # Dark Brown
+                (192, 192, 192, 255),  # Silver
+                (76, 105, 38, 255),    # Grass Green
+                (70, 70, 70, 255),     # Dark Gray
+                (160, 82, 45, 255),    # Sienna
             ]
         }
     
@@ -192,6 +212,8 @@ class ColorPalette:
                 self.palette_type = PaletteType.KAKELE
             elif palette_name == "Rucoy Online":
                 self.palette_type = PaletteType.RUCOY
+            elif palette_name == "Old School RuneScape":
+                self.palette_type = PaletteType.OLD_SCHOOL_RUNESCAPE
             
             # Ensure we have valid primary/secondary colors
             if self.primary_color >= len(self.colors):

@@ -497,7 +497,11 @@ class ColorWheel:
         if self.selected_custom_color and self.selected_custom_color not in colors:
             self.selected_custom_color = None
         
-        # Create grid of color buttons (4 columns)
+        # Configure grid columns to expand equally (4 columns)
+        for col_idx in range(4):
+            self.custom_colors_container.grid_columnconfigure(col_idx, weight=1, uniform="custom_color")
+        
+        # Create grid of color buttons (4 columns) that expand to fill space
         for i, color in enumerate(colors):
             r, g, b, a = color
             row = i // 4
@@ -513,14 +517,15 @@ class ColorWheel:
             btn = ctk.CTkButton(
                 self.custom_colors_container,
                 text="",
-                width=40,
-                height=40,
+                width=50,
+                height=50,
                 fg_color=hex_color,
                 hover_color=f"#{min(255, r+30):02x}{min(255, g+30):02x}{min(255, b+30):02x}",
                 border_width=border_width,
                 border_color=border_color
             )
-            btn.grid(row=row, column=col, padx=3, pady=3)
+            # Make buttons sticky to fill their grid cells
+            btn.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
             
             # Bind click to select this color
             btn.bind("<Button-1>", lambda e, c=color, b=btn: self._select_custom_color(c, b))

@@ -354,13 +354,16 @@ class MainWindow:
         )
         self.palette_menu.pack(pady=3)
         
-        # View mode selector
-        view_mode_frame = ctk.CTkFrame(self.palette_frame)
-        view_mode_frame.pack(fill="x", padx=10, pady=3)
+        # View mode selector - centered container
+        view_mode_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
+        view_mode_container.pack(pady=3)
+        
+        view_mode_frame = ctk.CTkFrame(view_mode_container)
+        view_mode_frame.pack()
         
         self.view_mode_var = ctk.StringVar(value="grid")
         
-        # Create a grid layout for radio buttons to ensure they all fit
+        # Create a grid layout for radio buttons - centered
         self.grid_view_btn = ctk.CTkRadioButton(
             view_mode_frame,
             text="Grid",
@@ -368,7 +371,7 @@ class MainWindow:
             value="grid",
             command=self._on_view_mode_change
         )
-        self.grid_view_btn.grid(row=0, column=0, padx=2, pady=2, sticky="w")
+        self.grid_view_btn.grid(row=0, column=0, padx=5, pady=2)
         
         self.primary_view_btn = ctk.CTkRadioButton(
             view_mode_frame,
@@ -377,7 +380,7 @@ class MainWindow:
             value="primary",
             command=self._on_view_mode_change
         )
-        self.primary_view_btn.grid(row=0, column=1, padx=2, pady=2, sticky="w")
+        self.primary_view_btn.grid(row=0, column=1, padx=5, pady=2)
         
         self.wheel_view_btn = ctk.CTkRadioButton(
             view_mode_frame,
@@ -386,11 +389,14 @@ class MainWindow:
             value="wheel",
             command=self._on_view_mode_change
         )
-        self.wheel_view_btn.grid(row=1, column=0, columnspan=2, padx=2, pady=2, sticky="w")
+        self.wheel_view_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=2)
         
-        # Color display container
-        self.color_display_frame = ctk.CTkFrame(self.palette_frame)
-        self.color_display_frame.pack(fill="both", expand=True, pady=10)
+        # Color display container - centered
+        color_display_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
+        color_display_container.pack(fill="both", expand=True, pady=5)
+        
+        self.color_display_frame = ctk.CTkFrame(color_display_container)
+        self.color_display_frame.pack(expand=True)
         
         # Initialize with grid view
         self._create_color_grid()
@@ -406,9 +412,9 @@ class MainWindow:
         for widget in self.color_display_frame.winfo_children():
             widget.destroy()
         
-        # Create grid frame
+        # Create grid frame - centered
         self.color_frame = ctk.CTkFrame(self.color_display_frame)
-        self.color_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.color_frame.pack(padx=10, pady=10)
         
         # Store color button references for easy updating
         if not hasattr(self, 'color_buttons'):

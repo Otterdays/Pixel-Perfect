@@ -1,8 +1,8 @@
 # Pixel Perfect - Development Scratchpad
 
 ## Version 1.13 - Documentation Organization & Updates
-**Date**: October 11, 2025
-**Status**: Documentation Overhaul Complete + UI Improvements + Missing Palettes Fixed + App Icon Fully Working
+**Date**: October 11-12, 2025
+**Status**: Documentation Overhaul Complete + UI Improvements + 7 Palettes + OSRS Theme
 
 ### UI Improvements:
 1. **Compact Tools Panel** - Reorganized tool buttons from vertical stack to 3×3 grid layout
@@ -29,6 +29,19 @@
    - Windows-specific taskbar icon handling with App User Model ID
    - Fixed runtime icon loading to work with PyInstaller bundled executable
    - Uses sys.frozen detection to locate icon in correct path
+2. **Old School RuneScape Palette** - New medieval fantasy color palette
+   - 16 colors based on OSRS visual aesthetic research
+   - Classic earthy tones, stone grays, gold, and interface colors
+   - Perfect for medieval fantasy and OSRS-style sprites
+3. **Centered Palette UI** - View mode buttons and color grid now centered
+   - Grid/Primary/Wheel buttons centered under dropdown
+   - Color display grid centered in container
+   - Matches Tools section aesthetic
+4. **Custom Colors Expansion** - Custom colors now fill entire container
+   - Grid columns configured to expand equally (4 columns)
+   - Buttons use sticky positioning to fill cells
+   - Increased button size from 40x40 to 50x50
+   - No more wasted space on right side
 
 ### Bug Fixes:
 1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)
