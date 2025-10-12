@@ -2,7 +2,16 @@
 
 ## Project Status: PRODUCTION READY ✅
 **Version**: 1.13  
-**Last Updated**: October 11, 2025 - UI Improvements & Complete Palette System
+**Last Updated**: October 12, 2025 - Complete UI Polish + Custom File Icons
+
+## Latest Updates (v1.13)
+
+- **7 Color Palettes**: SNES, Curse of Aros, Heartwood, Definya, Kakele, Rucoy, **Old School RuneScape**
+- **Custom File Icon**: Purple diamond icon auto-registers for `.pixpf` files
+- **Centered UI**: Palette controls and colors now centered
+- **Expanding Custom Colors**: Fill entire container width dynamically
+- **Resizable Panels**: Drag dividers to resize tools/layers panels
+- **Custom App Icon**: Colorful pixel grid logo in window/taskbar/EXE
 
 ## Overview
 Pixel Perfect is a **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets. Inspired by classic SNES-era games like Curse of Aros, it provides a complete, production-ready tool for sprite, tile, and animation creation with preset sizes and SNES-style color palettes.
