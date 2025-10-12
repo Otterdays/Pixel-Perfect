@@ -1475,6 +1475,9 @@ class MainWindow:
         self.canvas._redraw_surface()
         # Update the tkinter canvas to show current grid state
         self._update_pixel_display()
+        # Force tkinter to process all pending events and update display
+        self.root.update_idletasks()
+        self.root.update()
 
     def _on_layer_changed(self):
         """Handle layer changes"""
