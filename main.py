@@ -10,6 +10,14 @@ from src.ui.main_window import MainWindow
 
 def main():
     """Main application entry point"""
+    # Register .pixpf file icon on first launch (Windows only)
+    if os.name == 'nt':
+        try:
+            from src.utils.file_association import prompt_and_register
+            prompt_and_register()
+        except Exception as e:
+            print(f"Note: Could not register file icon: {e}")
+    
     try:
         app = MainWindow()
         app.run()
