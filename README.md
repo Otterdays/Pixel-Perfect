@@ -6,6 +6,16 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## 🆕 Latest Updates
 
+### Version 1.14 (October 2025)
+🔄 **PNG Import with Auto-Downscaling**
+- **Import PNG directly to canvas** - Load PNGs straight into canvas for immediate editing
+- **Auto-downscaling** - Handles 128x128, 256x256, 512x512 scaled exports automatically
+- **Smart scale detection** - Detects 8x/4x/2x export scales and downscales to canvas size
+- **Perfect for re-editing** - Export at 8x, edit externally, re-import seamlessly
+- **Dimension validation** - Ensures 16x16, 32x32, or 64x64 canvas sizes
+- **Pixel-perfect preservation** - Uses nearest-neighbor scaling to maintain pixel art quality
+- **Fixed dimension sync bugs** - Proper canvas/layer synchronization during import
+
 ### Version 1.13 (October 2025)
 🎨 **UI Improvements & Complete Palette System**
 - **Custom application icon** - Colorful 4×4 pixel grid logo in window, taskbar, and EXE
