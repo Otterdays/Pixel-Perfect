@@ -1253,8 +1253,8 @@ class MainWindow:
         
         # Force canvas redraw with grid and update UI
         self._force_tkinter_canvas_update()
-        self.layer_panel.update_layer_list()
-        self.timeline_panel.update_timeline()
+        self.layer_panel.refresh()
+        self.timeline_panel.refresh()
         
         print("✓ New project created")
     
@@ -1280,8 +1280,8 @@ class MainWindow:
                 if success:
                     # Update UI components to reflect loaded project
                     self._force_tkinter_canvas_update()
-                    self.layer_panel.update_layer_list()
-                    self.timeline_panel.update_timeline()
+                    self.layer_panel.refresh()
+                    self.timeline_panel.refresh()
                     self._update_palette_display()
                     print(f"✓ Project opened: {file_path}")
                 else:
