@@ -1,4 +1,7 @@
-# Software Bill of Materials (SBOM) - Pixel Perfect
+# Software Bill of Materials (SBOM)
+
+**Last Updated**: October 12, 2025  
+**Project Version**: 1.14 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
