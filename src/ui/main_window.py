@@ -1243,9 +1243,8 @@ class MainWindow:
         # Clear canvas
         self.canvas.clear()
         
-        # Reset layers
+        # Reset layers (clear_layers() already adds a "Background" layer)
         self.layer_manager.clear_layers()
-        self.layer_manager.add_layer("Background")
         
         # Reset timeline
         self.timeline.clear_frames()
