@@ -22,13 +22,15 @@
 - Immediate canvas update - ready to edit right away
 
 ### Auto-Downscaling Feature
-- **Detects scaled exports**: 8x, 4x, 2x, 1x scales
+- **Detects scaled exports**: Checks 8x, 4x, 2x, 1x scales (in priority order)
+- **Smart scale detection**: Prioritizes 8x (default export scale) first
 - **Examples**:
-  - 256x256 PNG → Auto-downscales 8x to 32x32 canvas
-  - 128x128 PNG → Auto-downscales 8x to 16x16 canvas
-  - 512x512 PNG → Auto-downscales 8x to 64x64 canvas
+  - 256x256 PNG → Auto-downscales 8x to 32x32 canvas ✅
+  - 128x128 PNG → Auto-downscales 8x to 16x16 canvas ✅
+  - 512x512 PNG → Auto-downscales 8x to 64x64 canvas ✅
 - Uses nearest-neighbor scaling to preserve pixel-perfect art
 - Console feedback shows detected scale and downscale action
+- Correctly restores original canvas size when re-importing
 
 ### Use Cases
 - **Re-edit exported PNG sprites** (most common workflow - export, edit externally, re-import)
@@ -50,6 +52,11 @@
   - Update dimensions before clearing layers
   - Copy layer data to canvas before creating pygame surface
   - Correct order: dimensions → canvas.pixels → layers → update → surface
+- **Scale Detection Priority**: Fixed incorrect canvas size on re-import
+  - Now checks scales in reverse order (8x, 4x, 2x, 1x)
+  - Prioritizes original export scale (8x) over smaller scales
+  - Prevents 128x128 from being detected as 64x64 at 2x instead of 16x16 at 8x
+  - Correctly restores original canvas dimensions when re-importing exported PNGs
 
 ### Files Modified
 - **NEW**: `src/utils/import_png.py` - PNG import utility with auto-downscaling (228 lines)

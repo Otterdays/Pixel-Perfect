@@ -62,7 +62,12 @@
    - Initialize canvas.pixels array with correct dimensions before operations
    - Update canvas/layer dimensions before clearing layers
    - Proper operation order prevents index out of bounds errors
-   - Successfully tested with 256x256 PNG downscaling to 64x64 canvas
+   - Successfully tested with 256x256 PNG downscaling to 32x32 canvas
+2. **Scale Detection Priority** - Fixed incorrect canvas size on re-import
+   - Changed scale checking order from [1x, 2x, 4x, 8x] to [8x, 4x, 2x, 1x]
+   - Now prioritizes 8x scale (default export) first
+   - Example: 128x128 PNG now correctly → 16x16 (not 64x64)
+   - Prevents "doubling in pixel size" effect when re-importing saved images
 
 ### Bug Fixes (v1.13):
 1. **Project Import Not Working** - Fixed critical bug in project loading (multiple iterations)

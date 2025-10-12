@@ -56,7 +56,8 @@ class PNGImporter:
             
             if width not in self.VALID_SIZES or height not in self.VALID_SIZES:
                 # Try to detect if this is a scaled export
-                for scale in self.SCALE_FACTORS:
+                # Check scales in REVERSE order (8x first) to match original export scale
+                for scale in reversed(self.SCALE_FACTORS):
                     scaled_width = width // scale
                     scaled_height = height // scale
                     
@@ -207,8 +208,8 @@ class PNGImporter:
             if width in self.VALID_SIZES and height in self.VALID_SIZES:
                 return True, f"Valid dimensions: {width}x{height}", width, height
             
-            # Check if it's a scaled export
-            for scale in self.SCALE_FACTORS:
+            # Check if it's a scaled export (check 8x first to match original export scale)
+            for scale in reversed(self.SCALE_FACTORS):
                 scaled_width = width // scale
                 scaled_height = height // scale
                 
