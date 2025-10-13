@@ -117,21 +117,42 @@ class ColorWheel:
         self.v_value_label = ctk.CTkLabel(hsv_col, text="V: 100%", font=ctk.CTkFont(size=11))
         self.v_value_label.pack(pady=1)
         
-        # RGB column
+        # RGB column with editable entries
         rgb_col = ctk.CTkFrame(values_container, fg_color="transparent")
         rgb_col.pack(side="left", padx=15)
         
         rgb_title = ctk.CTkLabel(rgb_col, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
         rgb_title.pack()
         
-        self.r_value_label = ctk.CTkLabel(rgb_col, text="R: 255", font=ctk.CTkFont(size=11))
-        self.r_value_label.pack(pady=1)
+        # R value with entry
+        r_frame = ctk.CTkFrame(rgb_col, fg_color="transparent")
+        r_frame.pack(pady=1)
+        ctk.CTkLabel(r_frame, text="R:", font=ctk.CTkFont(size=11), width=15).pack(side="left")
+        self.r_entry = ctk.CTkEntry(r_frame, width=50, height=20, font=ctk.CTkFont(size=11))
+        self.r_entry.pack(side="left", padx=2)
+        self.r_entry.insert(0, "255")
+        self.r_entry.bind("<Return>", lambda e: self._on_rgb_entry_change())
+        self.r_entry.bind("<FocusOut>", lambda e: self._on_rgb_entry_change())
         
-        self.g_value_label = ctk.CTkLabel(rgb_col, text="G: 0", font=ctk.CTkFont(size=11))
-        self.g_value_label.pack(pady=1)
+        # G value with entry
+        g_frame = ctk.CTkFrame(rgb_col, fg_color="transparent")
+        g_frame.pack(pady=1)
+        ctk.CTkLabel(g_frame, text="G:", font=ctk.CTkFont(size=11), width=15).pack(side="left")
+        self.g_entry = ctk.CTkEntry(g_frame, width=50, height=20, font=ctk.CTkFont(size=11))
+        self.g_entry.pack(side="left", padx=2)
+        self.g_entry.insert(0, "0")
+        self.g_entry.bind("<Return>", lambda e: self._on_rgb_entry_change())
+        self.g_entry.bind("<FocusOut>", lambda e: self._on_rgb_entry_change())
         
-        self.b_value_label = ctk.CTkLabel(rgb_col, text="B: 0", font=ctk.CTkFont(size=11))
-        self.b_value_label.pack(pady=1)
+        # B value with entry
+        b_frame = ctk.CTkFrame(rgb_col, fg_color="transparent")
+        b_frame.pack(pady=1)
+        ctk.CTkLabel(b_frame, text="B:", font=ctk.CTkFont(size=11), width=15).pack(side="left")
+        self.b_entry = ctk.CTkEntry(b_frame, width=50, height=20, font=ctk.CTkFont(size=11))
+        self.b_entry.pack(side="left", padx=2)
+        self.b_entry.insert(0, "0")
+        self.b_entry.bind("<Return>", lambda e: self._on_rgb_entry_change())
+        self.b_entry.bind("<FocusOut>", lambda e: self._on_rgb_entry_change())
         
         # Brightness slider (floating)
         brightness_label = ctk.CTkLabel(self.parent_frame, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
@@ -390,10 +411,16 @@ class ColorWheel:
         self.s_value_label.configure(text=f"S: {int(self.saturation * 100)}%")
         self.v_value_label.configure(text=f"V: {int(self.value * 100)}%")
         
-        # Update RGB labels
-        self.r_value_label.configure(text=f"R: {rgb[0]}")
-        self.g_value_label.configure(text=f"G: {rgb[1]}")
-        self.b_value_label.configure(text=f"B: {rgb[2]}")
+        # Update RGB entry fields (not labels anymore)
+        if hasattr(self, 'r_entry'):
+            self.r_entry.delete(0, 'end')
+            self.r_entry.insert(0, str(rgb[0]))
+        if hasattr(self, 'g_entry'):
+            self.g_entry.delete(0, 'end')
+            self.g_entry.insert(0, str(rgb[1]))
+        if hasattr(self, 'b_entry'):
+            self.b_entry.delete(0, 'end')
+            self.b_entry.insert(0, str(rgb[2]))
         
         # Call callback if set
         if self.on_color_changed:
@@ -467,6 +494,38 @@ class ColorWheel:
         self.value = float(value) / 100.0
         # Redraw square (depends on brightness) but not wheel
         self._update_displays(redraw_wheel=False, redraw_square=True)
+    
+    def _on_rgb_entry_change(self):
+        """Handle manual RGB entry changes"""
+        try:
+            # Get RGB values from entries
+            r = int(self.r_entry.get())
+            g = int(self.g_entry.get())
+            b = int(self.b_entry.get())
+            
+            # Clamp values to 0-255
+            r = max(0, min(255, r))
+            g = max(0, min(255, g))
+            b = max(0, min(255, b))
+            
+            # Convert to HSV and update
+            self.hue, self.saturation, self.value = self._rgb_to_hsv(r, g, b)
+            
+            # Update brightness slider
+            self.brightness_slider.set(self.value * 100)
+            
+            # Update all displays
+            self._update_displays()
+            
+        except ValueError:
+            # Invalid input, restore current values
+            rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+            self.r_entry.delete(0, 'end')
+            self.r_entry.insert(0, str(rgb[0]))
+            self.g_entry.delete(0, 'end')
+            self.g_entry.insert(0, str(rgb[1]))
+            self.b_entry.delete(0, 'end')
+            self.b_entry.insert(0, str(rgb[2]))
     
     def _save_custom_color(self):
         """Save current color to custom colors"""
