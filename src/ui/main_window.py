@@ -3063,6 +3063,11 @@ class MainWindow:
         # Sample color from the canvas
         sampled_color = self.canvas.get_pixel(canvas_x, canvas_y)
         
+        # Check if pixel is fully transparent (empty/not drawn)
+        if sampled_color[3] == 0:  # Alpha channel is 0
+            # Don't sample transparent pixels - they're empty!
+            return
+        
         # Convert to RGB (remove alpha for comparison)
         rgb_color = sampled_color[:3]
         
