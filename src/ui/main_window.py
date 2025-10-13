@@ -3068,8 +3068,12 @@ class MainWindow:
         
         if button == 1:  # Left click - set primary color
             self._set_color_from_eyedropper(rgb_color, is_primary=True)
+            # Auto-switch back to brush tool for immediate painting
+            self._select_tool("brush")
         elif button == 3:  # Right click - set secondary color
             self._set_color_from_eyedropper(rgb_color, is_primary=False)
+            # Auto-switch back to brush tool for immediate painting
+            self._select_tool("brush")
     
     def _set_color_from_eyedropper(self, rgb_color: tuple, is_primary: bool = True):
         """Set color from eyedropper, either in palette or color wheel"""
