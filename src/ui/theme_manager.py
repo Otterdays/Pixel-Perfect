@@ -47,6 +47,8 @@ class BasicGreyTheme(Theme):
     def __init__(self):
         super().__init__("Basic Grey")
         # Already set to default dark colors in base Theme class
+        # Adjust tertiary for better contrast with custom colors grid
+        self.bg_tertiary = "#3a3a3a"
 
 class AngelicTheme(Theme):
     """Light, angelic theme with soft colors"""
@@ -55,7 +57,7 @@ class AngelicTheme(Theme):
         # Main window colors - light and airy
         self.bg_primary = "#f5f5f5"
         self.bg_secondary = "#ffffff"
-        self.bg_tertiary = "#e8e8e8"
+        self.bg_tertiary = "#dfe6f0"  # Soft blue-grey for custom colors grid
         
         # Text colors
         self.text_primary = "#1a1a1a"

@@ -2274,6 +2274,11 @@ class MainWindow:
             try:
                 if isinstance(widget, ctk.CTkLabel):
                     widget.configure(text_color=theme.text_primary)
+                elif isinstance(widget, ctk.CTkScrollableFrame):
+                    # Style scrollable frames (like custom colors)
+                    widget.configure(fg_color=theme.bg_tertiary)
+                    # Recursively update children
+                    self._apply_theme_to_children(widget, theme)
                 elif isinstance(widget, ctk.CTkFrame):
                     # Check if it's supposed to be transparent
                     try:
