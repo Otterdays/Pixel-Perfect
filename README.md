@@ -89,7 +89,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 <div align="center">
 
-**Made with ❤️ for the pixel art community by Diamond Clad Studios**
+**Developed by Kirby • Designed by Semaj • Diamond Clad Studios**
 
 [⬇️ Download Now](#-installation) • [📖 Read Docs](#-documentation) • [🌟 See Features](#-complete-feature-set)
 
@@ -746,7 +746,7 @@ This is proprietary software. All source code, documentation, assets, and relate
 
 ---
 
-**Made with ❤️ for the pixel art community**
+**Developed by Kirby • Designed by Semaj • Diamond Clad Studios**
 
 
 ---
