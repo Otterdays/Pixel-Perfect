@@ -1911,29 +1911,18 @@ class MainWindow:
             self._force_tkinter_canvas_update()
     
     def _on_palette_change(self, palette_name: str):
-        """Handle palette change"""
+        """Handle palette change - automatically switch to Grid view"""
         self.palette.load_preset(palette_name)
         
-        # Update the appropriate view based on current mode
-        current_mode = self.view_mode_var.get()
+        # Always switch to Grid view when changing palette
+        self.view_mode_var.set("grid")
         
-        if current_mode == "grid":
-            # Update grid view
-            self.color_display_frame = self.grid_view_frame
-            self._create_color_grid()
-        elif current_mode == "primary":
-            # Update primary colors view
-            self.color_display_frame = self.primary_view_frame
-            self._create_primary_colors()
-        elif current_mode == "wheel":
-            # Color wheel doesn't depend on palette, no update needed
-            pass
-        elif current_mode == "saved":
-            # Saved colors are independent, no update needed
-            pass
-        elif current_mode == "constants":
-            # Constants are dynamic, will update on next switch
-            pass
+        # Update grid view with new palette
+        self.color_display_frame = self.grid_view_frame
+        self._create_color_grid()
+        
+        # Show grid view
+        self._show_view("grid")
     
     def _initialize_all_views(self):
         """Initialize all palette views once at startup (OPTIMIZED)"""
