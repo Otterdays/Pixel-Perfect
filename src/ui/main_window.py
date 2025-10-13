@@ -3090,17 +3090,17 @@ class MainWindow:
                 found_in_palette = True
                 break
         
+        # ALWAYS update color wheel to show the sampled color (improves flow)
+        if hasattr(self, 'color_wheel') and self.color_wheel:
+            self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
+        
         if found_in_palette:
-            # Color found in palette, update UI
+            # Color found in palette, update grid UI (stays in current view)
             self._update_color_grid_selection()
         else:
-            # Color not in palette, switch to color wheel and set the color
+            # Color not in palette, switch to color wheel view
             self.view_mode_var.set("wheel")
             self._show_view("wheel")
-            
-            # Set the sampled color in the color wheel
-            if hasattr(self, 'color_wheel') and self.color_wheel:
-                self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
     
     def _undo(self):
         """Undo last action"""
