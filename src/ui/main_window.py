@@ -101,6 +101,10 @@ class MainWindow:
         from src.core.custom_colors import CustomColorManager
         self.custom_colors = CustomColorManager()
         
+        # Initialize saved colors manager (local user storage)
+        from src.core.saved_colors import SavedColorsManager
+        self.saved_colors = SavedColorsManager(max_colors=24)
+        
         # Initialize project and export managers
         from src.core.project import ProjectManager
         from src.utils.export import ExportManager
@@ -586,6 +590,15 @@ class MainWindow:
             command=self._on_view_mode_change
         )
         self.constants_view_btn.grid(row=1, column=1, padx=5, pady=2)
+        
+        self.saved_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Saved",
+            variable=self.view_mode_var,
+            value="saved",
+            command=self._on_view_mode_change
+        )
+        self.saved_view_btn.grid(row=2, column=0, padx=5, pady=2)
         
         # Color display container - centered
         color_display_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
@@ -1896,7 +1909,7 @@ class MainWindow:
             self._create_color_wheel()
     
     def _on_view_mode_change(self):
-        """Handle view mode change between grid, primary colors, color wheel, and constants"""
+        """Handle view mode change between grid, primary colors, color wheel, constants, and saved"""
         mode = self.view_mode_var.get()
         if mode == "grid":
             self._create_color_grid()
@@ -1904,6 +1917,8 @@ class MainWindow:
             self._create_primary_colors()
         elif mode == "constants":
             self._create_constants_grid()
+        elif mode == "saved":
+            self._create_saved_colors_view()
         else:  # wheel
             self._create_color_wheel()
     
@@ -1970,6 +1985,171 @@ class MainWindow:
             text_color="gray"
         )
         count_label.pack(pady=(5, 0))
+    
+    def _create_saved_colors_view(self):
+        """Create saved colors view with empty slots and export button"""
+        # Clear existing widgets
+        for widget in self.color_display_frame.winfo_children():
+            widget.destroy()
+        
+        # Title
+        title_label = ctk.CTkLabel(
+            self.color_display_frame,
+            text="Saved Colors",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        title_label.pack(pady=(5, 2))
+        
+        # Instructions
+        info_label = ctk.CTkLabel(
+            self.color_display_frame,
+            text="Click empty slot to save current color",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        info_label.pack(pady=(0, 5))
+        
+        # Grid for saved colors
+        grid_frame = ctk.CTkFrame(self.color_display_frame)
+        grid_frame.pack(padx=10, pady=5)
+        
+        # Configure grid - 4 columns x 6 rows = 24 slots
+        for col in range(4):
+            grid_frame.grid_columnconfigure(col, weight=1)
+        
+        # Create 24 color slots
+        self.saved_color_buttons = []
+        for idx in range(24):
+            row = idx // 4
+            col = idx % 4
+            
+            saved_color = self.saved_colors.get_color(idx)
+            
+            if saved_color:
+                # Slot has a color - show filled button
+                r, g, b, a = saved_color
+                hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                btn = ctk.CTkButton(
+                    grid_frame,
+                    text="",
+                    width=50,
+                    height=50,
+                    fg_color=hex_color,
+                    hover_color=hex_color,
+                    border_width=2,
+                    border_color="gray",
+                    corner_radius=3,
+                    command=lambda i=idx: self._on_saved_color_click(i)
+                )
+            else:
+                # Empty slot - show transparent outlined button
+                btn = ctk.CTkButton(
+                    grid_frame,
+                    text="+",
+                    width=50,
+                    height=50,
+                    fg_color="transparent",
+                    hover_color="#3a3a3a",
+                    border_width=2,
+                    border_color="gray",
+                    corner_radius=3,
+                    command=lambda i=idx: self._on_saved_slot_click(i)
+                )
+            
+            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
+            self.saved_color_buttons.append(btn)
+        
+        # Export button
+        export_btn = ctk.CTkButton(
+            self.color_display_frame,
+            text="Export Saved Colors",
+            height=32,
+            fg_color="#1f6aa5",
+            hover_color="#1f5a95",
+            command=self._export_saved_colors
+        )
+        export_btn.pack(fill="x", padx=10, pady=(5, 2))
+        
+        # Import button
+        import_btn = ctk.CTkButton(
+            self.color_display_frame,
+            text="Import Saved Colors",
+            height=32,
+            fg_color="#4a4a4a",
+            hover_color="#5a5a5a",
+            command=self._import_saved_colors
+        )
+        import_btn.pack(fill="x", padx=10, pady=2)
+        
+        # Clear all button
+        clear_btn = ctk.CTkButton(
+            self.color_display_frame,
+            text="Clear All Slots",
+            height=32,
+            fg_color="red",
+            hover_color="#cc0000",
+            command=self._clear_all_saved_colors
+        )
+        clear_btn.pack(fill="x", padx=10, pady=2)
+    
+    def _on_saved_slot_click(self, slot_index: int):
+        """Handle click on empty saved color slot - save current color"""
+        # Get current primary color
+        current_color = self.palette.get_primary_color()
+        
+        # Save to slot
+        self.saved_colors.set_color(slot_index, current_color)
+        
+        # Refresh view
+        self._create_saved_colors_view()
+        
+        print(f"[SAVED] Color {current_color} saved to slot {slot_index}")
+    
+    def _on_saved_color_click(self, slot_index: int):
+        """Handle click on filled saved color slot - load color"""
+        saved_color = self.saved_colors.get_color(slot_index)
+        if saved_color:
+            # Set as primary color
+            self.palette.set_primary_color_rgba(saved_color)
+            self._update_pixel_display()
+            print(f"[SAVED] Loaded color {saved_color} from slot {slot_index}")
+    
+    def _export_saved_colors(self):
+        """Export saved colors to a file"""
+        from tkinter import filedialog
+        filepath = filedialog.asksaveasfilename(
+            title="Export Saved Colors",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        if filepath:
+            if self.saved_colors.export_to_file(filepath):
+                print(f"[EXPORT] Saved colors exported to: {filepath}")
+            else:
+                print("[EXPORT] Failed to export saved colors")
+    
+    def _import_saved_colors(self):
+        """Import saved colors from a file"""
+        from tkinter import filedialog
+        filepath = filedialog.askopenfilename(
+            title="Import Saved Colors",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        if filepath:
+            if self.saved_colors.import_from_file(filepath):
+                self._create_saved_colors_view()  # Refresh view
+                print(f"[IMPORT] Saved colors imported from: {filepath}")
+            else:
+                print("[IMPORT] Failed to import saved colors")
+    
+    def _clear_all_saved_colors(self):
+        """Clear all saved color slots with confirmation"""
+        from tkinter import messagebox
+        if messagebox.askyesno("Clear All Slots", "Are you sure you want to clear all saved colors?\nThis cannot be undone."):
+            self.saved_colors.clear_all()
+            self._create_saved_colors_view()  # Refresh view
+            print("[SAVED] All saved colors cleared")
     
     def _get_canvas_colors(self):
         """Extract unique colors from the canvas (all layers combined)"""
