@@ -1913,10 +1913,27 @@ class MainWindow:
     def _on_palette_change(self, palette_name: str):
         """Handle palette change"""
         self.palette.load_preset(palette_name)
-        if self.view_mode_var.get() == "grid":
+        
+        # Update the appropriate view based on current mode
+        current_mode = self.view_mode_var.get()
+        
+        if current_mode == "grid":
+            # Update grid view
+            self.color_display_frame = self.grid_view_frame
             self._create_color_grid()
-        else:
-            self._create_color_wheel()
+        elif current_mode == "primary":
+            # Update primary colors view
+            self.color_display_frame = self.primary_view_frame
+            self._create_primary_colors()
+        elif current_mode == "wheel":
+            # Color wheel doesn't depend on palette, no update needed
+            pass
+        elif current_mode == "saved":
+            # Saved colors are independent, no update needed
+            pass
+        elif current_mode == "constants":
+            # Constants are dynamic, will update on next switch
+            pass
     
     def _initialize_all_views(self):
         """Initialize all palette views once at startup (OPTIMIZED)"""
