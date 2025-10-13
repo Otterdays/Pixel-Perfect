@@ -11,7 +11,7 @@ class EraserTool(Tool):
     """Eraser tool for removing pixels"""
     
     def __init__(self):
-        super().__init__("Eraser")
+        super().__init__("Eraser", cursor="X_cursor")
         self.is_erasing = False
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):

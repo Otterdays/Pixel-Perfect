@@ -11,7 +11,7 @@ class FillTool(Tool):
     """Flood fill bucket tool"""
     
     def __init__(self):
-        super().__init__("Fill")
+        super().__init__("Fill", cursor="spraycan")
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Perform flood fill"""

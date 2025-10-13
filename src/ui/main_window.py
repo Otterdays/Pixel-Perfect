@@ -1,6 +1,9 @@
 """
 Main application window for Pixel Perfect
 Coordinates all UI components and handles events
+
+Copyright © 2024-2025 Diamond Clad Studios
+All Rights Reserved - Proprietary Software
 """
 
 import pygame
@@ -9,6 +12,8 @@ import tkinter as tk
 from typing import Optional, Tuple
 import sys
 import os
+import numpy as np
+from PIL import Image
 
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -21,11 +26,14 @@ from tools.fill import FillTool
 from tools.eyedropper import EyedropperTool
 from tools.selection import SelectionTool, MoveTool
 from tools.shapes import LineTool, RectangleTool, CircleTool
+from tools.pan import PanTool
 from core.layer_manager import LayerManager
 from core.undo_manager import UndoManager, UndoState
 from ui.layer_panel import LayerPanel
 from animation.timeline import AnimationTimeline
 from ui.timeline_panel import TimelinePanel
+from ui.tooltip import create_tooltip
+from ui.theme_manager import ThemeManager
 
 class MainWindow:
     """Main application window"""
@@ -72,7 +80,7 @@ class MainWindow:
                     except:
                         pass
                 
-                print(f"✓ Icon loaded: {icon_path}")
+                print(f"[OK] Icon loaded: {icon_path}")
             else:
                 # Fallback to PNG
                 png_path = os.path.join(base_path, "assets", "icons", "app_icon.png")
@@ -80,11 +88,11 @@ class MainWindow:
                 if os.path.exists(png_path):
                     icon_photo = tk.PhotoImage(file=png_path)
                     self.root.iconphoto(True, icon_photo)
-                    print(f"✓ Icon loaded (PNG): {png_path}")
+                    print(f"[OK] Icon loaded (PNG): {png_path}")
                 else:
-                    print(f"⚠ Icon not found at: {icon_path} or {png_path}")
+                    print(f"[WARN] Icon not found at: {icon_path} or {png_path}")
         except Exception as e:
-            print(f"⚠ Could not load icon: {e}")
+            print(f"[WARN] Could not load icon: {e}")
         
         # Initialize core systems
         self.canvas = Canvas(32, 32, zoom=16)  # Higher zoom for better grid visibility
@@ -117,18 +125,44 @@ class MainWindow:
             "move": MoveTool(),
             "line": LineTool(),
             "rectangle": RectangleTool(),
-            "circle": CircleTool()
+            "circle": CircleTool(),
+            "pan": PanTool()
         }
         self.current_tool = "brush"
         
         # Connect selection and move tools
         self.tools["move"].set_selection_tool(self.tools["selection"])
         
+        # Set up auto-switch to move tool after selection
+        self.tools["selection"].on_selection_complete = self._on_selection_complete
+        
         # UI state
         self.is_drawing = False
         self.last_mouse_pos = (0, 0)
         self._last_drawn_pixel = None  # Track last drawn pixel for efficient updates
         self._updating_display = False  # Flag to prevent recursion
+        
+        # Copy/paste state
+        self.is_placing_copy = False
+        self.copy_buffer = None
+        self.copy_dimensions = None
+        self.copy_preview_pos = None  # Mouse position for copy preview
+        
+        # Scaling state
+        self.is_scaling = False
+        self.scale_handle = None  # Which handle is being dragged
+        self.scale_start_pos = None
+        self.scale_original_rect = None  # Reference rect for calculating deltas (updates between drags)
+        self.scale_true_original_rect = None  # Never changes - used for final apply
+        self.scale_is_dragging = False  # True while actively dragging (mouse down)
+        
+        # Pan state
+        self.pan_offset_x = 0
+        self.pan_offset_y = 0
+        
+        # Initialize theme manager
+        self.theme_manager = ThemeManager()
+        self.theme_manager.on_theme_changed = self._apply_theme
         
         # Create UI
         self._create_ui()
@@ -148,24 +182,49 @@ class MainWindow:
         # Top toolbar
         self._create_toolbar()
         
-        # Main content area with resizable panes
+        # Main content area with resizable panes (optimized for smooth resizing)
         self.paned_window = tk.PanedWindow(
             self.main_frame, 
             orient=tk.HORIZONTAL, 
-            sashwidth=8, 
-            bg="#2b2b2b",
-            sashrelief=tk.RAISED,
-            bd=0
+            sashwidth=10,  # Wider for easier grabbing
+            bg="#505050",  # Lighter grey for visibility
+            sashrelief=tk.FLAT,  # Flat, no border
+            bd=0,
+            opaqueresize=False  # Don't show content during drag - faster!
         )
         self.paned_window.pack(fill="both", expand=True, pady=(10, 0))
         
-        # Left panel container (wrapper for CTk widget)
-        left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
-        self.paned_window.add(left_container, minsize=220, width=500, stretch="never")
+        # Track panel resize state
+        self._is_resizing_panels = False
         
-        # Left panel (tools and palette) - with scrollbar
-        self.left_panel = ctk.CTkScrollableFrame(left_container, width=500)
-        self.left_panel.pack(fill="both", expand=True)
+        # Track panel collapse state
+        self.left_panel_collapsed = False
+        self.right_panel_collapsed = False
+        
+        # Left panel container (wrapper for CTk widget)
+        self.left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never")
+        
+        # Left collapse button (visible when expanded)
+        left_collapse_btn = ctk.CTkButton(
+            self.left_container,
+            text="◀",
+            width=25,
+            font=("Arial", 14, "bold"),
+            fg_color="#1f538d",
+            hover_color="#144870",
+            corner_radius=8,
+            command=self._toggle_left_panel
+        )
+        left_collapse_btn.pack(side="right", fill="y", padx=0, pady=0)
+        self.left_collapse_btn = left_collapse_btn
+        
+        # Left panel (tools and palette) - with scrollbar (optimized for smooth resize)
+        self.left_panel = ctk.CTkScrollableFrame(
+            self.left_container, 
+            width=500
+        )
+        self.left_panel.pack(side="left", fill="both", expand=True)
         
         # Canvas area container
         canvas_container = tk.Frame(self.paned_window, bg="#2b2b2b")
@@ -176,12 +235,29 @@ class MainWindow:
         self.canvas_frame.pack(fill="both", expand=True)
         
         # Right panel container (wrapper for CTk widget)
-        right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
-        self.paned_window.add(right_container, minsize=220, width=300, stretch="never")
+        self.right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.paned_window.add(self.right_container, minsize=220, width=300, stretch="never")
         
-        # Right panel (layers, etc.) - with scrollbar
-        self.right_panel = ctk.CTkScrollableFrame(right_container, width=300)
-        self.right_panel.pack(fill="both", expand=True)
+        # Right collapse button (visible when expanded)
+        right_collapse_btn = ctk.CTkButton(
+            self.right_container,
+            text="▶",
+            width=25,
+            font=("Arial", 14, "bold"),
+            fg_color="#1f538d",
+            hover_color="#144870",
+            corner_radius=8,
+            command=self._toggle_right_panel
+        )
+        right_collapse_btn.pack(side="left", fill="y", padx=0, pady=0)
+        self.right_collapse_btn = right_collapse_btn
+        
+        # Right panel (layers, etc.) - with scrollbar (optimized for smooth resize)
+        self.right_panel = ctk.CTkScrollableFrame(
+            self.right_container, 
+            width=300
+        )
+        self.right_panel.pack(side="right", fill="both", expand=True)
         
         # Create panels
         self._create_tool_panel()
@@ -235,11 +311,50 @@ class MainWindow:
         # Undo/Redo buttons
         self._create_undo_redo_buttons()
         
+        # Theme selector with brand logo
+        try:
+            # Load DCS brand logo
+            logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "dcs.png")
+            logo_path = os.path.abspath(logo_path)
+            if os.path.exists(logo_path):
+                logo_image = Image.open(logo_path)
+                # Resize to fit toolbar (24x24)
+                logo_image = logo_image.resize((24, 24), Image.Resampling.LANCZOS)
+                logo_ctk = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(24, 24))
+                self.theme_label = ctk.CTkLabel(self.toolbar, image=logo_ctk, text="")
+            else:
+                # Fallback to emoji if image not found
+                self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
+        except Exception as e:
+            print(f"[WARN] Could not load DCS logo: {e}")
+            # Fallback to emoji if image loading fails
+            self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
+        
+        self.theme_label.pack(side="right", padx=(20, 2))
+        create_tooltip(self.theme_label, "Color Theme - Diamond Clad Studios", delay=1000)
+        
+        self.theme_var = ctk.StringVar(value="Basic Grey")
+        self.theme_menu = ctk.CTkOptionMenu(
+            self.toolbar,
+            variable=self.theme_var,
+            values=self.theme_manager.get_theme_names(),
+            command=self._on_theme_selected,
+            width=120
+        )
+        self.theme_menu.pack(side="right", padx=5)
+        
         # Grid toggle
         self.grid_button = ctk.CTkButton(self.toolbar, text="Grid", width=60)
         self.grid_button.pack(side="right", padx=5)
         self.grid_button.configure(command=self._toggle_grid)
         self._update_grid_button_text()
+        
+        # Grid overlay toggle (grid on top of pixels)
+        self.grid_overlay = False
+        self.grid_overlay_button = ctk.CTkButton(self.toolbar, text="Grid Overlay", width=90)
+        self.grid_overlay_button.pack(side="right", padx=5)
+        self.grid_overlay_button.configure(command=self._toggle_grid_overlay)
+        self._update_grid_overlay_button_text()
     
     def _create_undo_redo_buttons(self):
         """Create stylized undo/redo buttons with arrows"""
@@ -303,19 +418,20 @@ class MainWindow:
         # Tool buttons in 3x3 grid for compact layout
         self.tool_buttons = {}
         tools = [
-            ("brush", "Brush"),
-            ("eraser", "Eraser"),
-            ("fill", "Fill"),
-            ("eyedropper", "Eyedropper"),
-            ("selection", "Select"),
-            ("move", "Move"),
-            ("line", "Line"),
-            ("rectangle", "Rectangle"),
-            ("circle", "Circle")
+            ("brush", "Brush", "Draw single pixels (B)"),
+            ("eraser", "Eraser", "Erase pixels (E)"),
+            ("fill", "Fill", "Fill areas with color (F)"),
+            ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
+            ("selection", "Select", "Select rectangular areas (S)"),
+            ("move", "Move", "Move selected pixels (M)"),
+            ("line", "Line", "Draw straight lines (L)"),
+            ("rectangle", "Square", "Draw rectangles and squares (R)"),
+            ("circle", "Circle", "Draw circles (C)"),
+            ("pan", "Pan", "Move camera view (Hold Space)")
         ]
         
         # Arrange in 3 columns
-        for idx, (tool_id, tool_name) in enumerate(tools):
+        for idx, (tool_id, tool_name, tooltip_text) in enumerate(tools):
             row = idx // 3
             col = idx % 3
             
@@ -328,6 +444,9 @@ class MainWindow:
             )
             btn.grid(row=row, column=col, padx=2, pady=2)
             self.tool_buttons[tool_id] = btn
+            
+            # Add tooltip
+            create_tooltip(btn, tooltip_text, delay=1000)
         
         # Configure grid columns - buttons stay fixed size
         for col in range(3):
@@ -335,6 +454,70 @@ class MainWindow:
         
         # Highlight current tool
         self._update_tool_selection()
+        
+        # Selection operations section
+        selection_ops_label = ctk.CTkLabel(self.tool_frame, text="Selection", font=ctk.CTkFont(size=14, weight="bold"))
+        selection_ops_label.pack(pady=(10, 3))
+        
+        # Selection operations buttons in 3 columns
+        selection_ops_grid = ctk.CTkFrame(self.tool_frame)
+        selection_ops_grid.pack(pady=(0, 5), padx=5)
+        
+        # Create selection operation buttons
+        mirror_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Mirror",
+            width=85,
+            height=28,
+            command=self._mirror_selection,
+            fg_color="gray"
+        )
+        mirror_btn.grid(row=0, column=0, padx=2, pady=2)
+        create_tooltip(mirror_btn, "Flip selection horizontally", delay=1000)
+        
+        rotate_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Rotate",
+            width=85,
+            height=28,
+            command=self._rotate_selection,
+            fg_color="gray"
+        )
+        rotate_btn.grid(row=0, column=1, padx=2, pady=2)
+        create_tooltip(rotate_btn, "Rotate selection 90° clockwise", delay=1000)
+        
+        copy_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Copy",
+            width=85,
+            height=28,
+            command=self._copy_selection,
+            fg_color="gray"
+        )
+        copy_btn.grid(row=0, column=2, padx=2, pady=2)
+        create_tooltip(copy_btn, "Copy selection for placement", delay=1000)
+        
+        # Second row for Scale button
+        scale_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Scale",
+            width=85,
+            height=28,
+            command=self._scale_selection,
+            fg_color="gray"
+        )
+        scale_btn.grid(row=1, column=0, padx=2, pady=2, columnspan=3, sticky="ew")
+        create_tooltip(scale_btn, "Scale selection with draggable corners", delay=1000)
+        
+        # Store references
+        self.mirror_btn = mirror_btn
+        self.rotate_btn = rotate_btn
+        self.copy_btn = copy_btn
+        self.scale_btn = scale_btn
+        
+        # Configure grid columns
+        for col in range(3):
+            selection_ops_grid.grid_columnconfigure(col, weight=0)
     
     def _create_palette_panel(self):
         """Create color palette panel"""
@@ -796,6 +979,9 @@ class MainWindow:
         self.drawing_canvas.bind("<ButtonRelease-1>", self._on_tkinter_canvas_mouse_up)
         self.drawing_canvas.bind("<B1-Motion>", self._on_tkinter_canvas_mouse_drag)
         self.drawing_canvas.bind("<Motion>", self._on_tkinter_canvas_mouse_move)
+        
+        # Set initial cursor (brush tool is default)
+        self.drawing_canvas.configure(cursor=self.tools[self.current_tool].cursor)
 
         # Initialize the drawing surface
         self._init_drawing_surface()
@@ -841,11 +1027,12 @@ class MainWindow:
                     print("Drawing grid...")  # Debug
                     self._draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
-                # Draw a border around the canvas area
+                # Draw a border around the canvas area with theme color
+                theme = self.theme_manager.get_current_theme()
                 self.drawing_canvas.create_rectangle(
                     x_offset, y_offset,
                     x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
-                    outline="black", width=2
+                    outline=theme.canvas_border, width=2, tags="border"
                 )
 
                 # Draw any existing pixels
@@ -863,24 +1050,26 @@ class MainWindow:
 
     def _draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
         """Draw grid lines on tkinter canvas"""
-        grid_color = "#666666"  # Dark gray
+        # Use theme color for grid
+        theme = self.theme_manager.get_current_theme()
+        grid_color = theme.grid_color
 
-        # Draw vertical lines
+        # Draw vertical lines with 'grid' tag for easy theme updates
         for x in range(0, self.canvas.width + 1):
             screen_x = x_offset + (x * self.canvas.zoom)
             self.drawing_canvas.create_line(
                 screen_x, y_offset,
                 screen_x, y_offset + canvas_height,
-                fill=grid_color, width=1
+                fill=grid_color, width=1, tags="grid"
             )
 
-        # Draw horizontal lines
+        # Draw horizontal lines with 'grid' tag
         for y in range(0, self.canvas.height + 1):
             screen_y = y_offset + (y * self.canvas.zoom)
             self.drawing_canvas.create_line(
                 x_offset, screen_y,
                 x_offset + canvas_width, screen_y,
-                fill=grid_color, width=1
+                fill=grid_color, width=1, tags="grid"
             )
 
 
@@ -913,17 +1102,158 @@ class MainWindow:
         # Bind window resize event to fix grid centering
         self.root.bind("<Configure>", self._on_window_resize)
         
+        # Bind paned window for smooth resize detection
+        self.paned_window.bind("<ButtonPress-1>", self._on_sash_drag_start)
+        self.paned_window.bind("<ButtonRelease-1>", self._on_sash_drag_end)
+        
         # Mouse events are now bound to the tkinter drawing canvas
+    
+    def _on_sash_drag_start(self, event):
+        """Called when user starts dragging panel divider"""
+        self._is_resizing_panels = True
+    
+    def _on_sash_drag_end(self, event):
+        """Called when user stops dragging panel divider"""
+        self._is_resizing_panels = False
+        # Force a single update after drag completes
+        self.root.update_idletasks()
     
     def _on_window_resize(self, event):
         """Handle window resize events to maintain grid centering"""
+        # Skip if we're resizing panels (not the window)
+        if self._is_resizing_panels:
+            return
+            
         # Only handle main window resize, not child widget events
         if event.widget == self.root:
             # Schedule a delayed redraw to avoid excessive updates during resize
-            if hasattr(self, '_resize_timer'):
-                self.root.after_cancel(self._resize_timer)
+            if hasattr(self, '_resize_timer') and self._resize_timer is not None:
+                try:
+                    self.root.after_cancel(self._resize_timer)
+                except:
+                    pass  # Timer already executed or cancelled
             
             self._resize_timer = self.root.after(100, self._redraw_canvas_after_resize)
+    
+    def _toggle_left_panel(self):
+        """Collapse or expand the left panel"""
+        if self.left_panel_collapsed:
+            # Expand panel - remove restore button overlay
+            if hasattr(self, 'left_restore_btn'):
+                try:
+                    self.left_restore_btn.place_forget()
+                except:
+                    pass
+            
+            # Re-add the container at the beginning
+            # Get the current first pane to insert before it
+            panes = self.paned_window.panes()
+            if len(panes) > 0:
+                self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never", before=panes[0])
+            else:
+                self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never")
+            
+            self.left_collapse_btn.configure(text="◀")
+            self.left_panel_collapsed = False
+            
+            # Redraw canvas to re-center grid after panel expand
+            self.root.after(50, self._redraw_canvas_after_resize)
+        else:
+            # Collapse panel
+            self.paned_window.forget(self.left_container)
+            self.left_collapse_btn.configure(text="▶")
+            self.left_panel_collapsed = True
+            
+            # Create restore button if it doesn't exist (overlay on left edge)
+            if not hasattr(self, 'left_restore_btn'):
+                # Use regular tkinter button with custom styling for true transparency
+                self.left_restore_btn = tk.Button(
+                    self.paned_window,
+                    text="▶",
+                    font=("Arial", 18, "bold"),
+                    fg="white",
+                    bg="#1f538d",
+                    activebackground="#2a6bb3",
+                    activeforeground="white",
+                    relief=tk.FLAT,
+                    borderwidth=0,
+                    highlightthickness=0,
+                    width=3,
+                    height=4,
+                    cursor="hand2",
+                    command=self._toggle_left_panel
+                )
+                # Bind hover events for color change
+                self.left_restore_btn.bind("<Enter>", lambda e: self.left_restore_btn.configure(bg="#2a6bb3"))
+                self.left_restore_btn.bind("<Leave>", lambda e: self.left_restore_btn.configure(bg="#1f538d"))
+            
+            # Place restore button directly on left edge
+            self.left_restore_btn.place(x=5, y=100)
+            
+            # Redraw canvas to re-center grid after panel collapse
+            self.root.after(50, self._redraw_canvas_after_resize)
+    
+    def _toggle_right_panel(self):
+        """Collapse or expand the right panel"""
+        if self.right_panel_collapsed:
+            # Expand panel - remove restore button overlay
+            if hasattr(self, 'right_restore_btn'):
+                try:
+                    self.right_restore_btn.place_forget()
+                except:
+                    pass
+            
+            # Re-add the container at the end
+            self.paned_window.add(self.right_container, minsize=220, width=300, stretch="never")
+            
+            self.right_collapse_btn.configure(text="▶")
+            self.right_panel_collapsed = False
+            
+            # Redraw canvas to re-center grid after panel expand
+            self.root.after(50, self._redraw_canvas_after_resize)
+        else:
+            # Collapse panel
+            self.paned_window.forget(self.right_container)
+            self.right_collapse_btn.configure(text="◀")
+            self.right_panel_collapsed = True
+            
+            # Create restore button if it doesn't exist (overlay on right edge)
+            if not hasattr(self, 'right_restore_btn'):
+                # Use regular tkinter button with custom styling for true transparency
+                self.right_restore_btn = tk.Button(
+                    self.paned_window,
+                    text="◀",
+                    font=("Arial", 18, "bold"),
+                    fg="white",
+                    bg="#1f538d",
+                    activebackground="#2a6bb3",
+                    activeforeground="white",
+                    relief=tk.FLAT,
+                    borderwidth=0,
+                    highlightthickness=0,
+                    width=3,
+                    height=4,
+                    cursor="hand2",
+                    command=self._toggle_right_panel
+                )
+                # Bind hover events for color change
+                self.right_restore_btn.bind("<Enter>", lambda e: self.right_restore_btn.configure(bg="#2a6bb3"))
+                self.right_restore_btn.bind("<Leave>", lambda e: self.right_restore_btn.configure(bg="#1f538d"))
+            
+            # Place restore button directly on right edge
+            # Use anchor='ne' to position from right edge (match left button offset)
+            self.right_restore_btn.place(relx=1.0, x=-5, y=100, anchor='ne')
+            
+            # Redraw canvas to re-center grid after panel collapse
+            self.root.after(50, self._redraw_canvas_after_resize)
+    
+    def _on_restore_btn_enter(self, button):
+        """Hover effect - color already handled in bind"""
+        pass
+    
+    def _on_restore_btn_leave(self, button):
+        """Hover leave - color already handled in bind"""
+        pass
     
     def _redraw_canvas_after_resize(self):
         """Redraw canvas after window resize to maintain grid centering"""
@@ -937,6 +1267,32 @@ class MainWindow:
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""
         key = event.keysym.lower()
+        
+        # Cancel copy placement mode
+        if key == 'escape' and self.is_placing_copy:
+            self.is_placing_copy = False
+            self.copy_preview_pos = None
+            self._update_pixel_display()
+            print("[INFO] Copy placement cancelled")
+            return
+        
+        # Cancel scaling mode
+        if key == 'escape' and self.is_scaling:
+            self.is_scaling = False
+            self.scale_handle = None
+            self.scale_is_dragging = False
+            self.scale_original_rect = None
+            self.scale_true_original_rect = None
+            
+            # Restore current tool's cursor and button highlighting
+            tool = self.tools[self.current_tool]
+            self.drawing_canvas.configure(cursor=tool.cursor)
+            self.scale_btn.configure(fg_color="gray")
+            self._update_tool_selection()
+            
+            self._update_pixel_display()
+            print("[INFO] Scaling cancelled")
+            return
         
         # Tool shortcuts
         if key == 'b':
@@ -988,8 +1344,417 @@ class MainWindow:
     
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
+        # Exit scaling mode if active
+        if self.is_scaling:
+            self.is_scaling = False
+            self.scale_handle = None
+            self.scale_original_rect = None
+            self.scale_true_original_rect = None
+            self.scale_is_dragging = False
+            self.scale_btn.configure(fg_color="gray")
+            print("[INFO] Exited scaling mode")
+        
         self.current_tool = tool_id
         self._update_tool_selection()
+        
+        # Update canvas cursor based on selected tool
+        if hasattr(self, 'drawing_canvas') and tool_id in self.tools:
+            tool = self.tools[tool_id]
+            self.drawing_canvas.configure(cursor=tool.cursor)
+    
+    def _on_selection_complete(self):
+        """Called when selection is complete - auto-switch to move tool"""
+        # Automatically switch to move tool after selection
+        self._select_tool("move")
+        print("Selection complete - switched to Move tool")
+    
+    def _mirror_selection(self):
+        """Mirror (flip horizontally) the selected pixels"""
+        # Exit scaling mode if active
+        if self.is_scaling:
+            self.is_scaling = False
+            self.scale_handle = None
+            self.scale_original_rect = None
+            self.scale_true_original_rect = None
+            self.scale_is_dragging = False
+            self.scale_btn.configure(fg_color="gray")
+            self._update_tool_selection()
+            print("[INFO] Exited scaling mode")
+        
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or not selection_tool.has_active_selection():
+            print("[INFO] No selection to mirror")
+            return
+        
+        # Get selection data
+        if selection_tool.selected_pixels is None:
+            return
+        
+        bounds = selection_tool.get_selection_bounds()
+        if not bounds:
+            return
+        
+        left, top, width, height = bounds
+        
+        # Mirror the pixels horizontally (flip left-right)
+        mirrored_pixels = np.flip(selection_tool.selected_pixels, axis=1).copy()
+        
+        # Update the selection with mirrored pixels
+        selection_tool.selected_pixels = mirrored_pixels
+        
+        # Redraw on canvas
+        draw_layer = self._get_drawing_layer()
+        if draw_layer:
+            for py in range(height):
+                for px in range(width):
+                    if py < mirrored_pixels.shape[0] and px < mirrored_pixels.shape[1]:
+                        pixel_color = tuple(mirrored_pixels[py, px])
+                        canvas_x = left + px
+                        canvas_y = top + py
+                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            # Update canvas display
+            self._update_canvas_from_layers()
+            self._update_pixel_display()
+            
+        print("[OK] Selection mirrored")
+    
+    def _rotate_selection(self):
+        """Rotate the selected pixels 90 degrees clockwise"""
+        # Exit scaling mode if active
+        if self.is_scaling:
+            self.is_scaling = False
+            self.scale_handle = None
+            self.scale_original_rect = None
+            self.scale_true_original_rect = None
+            self.scale_is_dragging = False
+            self.scale_btn.configure(fg_color="gray")
+            self._update_tool_selection()
+            print("[INFO] Exited scaling mode")
+        
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or not selection_tool.has_active_selection():
+            print("[INFO] No selection to rotate")
+            return
+        
+        # Get selection data
+        if selection_tool.selected_pixels is None:
+            return
+        
+        bounds = selection_tool.get_selection_bounds()
+        if not bounds:
+            return
+        
+        left, top, width, height = bounds
+        
+        # Rotate 90 degrees clockwise: transpose then flip horizontally
+        rotated_pixels = np.rot90(selection_tool.selected_pixels, k=-1).copy()
+        
+        # Update the selection with rotated pixels
+        selection_tool.selected_pixels = rotated_pixels
+        
+        # Note: rotation changes dimensions (width becomes height, height becomes width)
+        new_width = rotated_pixels.shape[1]
+        new_height = rotated_pixels.shape[0]
+        
+        # Update selection rectangle with new dimensions
+        selection_tool.selection_rect = (left, top, new_width, new_height)
+        
+        # Clear old area
+        draw_layer = self._get_drawing_layer()
+        if draw_layer:
+            # Clear original area
+            for py in range(height):
+                for px in range(width):
+                    canvas_x = left + px
+                    canvas_y = top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+            
+            # Draw rotated pixels
+            for py in range(new_height):
+                for px in range(new_width):
+                    if py < rotated_pixels.shape[0] and px < rotated_pixels.shape[1]:
+                        pixel_color = tuple(rotated_pixels[py, px])
+                        canvas_x = left + px
+                        canvas_y = top + py
+                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                            if pixel_color[3] > 0:  # Only draw non-transparent pixels
+                                draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            # Update canvas display
+            self._update_canvas_from_layers()
+            self._update_pixel_display()
+            
+        print("[OK] Selection rotated 90° clockwise")
+    
+    def _copy_selection(self):
+        """Enter copy mode - allows placing a copy of the selection"""
+        # Exit scaling mode if active
+        if self.is_scaling:
+            self.is_scaling = False
+            self.scale_handle = None
+            self.scale_original_rect = None
+            self.scale_true_original_rect = None
+            self.scale_is_dragging = False
+            self.scale_btn.configure(fg_color="gray")
+            self._update_tool_selection()
+            print("[INFO] Exited scaling mode")
+        
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or not selection_tool.has_active_selection():
+            print("[INFO] No selection to copy")
+            return
+        
+        # Get selection data
+        if selection_tool.selected_pixels is None:
+            return
+        
+        # Store copy data
+        self.copy_buffer = selection_tool.selected_pixels.copy()
+        bounds = selection_tool.get_selection_bounds()
+        if bounds:
+            _, _, width, height = bounds
+            self.copy_dimensions = (width, height)
+            
+            # Switch to a placement mode
+            self.is_placing_copy = True
+            
+            print("[OK] Selection copied - click on canvas to place")
+            print("     Press Escape to cancel placement")
+    
+    def _scale_selection(self):
+        """Enter scaling mode for the selection"""
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or not selection_tool.has_active_selection():
+            print("[INFO] No selection to scale")
+            return
+        
+        bounds = selection_tool.get_selection_bounds()
+        if not bounds:
+            return
+        
+        # Enter scaling mode
+        self.is_scaling = True
+        self.scale_original_rect = bounds  # Reference for calculating deltas
+        self.scale_true_original_rect = bounds  # Never changes - for final apply
+        
+        # Change cursor to arrow for grabbing handles
+        self.drawing_canvas.configure(cursor="arrow")
+        
+        # Update button states - deselect tool buttons, highlight Scale button
+        for tool_id, btn in self.tool_buttons.items():
+            btn.configure(fg_color="gray")
+        self.scale_btn.configure(fg_color="blue")
+        
+        # Update display to show handles
+        self._update_pixel_display()
+        
+        print("[OK] Scaling mode - drag corners/edges to resize")
+        print("     Each drag applies scaling incrementally")
+        print("     Click away from selection to exit")
+    
+    def _apply_scale(self, new_rect):
+        """Apply scaling to the selection"""
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or selection_tool.selected_pixels is None:
+            return
+        
+        # Use the TRUE original rect (from when we entered scale mode)
+        old_left, old_top, old_width, old_height = self.scale_true_original_rect
+        new_left, new_top, new_width, new_height = new_rect
+        
+        # Ensure minimum size
+        if new_width < 1 or new_height < 1:
+            return
+        
+        # Scale the pixels using nearest neighbor
+        from scipy import ndimage
+        try:
+            # Calculate scale factors
+            scale_y = new_height / old_height
+            scale_x = new_width / old_width
+            
+            # Use zoom for nearest neighbor scaling
+            scaled_pixels = ndimage.zoom(
+                selection_tool.selected_pixels,
+                (scale_y, scale_x, 1),
+                order=0  # Nearest neighbor
+            )
+            
+            # Update selection
+            selection_tool.selected_pixels = scaled_pixels.astype(np.uint8)
+            selection_tool.selection_rect = new_rect
+            
+            # Clear old area and draw new
+            draw_layer = self._get_drawing_layer()
+            if draw_layer:
+                # Clear old area
+                for py in range(old_height):
+                    for px in range(old_width):
+                        canvas_x = old_left + px
+                        canvas_y = old_top + py
+                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                            draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                
+                # Draw scaled pixels
+                for py in range(new_height):
+                    for px in range(new_width):
+                        if py < scaled_pixels.shape[0] and px < scaled_pixels.shape[1]:
+                            pixel_color = tuple(scaled_pixels[py, px])
+                            canvas_x = new_left + px
+                            canvas_y = new_top + py
+                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                if pixel_color[3] > 0:
+                                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+                
+                self._update_canvas_from_layers()
+                self._update_pixel_display()
+            
+            print(f"[OK] Scaled from {old_width}x{old_height} to {new_width}x{new_height}")
+        except ImportError:
+            # Fallback if scipy not available - use simple repetition
+            print("[WARN] scipy not available, using simple scaling")
+            self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
+    
+    def _simple_scale(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
+        """Simple scaling without scipy"""
+        scaled_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
+        
+        for ny in range(new_height):
+            for nx in range(new_width):
+                # Map to original coordinates
+                ox = int(nx * old_width / new_width)
+                oy = int(ny * old_height / new_height)
+                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
+                    scaled_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
+        
+        selection_tool.selected_pixels = scaled_pixels
+        selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
+        
+        # Redraw
+        draw_layer = self._get_drawing_layer()
+        if draw_layer:
+            for py in range(new_height):
+                for px in range(new_width):
+                    pixel_color = tuple(scaled_pixels[py, px])
+                    canvas_x = new_left + px
+                    canvas_y = new_top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        if pixel_color[3] > 0:
+                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            self._update_canvas_from_layers()
+            self._update_pixel_display()
+    
+    def _preview_scaled_pixels(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
+        """Show a live preview of scaled pixels during drag (doesn't modify stored data)"""
+        # Quick nearest-neighbor scaling for preview
+        preview_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
+        
+        for ny in range(new_height):
+            for nx in range(new_width):
+                # Map to original coordinates
+                ox = int(nx * old_width / new_width)
+                oy = int(ny * old_height / new_height)
+                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
+                    preview_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
+        
+        # Temporarily draw the preview on canvas
+        draw_layer = self._get_drawing_layer()
+        if draw_layer:
+            # Clear the TRUE original area (where pixels actually were)
+            true_orig_left, true_orig_top, true_orig_width, true_orig_height = self.scale_true_original_rect
+            for py in range(true_orig_height):
+                for px in range(true_orig_width):
+                    canvas_x = true_orig_left + px
+                    canvas_y = true_orig_top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+            
+            # Draw the scaled preview
+            for py in range(new_height):
+                for px in range(new_width):
+                    pixel_color = tuple(preview_pixels[py, px])
+                    canvas_x = new_left + px
+                    canvas_y = new_top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        if pixel_color[3] > 0:
+                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            self._update_canvas_from_layers()
+            self._update_pixel_display()
+    
+    def _get_scale_handle(self, x: int, y: int, left: int, top: int, width: int, height: int):
+        """Detect which scale handle/edge the user clicked near"""
+        handle_tolerance = max(3, 8 // self.canvas.zoom)  # Adjust based on zoom
+        
+        right = left + width
+        bottom = top + height
+        
+        # Check corners first (higher priority)
+        if abs(x - left) <= handle_tolerance and abs(y - top) <= handle_tolerance:
+            return "tl"  # Top-left
+        if abs(x - right) <= handle_tolerance and abs(y - top) <= handle_tolerance:
+            return "tr"  # Top-right
+        if abs(x - left) <= handle_tolerance and abs(y - bottom) <= handle_tolerance:
+            return "bl"  # Bottom-left
+        if abs(x - right) <= handle_tolerance and abs(y - bottom) <= handle_tolerance:
+            return "br"  # Bottom-right
+        
+        # Check edges
+        if abs(x - left) <= handle_tolerance and top <= y <= bottom:
+            return "l"  # Left edge
+        if abs(x - right) <= handle_tolerance and top <= y <= bottom:
+            return "r"  # Right edge
+        if abs(y - top) <= handle_tolerance and left <= x <= right:
+            return "t"  # Top edge
+        if abs(y - bottom) <= handle_tolerance and left <= x <= right:
+            return "b"  # Bottom edge
+        
+        return None
+    
+    def _draw_scale_handle(self, x: float, y: float, size: int, color: str):
+        """Draw a scale handle on the canvas"""
+        half_size = size / 2
+        self.drawing_canvas.create_rectangle(
+            x - half_size, y - half_size,
+            x + half_size, y + half_size,
+            fill=color,
+            outline="black",
+            width=1,
+            tags="selection"
+        )
+    
+    def _place_copy_at(self, canvas_x: int, canvas_y: int):
+        """Place the copied pixels at the specified position"""
+        if self.copy_buffer is None or self.copy_dimensions is None:
+            return
+        
+        width, height = self.copy_dimensions
+        
+        # Place pixels
+        draw_layer = self._get_drawing_layer()
+        if draw_layer:
+            for py in range(height):
+                for px in range(width):
+                    if py < self.copy_buffer.shape[0] and px < self.copy_buffer.shape[1]:
+                        pixel_color = tuple(self.copy_buffer[py, px])
+                        dest_x = canvas_x + px
+                        dest_y = canvas_y + py
+                        if 0 <= dest_x < self.canvas.width and 0 <= dest_y < self.canvas.height:
+                            # Only draw non-transparent pixels
+                            if pixel_color[3] > 0:
+                                draw_layer.set_pixel(dest_x, dest_y, pixel_color)
+            
+            # Update canvas display
+            self._update_canvas_from_layers()
+            self._update_pixel_display()
+            
+        # Exit placement mode
+        self.is_placing_copy = False
+        print(f"[OK] Copy placed at ({canvas_x}, {canvas_y})")
     
     def _update_tool_selection(self):
         """Update tool button appearance"""
@@ -1193,6 +1958,270 @@ class MainWindow:
             self.grid_button.configure(text="Grid: OFF")
             self.grid_button.configure(fg_color="red")
     
+    def _toggle_grid_overlay(self):
+        """Toggle grid overlay mode (grid on top of pixels)"""
+        self.grid_overlay = not self.grid_overlay
+        self._update_grid_overlay_button_text()
+        self._force_tkinter_canvas_update()
+    
+    def _update_grid_overlay_button_text(self):
+        """Update grid overlay button text to show current state"""
+        if self.grid_overlay:
+            self.grid_overlay_button.configure(text="Overlay: ON")
+            self.grid_overlay_button.configure(fg_color="#1f538d")
+        else:
+            self.grid_overlay_button.configure(text="Overlay: OFF")
+            self.grid_overlay_button.configure(fg_color="gray")
+    
+    def _on_theme_selected(self, theme_name: str):
+        """Handle theme selection from dropdown"""
+        self.theme_manager.set_theme(theme_name)
+        print(f"[OK] Theme changed to: {theme_name}")
+    
+    def _apply_theme(self, theme):
+        """Apply theme colors to all UI elements - optimized for instant switching"""
+        # SKIP appearance mode change - it causes full UI refresh!
+        # Instead, manually configure all widget colors
+        
+        # Direct widget configuration (fast and immediate, no UI refresh)
+        self.main_frame.configure(fg_color=theme.bg_primary)
+        self.toolbar.configure(fg_color=theme.bg_secondary)
+        self.tool_frame.configure(fg_color=theme.bg_primary)
+        self.canvas_frame.configure(fg_color=theme.bg_primary)
+        self.drawing_canvas.configure(bg=theme.canvas_bg)
+        
+        # Update all tool buttons
+        for tool_id, btn in self.tool_buttons.items():
+            if tool_id == self.current_tool:
+                btn.configure(
+                    fg_color=theme.tool_selected,
+                    hover_color=theme.button_hover,
+                    text_color=theme.text_primary
+                )
+            else:
+                btn.configure(
+                    fg_color=theme.tool_unselected,
+                    hover_color=theme.button_hover,
+                    text_color=theme.text_primary
+                )
+        
+        # Update operation buttons (Mirror, Rotate, Copy, Scale)
+        if hasattr(self, 'mirror_btn'):
+            for btn in [self.mirror_btn, self.rotate_btn, self.copy_btn, self.scale_btn]:
+                btn.configure(
+                    fg_color=theme.button_normal,
+                    hover_color=theme.button_hover,
+                    text_color=theme.text_primary
+                )
+        
+        # Update grid button
+        if self.canvas.show_grid:
+            self.grid_button.configure(fg_color="green", text_color=theme.text_primary)
+        else:
+            self.grid_button.configure(fg_color=theme.button_normal, text_color=theme.text_primary)
+        
+        # Update other toolbar buttons (different configure params for different widget types)
+        self.file_button.configure(
+            fg_color=theme.button_normal,
+            hover_color=theme.button_hover,
+            text_color=theme.text_primary
+        )
+        
+        # Update dropdowns (CTkOptionMenu has different params)
+        for dropdown in [self.size_menu, self.zoom_menu, self.theme_menu]:
+            try:
+                dropdown.configure(
+                    fg_color=theme.button_normal,
+                    text_color=theme.text_primary,
+                    dropdown_fg_color=theme.bg_secondary,
+                    dropdown_hover_color=theme.button_hover
+                )
+            except:
+                pass  # Skip if params not supported
+        
+        # Update labels
+        self.size_label.configure(text_color=theme.text_primary)
+        self.zoom_label.configure(text_color=theme.text_primary)
+        self.theme_label.configure(text_color=theme.text_primary)
+        
+        # Update left and right panel backgrounds
+        self.left_panel.configure(
+            fg_color=theme.bg_secondary,
+            scrollbar_button_color=theme.button_normal,
+            scrollbar_button_hover_color=theme.button_hover
+        )
+        self.right_panel.configure(
+            fg_color=theme.bg_secondary,
+            scrollbar_button_color=theme.button_normal,
+            scrollbar_button_hover_color=theme.button_hover
+        )
+        
+        # Update palette panel label
+        if hasattr(self, 'palette_label'):
+            self.palette_label.configure(text_color=theme.text_primary)
+        
+        # Update all section labels and frames in tool panel
+        for widget in self.tool_frame.winfo_children():
+            if isinstance(widget, ctk.CTkLabel):
+                widget.configure(text_color=theme.text_primary)
+            elif isinstance(widget, ctk.CTkFrame):
+                widget.configure(fg_color=theme.bg_primary)
+        
+        # Update palette panel and its children recursively
+        if hasattr(self, 'palette_frame'):
+            self.palette_frame.configure(fg_color=theme.bg_primary)
+            self._apply_theme_to_children(self.palette_frame, theme)
+        
+        # Update palette dropdown
+        if hasattr(self, 'palette_menu'):
+            try:
+                self.palette_menu.configure(
+                    fg_color=theme.button_normal,
+                    text_color=theme.text_primary
+                )
+            except:
+                pass
+        
+        # Update layer panel if it exists (comprehensive)
+        if hasattr(self, 'layer_panel'):
+            try:
+                # Update layer panel background - use layer_frame not frame
+                if hasattr(self.layer_panel, 'layer_frame'):
+                    self.layer_panel.layer_frame.configure(fg_color=theme.bg_secondary)
+                    # Recursively update all children
+                    self._apply_theme_to_children(self.layer_panel.layer_frame, theme)
+            except Exception as e:
+                print(f"[DEBUG] Layer panel theme error: {e}")
+        
+        # Update timeline panel if it exists (comprehensive)
+        if hasattr(self, 'timeline_panel'):
+            try:
+                # Update timeline panel background - use timeline_frame not frame
+                if hasattr(self.timeline_panel, 'timeline_frame'):
+                    self.timeline_panel.timeline_frame.configure(fg_color=theme.bg_secondary)
+                    # Recursively update all children
+                    self._apply_theme_to_children(self.timeline_panel.timeline_frame, theme)
+                
+                # Update frame list scrollable area specifically
+                if hasattr(self.timeline_panel, 'frame_list_frame'):
+                    self.timeline_panel.frame_list_frame.configure(
+                        fg_color=theme.bg_tertiary,
+                        scrollbar_button_color=theme.button_normal,
+                        scrollbar_button_hover_color=theme.button_hover
+                    )
+            except Exception as e:
+                print(f"[DEBUG] Timeline panel theme error: {e}")
+        
+        # Update undo/redo buttons if they exist
+        if hasattr(self, 'undo_button') and hasattr(self, 'redo_button'):
+            self.undo_button.configure(
+                fg_color=theme.button_normal,
+                hover_color=theme.button_hover,
+                text_color=theme.text_primary
+            )
+            self.redo_button.configure(
+                fg_color=theme.button_normal,
+                hover_color=theme.button_hover,
+                text_color=theme.text_primary
+            )
+        
+        # Update paned window sash (dividers between panels)
+        if hasattr(self, 'paned_window'):
+            try:
+                self.paned_window.configure(bg=theme.bg_tertiary)
+            except:
+                pass
+        
+        # Update canvas elements (grid/border only, not pixels) - lightweight
+        canvas_width = self.drawing_canvas.winfo_width()
+        if canvas_width > 1:
+            self._update_theme_canvas_elements(theme)
+        
+        print(f"[OK] Theme '{theme.name}' applied (instant mode)")
+    
+    def _apply_theme_to_children(self, parent_widget, theme):
+        """Recursively apply theme to all children widgets"""
+        for widget in parent_widget.winfo_children():
+            try:
+                if isinstance(widget, ctk.CTkLabel):
+                    widget.configure(text_color=theme.text_primary)
+                elif isinstance(widget, ctk.CTkFrame):
+                    # Check if it's supposed to be transparent
+                    try:
+                        current_fg = widget.cget("fg_color")
+                        if current_fg == "transparent":
+                            widget.configure(fg_color="transparent")
+                        else:
+                            widget.configure(fg_color=theme.bg_primary)
+                    except:
+                        widget.configure(fg_color=theme.bg_primary)
+                    # Recursively update children
+                    self._apply_theme_to_children(widget, theme)
+                elif isinstance(widget, ctk.CTkRadioButton):
+                    widget.configure(text_color=theme.text_primary)
+                elif isinstance(widget, ctk.CTkButton):
+                    widget.configure(
+                        fg_color=theme.button_normal,
+                        hover_color=theme.button_hover,
+                        text_color=theme.text_primary
+                    )
+            except Exception as e:
+                # Skip widgets that don't support these properties
+                pass
+    
+    def _update_theme_canvas_elements(self, theme):
+        """Update only theme-dependent canvas elements (grid, borders) without full redraw"""
+        width = self.drawing_canvas.winfo_width()
+        height = self.drawing_canvas.winfo_height()
+        
+        if width > 1 and height > 1:
+            # Calculate canvas display size
+            canvas_pixel_width = self.canvas.width * self.canvas.zoom
+            canvas_pixel_height = self.canvas.height * self.canvas.zoom
+            
+            # Calculate offsets
+            x_offset = (width - canvas_pixel_width) // 2
+            y_offset = (height - canvas_pixel_height) // 2
+            x_offset += self.pan_offset_x * self.canvas.zoom
+            y_offset += self.pan_offset_y * self.canvas.zoom
+            
+            # Only redraw grid and border (not pixels!)
+            # Delete old theme-dependent elements
+            self.drawing_canvas.delete("grid")
+            self.drawing_canvas.delete("border")
+            
+            # Draw grid if enabled (with new theme color)
+            if self.canvas.show_grid:
+                for x in range(self.canvas.width + 1):
+                    screen_x = x_offset + (x * self.canvas.zoom)
+                    self.drawing_canvas.create_line(
+                        screen_x, y_offset,
+                        screen_x, y_offset + canvas_pixel_height,
+                        fill=theme.grid_color, tags="grid"
+                    )
+                for y in range(self.canvas.height + 1):
+                    screen_y = y_offset + (y * self.canvas.zoom)
+                    self.drawing_canvas.create_line(
+                        x_offset, screen_y,
+                        x_offset + canvas_pixel_width, screen_y,
+                        fill=theme.grid_color, tags="grid"
+                    )
+            
+            # Draw border with new theme color
+            self.drawing_canvas.create_rectangle(
+                x_offset, y_offset,
+                x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
+                outline=theme.canvas_border, width=2, tags="border"
+            )
+            
+            # Bring pixels and selection to front (keep existing rendering)
+            self.drawing_canvas.tag_raise("pixels")
+            self.drawing_canvas.tag_raise("selection")
+            
+            # Raise grid above pixels if overlay mode is enabled
+            if self.grid_overlay and self.canvas.show_grid:
+                self.drawing_canvas.tag_raise("grid")
+    
     def _show_file_menu(self):
         """Show file menu options"""
         # Create a popup menu
@@ -1264,7 +2293,7 @@ class MainWindow:
         self.layer_panel.refresh()
         self.timeline_panel.refresh()
         
-        print("✓ New project created")
+        print("[OK] New project created")
     
     def _open_project(self):
         """Open an existing project"""
@@ -1297,11 +2326,11 @@ class MainWindow:
                     self.root.update_idletasks()
                     self.root.update()
                     
-                    print(f"✓ Project opened: {file_path}")
+                    print(f"[OK] Project opened: {file_path}")
                 else:
-                    print(f"✗ Failed to open project: {file_path}")
+                    print(f"[ERROR] Failed to open project: {file_path}")
         except Exception as e:
-            print(f"✗ Error opening project: {e}")
+            print(f"[ERROR] Error opening project: {e}")
             import traceback
             traceback.print_exc()
     
@@ -1448,7 +2477,7 @@ class MainWindow:
                     f"Ready to edit! Use File → Save Project when ready."
                 )
             
-            print(f"✓ Imported PNG to canvas: {os.path.basename(png_path)}")
+            print(f"[OK] Imported PNG to canvas: {os.path.basename(png_path)}")
                 
         except Exception as e:
             from tkinter import messagebox
@@ -1734,8 +2763,54 @@ class MainWindow:
     
     def _on_tkinter_canvas_mouse_down(self, event):
         """Handle mouse down on tkinter canvas"""
+        # Handle pan tool start (use raw screen coords, not canvas coords!)
+        if self.current_tool == "pan":
+            tool = self.tools["pan"]
+            tool.start_pan(event.x, event.y, self.pan_offset_x, self.pan_offset_y)
+            return
+        
         # Convert tkinter screen coordinates to canvas coordinates
         canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords(event.x, event.y)
+
+        # Handle copy placement mode
+        if self.is_placing_copy and self.copy_buffer is not None:
+            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                self._place_copy_at(canvas_x, canvas_y)
+            return
+        
+        # Handle scaling mode
+        if self.is_scaling:
+            selection_tool = self.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect:
+                left, top, width, height = selection_tool.selection_rect
+                
+                # Check if clicking near a handle or edge
+                handle = self._get_scale_handle(canvas_x, canvas_y, left, top, width, height)
+                
+                if handle:
+                    # Start dragging a handle
+                    # Update reference rect to current position before drag
+                    self.scale_original_rect = selection_tool.selection_rect
+                    self.scale_handle = handle
+                    self.scale_start_pos = (canvas_x, canvas_y)
+                    self.scale_is_dragging = True  # Mark as actively dragging
+                    print(f"[DEBUG] Starting drag from {self.scale_original_rect} with handle {handle}")
+                else:
+                    # Click outside - exit scaling mode (pixels already scaled)
+                    self.is_scaling = False
+                    self.scale_handle = None
+                    self.scale_original_rect = None
+                    self.scale_true_original_rect = None
+                    self.scale_is_dragging = False
+                    
+                    # Restore current tool's cursor and button highlighting
+                    tool = self.tools[self.current_tool]
+                    self.drawing_canvas.configure(cursor=tool.cursor)
+                    self.scale_btn.configure(fg_color="gray")
+                    self._update_tool_selection()
+                    
+                    print("[OK] Exited scaling mode")
+            return
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             # Get current tool
@@ -1786,7 +2861,75 @@ class MainWindow:
 
     def _on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
+        # Handle pan tool end
+        if self.current_tool == "pan":
+            tool = self.tools["pan"]
+            tool.end_pan()
+            # Reset cursor back to open hand
+            self.drawing_canvas.configure(cursor="hand2")
+            return
+        
+        # Convert tkinter screen coordinates to canvas coordinates
         canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords(event.x, event.y)
+        
+        # Handle scaling drag release - APPLY the scale incrementally
+        if self.is_scaling and self.scale_is_dragging:
+            selection_tool = self.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect and selection_tool.selected_pixels is not None:
+                old_rect = self.scale_original_rect
+                new_rect = selection_tool.selection_rect
+                
+                old_left, old_top, old_width, old_height = old_rect
+                new_left, new_top, new_width, new_height = new_rect
+                
+                # If size actually changed, apply the scaling
+                if old_width != new_width or old_height != new_height:
+                    # Scale the stored pixel data
+                    scaled_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
+                    for ny in range(new_height):
+                        for nx in range(new_width):
+                            ox = int(nx * old_width / new_width)
+                            oy = int(ny * old_height / new_height)
+                            if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
+                                scaled_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
+                    
+                    # Update the selection tool's stored pixels
+                    selection_tool.selected_pixels = scaled_pixels
+                    
+                    # Redraw on canvas
+                    draw_layer = self._get_drawing_layer()
+                    if draw_layer:
+                        # Clear old area
+                        for py in range(old_height):
+                            for px in range(old_width):
+                                canvas_x = old_left + px
+                                canvas_y = old_top + py
+                                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                    draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                        
+                        # Draw new scaled pixels
+                        for py in range(new_height):
+                            for px in range(new_width):
+                                pixel_color = tuple(scaled_pixels[py, px])
+                                canvas_x = new_left + px
+                                canvas_y = new_top + py
+                                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                    if pixel_color[3] > 0:
+                                        draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+                        
+                        self._update_canvas_from_layers()
+                    
+                    print(f"[OK] Scaled from {old_width}x{old_height} to {new_width}x{new_height}")
+                
+                # Update both reference rects for next drag
+                self.scale_original_rect = new_rect
+                self.scale_true_original_rect = new_rect
+            
+            # End this drag operation but keep in scaling mode
+            self.scale_is_dragging = False
+            self._update_pixel_display()
+            print("[INFO] Released - drag again to resize more, or click away to exit")
+            return
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             tool = self.tools[self.current_tool]
@@ -1815,8 +2958,56 @@ class MainWindow:
             self.is_drawing = False
 
     def _on_tkinter_canvas_mouse_drag(self, event):
-        """Handle mouse drag on tkinter canvas"""
+        """Handle mouse drag on tkinter canvas (button held down)"""
+        # Handle pan drag (PRIORITY - check first, use raw screen coords!)
+        if self.current_tool == "pan":
+            tool = self.tools["pan"]
+            if tool.is_panning:
+                # Get new absolute offset from pan tool (not delta!)
+                result = tool.update_pan(event.x, event.y, self.canvas.zoom)
+                if result:
+                    self.pan_offset_x, self.pan_offset_y = result
+                    # Change cursor to grabbing hand
+                    self.drawing_canvas.configure(cursor="fleur")
+                    # Redraw canvas with new offset
+                    self._update_pixel_display()
+            return
+        
+        # Convert tkinter screen coordinates to canvas coordinates
         canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords(event.x, event.y)
+        
+        # Handle scaling drag (PRIORITY - check second!)
+        if self.is_scaling and self.scale_is_dragging and self.scale_handle and self.scale_start_pos:
+            selection_tool = self.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect and selection_tool.selected_pixels is not None:
+                old_left, old_top, old_width, old_height = self.scale_original_rect
+                dx = canvas_x - self.scale_start_pos[0]
+                dy = canvas_y - self.scale_start_pos[1]
+                
+                # Calculate new rectangle based on which handle is being dragged
+                new_left, new_top, new_width, new_height = old_left, old_top, old_width, old_height
+                
+                if "t" in self.scale_handle:  # Top edge/corner
+                    new_top = old_top + dy
+                    new_height = old_height - dy
+                if "b" in self.scale_handle:  # Bottom edge/corner
+                    new_height = old_height + dy
+                if "l" in self.scale_handle:  # Left edge/corner
+                    new_left = old_left + dx
+                    new_width = old_width - dx
+                if "r" in self.scale_handle:  # Right edge/corner
+                    new_width = old_width + dx
+                
+                # Ensure minimum size
+                if new_width >= 1 and new_height >= 1:
+                    # Update the selection rectangle for visual feedback
+                    selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
+                    
+                    # Show live preview of scaled pixels during drag
+                    # This is a preview - not the actual scaling operation
+                    self._preview_scaled_pixels(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
+                    
+            return  # Don't do drawing when scaling
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             # Ensure we're in drawing state
@@ -1854,6 +3045,59 @@ class MainWindow:
     def _on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas"""
         canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords(event.x, event.y)
+        
+        # Update copy preview position
+        if self.is_placing_copy:
+            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                self.copy_preview_pos = (canvas_x, canvas_y)
+                self._update_pixel_display()  # Redraw with preview
+            return
+        
+        # Handle scaling drag or cursor update
+        if self.is_scaling:
+            selection_tool = self.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect:
+                # If actively dragging a handle (mouse button held down)
+                if self.scale_is_dragging and self.scale_handle and self.scale_start_pos:
+                    left, top, width, height = self.scale_original_rect
+                    dx = canvas_x - self.scale_start_pos[0]
+                    dy = canvas_y - self.scale_start_pos[1]
+                    
+                    # Calculate new rectangle based on which handle is being dragged
+                    new_left, new_top, new_width, new_height = left, top, width, height
+                    
+                    if "t" in self.scale_handle:  # Top edge/corner
+                        new_top = top + dy
+                        new_height = height - dy
+                    if "b" in self.scale_handle:  # Bottom edge/corner
+                        new_height = height + dy
+                    if "l" in self.scale_handle:  # Left edge/corner
+                        new_left = left + dx
+                        new_width = width - dx
+                    if "r" in self.scale_handle:  # Right edge/corner
+                        new_width = width + dx
+                    
+                    # Ensure minimum size
+                    if new_width >= 1 and new_height >= 1:
+                        selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
+                        self._update_pixel_display()
+                else:
+                    # Not dragging - update cursor based on what's under mouse
+                    left, top, width, height = selection_tool.selection_rect
+                    handle = self._get_scale_handle(canvas_x, canvas_y, left, top, width, height)
+                    
+                    # Change cursor based on handle type (Windows-compatible cursor names)
+                    if handle in ["tl", "br"]:
+                        self.drawing_canvas.configure(cursor="size_nw_se")  # Diagonal cursor
+                    elif handle in ["tr", "bl"]:
+                        self.drawing_canvas.configure(cursor="size_ne_sw")  # Diagonal cursor
+                    elif handle == "t" or handle == "b":
+                        self.drawing_canvas.configure(cursor="sb_v_double_arrow")  # Vertical cursor
+                    elif handle == "l" or handle == "r":
+                        self.drawing_canvas.configure(cursor="sb_h_double_arrow")  # Horizontal cursor
+                    else:
+                        self.drawing_canvas.configure(cursor="arrow")  # Default cursor
+            return
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             tool = self.tools[self.current_tool]
@@ -1888,6 +3132,10 @@ class MainWindow:
         # Convert to canvas pixel coordinates
         canvas_coord_x = relative_x // self.canvas.zoom
         canvas_coord_y = relative_y // self.canvas.zoom
+        
+        # Apply pan offset
+        canvas_coord_x -= self.pan_offset_x
+        canvas_coord_y -= self.pan_offset_y
 
         return canvas_coord_x, canvas_coord_y
     
@@ -1911,6 +3159,10 @@ class MainWindow:
                 # Calculate offsets to center the canvas
                 x_offset = (width - canvas_pixel_width) // 2
                 y_offset = (height - canvas_pixel_height) // 2
+                
+                # Apply pan offset
+                x_offset += self.pan_offset_x * self.canvas.zoom
+                y_offset += self.pan_offset_y * self.canvas.zoom
 
                 # Clear canvas
                 self.drawing_canvas.delete("all")
@@ -1919,18 +3171,126 @@ class MainWindow:
                 if self.canvas.show_grid:
                     self._draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
-                # Draw a border around the canvas area
+                # Draw a border around the canvas area with theme color
+                theme = self.theme_manager.get_current_theme()
                 self.drawing_canvas.create_rectangle(
                     x_offset, y_offset,
                     x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
-                    outline="black", width=2
+                    outline=theme.canvas_border, width=2, tags="border"
                 )
 
                 # Draw all pixels from the canvas
                 self._draw_all_pixels_on_tkinter(x_offset, y_offset)
+                
+                # Draw selection rectangle if active
+                self._draw_selection_on_tkinter(x_offset, y_offset)
+                
+                # Raise grid above pixels if overlay mode is enabled
+                if self.grid_overlay and self.canvas.show_grid:
+                    self.drawing_canvas.tag_raise("grid")
         finally:
             self._updating_display = False
 
+    def _draw_selection_on_tkinter(self, x_offset: int, y_offset: int):
+        """Draw selection rectangle on tkinter canvas"""
+        # Check if selection tool is active or if there's an active selection
+        selection_tool = self.tools.get("selection")
+        if not selection_tool:
+            return
+        
+        # Draw selection rectangle if it exists
+        if selection_tool.selection_rect and (selection_tool.is_selecting or selection_tool.has_selection):
+            left, top, width, height = selection_tool.selection_rect
+            zoom = self.canvas.zoom
+            
+            # Convert canvas coordinates to screen coordinates
+            screen_x1 = x_offset + (left * zoom)
+            screen_y1 = y_offset + (top * zoom)
+            screen_x2 = x_offset + ((left + width) * zoom)
+            screen_y2 = y_offset + ((top + height) * zoom)
+            
+            # Draw white selection rectangle
+            self.drawing_canvas.create_rectangle(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                outline="white", width=2, tags="selection"
+            )
+            
+            # Draw corner markers for better visibility
+            corner_size = 6
+            # Top-left
+            self.drawing_canvas.create_line(screen_x1, screen_y1, screen_x1 + corner_size, screen_y1, fill="white", width=3, tags="selection")
+            self.drawing_canvas.create_line(screen_x1, screen_y1, screen_x1, screen_y1 + corner_size, fill="white", width=3, tags="selection")
+            # Top-right
+            self.drawing_canvas.create_line(screen_x2, screen_y1, screen_x2 - corner_size, screen_y1, fill="white", width=3, tags="selection")
+            self.drawing_canvas.create_line(screen_x2, screen_y1, screen_x2, screen_y1 + corner_size, fill="white", width=3, tags="selection")
+            # Bottom-left
+            self.drawing_canvas.create_line(screen_x1, screen_y2, screen_x1 + corner_size, screen_y2, fill="white", width=3, tags="selection")
+            self.drawing_canvas.create_line(screen_x1, screen_y2, screen_x1, screen_y2 - corner_size, fill="white", width=3, tags="selection")
+            # Bottom-right
+            self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2 - corner_size, screen_y2, fill="white", width=3, tags="selection")
+            self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2, screen_y2 - corner_size, fill="white", width=3, tags="selection")
+            
+            # Draw scale handles if in scaling mode
+            if self.is_scaling:
+                handle_size = 8
+                # Draw corner handles
+                self._draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")  # Top-left
+                self._draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")  # Top-right
+                self._draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")  # Bottom-left
+                self._draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")  # Bottom-right
+                
+                # Draw edge handles
+                mid_x = (screen_x1 + screen_x2) / 2
+                mid_y = (screen_y1 + screen_y2) / 2
+                self._draw_scale_handle(mid_x, screen_y1, handle_size, "orange")  # Top
+                self._draw_scale_handle(mid_x, screen_y2, handle_size, "orange")  # Bottom
+                self._draw_scale_handle(screen_x1, mid_y, handle_size, "orange")  # Left
+                self._draw_scale_handle(screen_x2, mid_y, handle_size, "orange")  # Right
+        
+        # Draw copy preview if in placement mode
+        if self.is_placing_copy and self.copy_preview_pos and self.copy_buffer is not None and self.copy_dimensions:
+            preview_x, preview_y = self.copy_preview_pos
+            width, height = self.copy_dimensions
+            zoom = self.canvas.zoom
+            
+            # Draw preview pixels with semi-transparency effect (stipple pattern)
+            for py in range(height):
+                for px in range(width):
+                    if py < self.copy_buffer.shape[0] and px < self.copy_buffer.shape[1]:
+                        pixel_color = tuple(self.copy_buffer[py, px])
+                        if pixel_color[3] > 0:  # Only draw non-transparent pixels
+                            canvas_x = preview_x + px
+                            canvas_y = preview_y + py
+                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                screen_x = x_offset + (canvas_x * zoom)
+                                screen_y = y_offset + (canvas_y * zoom)
+                                
+                                # Draw semi-transparent preview rectangle
+                                color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
+                                self.drawing_canvas.create_rectangle(
+                                    screen_x, screen_y,
+                                    screen_x + zoom, screen_y + zoom,
+                                    fill=color_hex,
+                                    outline="",
+                                    stipple="gray50",  # Semi-transparent effect
+                                    tags="copy_preview"
+                                )
+            
+            # Draw preview boundary
+            preview_screen_x1 = x_offset + (preview_x * zoom)
+            preview_screen_y1 = y_offset + (preview_y * zoom)
+            preview_screen_x2 = x_offset + ((preview_x + width) * zoom)
+            preview_screen_y2 = y_offset + ((preview_y + height) * zoom)
+            
+            self.drawing_canvas.create_rectangle(
+                preview_screen_x1, preview_screen_y1,
+                preview_screen_x2, preview_screen_y2,
+                outline="cyan",
+                width=2,
+                dash=(4, 4),  # Dashed line
+                tags="copy_preview"
+            )
+    
     def _update_single_pixel(self, canvas_x: int, canvas_y: int, old_color):
         """Update only a single pixel for better performance"""
         # For now, just trigger a full update to ensure consistency

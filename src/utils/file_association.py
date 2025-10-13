@@ -36,7 +36,7 @@ def register_pixpf_icon():
         icon_path = os.path.abspath(os.path.join(base_path, "assets", "icons", "pixpf_icon.ico"))
         
         if not os.path.exists(icon_path):
-            print(f"⚠ Icon not found: {icon_path}")
+            print(f"[WARN] Icon not found: {icon_path}")
             return False
         
         # Register file association
@@ -57,11 +57,11 @@ def register_pixpf_icon():
         winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f"{icon_path},0")
         winreg.CloseKey(key)
         
-        print("✓ Registered .pixpf file icon")
+        print("[OK] Registered .pixpf file icon")
         return True
         
     except Exception as e:
-        print(f"✗ Failed to register icon: {e}")
+        print(f"[ERROR] Failed to register icon: {e}")
         return False
 
 def prompt_and_register():
@@ -76,11 +76,11 @@ def prompt_and_register():
     print("Registering file association...")
     
     if register_pixpf_icon():
-        print("\n✓ Success! .pixpf files will now show the custom icon.")
+        print("\n[OK] Success! .pixpf files will now show the custom icon.")
         print("  (You may need to restart Explorer to see changes)")
         return True
     else:
-        print("\n⚠ Could not auto-register.")
+        print("\n[WARN] Could not auto-register.")
         print("  To manually register, run: register_pixpf_icon.bat")
         return False
 

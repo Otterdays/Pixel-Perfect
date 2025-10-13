@@ -11,7 +11,7 @@ class EyedropperTool(Tool):
     """Eyedropper tool for sampling colors"""
     
     def __init__(self):
-        super().__init__("Eyedropper")
+        super().__init__("Eyedropper", cursor="tcross")
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Sample color from canvas - handled by main window"""

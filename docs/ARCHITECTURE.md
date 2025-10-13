@@ -4,11 +4,14 @@
 Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, custom colors, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 1.12
-**Status**: All Features Complete - Production Ready with Full System Integration
+**Version**: 1.25
+**Status**: All Features Complete - Production Ready with Advanced UI Controls
 
-### Latest Update (v1.12)
-- **Custom Colors System**: User-specific persistent color library with local storage
+### Latest Updates
+- **v1.25**: Grid Overlay - Toggle grid lines on top of pixels for precise editing
+- **v1.24**: Collapsible Panels - Hide/show side panels for maximum canvas space
+- **v1.23**: Panel Resize Optimization - Smooth, lag-free panel divider dragging
+- **v1.22**: Theme System - Real-time UI color scheme switching (Basic Grey/Angelic)
 
 ## Core Components
 
@@ -18,8 +21,10 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - Zoom levels (1x to 32x) with visible grid overlay
   - Preset canvas sizes (16x16, 32x32, 16x32, 32x64, 64x64)
   - Grid overlay with toggle and proper visibility
+  - **Grid overlay mode** - Grid lines can appear on top of pixels for precise editing
   - Mouse position tracking and coordinate conversion
   - Real-time pixel manipulation with numpy arrays
+  - Pan tool for camera movement around canvas
 - **Dependencies**: Pygame for rendering, numpy for efficient pixel operations
 
 ### Color Palette (`src/core/color_palette.py`)
@@ -112,12 +117,29 @@ class Tool:
 - Coordinates all UI panels with proper integration
 - Mouse event routing to canvas tools
 - Keyboard shortcuts for all major functions
+- **Theme System** (v1.22): Real-time UI color scheme switching with callback architecture
+- **Collapsible Panels** (v1.24): Hide/show side panels for maximum canvas space
+- **Grid Overlay** (v1.25): Toggle grid lines on top of pixels for precise editing
+
+### Toolbar Components
+- **File Menu**: New, Open, Save, Export options
+- **Size Dropdown**: Canvas size selection (16x16 to 64x64)
+- **Zoom Dropdown**: Zoom level control (1x to 32x)
+- **Undo/Redo Buttons**: Arrow buttons (↶ ↷) with visual state feedback
+- **Theme Dropdown**: Switch between Basic Grey and Angelic themes
+- **Grid Button**: Toggle grid visibility (ON/OFF with color feedback)
+- **Grid Overlay Button** (v1.25): Toggle grid lines on top of pixels (Overlay ON/OFF)
 
 ### UI Panels (All Implemented)
-- **Tool Panel**: Tool selection with visual feedback
-- **Palette Panel** (`palette_panel.py`): Color palette display and management
-- **Layer Panel** (`layer_panel.py`): Complete layer management UI
-- **Timeline Panel** (`timeline_panel.py`): Animation timeline controls
+- **Tool Panel**: Tool selection with visual feedback, 3×3 grid layout
+- **Palette Panel**: Color palette display and management (Grid/Primary/Wheel views)
+- **Layer Panel** (`layer_panel.py`): Complete layer management UI with visibility toggles
+- **Timeline Panel** (`timeline_panel.py`): Animation timeline controls with frame management
+- **Collapsible Side Panels** (v1.24): 
+  - Left panel: Tools and palette (collapse with ◀ button)
+  - Right panel: Layers and animation (collapse with ▶ button)
+  - Restore buttons appear when collapsed (blue arrow buttons)
+  - Resizable with draggable sash dividers (10px wide)
 
 ## Utility Systems (`src/utils/`)
 

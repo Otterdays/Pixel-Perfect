@@ -10,8 +10,9 @@ import pygame
 class Tool(ABC):
     """Base class for all drawing tools"""
     
-    def __init__(self, name: str):
+    def __init__(self, name: str, cursor: str = "arrow"):
         self.name = name
+        self.cursor = cursor  # Tkinter cursor type
         self.is_active = False
         self.preview_surface = None
     

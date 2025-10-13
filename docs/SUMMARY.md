@@ -1,10 +1,112 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.14  
-**Last Updated**: October 12, 2025 - PNG Import Feature
+**Version**: 1.25  
+**Last Updated**: October 13, 2025 - Grid Overlay
 
-## Latest Updates (v1.14)
+## Latest Updates (v1.25)
+
+- **Grid Overlay Feature**: Toggle grid lines on top of pixels
+- New toolbar button shows grid through drawn pixels
+- Perfect for precise pixel placement in dense artwork
+- "Overlay: ON" (blue) / "Overlay: OFF" (gray) states
+- Efficient canvas tag layering system
+
+## Latest Updates (v1.24)
+
+- **Collapsible Side Panels**: Hide tools/layers for more canvas space
+- Blue rounded arrow buttons (◀ ▶) collapse panels
+- Clean restore buttons at edges (no grey boxes!)
+- **Improved Dividers**: 10px wide flat grey sash dividers
+- Better visibility, professional styling
+- Fixed restore button appearance using tkinter buttons
+
+## Latest Updates (v1.23)
+
+- **Panel Resize Optimization**: Smooth, responsive divider dragging
+- `opaqueresize=False` shows outline during drag (fast!)
+- Sash drag tracking prevents UI conflicts
+- Fixed resize timer errors
+
+## Latest Updates (v1.22)
+
+- **Theme System**: Instant real-time UI color scheme switching
+- Two themes: **Basic Grey** (dark) and **Angelic** (light)
+- Palette icon 🎨 with dropdown in toolbar
+- Separate ThemeManager module for clean architecture
+- **100% coverage**: All panels, buttons, labels, scrollbars, dividers update
+- **Instant switching**: < 50ms (optimized, no appearance mode change)
+- Recursive widget updates catch all nested elements
+
+## Recent Updates (v1.21)
+
+- **Pan Tool**: Move camera view around the canvas
+- Open hand cursor changes to grabbing hand while dragging
+- Useful for navigating large canvases or zoomed-in views
+- Smooth real-time panning with coordinate offset system
+
+## Recent Updates (v1.20)
+
+- **Fixed Scaling Behavior**: Pixels maintain scaled size on mouse release
+- Each drag operation permanently applies to pixel data
+- Multiple drags build upon previous scaling results
+- Improved visual feedback during scaling operations
+
+## Recent Updates (v1.19)
+
+- **Interactive Scaling**: Scale selections with draggable handles
+  - Yellow corner handles scale proportionally
+  - Orange edge handles scale in one dimension
+  - Click away to apply, Escape to cancel
+  - Nearest-neighbor algorithm for crisp pixel art
+- **Copy Preview**: See exactly where pixels will be placed
+  - Semi-transparent preview follows cursor
+  - Cyan dashed boundary for placement area
+  - Real-time visual feedback
+- **Smart Upscaling**: Scale 32x32 art to 64x64 canvas for detail work
+- Added scipy>=1.11.0 for high-quality scaling
+
+## Recent Updates (v1.18)
+
+- **Selection Operations**: 3 new buttons for pixel manipulation
+  - **Mirror**: Flip selected pixels horizontally
+  - **Rotate**: Rotate selection 90° clockwise (click 4x for full circle)
+  - **Copy**: Duplicate selection and place anywhere (press Escape to cancel)
+- New "Selection" section below Tools with 3-button grid
+- Instant visual feedback for all operations
+- Natural workflow: Select → Transform/Copy → Place
+
+## Recent Updates (v1.17)
+
+- **Auto-Switch to Move**: After selection, automatically switches to Move tool for natural workflow
+- **Selection Visual Feedback Fixed**: Selection rectangle now displays properly
+  - White outline with corner markers
+  - Visible during and after selection
+  - Properly scaled to zoom level
+- **Unicode Fix**: Replaced emoji with ASCII ([OK], [WARN], [ERROR]) to fix console crashes
+- Natural Select → Move workflow eliminates manual tool switching
+
+## Recent Updates (v1.16)
+
+- **Tooltip System**: Helpful tooltips appear after 1 second hover on tool buttons
+  - Simple, direct descriptions with keyboard shortcuts
+  - Professional light yellow styling (#ffffe0)
+  - Examples: "Draw single pixels (B)", "Erase pixels (E)", etc.
+- **Selection Tool Fix**: Resolved numpy import issue
+- Non-intrusive 1-second delay prevents tooltip spam
+- Tooltips auto-hide on click or mouse leave
+
+## Recent Updates (v1.15)
+
+- **Tool Cursor Feedback**: Each tool now has unique cursor icon for visual feedback
+  - Brush: Pencil, Eraser: X, Fill: Spraycan, Eyedropper: Crosshair
+  - Selection: Crosshair, Move: 4-directional arrows, Line: Pencil
+  - Square (renamed from Rectangle): Plus, Circle: Circle
+- **Rectangle Renamed to Square**: Button label now displays "Square" for clarity
+- Automatic cursor changes when switching tools
+- Professional tool experience matching industry standards
+
+## Recent Updates (v1.14)
 
 - **PNG Import**: Load PNGs directly into canvas for immediate editing
 - **Auto-downscaling**: Handles 128x128, 256x256, 512x512 scaled exports (8x/4x/2x)

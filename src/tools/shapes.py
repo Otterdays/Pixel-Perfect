@@ -12,7 +12,7 @@ class LineTool(Tool):
     """Pixel-perfect line drawing tool"""
     
     def __init__(self):
-        super().__init__("Line")
+        super().__init__("Line", cursor="pencil")
         self.is_drawing = False
         self.start_point = (0, 0)
         self.end_point = (0, 0)
@@ -71,7 +71,7 @@ class RectangleTool(Tool):
     """Rectangle drawing tool"""
     
     def __init__(self):
-        super().__init__("Rectangle")
+        super().__init__("Rectangle", cursor="plus")
         self.is_drawing = False
         self.start_point = (0, 0)
         self.end_point = (0, 0)
@@ -145,7 +145,7 @@ class CircleTool(Tool):
     """Circle drawing tool"""
     
     def __init__(self):
-        super().__init__("Circle")
+        super().__init__("Circle", cursor="circle")
         self.is_drawing = False
         self.center = (0, 0)
         self.radius = 0

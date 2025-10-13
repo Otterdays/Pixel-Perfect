@@ -4,17 +4,39 @@
 
 A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
 
+**© 2024-2025 Diamond Clad Studios - All Rights Reserved**
+
 ## 🆕 Latest Updates
 
-### Version 1.14 (October 2025)
-🔄 **PNG Import with Auto-Downscaling**
-- **Import PNG directly to canvas** - Load PNGs straight into canvas for immediate editing
-- **Auto-downscaling** - Handles 128x128, 256x256, 512x512 scaled exports automatically
-- **Smart scale detection** - Detects 8x/4x/2x export scales and downscales to canvas size
-- **Perfect for re-editing** - Export at 8x, edit externally, re-import seamlessly
-- **Dimension validation** - Ensures 16x16, 32x32, or 64x64 canvas sizes
-- **Pixel-perfect preservation** - Uses nearest-neighbor scaling to maintain pixel art quality
-- **Fixed dimension sync bugs** - Proper canvas/layer synchronization during import
+### Version 1.25 (October 2025)
+🔲 **Grid Overlay Feature**
+- **Grid overlay button** - Toggle grid lines to appear on top of pixels
+- **See through pixels** - Grid lines visible through drawn artwork for precise placement
+- **Two modes** - Grid behind pixels (default) or grid on top (overlay mode)
+- **Visual feedback** - Blue when on, gray when off
+- **Perfect for dense artwork** - Never lose grid reference in heavily drawn areas
+
+### Version 1.24 (October 2025)
+🎛️ **Collapsible Panels & UI Refinements**
+- **Collapsible side panels** - Hide tools/layers panels for maximum canvas space
+- **Clean restore buttons** - Blue arrow buttons at screen edges (no grey boxes!)
+- **Styled dividers** - 10px wide flat grey sash dividers for easy panel resizing
+- **Smooth panel transitions** - Proper widget management for collapse/expand
+- **Independent panel control** - Collapse left, right, or both panels as needed
+- **Fixed UI artifacts** - Switched to tkinter buttons for clean overlay appearance
+
+### Version 1.23 (October 2025)
+⚡ **Panel Resize Optimization**
+- **Smooth divider dragging** - Optimized PanedWindow for lag-free panel resizing
+- **Outline-only resize** - Shows outline during drag instead of redrawing content
+- **Sash drag tracking** - Prevents window resize conflicts during panel manipulation
+
+### Version 1.22 (October 2025)
+🎨 **Theme System**
+- **Real-time theme switching** - Instant UI color scheme changes
+- **Two built-in themes** - Basic Grey (dark) and Angelic (light)
+- **100% UI coverage** - All panels, buttons, labels, scrollbars update
+- **Theme dropdown** - Palette icon 🎨 in toolbar for easy switching
 
 ### Version 1.13 (October 2025)
 🎨 **UI Improvements & Complete Palette System**

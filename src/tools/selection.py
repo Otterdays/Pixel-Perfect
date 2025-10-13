@@ -6,18 +6,20 @@ Rectangle selection and move functionality
 from .base_tool import Tool
 from typing import Tuple, Optional, List
 import pygame
+import numpy as np
 
 class SelectionTool(Tool):
     """Rectangle selection tool"""
     
     def __init__(self):
-        super().__init__("Selection")
+        super().__init__("Selection", cursor="crosshair")
         self.is_selecting = False
         self.selection_start = (0, 0)
         self.selection_end = (0, 0)
         self.selection_rect = None
         self.selected_pixels = None
         self.has_selection = False
+        self.on_selection_complete = None  # Callback for when selection is finalized
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Start selection"""
@@ -82,6 +84,10 @@ class SelectionTool(Tool):
         
         self.has_selection = True
         self.selection_rect = (left, top, width, height)
+        
+        # Notify that selection is complete
+        if self.on_selection_complete:
+            self.on_selection_complete()
     
     def clear_selection(self):
         """Clear current selection"""
@@ -100,16 +106,32 @@ class SelectionTool(Tool):
     
     def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
         """Draw selection preview"""
-        if self.is_selecting and self.selection_rect:
+        # Draw selection rectangle while selecting or when selection is finalized
+        if self.selection_rect and (self.is_selecting or self.has_selection):
             left, top, width, height = self.selection_rect
             rect = pygame.Rect(left, top, width, height)
+            # White rectangle for active selection
             pygame.draw.rect(surface, (255, 255, 255), rect, 1)
+            # Add corner markers for better visibility
+            corner_size = 3
+            # Top-left
+            pygame.draw.line(surface, (255, 255, 255), (left, top), (left + corner_size, top), 2)
+            pygame.draw.line(surface, (255, 255, 255), (left, top), (left, top + corner_size), 2)
+            # Top-right
+            pygame.draw.line(surface, (255, 255, 255), (left + width, top), (left + width - corner_size, top), 2)
+            pygame.draw.line(surface, (255, 255, 255), (left + width, top), (left + width, top + corner_size), 2)
+            # Bottom-left
+            pygame.draw.line(surface, (255, 255, 255), (left, top + height), (left + corner_size, top + height), 2)
+            pygame.draw.line(surface, (255, 255, 255), (left, top + height), (left, top + height - corner_size), 2)
+            # Bottom-right
+            pygame.draw.line(surface, (255, 255, 255), (left + width, top + height), (left + width - corner_size, top + height), 2)
+            pygame.draw.line(surface, (255, 255, 255), (left + width, top + height), (left + width, top + height - corner_size), 2)
 
 class MoveTool(Tool):
     """Move selection tool"""
     
     def __init__(self):
-        super().__init__("Move")
+        super().__init__("Move", cursor="fleur")
         self.is_moving = False
         self.move_offset = (0, 0)
         self.original_selection = None
@@ -131,12 +153,40 @@ class MoveTool(Tool):
                 if left <= x < left + width and top <= y < top + height:
                     self.is_moving = True
                     self.move_offset = (x - left, y - top)
+                    
+                    # Store original position and clear pixels from old location
+                    self.original_selection = (left, top)
+                    
+                    # Clear the selected area (make it transparent)
+                    for py in range(height):
+                        for px in range(width):
+                            canvas_x = left + px
+                            canvas_y = top + py
+                            if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
         if button == 1 and self.is_moving:
             self.is_moving = False
-            # Selection tool will handle the final placement
+            
+            # Place pixels at final position
+            if self.selection_tool and self.selection_tool.selected_pixels is not None:
+                bounds = self.selection_tool.get_selection_bounds()
+                if bounds:
+                    left, top, width, height = bounds
+                    
+                    # Draw selected pixels at new position
+                    for py in range(height):
+                        for px in range(width):
+                            if py < self.selection_tool.selected_pixels.shape[0] and px < self.selection_tool.selected_pixels.shape[1]:
+                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                                canvas_x = left + px
+                                canvas_y = top + py
+                                if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                    # Only draw non-transparent pixels
+                                    if pixel_color[3] > 0:
+                                        canvas.set_pixel(canvas_x, canvas_y, pixel_color)
     
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Update selection position while moving"""
@@ -147,6 +197,10 @@ class MoveTool(Tool):
                 new_left = x - self.move_offset[0]
                 new_top = y - self.move_offset[1]
                 
+                # Clamp to canvas bounds
+                new_left = max(0, min(new_left, canvas.width - width))
+                new_top = max(0, min(new_top, canvas.height - height))
+                
                 # Update selection position
                 self.selection_tool.selection_rect = (new_left, new_top, width, height)
     
@@ -156,5 +210,20 @@ class MoveTool(Tool):
             bounds = self.selection_tool.get_selection_bounds()
             if bounds:
                 left, top, width, height = bounds
+                
+                # Draw the selected pixels at their current position during drag
+                if self.selection_tool.selected_pixels is not None:
+                    for py in range(height):
+                        for px in range(width):
+                            if py < self.selection_tool.selected_pixels.shape[0] and px < self.selection_tool.selected_pixels.shape[1]:
+                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                                # Only draw non-transparent pixels
+                                if pixel_color[3] > 0:
+                                    pixel_x = left + px
+                                    pixel_y = top + py
+                                    if 0 <= pixel_x < surface.get_width() and 0 <= pixel_y < surface.get_height():
+                                        surface.set_at((pixel_x, pixel_y), pixel_color[:3])
+                
+                # Draw selection box
                 rect = pygame.Rect(left, top, width, height)
                 pygame.draw.rect(surface, (0, 255, 0), rect, 2)

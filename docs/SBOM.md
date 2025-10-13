@@ -1,15 +1,15 @@
 # Software Bill of Materials (SBOM)
 
-**Last Updated**: October 12, 2025  
-**Project Version**: 1.14 - Pixel Perfect
+**Last Updated**: October 13, 2025  
+**Project Version**: 1.25 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 1.12 (Custom Colors System Complete)
+- **Version**: 1.25 (Grid Overlay)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: October 11, 2025 (Custom Colors System & Documentation Organization)
+- **Last Updated**: October 13, 2025 (Grid Overlay Feature)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
-- **Status**: Production Ready - All Features Complete + Custom Colors + Documentation Organized
+- **Status**: Production Ready - Full Feature Set with Enhanced Grid Controls
 
 ## Python Environment
 - **Python Version**: 3.13.6 (Tested and Verified)
@@ -56,6 +56,14 @@
   - **Usage**: Pixel data storage, array operations, coordinate calculations
   - **Status**: ✅ Core dependency for all pixel operations
 
+- **scipy**: >=1.11.0
+  - **Purpose**: Advanced image scaling with nearest-neighbor interpolation
+  - **License**: BSD-3-Clause
+  - **Security**: Regular security updates available
+  - **Installation Date**: October 13, 2025 (Version 1.19)
+  - **Usage**: High-quality pixel scaling for selection tool (ndimage.zoom)
+  - **Status**: ✅ Enhanced scaling operations for pixel art
+
 ## Installation and Verification
 
 ### Installation Commands
@@ -64,6 +72,7 @@ pip install pygame>=2.5.0
 pip install Pillow>=10.0.0
 pip install customtkinter>=5.2.0
 pip install numpy>=1.24.0
+pip install scipy>=1.11.0
 ```
 
 ### Verification Commands
@@ -72,6 +81,7 @@ python -c "import pygame; print(f'Pygame: {pygame.version.ver}')"`
 python -c "import PIL; print(f'Pillow: {PIL.__version__}')"`
 python -c "import customtkinter; print('CustomTkinter: OK')"`
 python -c "import numpy; print(f'NumPy: {numpy.__version__}')"`
+python -c "import scipy; print(f'SciPy: {scipy.__version__}')"`
 ```
 
 ### Installed Versions (Verified)
@@ -80,6 +90,7 @@ python -c "import numpy; print(f'NumPy: {numpy.__version__}')"`
 - **Pillow**: 10.0.0+ ✅
 - **customtkinter**: 5.2.0+ ✅
 - **numpy**: 1.24.0+ ✅
+- **scipy**: 1.11.0+ ✅ (Added v1.19)
 
 ## Security Considerations
 
@@ -103,6 +114,7 @@ python -c "import numpy; print(f'NumPy: {numpy.__version__}')"`
 - **Pillow**: HPND - Permissive license, no restrictions
 - **customtkinter**: MIT - Fully permissive for any use
 - **numpy**: BSD-3-Clause - Permissive, commercial-friendly
+- **scipy**: BSD-3-Clause - Permissive, commercial-friendly
 
 ### Project License Compatibility
 - All dependencies compatible with intended project license

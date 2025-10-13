@@ -11,7 +11,7 @@ class BrushTool(Tool):
     """Single pixel brush tool"""
     
     def __init__(self):
-        super().__init__("Brush")
+        super().__init__("Brush", cursor="pencil")
         self.is_drawing = False
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):

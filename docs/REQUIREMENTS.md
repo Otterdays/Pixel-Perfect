@@ -4,9 +4,9 @@
 **Pixel Perfect** is a professional desktop pixel art editor designed for creating 2D MMORPG game assets with SNES-era aesthetics. This document outlines functional and non-functional requirements for the complete system.
 
 ## Version Information
-- **Current Version**: 1.12
+- **Current Version**: 1.25
 - **Status**: Production Ready
-- **Last Updated**: October 11, 2025
+- **Last Updated**: October 13, 2025
 
 ---
 
@@ -26,6 +26,8 @@
 - Grid visible by default on application startup
 - Toggle grid visibility with keyboard shortcut (G key) and UI button
 - Grid scales properly with zoom levels
+- **Grid overlay mode**: Toggle grid lines to appear on top of pixels (v1.25)
+- Grid automatically re-centers when panels collapse/expand
 
 #### FR1.3 Zoom Functionality
 - Support zoom levels from 1x to 32x magnification

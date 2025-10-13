@@ -2,6 +2,9 @@
 """
 Pixel Perfect - Retro Pixel Art Editor
 Main application entry point
+
+Copyright © 2024-2025 Diamond Clad Studios
+All Rights Reserved - Proprietary Software
 """
 
 import sys

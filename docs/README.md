@@ -6,16 +6,19 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## ✅ Complete Feature Set
 
-### 🎨 **Drawing Tools** (9 Complete Tools)
-- **Pixel Brush**: Precise single-pixel placement with mouse drag
-- **Eraser**: Clean pixel removal
-- **Fill Bucket**: Flood fill with customizable tolerance
-- **Eyedropper**: Color sampling from canvas
-- **Selection Tool**: Rectangle selection and move
-- **Line Tool**: Pixel-perfect line drawing (Bresenham's algorithm)
-- **Rectangle Tool**: Rectangle and square drawing (hollow/filled)
-- **Circle Tool**: Circle drawing with midpoint algorithm
-- **Move Tool**: Move selected pixels around canvas
+### 🎨 **Drawing Tools** (10 Complete Tools)
+- **Pixel Brush**: Precise single-pixel placement with mouse drag (pencil cursor)
+- **Eraser**: Clean pixel removal (X cursor)
+- **Fill Bucket**: Flood fill with customizable tolerance (spraycan cursor)
+- **Eyedropper**: Color sampling from canvas (crosshair cursor)
+- **Selection Tool**: Rectangle selection and move (crosshair cursor)
+- **Line Tool**: Pixel-perfect line drawing (Bresenham's algorithm, pencil cursor)
+- **Square Tool**: Rectangle and square drawing (hollow/filled, plus cursor)
+- **Circle Tool**: Circle drawing with midpoint algorithm (circle cursor)
+- **Move Tool**: Move selected pixels around canvas (4-way arrow cursor)
+- **Pan Tool**: Move camera view around canvas (open hand → grabbing hand cursor)
+
+**Visual Feedback**: Each tool has a unique cursor icon for clear visual indication of the active tool!
 
 ### 🖼️ **Canvas System** (Grid Fixed!)
 - **Preset Sizes**: 16x16, 32x32, 16x32, 32x64, 64x64 pixels
@@ -137,15 +140,15 @@ See `BUILDER/README.md` for detailed build documentation.
 ## Complete Keyboard Shortcuts
 
 ### Drawing Tools
-- `B` - Brush tool
-- `E` - Eraser tool
-- `F` - Fill bucket
-- `I` - Eyedropper
-- `S` - Selection tool
-- `M` - Move tool
-- `L` - Line tool
-- `R` - Rectangle tool
-- `C` - Circle tool
+- `B` - Brush tool (pencil cursor)
+- `E` - Eraser tool (X cursor)
+- `F` - Fill bucket (spraycan cursor)
+- `I` - Eyedropper (crosshair cursor)
+- `S` - Selection tool (crosshair cursor)
+- `M` - Move tool (4-way arrow cursor)
+- `L` - Line tool (pencil cursor)
+- `R` - Square tool (plus cursor)
+- `C` - Circle tool (circle cursor)
 
 ### Canvas Controls
 - `Ctrl + Plus` - Zoom in
@@ -252,6 +255,11 @@ Pixel Perfect uses a custom `.pixpf` format that includes:
 - **Verification**: Select brush tool and draw on canvas
 
 ## Development Status
+
+**Version 1.15 - Tool Cursor Feedback**
+- ✅ Visual cursor feedback for all tools
+- ✅ Rectangle renamed to Square for clarity
+- ✅ Professional tool experience
 
 **Version 0.04 - Complete Implementation**
 - ✅ All planned features implemented
