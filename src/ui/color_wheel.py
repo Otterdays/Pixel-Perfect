@@ -45,8 +45,8 @@ class ColorWheel:
         """Create the color wheel UI - floating components on grey background"""
         # No main container frame - pack directly to parent for transparent look
         
-        # Get background color from theme, fallback to dark grey
-        bg_color = self.theme.bg_secondary if self.theme else "#2b2b2b"
+        # Get background color from theme to match parent frame
+        bg_color = self.theme.bg_primary if self.theme else "#2b2b2b"
         
         # Hue wheel (floating)
         self.wheel_canvas = ctk.CTkCanvas(
@@ -187,10 +187,11 @@ class ColorWheel:
     
     def _get_bg_color_rgb(self):
         """Get background color as RGB tuple for PIL Image"""
-        if self.theme and hasattr(self.theme, 'bg_secondary'):
-            hex_color = self.theme.bg_secondary
+        # Use bg_primary to match parent frame color (not bg_secondary which is too dark)
+        if self.theme and hasattr(self.theme, 'bg_primary'):
+            hex_color = self.theme.bg_primary
         else:
-            hex_color = "#2b2b2b"  # Fallback to dark grey
+            hex_color = "#2b2b2b"  # Fallback to medium grey
         
         # Convert hex to RGB tuple
         hex_color = hex_color.lstrip('#')
@@ -208,7 +209,6 @@ class ColorWheel:
         
         # Get background color to fill empty areas (tkinter doesn't support RGBA transparency)
         bg_color = self._get_bg_color_rgb()
-        print(f"[COLOR WHEEL] Drawing hue wheel with background color: {bg_color}")
         
         # Create PIL image with background color (RGB mode)
         img = Image.new('RGB', (self.size, self.size), bg_color)
@@ -558,7 +558,7 @@ class ColorWheel:
     def update_theme(self, theme):
         """Update canvas backgrounds to match new theme"""
         self.theme = theme
-        bg_color = theme.bg_secondary if theme else "#2b2b2b"
+        bg_color = theme.bg_primary if theme else "#2b2b2b"
         
         # Update canvas backgrounds
         if hasattr(self, 'wheel_canvas') and self.wheel_canvas:
