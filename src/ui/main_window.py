@@ -2038,7 +2038,7 @@ class MainWindow:
         """Handle color wheel color change - now just for UI updates"""
         # Update color display in UI
         self._update_pixel_display()
-        print(f"Color wheel color changed: {rgb_color}")
+        # Removed print statement to prevent lag during dragging
     
     def _save_custom_color(self, rgb_color):
         """Save current color wheel color to custom colors"""

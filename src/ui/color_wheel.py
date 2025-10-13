@@ -50,7 +50,8 @@ class ColorWheel:
             width=self.size,
             height=self.size,
             bg="black",
-            highlightthickness=0
+            highlightthickness=0,
+            cursor="crosshair"
         )
         self.wheel_canvas.pack(pady=5)
         self.wheel_canvas.bind("<Button-1>", self._on_wheel_click)
@@ -63,7 +64,8 @@ class ColorWheel:
             width=180,
             height=180,
             bg="black",
-            highlightthickness=0
+            highlightthickness=0,
+            cursor="crosshair"
         )
         self.saturation_canvas.pack(pady=5)
         self.saturation_canvas.bind("<Button-1>", self._on_saturation_click)
@@ -260,10 +262,10 @@ class ColorWheel:
         x = center_x + radius * math.cos(angle)
         y = center_y + radius * math.sin(angle)
         
-        # Draw indicator circle
+        # Draw indicator circle with tag for easy deletion
         self.wheel_canvas.create_oval(
             x-6, y-6, x+6, y+6,
-            fill="white", outline="black", width=2
+            fill="white", outline="black", width=2, tags="indicator"
         )
     
     def _draw_saturation_indicator(self):
@@ -276,14 +278,14 @@ class ColorWheel:
         # Y follows cursor position for natural dragging feel (stored in self.cursor_y)
         y = getattr(self, 'cursor_y', square_size // 2)
         
-        # Draw indicator circle (easier to see than cross)
+        # Draw indicator circle with tag for easy deletion
         self.saturation_canvas.create_oval(
             x-6, y-6, x+6, y+6,
-            fill="", outline="white", width=3
+            fill="", outline="white", width=3, tags="indicator"
         )
         self.saturation_canvas.create_oval(
             x-5, y-5, x+5, y+5,
-            fill="", outline="black", width=1
+            fill="", outline="black", width=1, tags="indicator"
         )
     
     def _hsv_to_rgb(self, h: float, s: float, v: float) -> Tuple[int, int, int]:
@@ -333,13 +335,28 @@ class ColorWheel:
         
         return h, s, v
     
-    def _update_displays(self):
-        """Update all color displays"""
-        # Update hue wheel
-        self._draw_hue_wheel()
+    def _update_displays(self, redraw_wheel=True, redraw_square=True):
+        """Update all color displays
         
-        # Update saturation square
-        self._draw_saturation_square()
+        Args:
+            redraw_wheel: If True, redraw entire hue wheel (expensive)
+            redraw_square: If True, redraw entire saturation square (expensive)
+        """
+        # Only redraw wheel if needed (hue changed or initial draw)
+        if redraw_wheel:
+            self._draw_hue_wheel()
+        else:
+            # Just update the indicator position (cheap)
+            self.wheel_canvas.delete("indicator")
+            self._draw_hue_indicator()
+        
+        # Only redraw square if needed (hue or brightness changed)
+        if redraw_square:
+            self._draw_saturation_square()
+        else:
+            # Just update the indicator position (cheap)
+            self.saturation_canvas.delete("indicator")
+            self._draw_saturation_indicator()
         
         # Update color preview
         rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
@@ -405,7 +422,8 @@ class ColorWheel:
             angle = math.atan2(dy, dx)
             # Match the drawing calculation: use +180 to align with wheel
             self.hue = (math.degrees(angle) + 180) % 360
-            self._update_displays()
+            # Redraw square (depends on hue) but not wheel (just update indicator)
+            self._update_displays(redraw_wheel=False, redraw_square=True)
     
     def _update_saturation_from_position(self, x: int, y: int):
         """Update saturation from horizontal position only"""
@@ -422,13 +440,14 @@ class ColorWheel:
         self.saturation = x / (square_size - 1)
         # Brightness/Value is controlled by the slider only (Y-axis doesn't affect value)
         
-        # Update displays and trigger callback
-        self._update_displays()
+        # Update displays - no need to redraw wheel or square when just dragging
+        self._update_displays(redraw_wheel=False, redraw_square=False)
     
     def _on_brightness_change(self, value):
         """Handle brightness slider change"""
         self.value = float(value) / 100.0
-        self._update_displays()
+        # Redraw square (depends on brightness) but not wheel
+        self._update_displays(redraw_wheel=False, redraw_square=True)
     
     def _save_custom_color(self):
         """Save current color to custom colors"""
