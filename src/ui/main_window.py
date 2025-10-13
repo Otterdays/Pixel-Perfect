@@ -310,8 +310,16 @@ class MainWindow:
         # Theme selector with brand logo
         try:
             # Load DCS brand logo
-            logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "dcs.png")
-            logo_path = os.path.abspath(logo_path)
+            # Handle both development and PyInstaller environments
+            if getattr(sys, 'frozen', False):
+                # Running as compiled executable
+                base_path = sys._MEIPASS
+                logo_path = os.path.join(base_path, "dcs.png")
+            else:
+                # Running in development
+                logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "dcs.png")
+                logo_path = os.path.abspath(logo_path)
+            
             if os.path.exists(logo_path):
                 logo_image = Image.open(logo_path)
                 # Resize to fit toolbar (24x24)
