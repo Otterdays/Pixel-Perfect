@@ -52,14 +52,46 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## 🚀 Quick Start
 
-### Download & Run (No Installation Required)
-1. Download the latest release from `BUILDER/release/PixelPerfect/`
-2. Extract the **entire folder** (includes EXE + assets + palettes + docs)
-3. Double-click `PixelPerfect.exe` to start creating pixel art!
+<div align="center">
 
-**That's it!** No Python installation, no dependencies, no setup required.
+### ✨ Ready to Create Pixel Art?
 
-**Important:** Distribute the entire `PixelPerfect` folder, not just the EXE. The application needs the `assets/` folder for palettes and icons.
+**Three Simple Steps to Your First Masterpiece**
+
+</div>
+
+| Step | Action | Details |
+|:----:|:------:|:--------|
+| **1️⃣** | **Download** | Get `PixelPerfect.exe` from `BUILDER/release/` (29MB) |
+| **2️⃣** | **Extract** | Unzip the entire folder (includes EXE + assets + palettes + docs) |
+| **3️⃣** | **Create** | Double-click `PixelPerfect.exe` - Start drawing immediately! |
+
+<div align="center">
+
+**✅ No Installation • ✅ No Python Required • ✅ No Dependencies**
+
+</div>
+
+### 🎯 Perfect For
+
+<div align="center">
+
+| 🎮 Game Developers | 🎨 Pixel Artists | 🚀 Indie Creators | 💖 Retro Enthusiasts |
+|:------------------:|:----------------:|:-----------------:|:--------------------:|
+| SNES-era sprites | Professional tools | Fast asset creation | Authentic experience |
+| Tile-based games | Workflow efficiency | Budget-friendly | Classic aesthetics |
+
+</div>
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the pixel art community by Diamond Clad Studios**
+
+[⬇️ Download Now](#-installation) • [📖 Read Docs](#-documentation) • [🌟 See Features](#-complete-feature-set)
+
+</div>
 
 ## ✅ Complete Feature Set
 
