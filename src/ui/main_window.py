@@ -2066,6 +2066,89 @@ class MainWindow:
             print(f"[Canvas Resize] {old_width}x{old_height} → {new_width}x{new_height}")
             print(f"[Pixel Preservation] Top-left {preserved_w}x{preserved_h} region preserved")
     
+    def _apply_custom_canvas_size(self, width: int, height: int):
+        """Apply custom canvas size with same safety checks as preset sizes"""
+        from tkinter import messagebox
+        
+        # Store old dimensions
+        old_width = self.canvas.width
+        old_height = self.canvas.height
+        
+        # CHECK: Will this resize clip pixels?
+        will_clip_width = width < old_width
+        will_clip_height = height < old_height
+        
+        if will_clip_width or will_clip_height:
+            # WARN USER: Pixels will be permanently lost!
+            clip_msg = f"⚠️ DOWNSIZING WARNING\n\n"
+            clip_msg += f"Current size: {old_width}x{old_height}\n"
+            clip_msg += f"New size: {width}x{height}\n\n"
+            
+            if will_clip_width and will_clip_height:
+                clip_msg += f"This will PERMANENTLY DELETE pixels outside the {width}x{height} region!\n\n"
+            elif will_clip_width:
+                clip_msg += f"This will PERMANENTLY DELETE pixels beyond column {width-1} (right side)!\n\n"
+            else:
+                clip_msg += f"This will PERMANENTLY DELETE pixels beyond row {height-1} (bottom)!\n\n"
+            
+            clip_msg += "Lost pixels CANNOT be recovered!\n\n"
+            clip_msg += "Continue with resize?"
+            
+            # Show warning dialog
+            result = messagebox.askyesno(
+                "Canvas Downsize Warning",
+                clip_msg,
+                icon='warning'
+            )
+            
+            if not result:
+                # User cancelled - restore previous size in dropdown
+                if self.custom_canvas_size:
+                    self.size_var.set(f"CUSTOM ({self.custom_canvas_size[0]}x{self.custom_canvas_size[1]})")
+                else:
+                    old_size_str = f"{old_width}x{old_height}"
+                    self.size_var.set(old_size_str)
+                print(f"[Custom Canvas Resize] Cancelled by user")
+                return
+        
+        # Apply custom size
+        self.canvas.resize(width, height)
+        
+        # Store custom size
+        self.custom_canvas_size = (width, height)
+        
+        # Update dropdown to show CUSTOM
+        self.size_var.set(f"CUSTOM ({width}x{height})")
+        
+        # Auto-adjust zoom based on size
+        if width <= 16 or height <= 16:
+            if self.canvas.zoom < 16:
+                self.canvas.set_zoom(16)
+                self.zoom_var.set("16x")
+        elif width <= 32 or height <= 32:
+            if self.canvas.zoom < 16:
+                self.canvas.set_zoom(16)
+                self.zoom_var.set("16x")
+        elif width >= 64 or height >= 64:
+            if self.canvas.zoom > 8:
+                self.canvas.set_zoom(8)
+                self.zoom_var.set("8x")
+        
+        # Resize layer manager and timeline
+        preserve_width = min(old_width, width)
+        preserve_height = min(old_height, height)
+        
+        self.layer_manager.resize_layers(width, height)
+        self.timeline.resize_frames(width, height)
+        
+        # Sync canvas display with resized layer data
+        self._update_canvas_from_layers()
+        
+        # Update display
+        self._force_tkinter_canvas_update()
+        
+        print(f"[Custom Canvas Resize] Resized to {width}x{height}, preserved {preserve_width}x{preserve_height} pixels")
+    
     def _on_zoom_change(self, zoom_str: str):
         """Handle zoom level change"""
         zoom_map = {
