@@ -11,9 +11,10 @@ from PIL import Image, ImageDraw, ImageTk
 class ColorWheel:
     """HSV color wheel component for color selection"""
     
-    def __init__(self, parent_frame: ctk.CTkFrame, size: int = 250):
+    def __init__(self, parent_frame: ctk.CTkFrame, size: int = 250, theme=None):
         self.parent_frame = parent_frame
         self.size = size
+        self.theme = theme  # Store theme reference for dynamic background colors
         self.on_color_changed: Optional[Callable] = None
         self.on_save_custom_color: Optional[Callable] = None  # Callback for saving custom color
         self.on_remove_custom_color: Optional[Callable] = None  # Callback for removing custom color
@@ -44,12 +45,15 @@ class ColorWheel:
         """Create the color wheel UI - floating components on grey background"""
         # No main container frame - pack directly to parent for transparent look
         
+        # Get background color from theme, fallback to dark grey
+        bg_color = self.theme.bg_secondary if self.theme else "#2b2b2b"
+        
         # Hue wheel (floating)
         self.wheel_canvas = ctk.CTkCanvas(
             self.parent_frame,
             width=self.size,
             height=self.size,
-            bg="black",
+            bg=bg_color,
             highlightthickness=0,
             cursor="crosshair"
         )
@@ -63,7 +67,7 @@ class ColorWheel:
             self.parent_frame,
             width=180,
             height=180,
-            bg="black",
+            bg=bg_color,
             highlightthickness=0,
             cursor="crosshair"
         )
@@ -535,6 +539,17 @@ class ColorWheel:
         self.hue, self.saturation, self.value = self._rgb_to_hsv(r, g, b)
         self.brightness_slider.set(self.value * 100)
         self._update_displays()
+    
+    def update_theme(self, theme):
+        """Update canvas backgrounds to match new theme"""
+        self.theme = theme
+        bg_color = theme.bg_secondary if theme else "#2b2b2b"
+        
+        # Update canvas backgrounds
+        if hasattr(self, 'wheel_canvas') and self.wheel_canvas:
+            self.wheel_canvas.configure(bg=bg_color)
+        if hasattr(self, 'saturation_canvas') and self.saturation_canvas:
+            self.saturation_canvas.configure(bg=bg_color)
     
     def get_color(self) -> Tuple[int, int, int]:
         """Get current color as RGB"""

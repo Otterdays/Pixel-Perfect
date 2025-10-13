@@ -2024,7 +2024,7 @@ class MainWindow:
         
         # Import and create color wheel
         from src.ui.color_wheel import ColorWheel
-        self.color_wheel = ColorWheel(self.color_display_frame)
+        self.color_wheel = ColorWheel(self.color_display_frame, theme=self.theme_manager.current_theme)
         self.color_wheel.on_color_changed = self._on_color_wheel_changed
         
         # Connect color wheel callbacks to custom colors management
@@ -2200,6 +2200,10 @@ class MainWindow:
         if hasattr(self, 'palette_frame'):
             self.palette_frame.configure(fg_color=theme.bg_primary)
             self._apply_theme_to_children(self.palette_frame, theme)
+        
+        # Update color wheel canvas backgrounds
+        if hasattr(self, 'color_wheel') and self.color_wheel:
+            self.color_wheel.update_theme(theme)
         
         # Update palette dropdown
         if hasattr(self, 'palette_menu'):
