@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageTk
 class ColorWheel:
     """HSV color wheel component for color selection"""
     
-    def __init__(self, parent_frame: ctk.CTkFrame, size: int = 200):
+    def __init__(self, parent_frame: ctk.CTkFrame, size: int = 250):
         self.parent_frame = parent_frame
         self.size = size
         self.on_color_changed: Optional[Callable] = None
@@ -29,6 +29,7 @@ class ColorWheel:
         self.brightness_slider = None
         self.color_preview = None
         self.hsv_labels = None
+        self.hex_label = None
         
         # Interaction state
         self.is_dragging_hue = False
@@ -40,25 +41,13 @@ class ColorWheel:
     
     def _create_ui(self):
         """Create the color wheel UI"""
-        # Main container
+        # Main container (no outer frame, direct to parent)
         self.main_frame = ctk.CTkFrame(self.parent_frame)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Title
-        title_label = ctk.CTkLabel(
-            self.main_frame, 
-            text="Color Wheel", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        )
-        title_label.pack(pady=(10, 5))
-        
-        # Top section - Color wheel and saturation square
-        top_frame = ctk.CTkFrame(self.main_frame)
-        top_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Hue wheel (centered)
-        wheel_container = ctk.CTkFrame(top_frame)
-        wheel_container.pack(pady=10)
+        # Hue wheel (larger, centered)
+        wheel_container = ctk.CTkFrame(self.main_frame)
+        wheel_container.pack(pady=5)
         
         self.wheel_canvas = ctk.CTkCanvas(
             wheel_container,
@@ -72,14 +61,14 @@ class ColorWheel:
         self.wheel_canvas.bind("<B1-Motion>", self._on_wheel_drag)
         self.wheel_canvas.bind("<ButtonRelease-1>", self._on_wheel_release)
         
-        # Saturation/Value square (centered below wheel)
-        saturation_container = ctk.CTkFrame(top_frame)
+        # Saturation/Value square (larger, centered)
+        saturation_container = ctk.CTkFrame(self.main_frame)
         saturation_container.pack(pady=5)
         
         self.saturation_canvas = ctk.CTkCanvas(
             saturation_container,
-            width=150,
-            height=150,
+            width=180,
+            height=180,
             bg="black",
             highlightthickness=0
         )
@@ -88,115 +77,93 @@ class ColorWheel:
         self.saturation_canvas.bind("<B1-Motion>", self._on_saturation_drag)
         self.saturation_canvas.bind("<ButtonRelease-1>", self._on_saturation_release)
         
-        # Bottom section - All controls below saturation square
-        bottom_frame = ctk.CTkFrame(self.main_frame)
-        bottom_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        # Color preview (larger, centered)
+        preview_frame = ctk.CTkFrame(self.main_frame)
+        preview_frame.pack(pady=10)
         
-        # Controls in a horizontal layout
-        controls_row = ctk.CTkFrame(bottom_frame)
-        controls_row.pack(fill="x", pady=5)
-        
-        # Left column - Preview and Brightness
-        left_col = ctk.CTkFrame(controls_row)
-        left_col.pack(side="left", padx=10, pady=5)
-        
-        preview_label = ctk.CTkLabel(left_col, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
+        preview_label = ctk.CTkLabel(preview_frame, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
         preview_label.pack(pady=(0, 5))
         
-        self.color_preview = ctk.CTkFrame(left_col, width=80, height=80)
-        self.color_preview.pack(pady=5)
+        self.color_preview = ctk.CTkFrame(preview_frame, width=100, height=100)
+        self.color_preview.pack()
         
-        brightness_label = ctk.CTkLabel(left_col, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
-        brightness_label.pack(pady=(10, 5))
+        # HEX display (prominent)
+        hex_frame = ctk.CTkFrame(self.main_frame)
+        hex_frame.pack(pady=5, fill="x", padx=10)
+        
+        hex_label = ctk.CTkLabel(hex_frame, text="HEX:", font=ctk.CTkFont(size=12, weight="bold"))
+        hex_label.pack(side="left", padx=5)
+        
+        self.hex_label = ctk.CTkLabel(
+            hex_frame, 
+            text="#FF0000", 
+            font=ctk.CTkFont(size=16, weight="bold"),
+            width=120
+        )
+        self.hex_label.pack(side="left", padx=5)
+        
+        # HSV and RGB values side by side
+        values_frame = ctk.CTkFrame(self.main_frame)
+        values_frame.pack(pady=5, fill="x", padx=10)
+        
+        # HSV column
+        hsv_col = ctk.CTkFrame(values_frame)
+        hsv_col.pack(side="left", padx=10, expand=True)
+        
+        hsv_title = ctk.CTkLabel(hsv_col, text="HSV", font=ctk.CTkFont(size=12, weight="bold"))
+        hsv_title.pack()
+        
+        self.h_value_label = ctk.CTkLabel(hsv_col, text="H: 0°", font=ctk.CTkFont(size=11))
+        self.h_value_label.pack(pady=1)
+        
+        self.s_value_label = ctk.CTkLabel(hsv_col, text="S: 100%", font=ctk.CTkFont(size=11))
+        self.s_value_label.pack(pady=1)
+        
+        self.v_value_label = ctk.CTkLabel(hsv_col, text="V: 100%", font=ctk.CTkFont(size=11))
+        self.v_value_label.pack(pady=1)
+        
+        # RGB column
+        rgb_col = ctk.CTkFrame(values_frame)
+        rgb_col.pack(side="left", padx=10, expand=True)
+        
+        rgb_title = ctk.CTkLabel(rgb_col, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
+        rgb_title.pack()
+        
+        self.r_value_label = ctk.CTkLabel(rgb_col, text="R: 255", font=ctk.CTkFont(size=11))
+        self.r_value_label.pack(pady=1)
+        
+        self.g_value_label = ctk.CTkLabel(rgb_col, text="G: 0", font=ctk.CTkFont(size=11))
+        self.g_value_label.pack(pady=1)
+        
+        self.b_value_label = ctk.CTkLabel(rgb_col, text="B: 0", font=ctk.CTkFont(size=11))
+        self.b_value_label.pack(pady=1)
+        
+        # Brightness slider (full width)
+        brightness_frame = ctk.CTkFrame(self.main_frame)
+        brightness_frame.pack(pady=10, fill="x", padx=10)
+        
+        brightness_label = ctk.CTkLabel(brightness_frame, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
+        brightness_label.pack(pady=(0, 5))
         
         self.brightness_slider = ctk.CTkSlider(
-            left_col,
+            brightness_frame,
             from_=0,
             to=100,
             number_of_steps=100,
-            width=150,
             command=self._on_brightness_change
         )
-        self.brightness_slider.pack(pady=5)
+        self.brightness_slider.pack(fill="x", padx=10, pady=5)
         self.brightness_slider.set(100)  # Start at full brightness
         
-        # Middle column - HSV values
-        middle_col = ctk.CTkFrame(controls_row)
-        middle_col.pack(side="left", padx=10, pady=5)
-        
-        hsv_title = ctk.CTkLabel(middle_col, text="HSV", font=ctk.CTkFont(size=12, weight="bold"))
-        hsv_title.pack(pady=(0, 5))
-        
-        hsv_values_frame = ctk.CTkFrame(middle_col)
-        hsv_values_frame.pack()
-        
-        # H label and value in same row
-        h_row = ctk.CTkFrame(hsv_values_frame)
-        h_row.pack(fill="x", pady=2)
-        h_label = ctk.CTkLabel(h_row, text="H:", width=25, anchor="w")
-        h_label.pack(side="left")
-        self.h_value_label = ctk.CTkLabel(h_row, text="0°", width=50, anchor="e")
-        self.h_value_label.pack(side="left")
-        
-        # S label and value in same row
-        s_row = ctk.CTkFrame(hsv_values_frame)
-        s_row.pack(fill="x", pady=2)
-        s_label = ctk.CTkLabel(s_row, text="S:", width=25, anchor="w")
-        s_label.pack(side="left")
-        self.s_value_label = ctk.CTkLabel(s_row, text="100%", width=50, anchor="e")
-        self.s_value_label.pack(side="left")
-        
-        # V label and value in same row
-        v_row = ctk.CTkFrame(hsv_values_frame)
-        v_row.pack(fill="x", pady=2)
-        v_label = ctk.CTkLabel(v_row, text="V:", width=25, anchor="w")
-        v_label.pack(side="left")
-        self.v_value_label = ctk.CTkLabel(v_row, text="100%", width=50, anchor="e")
-        self.v_value_label.pack(side="left")
-        
-        # Right column - RGB values
-        right_col = ctk.CTkFrame(controls_row)
-        right_col.pack(side="left", padx=10, pady=5)
-        
-        rgb_title = ctk.CTkLabel(right_col, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
-        rgb_title.pack(pady=(0, 5))
-        
-        rgb_values_frame = ctk.CTkFrame(right_col)
-        rgb_values_frame.pack()
-        
-        # R label and value in same row
-        r_row = ctk.CTkFrame(rgb_values_frame)
-        r_row.pack(fill="x", pady=2)
-        r_label = ctk.CTkLabel(r_row, text="R:", width=25, anchor="w")
-        r_label.pack(side="left")
-        self.r_value_label = ctk.CTkLabel(r_row, text="255", width=50, anchor="e")
-        self.r_value_label.pack(side="left")
-        
-        # G label and value in same row
-        g_row = ctk.CTkFrame(rgb_values_frame)
-        g_row.pack(fill="x", pady=2)
-        g_label = ctk.CTkLabel(g_row, text="G:", width=25, anchor="w")
-        g_label.pack(side="left")
-        self.g_value_label = ctk.CTkLabel(g_row, text="0", width=50, anchor="e")
-        self.g_value_label.pack(side="left")
-        
-        # B label and value in same row
-        b_row = ctk.CTkFrame(rgb_values_frame)
-        b_row.pack(fill="x", pady=2)
-        b_label = ctk.CTkLabel(b_row, text="B:", width=25, anchor="w")
-        b_label.pack(side="left")
-        self.b_value_label = ctk.CTkLabel(b_row, text="0", width=50, anchor="e")
-        self.b_value_label.pack(side="left")
-        
-        # Action buttons at bottom (full width)
-        button_frame = ctk.CTkFrame(bottom_frame)
-        button_frame.pack(fill="x", pady=10, padx=10)
+        # Action buttons (full width)
+        button_frame = ctk.CTkFrame(self.main_frame)
+        button_frame.pack(fill="x", pady=5, padx=10)
         
         self.save_custom_btn = ctk.CTkButton(
             button_frame,
             text="Save Custom Color",
             command=self._save_custom_color,
-            height=30,
+            height=32,
             fg_color="green"
         )
         self.save_custom_btn.pack(fill="x", pady=2)
@@ -205,13 +172,13 @@ class ColorWheel:
             button_frame,
             text="Delete Color",
             command=self._delete_selected_color,
-            height=30,
+            height=32,
             fg_color="red"
         )
         self.delete_color_btn.pack(fill="x", pady=2)
         
         # Custom Colors Section
-        custom_colors_frame = ctk.CTkFrame(bottom_frame)
+        custom_colors_frame = ctk.CTkFrame(self.main_frame)
         custom_colors_frame.pack(fill="both", expand=True, pady=10, padx=10)
         
         custom_title = ctk.CTkLabel(
@@ -392,14 +359,18 @@ class ColorWheel:
         hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
         self.color_preview.configure(fg_color=hex_color)
         
-        # Update labels
-        self.h_value_label.configure(text=f"{int(self.hue)}°")
-        self.s_value_label.configure(text=f"{int(self.saturation * 100)}%")
-        self.v_value_label.configure(text=f"{int(self.value * 100)}%")
+        # Update HEX label
+        self.hex_label.configure(text=hex_color.upper())
         
-        self.r_value_label.configure(text=str(rgb[0]))
-        self.g_value_label.configure(text=str(rgb[1]))
-        self.b_value_label.configure(text=str(rgb[2]))
+        # Update HSV labels
+        self.h_value_label.configure(text=f"H: {int(self.hue)}°")
+        self.s_value_label.configure(text=f"S: {int(self.saturation * 100)}%")
+        self.v_value_label.configure(text=f"V: {int(self.value * 100)}%")
+        
+        # Update RGB labels
+        self.r_value_label.configure(text=f"R: {rgb[0]}")
+        self.g_value_label.configure(text=f"G: {rgb[1]}")
+        self.b_value_label.configure(text=f"B: {rgb[2]}")
         
         # Call callback if set
         if self.on_color_changed:
