@@ -1,12 +1,50 @@
-# Pixel Perfect - Retro Pixel Art Editor
+<div align="center">
+
+# 🎨 Pixel Perfect
+### Professional Retro Pixel Art Editor
+
+<img src="dcs.png" alt="Diamond Clad Studios" width="120"/>
+
+**by Diamond Clad Studios**
+
+[![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![CustomTkinter](https://img.shields.io/badge/CustomTkinter-5.2.0-1f538d?style=for-the-badge)](https://github.com/TomSchimansky/CustomTkinter)
+[![Pillow](https://img.shields.io/badge/Pillow-Latest-4B8BBE?style=for-the-badge)](https://python-pillow.org/)
+[![NumPy](https://img.shields.io/badge/NumPy-Latest-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
+
+[![Windows](https://img.shields.io/badge/Windows-11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+[![License](https://img.shields.io/badge/License-All_Rights_Reserved-red?style=for-the-badge)](LICENSE)
+[![Build](https://img.shields.io/badge/Build-29MB-success?style=for-the-badge)](BUILDER/)
+
+---
+
+### 📖 Quick Navigation
+
+[![Features](#-complete-feature-set)](https://img.shields.io/badge/Features-00ADD8?style=flat-square)
+[![Latest Updates](#-latest-updates)](https://img.shields.io/badge/Latest_Updates-FF6B6B?style=flat-square)
+[![Installation](#-installation)](https://img.shields.io/badge/Installation-4CAF50?style=flat-square)
+[![Tech Stack](#-tech-stack)](https://img.shields.io/badge/Tech_Stack-9C27B0?style=flat-square)
+[![Contributing](#-contributing)](https://img.shields.io/badge/Contributing-FF9800?style=flat-square)
+
+---
+
+</div>
+
+## 🖼️ Screenshots
 
 ![Pixel Perfect Header - Dark Theme](header.png)
-*Dark "Basic Grey" Theme*
+<p align="center"><em>Dark "Basic Grey" Theme - Professional workspace with dark color palette</em></p>
 
 ![Pixel Perfect Header - Light Theme](header_light.png)
-*Light "Angelic" Theme*
+<p align="center"><em>Light "Angelic" Theme - Elegant light interface for comfortable daytime use</em></p>
+
+---
+
+## 📝 About
 
 A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
+
+**Perfect for**: Game developers, pixel artists, indie creators, and retro game enthusiasts.
 
 **© 2024-2025 Diamond Clad Studios - All Rights Reserved**
 
