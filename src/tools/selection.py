@@ -5,7 +5,6 @@ Rectangle selection and move functionality
 
 from .base_tool import Tool
 from typing import Tuple, Optional, List
-import pygame
 import numpy as np
 
 class SelectionTool(Tool):
@@ -103,29 +102,6 @@ class SelectionTool(Tool):
     def has_active_selection(self) -> bool:
         """Check if there's an active selection"""
         return self.has_selection
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw selection preview"""
-        # Draw selection rectangle while selecting or when selection is finalized
-        if self.selection_rect and (self.is_selecting or self.has_selection):
-            left, top, width, height = self.selection_rect
-            rect = pygame.Rect(left, top, width, height)
-            # White rectangle for active selection
-            pygame.draw.rect(surface, (255, 255, 255), rect, 1)
-            # Add corner markers for better visibility
-            corner_size = 3
-            # Top-left
-            pygame.draw.line(surface, (255, 255, 255), (left, top), (left + corner_size, top), 2)
-            pygame.draw.line(surface, (255, 255, 255), (left, top), (left, top + corner_size), 2)
-            # Top-right
-            pygame.draw.line(surface, (255, 255, 255), (left + width, top), (left + width - corner_size, top), 2)
-            pygame.draw.line(surface, (255, 255, 255), (left + width, top), (left + width, top + corner_size), 2)
-            # Bottom-left
-            pygame.draw.line(surface, (255, 255, 255), (left, top + height), (left + corner_size, top + height), 2)
-            pygame.draw.line(surface, (255, 255, 255), (left, top + height), (left, top + height - corner_size), 2)
-            # Bottom-right
-            pygame.draw.line(surface, (255, 255, 255), (left + width, top + height), (left + width - corner_size, top + height), 2)
-            pygame.draw.line(surface, (255, 255, 255), (left + width, top + height), (left + width, top + height - corner_size), 2)
 
 class MoveTool(Tool):
     """Move selection tool"""
@@ -203,27 +179,3 @@ class MoveTool(Tool):
                 
                 # Update selection position
                 self.selection_tool.selection_rect = (new_left, new_top, width, height)
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw move preview"""
-        if self.is_moving and self.selection_tool:
-            bounds = self.selection_tool.get_selection_bounds()
-            if bounds:
-                left, top, width, height = bounds
-                
-                # Draw the selected pixels at their current position during drag
-                if self.selection_tool.selected_pixels is not None:
-                    for py in range(height):
-                        for px in range(width):
-                            if py < self.selection_tool.selected_pixels.shape[0] and px < self.selection_tool.selected_pixels.shape[1]:
-                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                # Only draw non-transparent pixels
-                                if pixel_color[3] > 0:
-                                    pixel_x = left + px
-                                    pixel_y = top + py
-                                    if 0 <= pixel_x < surface.get_width() and 0 <= pixel_y < surface.get_height():
-                                        surface.set_at((pixel_x, pixel_y), pixel_color[:3])
-                
-                # Draw selection box
-                rect = pygame.Rect(left, top, width, height)
-                pygame.draw.rect(surface, (0, 255, 0), rect, 2)

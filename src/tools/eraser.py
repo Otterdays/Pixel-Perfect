@@ -5,7 +5,6 @@ Pixel removal tool
 
 from .base_tool import Tool
 from typing import Tuple
-import pygame
 
 class EraserTool(Tool):
     """Eraser tool for removing pixels"""
@@ -28,8 +27,3 @@ class EraserTool(Tool):
         """Continue erasing while mouse is down"""
         if self.is_erasing:
             canvas.set_pixel(x, y, (0, 0, 0, 0))  # Transparent
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw eraser preview"""
-        # Draw a small square outline at the cursor position
-        pygame.draw.rect(surface, (255, 0, 0), (x-1, y-1, 3, 3), 1)

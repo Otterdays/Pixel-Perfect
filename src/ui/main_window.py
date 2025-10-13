@@ -6,7 +6,6 @@ Copyright © 2024-2025 Diamond Clad Studios
 All Rights Reserved - Proprietary Software
 """
 
-import pygame
 import customtkinter as ctk
 import tkinter as tk
 from typing import Optional, Tuple
@@ -39,9 +38,6 @@ class MainWindow:
     """Main application window"""
     
     def __init__(self):
-        # Initialize pygame
-        pygame.init()
-        
         # Set up CustomTkinter theme
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -1578,54 +1574,8 @@ class MainWindow:
         if new_width < 1 or new_height < 1:
             return
         
-        # Scale the pixels using nearest neighbor
-        from scipy import ndimage
-        try:
-            # Calculate scale factors
-            scale_y = new_height / old_height
-            scale_x = new_width / old_width
-            
-            # Use zoom for nearest neighbor scaling
-            scaled_pixels = ndimage.zoom(
-                selection_tool.selected_pixels,
-                (scale_y, scale_x, 1),
-                order=0  # Nearest neighbor
-            )
-            
-            # Update selection
-            selection_tool.selected_pixels = scaled_pixels.astype(np.uint8)
-            selection_tool.selection_rect = new_rect
-            
-            # Clear old area and draw new
-            draw_layer = self._get_drawing_layer()
-            if draw_layer:
-                # Clear old area
-                for py in range(old_height):
-                    for px in range(old_width):
-                        canvas_x = old_left + px
-                        canvas_y = old_top + py
-                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                            draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-                
-                # Draw scaled pixels
-                for py in range(new_height):
-                    for px in range(new_width):
-                        if py < scaled_pixels.shape[0] and px < scaled_pixels.shape[1]:
-                            pixel_color = tuple(scaled_pixels[py, px])
-                            canvas_x = new_left + px
-                            canvas_y = new_top + py
-                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                                if pixel_color[3] > 0:
-                                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
-                
-                self._update_canvas_from_layers()
-                self._update_pixel_display()
-            
-            print(f"[OK] Scaled from {old_width}x{old_height} to {new_width}x{new_height}")
-        except ImportError:
-            # Fallback if scipy not available - use simple repetition
-            print("[WARN] scipy not available, using simple scaling")
-            self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
+        # Scale the pixels using nearest neighbor (simple fallback method)
+        self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
     
     def _simple_scale(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
         """Simple scaling without scipy"""
@@ -1826,7 +1776,9 @@ class MainWindow:
                     btn.configure(border_width=0, border_color="")
     
     def _on_size_change(self, size_str: str):
-        """Handle canvas size change - preserves ALL pixel data during resize"""
+        """Handle canvas size change - WARNING: Downsizing clips pixels!"""
+        from tkinter import messagebox
+        
         size_map = {
             "16x16": CanvasSize.SMALL,
             "32x32": CanvasSize.MEDIUM,
@@ -1840,10 +1792,46 @@ class MainWindow:
             old_width = self.canvas.width
             old_height = self.canvas.height
             
+            # Get new dimensions
+            new_size = size_map[size_str].value
+            new_width, new_height = new_size
+            
+            # CHECK: Will this resize clip pixels?
+            will_clip_width = new_width < old_width
+            will_clip_height = new_height < old_height
+            
+            if will_clip_width or will_clip_height:
+                # WARN USER: Pixels will be permanently lost!
+                clip_msg = f"⚠️ DOWNSIZING WARNING\n\n"
+                clip_msg += f"Current size: {old_width}x{old_height}\n"
+                clip_msg += f"New size: {new_width}x{new_height}\n\n"
+                
+                if will_clip_width and will_clip_height:
+                    clip_msg += f"This will PERMANENTLY DELETE pixels outside the {new_width}x{new_height} region!\n\n"
+                elif will_clip_width:
+                    clip_msg += f"This will PERMANENTLY DELETE pixels beyond column {new_width-1} (right side)!\n\n"
+                else:
+                    clip_msg += f"This will PERMANENTLY DELETE pixels beyond row {new_height-1} (bottom)!\n\n"
+                
+                clip_msg += "Lost pixels CANNOT be recovered!\n\n"
+                clip_msg += "Continue with resize?"
+                
+                # Show warning dialog
+                result = messagebox.askyesno(
+                    "Canvas Downsize Warning",
+                    clip_msg,
+                    icon='warning'
+                )
+                
+                if not result:
+                    # User cancelled - restore old size in dropdown
+                    old_size_str = f"{old_width}x{old_height}"
+                    self.size_var.set(old_size_str)
+                    print(f"[Canvas Resize] Cancelled by user")
+                    return
+            
             # Resize canvas (updates dimensions only)
             self.canvas.set_preset_size(size_map[size_str])
-            new_width = self.canvas.width
-            new_height = self.canvas.height
             
             # Auto-adjust zoom based on canvas size for optimal viewing
             # Smaller canvases get higher zoom, larger canvases get lower zoom
@@ -3087,6 +3075,9 @@ class MainWindow:
                 # Update only the pixel that was affected
                 self._update_single_pixel(canvas_x, canvas_y, old_color)
 
+            # Clear shape preview after finalizing shape
+            self.drawing_canvas.delete("shape_preview")
+            
             # Clear drawing state
             self.is_drawing = False
 
@@ -3155,6 +3146,15 @@ class MainWindow:
                 color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
             else:
                 color = self.palette.get_primary_color()
+
+            # LIVE PREVIEW for shape tools (Line, Rectangle, Circle)
+            if self.current_tool in ["line", "rectangle", "circle"]:
+                # Update tool's tracking state
+                tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+                
+                # Draw live preview on canvas (doesn't affect pixel data yet!)
+                self._draw_shape_preview(tool, canvas_x, canvas_y, color)
+                return  # Don't apply pixels until mouse up!
 
             # Store the previous pixel color for efficient updating
             old_color = self.canvas.get_pixel(canvas_x, canvas_y)
@@ -3244,6 +3244,100 @@ class MainWindow:
                 color = self.palette.get_primary_color()
 
             tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+    
+    def _draw_shape_preview(self, tool, canvas_x: int, canvas_y: int, color: Tuple[int, int, int, int]):
+        """Draw live preview of shape tools (Line, Square, Circle) on tkinter canvas"""
+        import math
+        
+        # Clear any existing preview
+        self.drawing_canvas.delete("shape_preview")
+        
+        # Get canvas dimensions and offsets
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
+        
+        # Convert color to hex for tkinter
+        color_hex = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
+        
+        # LINE PREVIEW
+        if self.current_tool == "line" and tool.is_drawing:
+            start_x, start_y = tool.start_point
+            
+            # Convert canvas coords to screen coords
+            screen_x1 = x_offset + (start_x * self.canvas.zoom) + (self.canvas.zoom // 2)
+            screen_y1 = y_offset + (start_y * self.canvas.zoom) + (self.canvas.zoom // 2)
+            screen_x2 = x_offset + (canvas_x * self.canvas.zoom) + (self.canvas.zoom // 2)
+            screen_y2 = y_offset + (canvas_y * self.canvas.zoom) + (self.canvas.zoom // 2)
+            
+            # Draw preview line
+            self.drawing_canvas.create_line(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                fill=color_hex, width=3, tags="shape_preview"
+            )
+        
+        # SQUARE/RECTANGLE PREVIEW
+        elif self.current_tool == "rectangle" and tool.is_drawing:
+            start_x, start_y = tool.start_point
+            
+            # Calculate rectangle bounds
+            left = min(start_x, canvas_x)
+            right = max(start_x, canvas_x)
+            top = min(start_y, canvas_y)
+            bottom = max(start_y, canvas_y)
+            
+            # Convert to screen coords
+            screen_x1 = x_offset + (left * self.canvas.zoom)
+            screen_y1 = y_offset + (top * self.canvas.zoom)
+            screen_x2 = x_offset + ((right + 1) * self.canvas.zoom)
+            screen_y2 = y_offset + ((bottom + 1) * self.canvas.zoom)
+            
+            # Draw preview rectangle
+            if tool.filled:
+                self.drawing_canvas.create_rectangle(
+                    screen_x1, screen_y1, screen_x2, screen_y2,
+                    fill=color_hex, outline="", tags="shape_preview"
+                )
+            else:
+                self.drawing_canvas.create_rectangle(
+                    screen_x1, screen_y1, screen_x2, screen_y2,
+                    outline=color_hex, width=3, tags="shape_preview"
+                )
+        
+        # CIRCLE PREVIEW
+        elif self.current_tool == "circle" and tool.is_drawing:
+            center_x, center_y = tool.center
+            
+            # Calculate radius in screen coordinates
+            dx = canvas_x - center_x
+            dy = canvas_y - center_y
+            radius_pixels = int(math.sqrt(dx * dx + dy * dy))
+            radius_screen = radius_pixels * self.canvas.zoom
+            
+            # Convert center to screen coords
+            screen_cx = x_offset + (center_x * self.canvas.zoom) + (self.canvas.zoom // 2)
+            screen_cy = y_offset + (center_y * self.canvas.zoom) + (self.canvas.zoom // 2)
+            
+            # Calculate bounding box for oval
+            screen_x1 = screen_cx - radius_screen
+            screen_y1 = screen_cy - radius_screen
+            screen_x2 = screen_cx + radius_screen
+            screen_y2 = screen_cy + radius_screen
+            
+            # Draw preview circle (oval in tkinter)
+            if tool.filled:
+                self.drawing_canvas.create_oval(
+                    screen_x1, screen_y1, screen_x2, screen_y2,
+                    fill=color_hex, outline="", tags="shape_preview"
+                )
+            else:
+                self.drawing_canvas.create_oval(
+                    screen_x1, screen_y1, screen_x2, screen_y2,
+                    outline=color_hex, width=3, tags="shape_preview"
+                )
     
     def _tkinter_screen_to_canvas_coords(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
         """Convert tkinter screen coordinates to canvas coordinates"""
@@ -3463,4 +3557,3 @@ class MainWindow:
     def run(self):
         """Start the application"""
         self.root.mainloop()
-        pygame.quit()

@@ -8,6 +8,43 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## 🆕 Latest Updates
 
+### Version 1.30 (October 2025)
+⚡ **Massive Build Size Optimization** 🎉
+- **91% smaller executable** - Reduced from 330MB to just 29MB!
+- **Removed pygame dependency** - All rendering now pure tkinter (~60MB saved)
+- **Removed scipy dependency** - Using optimized numpy scaling (~120MB saved)
+- **Faster downloads** - 5 seconds vs 53 seconds on fast WiFi
+- **Cleaner build** - Only 3 core dependencies (Pillow, CustomTkinter, numpy)
+- **See `docs/BUILD_OPTIMIZATION.md`** for full analysis and additional optimization options
+- **Zero functionality lost** - All features work identically
+- **Better performance** - No unused library initialization overhead
+
+### Version 1.29 (October 2025)
+🎯 **Live Shape Preview**
+- **Real-time visualization** - See Line, Square, and Circle as you draw them
+- **Interactive feedback** - Preview updates dynamically during mouse drag
+- **Professional workflow** - Matches industry-standard drawing applications
+- **Works with all modes** - Filled and outline shapes both show preview
+- **Clean interaction** - Preview disappears when shape is finalized
+- **Perfect integration** - Works seamlessly with pan/zoom system
+
+### Version 1.28 (October 2025)
+⚠️ **Canvas Downsize Warning System**
+- **Prevents accidental pixel loss** - Warning dialog when downsizing canvas
+- **Clear communication** - Shows exactly which pixels will be deleted
+- **Smart detection** - Triggers on width or height reduction
+- **Cancel support** - Restore previous size if you change your mind
+- **Professional UX** - Warning icon with Yes/No confirmation
+- **No more surprises** - Never lose pixels accidentally from resize operations
+
+### Version 1.27 (October 2025)
+🖼️ **Canvas Resize Pixel Preservation**
+- **Fixed pixel preservation** - All pixels saved in top-left region when resizing
+- **Auto-zoom adjustment** - 16x for small canvases, 8x for large canvases
+- **No more "tiny sprites"** - Zoom automatically adjusts to maintain visibility
+- **Console logging** - Shows exact preservation region for each resize
+- **Smooth resize experience** - Zoom restoration when changing canvas sizes
+
 ### Version 1.26 (October 2025)
 🖥️ **Panel Width Adjustments**
 - **Expanded left panel** - Now 520px wide (was 500px) for better tool/palette visibility

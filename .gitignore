@@ -121,11 +121,11 @@ dmypy.json
 # Build artifacts (keep dist and release for distribution)
 BUILDER/build/
 BUILDER/*.spec
+BUILDER/release/
+BUILDER/dist/
 
 # Executables - exclude from git (too large)
 *.exe
-BUILDER/release/**/*.exe
-BUILDER/dist/**/*.exe
 
 # IDE
 .vscode/
@@ -145,11 +145,13 @@ Thumbs.db
 
 # Project specific
 *.pixpf
-*.png
-*.gif
-!assets/icons/logo.png
-!BUILDER/release/PixelPerfect/assets/
-!BUILDER/dist/assets/
+
+# Exclude generated images but keep documentation/assets
+!header.png
+!docs/**/*.pdf
+!assets/icons/*.png
+!assets/icons/*.ico
+!assets/palettes/*.json
 
 # User-specific custom colors (each user has their own)
 custom_colors.json

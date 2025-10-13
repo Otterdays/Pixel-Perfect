@@ -5,7 +5,6 @@ Handles PNG, GIF, and sprite sheet export
 
 import os
 from typing import List, Tuple, Optional
-import pygame
 from PIL import Image, ImageSequence
 import numpy as np
 

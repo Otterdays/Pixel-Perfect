@@ -5,7 +5,6 @@ All drawing tools inherit from this base class
 
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional
-import pygame
 
 class Tool(ABC):
     """Base class for all drawing tools"""
@@ -14,7 +13,6 @@ class Tool(ABC):
         self.name = name
         self.cursor = cursor  # Tkinter cursor type
         self.is_active = False
-        self.preview_surface = None
     
     @abstractmethod
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
@@ -29,10 +27,6 @@ class Tool(ABC):
     @abstractmethod
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Handle mouse movement"""
-        pass
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw tool preview (optional)"""
         pass
     
     def activate(self):

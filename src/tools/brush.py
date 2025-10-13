@@ -5,7 +5,6 @@ Single pixel placement tool
 
 from .base_tool import Tool
 from typing import Tuple
-import pygame
 
 class BrushTool(Tool):
     """Single pixel brush tool"""
@@ -31,9 +30,3 @@ class BrushTool(Tool):
         """Continue drawing while mouse is down"""
         if self.is_drawing:
             canvas.set_pixel(x, y, color)
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw brush preview"""
-        # Draw a small crosshair at the cursor position
-        pygame.draw.line(surface, color[:3], (x-2, y), (x+2, y), 1)
-        pygame.draw.line(surface, color[:3], (x, y-2), (x, y+2), 1)

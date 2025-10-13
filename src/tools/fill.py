@@ -5,7 +5,6 @@ Flood fill tool
 
 from .base_tool import Tool
 from typing import Tuple, Set
-import pygame
 
 class FillTool(Tool):
     """Flood fill bucket tool"""
@@ -64,8 +63,3 @@ class FillTool(Tool):
             stack.append((x - 1, y))
             stack.append((x, y + 1))
             stack.append((x, y - 1))
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw fill preview"""
-        # Draw a small bucket icon at the cursor position
-        pygame.draw.circle(surface, color[:3], (x, y), 2, 1)

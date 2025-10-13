@@ -5,7 +5,6 @@ Line, rectangle, and circle drawing tools
 
 from .base_tool import Tool
 from typing import Tuple, List
-import pygame
 import math
 
 class LineTool(Tool):
@@ -61,11 +60,6 @@ class LineTool(Tool):
             if e2 < dx:
                 err += dx
                 y0 += sy
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw line preview"""
-        if self.is_drawing:
-            pygame.draw.line(surface, color[:3], self.start_point, (x, y), 1)
 
 class RectangleTool(Tool):
     """Rectangle drawing tool"""
@@ -125,21 +119,6 @@ class RectangleTool(Tool):
             for y in range(top, bottom + 1):
                 canvas.set_pixel(left, y, color)
                 canvas.set_pixel(right, y, color)
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw rectangle preview"""
-        if self.is_drawing:
-            x1, y1 = self.start_point
-            x2, y2 = (x, y)
-            left = min(x1, x2)
-            right = max(x1, x2)
-            top = min(y1, y2)
-            bottom = max(y1, y2)
-            
-            if self.filled:
-                pygame.draw.rect(surface, color[:3], (left, top, right - left, bottom - top))
-            else:
-                pygame.draw.rect(surface, color[:3], (left, top, right - left, bottom - top), 1)
 
 class CircleTool(Tool):
     """Circle drawing tool"""
@@ -214,11 +193,3 @@ class CircleTool(Tool):
                     d += 2 * (x - y) + 5
                     y -= 1
                 x += 1
-    
-    def draw_preview(self, surface: pygame.Surface, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Draw circle preview"""
-        if self.is_drawing and self.radius > 0:
-            if self.filled:
-                pygame.draw.circle(surface, color[:3], self.center, self.radius)
-            else:
-                pygame.draw.circle(surface, color[:3], self.center, self.radius, 1)

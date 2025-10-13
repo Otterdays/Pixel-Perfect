@@ -1,8 +1,37 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.27  
-**Last Updated**: October 13, 2025 - Canvas Resize Fix
+**Version**: 1.30  
+**Last Updated**: October 13, 2025 - Build Optimization
+
+## Latest Updates (v1.30)
+
+- **Massive Build Size Reduction**: 330MB → 29MB (-91%!) 🎉
+- Removed pygame dependency (~60MB saved)
+- Removed scipy dependency (~120MB saved)
+- Only 3 core dependencies now: Pillow, CustomTkinter, numpy
+- Fixed all import issues and asset bundling
+- Zero functionality lost - all features work identically
+- Download time: 53 seconds → 5 seconds (fast WiFi)
+- See `docs/BUILD_OPTIMIZATION.md` for full analysis
+
+## Latest Updates (v1.29)
+
+- **Live Shape Preview**: Real-time visualization for shape tools
+- See Line, Square, and Circle as you draw before releasing mouse
+- Preview updates dynamically during drag
+- Works with filled/outline modes
+- Professional drawing application workflow
+- Smooth integration with pan/zoom system
+
+## Latest Updates (v1.28)
+
+- **Canvas Downsize Warning**: Prevents accidental pixel loss
+- Shows warning dialog when resizing will clip pixels
+- Explains exactly which pixels will be deleted (right side, bottom, or both)
+- User must confirm before permanent data loss
+- Cancel option restores previous size selection
+- No more surprise pixel deletion!
 
 ## Latest Updates (v1.27)
 
