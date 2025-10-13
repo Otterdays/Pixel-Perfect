@@ -40,75 +40,63 @@ class ColorWheel:
         self._update_displays()
     
     def _create_ui(self):
-        """Create the color wheel UI"""
-        # Main container (no outer frame, direct to parent)
-        self.main_frame = ctk.CTkFrame(self.parent_frame)
-        self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        """Create the color wheel UI - floating components on grey background"""
+        # No main container frame - pack directly to parent for transparent look
         
-        # Hue wheel (larger, centered)
-        wheel_container = ctk.CTkFrame(self.main_frame)
-        wheel_container.pack(pady=5)
-        
+        # Hue wheel (floating)
         self.wheel_canvas = ctk.CTkCanvas(
-            wheel_container,
+            self.parent_frame,
             width=self.size,
             height=self.size,
             bg="black",
             highlightthickness=0
         )
-        self.wheel_canvas.pack()
+        self.wheel_canvas.pack(pady=5)
         self.wheel_canvas.bind("<Button-1>", self._on_wheel_click)
         self.wheel_canvas.bind("<B1-Motion>", self._on_wheel_drag)
         self.wheel_canvas.bind("<ButtonRelease-1>", self._on_wheel_release)
         
-        # Saturation/Value square (larger, centered)
-        saturation_container = ctk.CTkFrame(self.main_frame)
-        saturation_container.pack(pady=5)
-        
+        # Saturation/Value square (floating)
         self.saturation_canvas = ctk.CTkCanvas(
-            saturation_container,
+            self.parent_frame,
             width=180,
             height=180,
             bg="black",
             highlightthickness=0
         )
-        self.saturation_canvas.pack()
+        self.saturation_canvas.pack(pady=5)
         self.saturation_canvas.bind("<Button-1>", self._on_saturation_click)
         self.saturation_canvas.bind("<B1-Motion>", self._on_saturation_drag)
         self.saturation_canvas.bind("<ButtonRelease-1>", self._on_saturation_release)
         
-        # Color preview (larger, centered)
-        preview_frame = ctk.CTkFrame(self.main_frame)
-        preview_frame.pack(pady=10)
+        # Color preview with label (floating)
+        preview_label = ctk.CTkLabel(self.parent_frame, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
+        preview_label.pack(pady=(10, 2))
         
-        preview_label = ctk.CTkLabel(preview_frame, text="Preview", font=ctk.CTkFont(size=12, weight="bold"))
-        preview_label.pack(pady=(0, 5))
+        self.color_preview = ctk.CTkFrame(self.parent_frame, width=100, height=100)
+        self.color_preview.pack(pady=5)
         
-        self.color_preview = ctk.CTkFrame(preview_frame, width=100, height=100)
-        self.color_preview.pack()
+        # HEX display (floating, centered)
+        hex_container = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
+        hex_container.pack(pady=5)
         
-        # HEX display (prominent)
-        hex_frame = ctk.CTkFrame(self.main_frame)
-        hex_frame.pack(pady=5, fill="x", padx=10)
-        
-        hex_label = ctk.CTkLabel(hex_frame, text="HEX:", font=ctk.CTkFont(size=12, weight="bold"))
-        hex_label.pack(side="left", padx=5)
+        hex_label = ctk.CTkLabel(hex_container, text="HEX:", font=ctk.CTkFont(size=12, weight="bold"))
+        hex_label.pack(side="left", padx=2)
         
         self.hex_label = ctk.CTkLabel(
-            hex_frame, 
+            hex_container, 
             text="#FF0000", 
-            font=ctk.CTkFont(size=16, weight="bold"),
-            width=120
+            font=ctk.CTkFont(size=16, weight="bold")
         )
-        self.hex_label.pack(side="left", padx=5)
+        self.hex_label.pack(side="left", padx=2)
         
-        # HSV and RGB values side by side
-        values_frame = ctk.CTkFrame(self.main_frame)
-        values_frame.pack(pady=5, fill="x", padx=10)
+        # HSV and RGB values side by side (floating)
+        values_container = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
+        values_container.pack(pady=5)
         
         # HSV column
-        hsv_col = ctk.CTkFrame(values_frame)
-        hsv_col.pack(side="left", padx=10, expand=True)
+        hsv_col = ctk.CTkFrame(values_container, fg_color="transparent")
+        hsv_col.pack(side="left", padx=15)
         
         hsv_title = ctk.CTkLabel(hsv_col, text="HSV", font=ctk.CTkFont(size=12, weight="bold"))
         hsv_title.pack()
@@ -123,8 +111,8 @@ class ColorWheel:
         self.v_value_label.pack(pady=1)
         
         # RGB column
-        rgb_col = ctk.CTkFrame(values_frame)
-        rgb_col.pack(side="left", padx=10, expand=True)
+        rgb_col = ctk.CTkFrame(values_container, fg_color="transparent")
+        rgb_col.pack(side="left", padx=15)
         
         rgb_title = ctk.CTkLabel(rgb_col, text="RGB", font=ctk.CTkFont(size=12, weight="bold"))
         rgb_title.pack()
@@ -138,59 +126,50 @@ class ColorWheel:
         self.b_value_label = ctk.CTkLabel(rgb_col, text="B: 0", font=ctk.CTkFont(size=11))
         self.b_value_label.pack(pady=1)
         
-        # Brightness slider (full width)
-        brightness_frame = ctk.CTkFrame(self.main_frame)
-        brightness_frame.pack(pady=10, fill="x", padx=10)
-        
-        brightness_label = ctk.CTkLabel(brightness_frame, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
-        brightness_label.pack(pady=(0, 5))
+        # Brightness slider (floating)
+        brightness_label = ctk.CTkLabel(self.parent_frame, text="Brightness", font=ctk.CTkFont(size=12, weight="bold"))
+        brightness_label.pack(pady=(10, 2))
         
         self.brightness_slider = ctk.CTkSlider(
-            brightness_frame,
+            self.parent_frame,
             from_=0,
             to=100,
             number_of_steps=100,
             command=self._on_brightness_change
         )
-        self.brightness_slider.pack(fill="x", padx=10, pady=5)
+        self.brightness_slider.pack(padx=20, pady=5)
         self.brightness_slider.set(100)  # Start at full brightness
         
-        # Action buttons (full width)
-        button_frame = ctk.CTkFrame(self.main_frame)
-        button_frame.pack(fill="x", pady=5, padx=10)
-        
+        # Action buttons (floating)
         self.save_custom_btn = ctk.CTkButton(
-            button_frame,
+            self.parent_frame,
             text="Save Custom Color",
             command=self._save_custom_color,
             height=32,
             fg_color="green"
         )
-        self.save_custom_btn.pack(fill="x", pady=2)
+        self.save_custom_btn.pack(fill="x", padx=10, pady=2)
         
         self.delete_color_btn = ctk.CTkButton(
-            button_frame,
+            self.parent_frame,
             text="Delete Color",
             command=self._delete_selected_color,
             height=32,
             fg_color="red"
         )
-        self.delete_color_btn.pack(fill="x", pady=2)
+        self.delete_color_btn.pack(fill="x", padx=10, pady=2)
         
-        # Custom Colors Section
-        custom_colors_frame = ctk.CTkFrame(self.main_frame)
-        custom_colors_frame.pack(fill="both", expand=True, pady=10, padx=10)
-        
+        # Custom Colors Section (floating)
         custom_title = ctk.CTkLabel(
-            custom_colors_frame,
+            self.parent_frame,
             text="Custom Colors",
             font=ctk.CTkFont(size=14, weight="bold")
         )
-        custom_title.pack(pady=(5, 10))
+        custom_title.pack(pady=(10, 5))
         
         # Scrollable frame for custom colors grid
         self.custom_colors_container = ctk.CTkScrollableFrame(
-            custom_colors_frame,
+            self.parent_frame,
             height=150
         )
         self.custom_colors_container.pack(fill="both", expand=True, padx=5, pady=5)
