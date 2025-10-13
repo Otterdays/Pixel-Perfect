@@ -35,6 +35,7 @@ class ColorWheel:
         self.is_dragging_hue = False
         self.is_dragging_saturation = False
         self.is_dragging_brightness = False
+        self.cursor_y = 90  # Track cursor Y position in saturation box for indicator
         
         self._create_ui()
         self._update_displays()
@@ -272,8 +273,8 @@ class ColorWheel:
         # Calculate position based on current saturation
         # X-axis represents saturation (0% left to 100% right)
         x = self.saturation * (square_size - 1)
-        # Y-axis is controlled by brightness slider, so indicator stays at middle
-        y = square_size // 2
+        # Y follows cursor position for natural dragging feel (stored in self.cursor_y)
+        y = getattr(self, 'cursor_y', square_size // 2)
         
         # Draw indicator circle (easier to see than cross)
         self.saturation_canvas.create_oval(
@@ -410,12 +411,16 @@ class ColorWheel:
         """Update saturation from horizontal position only"""
         square_size = 180
         
-        # Clamp X coordinate only (horizontal = saturation)
+        # Clamp coordinates
         x = max(0, min(square_size - 1, x))
+        y = max(0, min(square_size - 1, y))
+        
+        # Store cursor Y position for indicator display
+        self.cursor_y = y
         
         # Only update saturation (X-axis controls saturation)
         self.saturation = x / (square_size - 1)
-        # Brightness/Value is controlled by the slider only
+        # Brightness/Value is controlled by the slider only (Y-axis doesn't affect value)
         
         # Update displays and trigger callback
         self._update_displays()
