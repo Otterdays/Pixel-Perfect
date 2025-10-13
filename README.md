@@ -393,21 +393,63 @@ This project is open source. See LICENSE file for details.
 
 ## 🎯 Future Roadmap
 
-### Phase 2: Advanced Features
-- Onion skinning overlay for animation
-- Advanced animation tools (tweening, in-betweening)
-- Custom brush shapes and sizes
-- Extended color history and palette management
-- Tile pattern generation tools
-- Advanced selection tools (magic wand, lasso)
+<div align="center">
 
-### Phase 3: AI Integration ("Vibe Coding")
-- Text-to-sprite generation using Stable Diffusion
-- Style transfer matching Curse of Aros aesthetic
-- Auto-palette generation from reference images
-- AI-powered animation assistance (auto in-betweening)
-- Tile pattern generation from text descriptions
-- Smart color palette suggestions
+**Organized by Difficulty & Implementation Priority**
+
+</div>
+
+### 🟢 Phase 1: Quick Wins (Easy - Medium Difficulty)
+**Essential features with high impact, low complexity**
+
+- ✨ **Flip Vertical**: Mirror selection on Y-axis (complements existing horizontal flip)
+- 🎨 **Recent Colors Panel**: Quick access to last 10-15 colors used
+- 📐 **Repeating Edges Preview**: See how tiles connect seamlessly
+- 🖼️ **Asset Template Library**: Pre-made items (swords, axes, shields, armor, potions, runes)
+- 💾 **Export Presets**: Save favorite export settings for quick reuse
+- ⌨️ **More Keyboard Shortcuts**: Streamline common operations
+- 🔄 **Batch Export**: Export multiple frames/layers at once
+- 📊 **Grid Size Options**: Custom grid line thickness and color
+
+### 🟡 Phase 2: Advanced Features (Medium - Hard Difficulty)
+**Powerful tools for professional workflows**
+
+- 👻 **Onion Skinning**: Overlay previous/next frames for smooth animation
+- 🎬 **Advanced Animation Tools**: Tweening, in-betweening, easing curves
+- 🖌️ **Custom Brush Shapes**: Create and save custom brushes (square, circle, custom)
+- 🎨 **Extended Color History**: Save and manage color history across sessions
+- 🧩 **Tile Pattern Generator**: Auto-generate seamless tile patterns
+- 🪄 **Magic Wand Tool**: Select by color similarity with tolerance
+- ✂️ **Lasso Tool**: Freeform selection for organic shapes
+- 📱 **Mobile Companion App**: Lightweight version for touch devices
+- 🎮 **Touch/DPad Controls**: Alternative input methods for accessibility
+- 📐 **Isometric Grid Mode**: 2.5D/3D token creation support
+- 🔧 **Plugin System**: Extend functionality with custom tools
+
+### 🔴 Phase 3: Pro Features (Hard - Very Hard Difficulty)
+**Complex features for power users**
+
+- 🌊 **Symmetry Tools**: X/Y axis symmetry, radial symmetry
+- 🎭 **Layer Effects**: Opacity, blend modes, filters
+- 📦 **Sprite Sheet Import**: Extract individual sprites from sheets
+- 🔄 **Animation Timeline Enhancements**: Copy/paste frames, frame groups
+- 🎨 **Palette Generation from Image**: Auto-extract colors from reference
+- 🖼️ **Image Filters**: Pixelate, dithering, posterize effects
+- 💾 **Project Templates**: Save entire project setups for reuse
+- 🌐 **Multi-Language Support**: Internationalization (i18n)
+- ☁️ **Cloud Sync**: Optional cloud backup for projects
+
+### 🔮 Phase 4: AI Integration ("Vibe Coding") (Visionary)
+**Cutting-edge AI-powered features**
+
+- 🤖 **Text-to-Sprite Generation**: Create sprites from descriptions (Stable Diffusion)
+- 🎨 **Style Transfer**: Match specific game aesthetics (e.g., Curse of Aros)
+- 🌈 **AI Palette Generation**: Smart color schemes from reference images
+- 🎬 **AI Animation Assistance**: Auto in-betweening for smooth animations
+- 🧩 **Pattern Generation from Text**: Describe tiles, get seamless patterns
+- 💡 **Smart Color Suggestions**: Context-aware palette recommendations
+- ✨ **Upscaling/Cleanup**: AI-powered sprite enhancement
+- 🔄 **Auto-Recoloring**: Intelligent palette swaps while preserving style
 
 ---
 
