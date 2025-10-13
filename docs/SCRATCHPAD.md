@@ -186,25 +186,33 @@ def _on_palette_change(self, palette_name: str):
 
 **5. Bug Fixes**:
 
-**Constants Panel & Eyedropper Always Show Red**:
-- **Problem**: "in the constants panel, when clicking the box of a color that's displayed as a constant, it properly jumps to the color wheel, but seems to just select red" + "the eye dropper seems to have some issue. when using it I want it to jump to the color wheel panel on the correct color"
-- **Root Cause**: Both `_on_constant_color_click()` and `_set_color_from_eyedropper()` were calling `_create_color_wheel()` which recreated the entire color wheel, resetting it to default (red)
-- **Fix**: Use the new optimized view system instead:
-```python
-# BEFORE (BUG):
-self.view_mode_var.set("wheel")
-self._create_color_wheel()  # Recreates wheel, resets to red!
-self.color_wheel.set_color(rgb_color)  # Too late, wheel already reset
+**Eyedropper Bug Fixes**:
 
-# AFTER (FIXED):
-self.view_mode_var.set("wheel")
-self._show_view("wheel")  # Show pre-rendered wheel (instant!)
-self.color_wheel.set_color(rgb_color)  # Set color on existing wheel
-```
-- **Impact**: 
-  - Constants panel now correctly displays the clicked color in the wheel view
-  - Eyedropper tool now correctly displays sampled colors in the wheel view
-  - Both tools work consistently with the v1.33 performance system
+1. **Constants Panel & Eyedropper Always Show Red**:
+   - **Problem**: Clicking constant colors or using eyedropper showed red instead of actual color
+   - **Root Cause**: Both were calling `_create_color_wheel()` which recreated/reset the wheel
+   - **Fix**: Use optimized `_show_view("wheel")` instead of recreating
+   - **Impact**: Both tools now correctly display sampled colors
+
+2. **Eyedropper Always Updates Color Wheel**:
+   - **Enhancement**: "while i have the color wheel open, it triggers the color wheel to change no matter what"
+   - **New Behavior**: Color wheel ALWAYS updates when sampling, even for palette colors
+   - **Improves Flow**: Wheel always reflects current selection for visual feedback
+
+3. **Eyedropper Auto-Switch to Brush**:
+   - **Enhancement**: After sampling, automatically switches back to Brush tool
+   - **Workflow**: Sample → Brush selected → Start painting immediately
+
+4. **Eyedropper Sampling Transparent Pixels Breaks Wheel**:
+   - **Problem**: "if i use the eye dropper, and i click an empty pixel spot, it causes the color wheel and shader box to break"
+   - **Root Cause**: Sampling transparent pixels (alpha=0) set RGB(0,0,0) with 0% brightness
+   - **Result**: Color wheel stuck on black - brightness at 0% means all colors are black
+   - **Fix**: Check alpha channel before sampling:
+   ```python
+   if sampled_color[3] == 0:  # Empty/transparent pixel
+       return  # Don't sample it!
+   ```
+   - **Impact**: Color wheel stays functional when sampling empty areas
 
 **Crash on Startup**: `'MainWindow' object has no attribute 'primary_colors_mode'`
 - **Root Cause**: `_initialize_all_views()` was called before `self.primary_colors_mode` was initialized

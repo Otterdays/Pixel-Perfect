@@ -2222,11 +2222,97 @@ class MainWindow:
     
     def _clear_all_saved_colors(self):
         """Clear all saved color slots with confirmation"""
-        from tkinter import messagebox
-        if messagebox.askyesno("Clear All Slots", "Are you sure you want to clear all saved colors?\nThis cannot be undone."):
+        # Create custom confirmation dialog
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Clear All Slots")
+        dialog.geometry("450x220")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog on the main window
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (450 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (220 // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Icon and title frame
+        header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        header_frame.pack(pady=20, padx=20, fill="x")
+        
+        # Large colorful icon (🎨 emoji)
+        icon_label = ctk.CTkLabel(
+            header_frame,
+            text="🎨",
+            font=ctk.CTkFont(size=48)
+        )
+        icon_label.pack(side="left", padx=(10, 20))
+        
+        # Title text
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="Clear All Slots",
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        title_label.pack(side="left", anchor="w")
+        
+        # Warning message
+        message_label = ctk.CTkLabel(
+            dialog,
+            text="Are you sure you want to clear all saved colors?\nThis cannot be undone.",
+            font=ctk.CTkFont(size=14),
+            text_color="#e0e0e0"
+        )
+        message_label.pack(pady=(0, 25), padx=20)
+        
+        # Button frame
+        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_frame.pack(pady=(0, 20), padx=20, fill="x")
+        
+        # Result storage
+        result = [False]
+        
+        def on_yes():
+            result[0] = True
+            dialog.destroy()
+        
+        def on_no():
+            result[0] = False
+            dialog.destroy()
+        
+        # No button (cancel)
+        no_btn = ctk.CTkButton(
+            button_frame,
+            text="No",
+            width=140,
+            height=40,
+            fg_color="#4a4a4a",
+            hover_color="#5a5a5a",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_no
+        )
+        no_btn.pack(side="right", padx=5)
+        
+        # Yes button (destructive action)
+        yes_btn = ctk.CTkButton(
+            button_frame,
+            text="Yes",
+            width=140,
+            height=40,
+            fg_color="#d32f2f",
+            hover_color="#b71c1c",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_yes
+        )
+        yes_btn.pack(side="right", padx=5)
+        
+        # Wait for dialog to close
+        self.root.wait_window(dialog)
+        
+        # Process result
+        if result[0]:
             self.saved_colors.clear_all()
             self._update_saved_color_buttons()  # Fast refresh
-            print("[SAVED] All saved colors cleared")
     
     def _get_canvas_colors(self):
         """Extract unique colors from the canvas (all layers combined)"""
