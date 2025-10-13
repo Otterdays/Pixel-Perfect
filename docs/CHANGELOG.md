@@ -1,5 +1,25 @@
 # Pixel Perfect - Changelog
 
+## Version 1.32 - Color Wheel Background Polish (October 13, 2025) ✅
+
+### Visual Polish
+- **Fixed Color Wheel Backgrounds**: Corners now match theme perfectly
+  - PIL Images now use `bg_primary` (#2b2b2b = 43,43,43) instead of hardcoded black
+  - Matches parent panel background color seamlessly
+  - Works across all themes (Basic Grey, Angelic, etc.)
+  - No more harsh black rectangles breaking the polished look
+
+### Technical Implementation
+- Changed from RGBA (doesn't work in tkinter) to RGB with theme colors
+- Updated `_get_bg_color_rgb()` to use `theme.bg_primary` instead of `bg_secondary`
+- Canvas backgrounds and PIL Image backgrounds now use same color
+- Dynamic theme switching updates wheel backgrounds instantly
+
+### Bug Fixes
+- Fixed: bg_secondary (#1e1e1e) was too dark, looked identical to black
+- Fixed: Transparent pixels converted to black in tkinter Canvas
+- Solution: Fill with theme background color for seamless integration
+
 ## Version 1.31 - Color Wheel UX & Performance (October 13, 2025) ✅
 
 ### UX Enhancements
