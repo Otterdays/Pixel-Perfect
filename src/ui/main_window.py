@@ -456,6 +456,19 @@ class MainWindow:
             # Add tooltip
             create_tooltip(btn, tooltip_text, delay=1000)
         
+        # Texture button (special - opens panel, not a drawing tool)
+        texture_btn = ctk.CTkButton(
+            tool_grid,
+            text="Texture",
+            width=175,  # Span 2 columns
+            height=28,
+            command=self._open_texture_panel,
+            fg_color="#4a4a4a",  # Different color to distinguish from tools
+            hover_color="#5a5a5a"
+        )
+        texture_btn.grid(row=4, column=0, columnspan=2, padx=2, pady=2)
+        create_tooltip(texture_btn, "Open texture panel", delay=1000)
+        
         # Configure grid columns - buttons stay fixed size
         for col in range(3):
             tool_grid.grid_columnconfigure(col, weight=0)
@@ -2414,6 +2427,44 @@ class MainWindow:
         if hasattr(self, 'color_wheel') and self.color_wheel:
             colors = self.custom_colors.get_colors()
             self.color_wheel.update_custom_colors_grid(colors)
+    
+    def _open_texture_panel(self):
+        """Open texture panel (blank for now)"""
+        # Create texture panel window
+        texture_window = ctk.CTkToplevel(self.root)
+        texture_window.title("Texture Panel")
+        texture_window.geometry("600x500")
+        texture_window.resizable(True, True)
+        texture_window.transient(self.root)
+        
+        # Center on main window
+        texture_window.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (600 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (500 // 2)
+        texture_window.geometry(f"+{x}+{y}")
+        
+        # Header
+        header_frame = ctk.CTkFrame(texture_window, fg_color="transparent")
+        header_frame.pack(pady=20, padx=20, fill="x")
+        
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="🎨 Texture Panel",
+            font=ctk.CTkFont(size=24, weight="bold")
+        )
+        title_label.pack()
+        
+        # Placeholder content
+        content_frame = ctk.CTkFrame(texture_window)
+        content_frame.pack(expand=True, fill="both", padx=20, pady=(0, 20))
+        
+        placeholder_label = ctk.CTkLabel(
+            content_frame,
+            text="Texture features coming soon!\n\nThis panel will contain:\n• Texture library\n• Pattern generation\n• Texture application tools",
+            font=ctk.CTkFont(size=14),
+            text_color="#a0a0a0"
+        )
+        placeholder_label.pack(expand=True)
     
     def _toggle_grid(self):
         """Toggle grid visibility"""
