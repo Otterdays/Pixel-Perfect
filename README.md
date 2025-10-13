@@ -20,13 +20,15 @@
 
 ### 📖 Quick Navigation
 
-[![Quick Start](#-quick-start)](https://img.shields.io/badge/Quick_Start-00C853?style=flat-square&logo=rocket&logoColor=white)
-[![Features](#-complete-feature-set)](https://img.shields.io/badge/Features-00ADD8?style=flat-square&logo=star&logoColor=white)
-[![Installation](#-installation)](https://img.shields.io/badge/Installation-4CAF50?style=flat-square&logo=download&logoColor=white)
-[![Tech Stack](#-tech-stack)](https://img.shields.io/badge/Tech_Stack-9C27B0?style=flat-square&logo=code&logoColor=white)
-[![Documentation](#-documentation)](https://img.shields.io/badge/Documentation-2196F3?style=flat-square&logo=book&logoColor=white)
-[![Contributing](#-contributing)](https://img.shields.io/badge/Contributing-FF9800?style=flat-square&logo=users&logoColor=white)
-[![Latest Updates](#-latest-updates)](https://img.shields.io/badge/Latest_Updates-FF6B6B?style=flat-square&logo=history&logoColor=white)
+[🚀 **Quick Start**](#-quick-start) • 
+[✨ **Features**](#-complete-feature-set) • 
+[💻 **Tech Stack**](#-technology-stack) • 
+[📚 **Documentation**](#-documentation) • 
+[🤝 **Contributing**](#-contributing) • 
+[📄 **License**](#-license) • 
+[💰 **Monetization**](#-monetization-strategy) • 
+[🎯 **Roadmap**](#-future-roadmap) • 
+[🆕 **Latest Updates**](#-latest-updates)
 
 ---
 
