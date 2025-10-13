@@ -1911,6 +1911,11 @@ class MainWindow:
     def _on_view_mode_change(self):
         """Handle view mode change between grid, primary colors, color wheel, constants, and saved"""
         mode = self.view_mode_var.get()
+        
+        # Clear saved view created flag when switching away from saved view
+        if mode != "saved" and hasattr(self, '_saved_view_created'):
+            self._saved_view_created = False
+        
         if mode == "grid":
             self._create_color_grid()
         elif mode == "primary":
@@ -1987,7 +1992,12 @@ class MainWindow:
         count_label.pack(pady=(5, 0))
     
     def _create_saved_colors_view(self):
-        """Create saved colors view with empty slots and export button"""
+        """Create saved colors view with empty slots and export button (OPTIMIZED)"""
+        # Check if view already exists - just update buttons instead of recreating
+        if hasattr(self, '_saved_view_created') and self._saved_view_created:
+            self._update_saved_color_buttons()
+            return
+        
         # Clear existing widgets
         for widget in self.color_display_frame.winfo_children():
             widget.destroy()
@@ -2017,45 +2027,24 @@ class MainWindow:
         for col in range(4):
             grid_frame.grid_columnconfigure(col, weight=1)
         
-        # Create 24 color slots
+        # Create 24 color slots (create once, update later)
         self.saved_color_buttons = []
         for idx in range(24):
             row = idx // 4
             col = idx % 4
             
-            saved_color = self.saved_colors.get_color(idx)
-            
-            if saved_color:
-                # Slot has a color - show filled button
-                r, g, b, a = saved_color
-                hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                btn = ctk.CTkButton(
-                    grid_frame,
-                    text="",
-                    width=50,
-                    height=50,
-                    fg_color=hex_color,
-                    hover_color=hex_color,
-                    border_width=2,
-                    border_color="gray",
-                    corner_radius=3,
-                    command=lambda i=idx: self._on_saved_color_click(i)
-                )
-            else:
-                # Empty slot - show transparent outlined button
-                btn = ctk.CTkButton(
-                    grid_frame,
-                    text="+",
-                    width=50,
-                    height=50,
-                    fg_color="transparent",
-                    hover_color="#3a3a3a",
-                    border_width=2,
-                    border_color="gray",
-                    corner_radius=3,
-                    command=lambda i=idx: self._on_saved_slot_click(i)
-                )
-            
+            # Create button (will be configured in _update_saved_color_buttons)
+            btn = ctk.CTkButton(
+                grid_frame,
+                text="+",
+                width=50,
+                height=50,
+                fg_color="transparent",
+                hover_color="#3a3a3a",
+                border_width=2,
+                border_color="gray",
+                corner_radius=3
+            )
             btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
             self.saved_color_buttons.append(btn)
         
@@ -2091,6 +2080,39 @@ class MainWindow:
             command=self._clear_all_saved_colors
         )
         clear_btn.pack(fill="x", padx=10, pady=2)
+        
+        # Mark view as created
+        self._saved_view_created = True
+        
+        # Now update button states
+        self._update_saved_color_buttons()
+    
+    def _update_saved_color_buttons(self):
+        """Update saved color button states without recreating them (FAST)"""
+        if not hasattr(self, 'saved_color_buttons'):
+            return
+        
+        for idx, btn in enumerate(self.saved_color_buttons):
+            saved_color = self.saved_colors.get_color(idx)
+            
+            if saved_color:
+                # Slot has a color - configure as filled
+                r, g, b, a = saved_color
+                hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                btn.configure(
+                    text="",
+                    fg_color=hex_color,
+                    hover_color=hex_color,
+                    command=lambda i=idx: self._on_saved_color_click(i)
+                )
+            else:
+                # Empty slot - configure as empty
+                btn.configure(
+                    text="+",
+                    fg_color="transparent",
+                    hover_color="#3a3a3a",
+                    command=lambda i=idx: self._on_saved_slot_click(i)
+                )
     
     def _on_saved_slot_click(self, slot_index: int):
         """Handle click on empty saved color slot - save current color"""
@@ -2100,8 +2122,8 @@ class MainWindow:
         # Save to slot
         self.saved_colors.set_color(slot_index, current_color)
         
-        # Refresh view
-        self._create_saved_colors_view()
+        # Fast refresh - just update button states
+        self._update_saved_color_buttons()
         
         print(f"[SAVED] Color {current_color} saved to slot {slot_index}")
     
@@ -2138,7 +2160,7 @@ class MainWindow:
         )
         if filepath:
             if self.saved_colors.import_from_file(filepath):
-                self._create_saved_colors_view()  # Refresh view
+                self._update_saved_color_buttons()  # Fast refresh
                 print(f"[IMPORT] Saved colors imported from: {filepath}")
             else:
                 print("[IMPORT] Failed to import saved colors")
@@ -2148,7 +2170,7 @@ class MainWindow:
         from tkinter import messagebox
         if messagebox.askyesno("Clear All Slots", "Are you sure you want to clear all saved colors?\nThis cannot be undone."):
             self.saved_colors.clear_all()
-            self._create_saved_colors_view()  # Refresh view
+            self._update_saved_color_buttons()  # Fast refresh
             print("[SAVED] All saved colors cleared")
     
     def _get_canvas_colors(self):
