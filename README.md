@@ -104,9 +104,10 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **Custom Backgrounds**: Checkerboard transparency pattern
 - **Mouse Integration**: Click and drag to draw pixels
 
-### 🎨 **Color Management** (6 Complete Palettes + 4 View Modes + Custom Colors)
-- **6 Game-Inspired Palettes**:
+### 🎨 **Color Management** (7 Complete Palettes + 4 View Modes + Custom Colors)
+- **7 Game-Inspired Palettes**:
   - **SNES Classic**: 16 colors matching original SNES palette
+  - **Old School RuneScape**: Classic OSRS color palette for authentic retro MMORPG sprites
   - **Curse of Aros**: Muted, earthy tones matching the game aesthetic
   - **Heartwood Online**: Forest-themed palette
   - **Definya**: Bright, vibrant colors
