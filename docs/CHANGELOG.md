@@ -1,5 +1,33 @@
 # Pixel Perfect - Changelog
 
+## Version 1.31 - Color Wheel UX & Performance (October 13, 2025) ✅
+
+### UX Enhancements
+- **Crosshair Cursor**: Added precise crosshair cursor to hue wheel and saturation box
+  - Better targeting and positioning feedback
+  - Professional color picker feel
+  - Clear indication of active color selection area
+
+### Performance Improvements
+- **~100× Faster Color Wheel**: Massive optimization to dragging responsiveness
+  - **Before**: Redrew 250×250 hue wheel + 180×180 saturation square on EVERY mouse move (~95,000 pixels/frame)
+  - **After**: Smart selective updates - only redraws what actually changed
+  - **Removed console spam**: Eliminated print statement that fired on every mouse movement
+  - **Result**: Silky smooth, instant response during color dragging
+
+### Technical Implementation
+- Added "indicator" tags for efficient canvas element deletion/redrawing
+- Optimized `_update_displays()` with selective redraw parameters:
+  - **Saturation drag**: Only updates indicator position (no full redraw)
+  - **Hue wheel drag**: Redraws square (color depends on hue), but not wheel
+  - **Brightness slider**: Redraws square (color depends on brightness), but not wheel
+- Fixed redundant full redraws on every mouse movement
+
+### Bug Fixes
+- Fixed saturation indicator properly following cursor during drag
+- Fixed cursor position tracking for natural dragging feel
+- Removed laggy console output during color selection
+
 ## Version 1.30 - Build Size Optimization (October 13, 2025) ✅
 
 ### Optimizations

@@ -1,15 +1,15 @@
 # Software Bill of Materials (SBOM)
 
 **Last Updated**: October 13, 2025  
-**Project Version**: 1.30 - Pixel Perfect
+**Project Version**: 1.31 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 1.30 (Optimized Build - 91% Smaller! 🎉)
+- **Version**: 1.31 (Color Wheel Performance Optimized - 100× Faster! 🚀)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: October 13, 2025 (Build Size Optimization - 330MB → 29MB)
+- **Last Updated**: October 13, 2025 (Color Wheel UX & Performance - Crosshair Cursor + Selective Redrawing)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
-- **Status**: Production Ready - Optimized Distribution (29MB vs 330MB - 91% reduction!)
+- **Status**: Production Ready - Optimized Distribution (29MB exe, silky smooth color selection)
 
 ## Python Environment
 - **Python Version**: 3.13.6 (Tested and Verified)

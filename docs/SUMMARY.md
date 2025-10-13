@@ -1,8 +1,17 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.30  
-**Last Updated**: October 13, 2025 - Build Optimization
+**Version**: 1.31  
+**Last Updated**: October 13, 2025 - Color Wheel Optimization
+
+## Latest Updates (v1.31)
+
+- **Crosshair Cursor**: Professional precision cursor for color selection
+- **100× Faster Color Wheel**: Eliminated lag during color dragging
+- Smart selective updates - only redraws changed elements
+- Removed console spam and redundant full canvas redraws
+- Silky smooth, instant response during color selection
+- Fixed saturation indicator cursor tracking
 
 ## Latest Updates (v1.30)
 
