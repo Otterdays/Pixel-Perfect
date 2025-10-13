@@ -391,7 +391,9 @@ Contributions are welcome! The modular architecture makes it easy to add new fea
 
 ## 📄 License
 
-This project is open source. See LICENSE file for details.
+**© 2024-2025 Diamond Clad Studios - All Rights Reserved**
+
+This is proprietary software. All source code, documentation, assets, and related materials are the exclusive property of Diamond Clad Studios. Unauthorized copying, distribution, modification, or use is strictly prohibited without explicit written permission.
 
 ---
 
