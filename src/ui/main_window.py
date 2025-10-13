@@ -1936,13 +1936,17 @@ class MainWindow:
         )
         apply_btn.pack(side="right", padx=5)
         
-        # Focus width entry and select all
-        width_entry.focus()
-        width_entry.select_range(0, 'end')
-        
         # Bind Enter key to apply
         width_entry.bind("<Return>", lambda e: height_entry.focus())
         height_entry.bind("<Return>", lambda e: on_apply())
+        
+        # Focus width entry and select all (delayed to ensure dialog is rendered)
+        def focus_and_select():
+            width_entry.focus_force()
+            width_entry.select_range(0, 'end')
+            width_entry.icursor('end')  # Move cursor to end after selection
+        
+        dialog.after(100, focus_and_select)
         
         # Wait for dialog
         self.root.wait_window(dialog)
