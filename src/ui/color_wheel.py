@@ -208,6 +208,7 @@ class ColorWheel:
         
         # Get background color to fill empty areas (tkinter doesn't support RGBA transparency)
         bg_color = self._get_bg_color_rgb()
+        print(f"[COLOR WHEEL] Drawing hue wheel with background color: {bg_color}")
         
         # Create PIL image with background color (RGB mode)
         img = Image.new('RGB', (self.size, self.size), bg_color)
