@@ -20,11 +20,13 @@
 
 ### 📖 Quick Navigation
 
-[![Features](#-complete-feature-set)](https://img.shields.io/badge/Features-00ADD8?style=flat-square)
-[![Latest Updates](#-latest-updates)](https://img.shields.io/badge/Latest_Updates-FF6B6B?style=flat-square)
-[![Installation](#-installation)](https://img.shields.io/badge/Installation-4CAF50?style=flat-square)
-[![Tech Stack](#-tech-stack)](https://img.shields.io/badge/Tech_Stack-9C27B0?style=flat-square)
-[![Contributing](#-contributing)](https://img.shields.io/badge/Contributing-FF9800?style=flat-square)
+[![Quick Start](#-quick-start)](https://img.shields.io/badge/Quick_Start-00C853?style=flat-square&logo=rocket&logoColor=white)
+[![Features](#-complete-feature-set)](https://img.shields.io/badge/Features-00ADD8?style=flat-square&logo=star&logoColor=white)
+[![Installation](#-installation)](https://img.shields.io/badge/Installation-4CAF50?style=flat-square&logo=download&logoColor=white)
+[![Tech Stack](#-tech-stack)](https://img.shields.io/badge/Tech_Stack-9C27B0?style=flat-square&logo=code&logoColor=white)
+[![Documentation](#-documentation)](https://img.shields.io/badge/Documentation-2196F3?style=flat-square&logo=book&logoColor=white)
+[![Contributing](#-contributing)](https://img.shields.io/badge/Contributing-FF9800?style=flat-square&logo=users&logoColor=white)
+[![Latest Updates](#-latest-updates)](https://img.shields.io/badge/Latest_Updates-FF6B6B?style=flat-square&logo=history&logoColor=white)
 
 ---
 
@@ -47,126 +49,6 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 **Perfect for**: Game developers, pixel artists, indie creators, and retro game enthusiasts.
 
 **© 2024-2025 Diamond Clad Studios - All Rights Reserved**
-
-## 🆕 Latest Updates
-
-### Version 1.34 (October 2025)
-📐🎨 **Custom Canvas Size & Eyedropper Refinements**
-- **Custom Canvas Size** - Beautiful dialog for any canvas dimensions (1x1 to 512x512)
-- **Sleek UX** - Type width, Enter, type height, Enter - done! Auto-focused fields
-- **Dropdown Shows CUSTOM** - Displays "CUSTOM (48x48)" when using custom sizes
-- **Eyedropper Perfection** - Always updates color wheel, auto-switches to brush, ignores empty pixels
-- **Custom Dialogs** - Styled "Clear All Slots" confirmation with emoji and prominent buttons
-- **Texture Button** - Added texture panel button (placeholder for future features)
-
-### Version 1.33 (October 2025)
-🎨⚡ **Saved Colors & Performance Revolution**
-- **Saved Colors System** - 24-slot personal palette with export/import to share
-- **50-100× Faster UI** - Instant view switching (<10ms, was 500-1000ms)
-- **Editable RGB Values** - Type exact color numbers in color wheel
-- **Auto-Switch to Grid** - Palette changes show colors immediately
-- **Perfect Polish** - Color wheel backgrounds match theme seamlessly
-
-### Version 1.30 (October 2025)
-⚡ **Massive Build Size Optimization** 🎉
-- **91% smaller executable** - Reduced from 330MB to just 29MB!
-- **Removed pygame dependency** - All rendering now pure tkinter (~60MB saved)
-- **Removed scipy dependency** - Using optimized numpy scaling (~120MB saved)
-- **Faster downloads** - 5 seconds vs 53 seconds on fast WiFi
-- **Cleaner build** - Only 3 core dependencies (Pillow, CustomTkinter, numpy)
-- **See `docs/BUILD_OPTIMIZATION.md`** for full analysis and additional optimization options
-- **Zero functionality lost** - All features work identically
-- **Better performance** - No unused library initialization overhead
-
-### Version 1.29 (October 2025)
-🎯 **Live Shape Preview**
-- **Real-time visualization** - See Line, Square, and Circle as you draw them
-- **Interactive feedback** - Preview updates dynamically during mouse drag
-- **Professional workflow** - Matches industry-standard drawing applications
-- **Works with all modes** - Filled and outline shapes both show preview
-- **Clean interaction** - Preview disappears when shape is finalized
-- **Perfect integration** - Works seamlessly with pan/zoom system
-
-### Version 1.28 (October 2025)
-⚠️ **Canvas Downsize Warning System**
-- **Prevents accidental pixel loss** - Warning dialog when downsizing canvas
-- **Clear communication** - Shows exactly which pixels will be deleted
-- **Smart detection** - Triggers on width or height reduction
-- **Cancel support** - Restore previous size if you change your mind
-- **Professional UX** - Warning icon with Yes/No confirmation
-- **No more surprises** - Never lose pixels accidentally from resize operations
-
-### Version 1.27 (October 2025)
-🖼️ **Canvas Resize Pixel Preservation**
-- **Fixed pixel preservation** - All pixels saved in top-left region when resizing
-- **Auto-zoom adjustment** - 16x for small canvases, 8x for large canvases
-- **No more "tiny sprites"** - Zoom automatically adjusts to maintain visibility
-- **Console logging** - Shows exact preservation region for each resize
-- **Smooth resize experience** - Zoom restoration when changing canvas sizes
-
-### Version 1.26 (October 2025)
-🖥️ **Panel Width Adjustments**
-- **Expanded left panel** - Now 520px wide (was 500px) for better tool/palette visibility
-- **Expanded right panel** - Now 500px wide (was 300px) for improved layers/animation controls
-- **66% larger right panel** - Much more room for layer management and animation timeline
-- **User-optimized workspace** - Panel sizes adjusted based on workflow feedback
-
-### Version 1.25 (October 2025)
-🔲 **Grid Overlay Feature**
-- **Grid overlay button** - Toggle grid lines to appear on top of pixels
-- **See through pixels** - Grid lines visible through drawn artwork for precise placement
-- **Two modes** - Grid behind pixels (default) or grid on top (overlay mode)
-- **Visual feedback** - Blue when on, gray when off
-- **Perfect for dense artwork** - Never lose grid reference in heavily drawn areas
-
-### Version 1.24 (October 2025)
-🎛️ **Collapsible Panels & UI Refinements**
-- **Collapsible side panels** - Hide tools/layers panels for maximum canvas space
-- **Clean restore buttons** - Blue arrow buttons at screen edges (no grey boxes!)
-- **Styled dividers** - 10px wide flat grey sash dividers for easy panel resizing
-- **Smooth panel transitions** - Proper widget management for collapse/expand
-- **Independent panel control** - Collapse left, right, or both panels as needed
-- **Fixed UI artifacts** - Switched to tkinter buttons for clean overlay appearance
-
-### Version 1.23 (October 2025)
-⚡ **Panel Resize Optimization**
-- **Smooth divider dragging** - Optimized PanedWindow for lag-free panel resizing
-- **Outline-only resize** - Shows outline during drag instead of redrawing content
-- **Sash drag tracking** - Prevents window resize conflicts during panel manipulation
-
-### Version 1.22 (October 2025)
-🎨 **Theme System**
-- **Real-time theme switching** - Instant UI color scheme changes
-- **Two built-in themes** - Basic Grey (dark) and Angelic (light)
-- **100% UI coverage** - All panels, buttons, labels, scrollbars update
-- **Theme dropdown** - Palette icon 🎨 in toolbar for easy switching
-
-### Version 1.13 (October 2025)
-🎨 **UI Improvements & Complete Palette System**
-- **Custom application icon** - Colorful 4×4 pixel grid logo in window, taskbar, and EXE
-- **Resizable side panels** - Drag dividers to adjust panel widths
-- **Compact 3×3 tool grid** - Saves 180+ pixels of vertical space, centered layout
-- **All 6 palettes available** - Added 4 missing palette JSON files to distribution
-- **Reduced spacing** - Tighter, more efficient UI throughout
-- **Documentation organized** - New `features/` and `technical/` subdirectories
-- **REQUIREMENTS.md** - Comprehensive project requirements document
-
-### Version 1.12 (October 2025)
-🎨 **Custom Colors System**
-- Save up to 32 custom colors that persist across all sessions
-- User-specific color library (each user has their own)
-- Simple interface: Save (green) and Delete (red) buttons
-- Click saved colors to instantly load them into the color wheel
-- Stored locally in your user profile (not bundled with the app)
-- Complete visual selection feedback with white borders
-
-### Version 1.11 (October 2025)
-📐 **64x64 Canvas Size Support**
-- Added extra-large 64x64 canvas preset for detailed sprites
-- Fixed critical layer dimension caching bug
-- Improved canvas resize synchronization
-- Auto-zoom adjustment for optimal viewing
-- Full drawing area coverage on all canvas sizes
 
 ## 🚀 Quick Start
 
@@ -508,3 +390,132 @@ This project is open source. See LICENSE file for details.
 ---
 
 **Made with ❤️ for the pixel art community**
+
+
+---
+
+<div align="center">
+
+## 🆕 Latest Updates
+
+**Version History & Release Notes**
+
+</div>
+
+### Version 1.34 (October 2025)
+📐🎨 **Custom Canvas Size & Eyedropper Refinements**
+- **Custom Canvas Size** - Beautiful dialog for any canvas dimensions (1x1 to 512x512)
+- **Sleek UX** - Type width, Enter, type height, Enter - done! Auto-focused fields
+- **Dropdown Shows CUSTOM** - Displays "CUSTOM (48x48)" when using custom sizes
+- **Eyedropper Perfection** - Always updates color wheel, auto-switches to brush, ignores empty pixels
+- **Custom Dialogs** - Styled "Clear All Slots" confirmation with emoji and prominent buttons
+- **Texture Button** - Added texture panel button (placeholder for future features)
+
+### Version 1.33 (October 2025)
+🎨⚡ **Saved Colors & Performance Revolution**
+- **Saved Colors System** - 24-slot personal palette with export/import to share
+- **50-100× Faster UI** - Instant view switching (<10ms, was 500-1000ms)
+- **Editable RGB Values** - Type exact color numbers in color wheel
+- **Auto-Switch to Grid** - Palette changes show colors immediately
+- **Perfect Polish** - Color wheel backgrounds match theme seamlessly
+
+### Version 1.30 (October 2025)
+⚡ **Massive Build Size Optimization** 🎉
+- **91% smaller executable** - Reduced from 330MB to just 29MB!
+- **Removed pygame dependency** - All rendering now pure tkinter (~60MB saved)
+- **Removed scipy dependency** - Using optimized numpy scaling (~120MB saved)
+- **Faster downloads** - 5 seconds vs 53 seconds on fast WiFi
+- **Cleaner build** - Only 3 core dependencies (Pillow, CustomTkinter, numpy)
+- **See `docs/BUILD_OPTIMIZATION.md`** for full analysis and additional optimization options
+- **Zero functionality lost** - All features work identically
+- **Better performance** - No unused library initialization overhead
+
+### Version 1.29 (October 2025)
+🎯 **Live Shape Preview**
+- **Real-time visualization** - See Line, Square, and Circle as you draw them
+- **Interactive feedback** - Preview updates dynamically during mouse drag
+- **Professional workflow** - Matches industry-standard drawing applications
+- **Works with all modes** - Filled and outline shapes both show preview
+- **Clean interaction** - Preview disappears when shape is finalized
+- **Perfect integration** - Works seamlessly with pan/zoom system
+
+### Version 1.28 (October 2025)
+⚠️ **Canvas Downsize Warning System**
+- **Prevents accidental pixel loss** - Warning dialog when downsizing canvas
+- **Clear communication** - Shows exactly which pixels will be deleted
+- **Smart detection** - Triggers on width or height reduction
+- **Cancel support** - Restore previous size if you change your mind
+- **Professional UX** - Warning icon with Yes/No confirmation
+- **No more surprises** - Never lose pixels accidentally from resize operations
+
+### Version 1.27 (October 2025)
+🖼️ **Canvas Resize Pixel Preservation**
+- **Fixed pixel preservation** - All pixels saved in top-left region when resizing
+- **Auto-zoom adjustment** - 16x for small canvases, 8x for large canvases
+- **No more "tiny sprites"** - Zoom automatically adjusts to maintain visibility
+- **Console logging** - Shows exact preservation region for each resize
+- **Smooth resize experience** - Zoom restoration when changing canvas sizes
+
+### Version 1.26 (October 2025)
+🖥️ **Panel Width Adjustments**
+- **Expanded left panel** - Now 520px wide (was 500px) for better tool/palette visibility
+- **Expanded right panel** - Now 500px wide (was 300px) for improved layers/animation controls
+- **66% larger right panel** - Much more room for layer management and animation timeline
+- **User-optimized workspace** - Panel sizes adjusted based on workflow feedback
+
+### Version 1.25 (October 2025)
+🔲 **Grid Overlay Feature**
+- **Grid overlay button** - Toggle grid lines to appear on top of pixels
+- **See through pixels** - Grid lines visible through drawn artwork for precise placement
+- **Two modes** - Grid behind pixels (default) or grid on top (overlay mode)
+- **Visual feedback** - Blue when on, gray when off
+- **Perfect for dense artwork** - Never lose grid reference in heavily drawn areas
+
+### Version 1.24 (October 2025)
+🎛️ **Collapsible Panels & UI Refinements**
+- **Collapsible side panels** - Hide tools/layers panels for maximum canvas space
+- **Clean restore buttons** - Blue arrow buttons at screen edges (no grey boxes!)
+- **Styled dividers** - 10px wide flat grey sash dividers for easy panel resizing
+- **Smooth panel transitions** - Proper widget management for collapse/expand
+- **Independent panel control** - Collapse left, right, or both panels as needed
+- **Fixed UI artifacts** - Switched to tkinter buttons for clean overlay appearance
+
+### Version 1.23 (October 2025)
+⚡ **Panel Resize Optimization**
+- **Smooth divider dragging** - Optimized PanedWindow for lag-free panel resizing
+- **Outline-only resize** - Shows outline during drag instead of redrawing content
+- **Sash drag tracking** - Prevents window resize conflicts during panel manipulation
+
+### Version 1.22 (October 2025)
+🎨 **Theme System**
+- **Real-time theme switching** - Instant UI color scheme changes
+- **Two built-in themes** - Basic Grey (dark) and Angelic (light)
+- **100% UI coverage** - All panels, buttons, labels, scrollbars update
+- **Theme dropdown** - Palette icon 🎨 in toolbar for easy switching
+
+### Version 1.13 (October 2025)
+🎨 **UI Improvements & Complete Palette System**
+- **Custom application icon** - Colorful 4×4 pixel grid logo in window, taskbar, and EXE
+- **Resizable side panels** - Drag dividers to adjust panel widths
+- **Compact 3×3 tool grid** - Saves 180+ pixels of vertical space, centered layout
+- **All 6 palettes available** - Added 4 missing palette JSON files to distribution
+- **Reduced spacing** - Tighter, more efficient UI throughout
+- **Documentation organized** - New `features/` and `technical/` subdirectories
+- **REQUIREMENTS.md** - Comprehensive project requirements document
+
+### Version 1.12 (October 2025)
+🎨 **Custom Colors System**
+- Save up to 32 custom colors that persist across all sessions
+- User-specific color library (each user has their own)
+- Simple interface: Save (green) and Delete (red) buttons
+- Click saved colors to instantly load them into the color wheel
+- Stored locally in your user profile (not bundled with the app)
+- Complete visual selection feedback with white borders
+
+### Version 1.11 (October 2025)
+📐 **64x64 Canvas Size Support**
+- Added extra-large 64x64 canvas preset for detailed sprites
+- Fixed critical layer dimension caching bug
+- Improved canvas resize synchronization
+- Auto-zoom adjustment for optimal viewing
+- Full drawing area coverage on all canvas sizes
