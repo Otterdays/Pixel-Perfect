@@ -1,12 +1,25 @@
 # Pixel Perfect - Retro Pixel Art Editor
 
-![Pixel Perfect Header](header.png)
+![Pixel Perfect Header - Dark Theme](header.png)
+*Dark "Basic Grey" Theme*
+
+![Pixel Perfect Header - Light Theme](header_light.png)
+*Light "Angelic" Theme*
 
 A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
 
 **© 2024-2025 Diamond Clad Studios - All Rights Reserved**
 
 ## 🆕 Latest Updates
+
+### Version 1.34 (October 2025)
+📐🎨 **Custom Canvas Size & Eyedropper Refinements**
+- **Custom Canvas Size** - Beautiful dialog for any canvas dimensions (1x1 to 512x512)
+- **Sleek UX** - Type width, Enter, type height, Enter - done! Auto-focused fields
+- **Dropdown Shows CUSTOM** - Displays "CUSTOM (48x48)" when using custom sizes
+- **Eyedropper Perfection** - Always updates color wheel, auto-switches to brush, ignores empty pixels
+- **Custom Dialogs** - Styled "Clear All Slots" confirmation with emoji and prominent buttons
+- **Texture Button** - Added texture panel button (placeholder for future features)
 
 ### Version 1.33 (October 2025)
 🎨⚡ **Saved Colors & Performance Revolution**
