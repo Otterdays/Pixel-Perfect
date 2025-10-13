@@ -206,8 +206,11 @@ class ColorWheel:
         center_y = self.size // 2
         radius = wheel_size // 2
         
-        # Create PIL image with transparency (RGBA mode)
-        img = Image.new('RGBA', (self.size, self.size), (0, 0, 0, 0))  # Fully transparent
+        # Get background color to fill empty areas (tkinter doesn't support RGBA transparency)
+        bg_color = self._get_bg_color_rgb()
+        
+        # Create PIL image with background color (RGB mode)
+        img = Image.new('RGB', (self.size, self.size), bg_color)
         draw = ImageDraw.Draw(img)
         
         # Draw hue wheel
@@ -221,7 +224,7 @@ class ColorWheel:
                     angle = math.atan2(dy, dx)
                     hue = (math.degrees(angle) + 180) % 360
                     rgb = self._hsv_to_rgb(hue, 1.0, 1.0)
-                    img.putpixel((x, y), rgb + (255,))  # Add full opacity to colored pixels
+                    img.putpixel((x, y), rgb)
         
         # Convert to PhotoImage and display
         self.wheel_image = ImageTk.PhotoImage(img)
