@@ -1,5 +1,45 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.27 - Canvas Resize Pixel Preservation
+**Date**: October 13, 2025
+**Status**: Complete ✅
+
+### Issue:
+**Canvas resize pixel loss** - User reported pixels disappearing when resizing canvas
+- Scenario: 16x32 → 32x64 → back to 16x32, pixels appeared to be lost
+- Root cause: Pixels WERE preserved but became invisible due to zoom changes
+- When upsizing to 32x64, zoom dropped from 16x to 8x making sprite look tiny
+- When downsizing back to 16x32, zoom stayed at 8x, sprite still looked tiny/gone
+
+### Solution:
+1. **Verified pixel preservation**: LayerManager.resize_layers() and Timeline.resize_frames() already preserve pixels correctly
+2. **Added bidirectional zoom adjustment**:
+   - Small canvases (16x16, 16x32, 32x32): Auto-increase zoom to 16x minimum
+   - Large canvases (32x64, 64x64): Auto-decrease zoom to 8x maximum
+3. **Enhanced logging**: Console shows exact preservation region
+
+### Implementation:
+```python
+# Auto-adjust zoom based on canvas size
+if size_str == "16x16":
+    if self.canvas.zoom < 16:
+        self.canvas.set_zoom(16)  # Restore visibility
+elif size_str == "16x32" or size_str == "32x32":
+    if self.canvas.zoom < 16:
+        self.canvas.set_zoom(16)  # Restore visibility
+elif size_str in ["32x64", "64x64"]:
+    if self.canvas.zoom > 8:
+        self.canvas.set_zoom(8)  # Prevent clipping
+```
+
+### Result:
+- ✅ Pixels always preserved in top-left region during resize
+- ✅ Zoom automatically adjusts to maintain visibility
+- ✅ No more "tiny sprite" or "lost pixels" issues
+- ✅ Smooth resize experience with proper zoom restoration
+
+---
+
 ## Version 1.26 - Panel Width Adjustments
 **Date**: October 13, 2025
 **Status**: Complete ✅

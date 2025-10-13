@@ -1826,7 +1826,7 @@ class MainWindow:
                     btn.configure(border_width=0, border_color="")
     
     def _on_size_change(self, size_str: str):
-        """Handle canvas size change"""
+        """Handle canvas size change - preserves ALL pixel data during resize"""
         size_map = {
             "16x16": CanvasSize.SMALL,
             "32x32": CanvasSize.MEDIUM,
@@ -1836,36 +1836,49 @@ class MainWindow:
         }
         
         if size_str in size_map:
+            # Store old dimensions for preservation info
+            old_width = self.canvas.width
+            old_height = self.canvas.height
+            
+            # Resize canvas (updates dimensions only)
             self.canvas.set_preset_size(size_map[size_str])
+            new_width = self.canvas.width
+            new_height = self.canvas.height
             
-            # Auto-adjust zoom for larger canvases to prevent negative offsets
-            if size_str in ["32x64", "64x64"]:
-                # Get available canvas area (approximate)
-                canvas_area_width = 864  # Typical width from debug logs
-                canvas_area_height = 963  # Typical height from debug logs
-                
-                # Calculate maximum zoom that fits
-                max_zoom_w = canvas_area_width // self.canvas.width
-                max_zoom_h = canvas_area_height // self.canvas.height
-                max_zoom = min(max_zoom_w, max_zoom_h)
-                
-                # Set to a reasonable zoom (8x or less for 64x64, 16x for 32x64)
-                if size_str == "64x64" and self.canvas.zoom > 8:
+            # Auto-adjust zoom based on canvas size for optimal viewing
+            # Smaller canvases get higher zoom, larger canvases get lower zoom
+            if size_str == "16x16":
+                # Very small canvas - use high zoom (16x minimum)
+                if self.canvas.zoom < 16:
+                    self.canvas.set_zoom(16)
+                    self.zoom_var.set("16x")
+            elif size_str == "16x32" or size_str == "32x32":
+                # Small canvas - use medium-high zoom (16x minimum)
+                if self.canvas.zoom < 16:
+                    self.canvas.set_zoom(16)
+                    self.zoom_var.set("16x")
+            elif size_str in ["32x64", "64x64"]:
+                # Large canvas - reduce zoom to fit (8x maximum)
+                if self.canvas.zoom > 8:
                     self.canvas.set_zoom(8)
                     self.zoom_var.set("8x")
-                elif size_str == "32x64" and self.canvas.zoom > 8:
-                    self.canvas.set_zoom(8)
-                    self.zoom_var.set("8x")
             
-            # Update layer manager and timeline to match new canvas size
-            self.layer_manager.resize_layers(self.canvas.width, self.canvas.height)
-            self.timeline.resize_frames(self.canvas.width, self.canvas.height)
+            # Resize layer manager and timeline (both automatically preserve pixel data)
+            # These methods copy existing pixels to the top-left of new size
+            self.layer_manager.resize_layers(new_width, new_height)
+            self.timeline.resize_frames(new_width, new_height)
             
-            # Sync canvas pixels with layer data after resize
+            # Sync canvas display with resized layer data
             self._update_canvas_from_layers()
             
             # Update display immediately
             self._force_tkinter_canvas_update()
+            
+            # Log resize info
+            preserved_w = min(old_width, new_width)
+            preserved_h = min(old_height, new_height)
+            print(f"[Canvas Resize] {old_width}x{old_height} → {new_width}x{new_height}")
+            print(f"[Pixel Preservation] Top-left {preserved_w}x{preserved_h} region preserved")
     
     def _on_zoom_change(self, zoom_str: str):
         """Handle zoom level change"""

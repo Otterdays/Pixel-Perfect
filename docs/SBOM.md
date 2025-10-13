@@ -1,15 +1,15 @@
 # Software Bill of Materials (SBOM)
 
 **Last Updated**: October 13, 2025  
-**Project Version**: 1.26 - Pixel Perfect
+**Project Version**: 1.27 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 1.26 (Panel Width Adjustments)
+- **Version**: 1.27 (Canvas Resize Fix)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: October 13, 2025 (Panel Width Adjustments)
+- **Last Updated**: October 13, 2025 (Canvas Resize Pixel Preservation)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
-- **Status**: Production Ready - Full Feature Set with Optimized UI Layout
+- **Status**: Production Ready - Full Feature Set with Fixed Canvas Resize
 
 ## Python Environment
 - **Python Version**: 3.13.6 (Tested and Verified)

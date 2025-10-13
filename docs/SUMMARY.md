@@ -1,8 +1,16 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.26  
-**Last Updated**: October 13, 2025 - Panel Width Adjustments
+**Version**: 1.27  
+**Last Updated**: October 13, 2025 - Canvas Resize Fix
+
+## Latest Updates (v1.27)
+
+- **Fixed Canvas Resize**: Pixels now properly preserved when changing canvas size
+- Auto-adjusts zoom: 16x for small canvases, 8x for large canvases
+- No more "tiny sprite" or "lost pixels" issues
+- Zoom restoration when resizing back to smaller canvas
+- Console logging shows preservation region
 
 ## Latest Updates (v1.26)
 

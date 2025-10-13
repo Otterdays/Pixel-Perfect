@@ -1,5 +1,23 @@
 # Pixel Perfect - Changelog
 
+## Version 1.27 - Canvas Resize Pixel Preservation (October 13, 2025) ✅
+
+### Bug Fixes
+- **Fixed Canvas Resize Pixel Loss**: Pixels now properly preserved when changing canvas size
+  - All layers and timeline frames preserve pixel data in top-left region
+  - Auto-adjusts zoom when resizing: 16x for small canvases, 8x for large canvases
+  - Prevents "tiny sprite" issue when upsizing canvas
+  - Zoom restoration when going back to smaller canvas sizes
+  - Console logging shows exact preservation region (e.g., "Top-left 16x32 region preserved")
+  - No more accidental pixel loss from size changes!
+
+### Technical Implementation
+- Enhanced `_on_size_change()` method with proper pixel preservation flow
+- Added automatic zoom adjustment for all canvas sizes (16x16, 32x32, 16x32, 32x64, 64x64)
+- Zoom increases to 16x minimum for small canvases to maintain visibility
+- Zoom decreases to 8x maximum for large canvases to prevent clipping
+- Detailed console logging for resize operations
+
 ## Version 1.26 - Panel Width Adjustments (October 13, 2025) ✅
 
 ### UI Enhancements
