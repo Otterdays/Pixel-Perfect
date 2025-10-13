@@ -1,8 +1,22 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.33  
-**Last Updated**: October 13, 2025 - Saved Colors & Performance Revolution
+**Version**: 1.34  
+**Last Updated**: October 13, 2025 - Eyedropper Refinements & Custom Dialogs
+
+## Latest Updates (v1.34)
+
+### Eyedropper Perfection 🔍
+- Always updates color wheel (even for palette colors)
+- Auto-switches to Brush after sampling
+- Ignores transparent pixels (no more broken wheel!)
+- Seamless workflow improvements
+
+### Custom Styled Dialogs 🎨
+- Beautiful confirmation dialog for "Clear All Slots"
+- Large emoji icon, bold typography, prominent buttons
+- Red for danger, grey for safe actions
+- Professional CustomTkinter styling
 
 ## Latest Updates (v1.33)
 

@@ -1,5 +1,41 @@
 # Pixel Perfect - Changelog
 
+## Version 1.34 - Eyedropper Refinements & Custom Dialogs (October 13, 2025) ✅
+
+### Eyedropper Tool Enhancements
+- **Always Updates Color Wheel**: Color wheel now updates to show sampled color even for palette colors
+  - Better visual feedback - wheel always reflects current selection
+  - Improved workflow when color wheel is open
+  - Works seamlessly with palette selection
+
+- **Auto-Switch to Brush**: After sampling color, automatically switches to Brush tool
+  - Standard workflow: Sample → Paint immediately
+  - No manual tool switching needed
+  - Works for both left-click (primary) and right-click (secondary)
+
+### Bug Fixes
+- **Fixed: Eyedropper Sampling Transparent Pixels**
+  - Sampling empty/transparent pixels was breaking color wheel
+  - RGB(0,0,0) with 0% brightness made wheel stuck on black
+  - Now ignores transparent pixels (alpha=0) when sampling
+  - Color wheel stays functional at all times
+
+- **Fixed: Constants & Eyedropper Color Display**
+  - Both were calling `_create_color_wheel()` which reset the wheel to red
+  - Now use optimized `_show_view("wheel")` for correct color display
+  - Fixed with v1.33 performance system integration
+
+### UI Enhancements
+- **Custom "Clear All Slots" Confirmation Dialog**
+  - Beautiful CustomTkinter dialog replacing standard messagebox
+  - Large colorful palette emoji (🎨) for visual impact
+  - Bold title and clear warning message
+  - Large, prominent buttons (140x40px)
+  - Red "Yes" button signals destructive action
+  - Grey "No" button as safe default
+  - Centers on main window with modal behavior
+  - Professional look matching app theme
+
 ## Version 1.33 - Saved Colors & Performance Revolution (October 13, 2025) ✅
 
 ### Major New Features
