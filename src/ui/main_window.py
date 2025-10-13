@@ -3089,17 +3089,14 @@ class MainWindow:
         if found_in_palette:
             # Color found in palette, update UI
             self._update_color_grid_selection()
-            print(f"Color found in palette: {rgb_color}")
         else:
-            # Color not in palette, switch to color wheel mode
+            # Color not in palette, switch to color wheel and set the color
             self.view_mode_var.set("wheel")
-            self._create_color_wheel()
+            self._show_view("wheel")
             
-            # Set the color in the color wheel
+            # Set the sampled color in the color wheel
             if hasattr(self, 'color_wheel') and self.color_wheel:
-                # Set the color directly in the color wheel
                 self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
-                print(f"Color set in color wheel: {rgb_color}")
     
     def _undo(self):
         """Undo last action"""
