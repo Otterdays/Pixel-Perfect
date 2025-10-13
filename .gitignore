@@ -157,3 +157,8 @@ desktop.ini
 # User-specific custom colors (each user has their own)
 custom_colors.json
 **/custom_colors.json
+
+# User's local saved colors (not for production)
+saved_colors.json
+**/saved_colors.json
+.pixelperfect/
