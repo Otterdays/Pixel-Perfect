@@ -290,10 +290,13 @@ class MainWindow:
         self.size_menu = ctk.CTkOptionMenu(
             self.toolbar, 
             variable=self.size_var,
-            values=["16x16", "32x32", "16x32", "32x64", "64x64"],
+            values=["16x16", "32x32", "16x32", "32x64", "64x64", "Custom..."],
             command=self._on_size_change
         )
         self.size_menu.pack(side="left", padx=5)
+        
+        # Track custom size
+        self.custom_canvas_size = None
         
         # Zoom controls
         self.zoom_label = ctk.CTkLabel(self.toolbar, text="Zoom:")
@@ -1819,9 +1822,157 @@ class MainWindow:
                 else:
                     btn.configure(border_width=0, border_color="")
     
+    def _open_custom_size_dialog(self):
+        """Open dialog for custom canvas size input"""
+        # Create custom size dialog
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Custom Canvas Size")
+        dialog.geometry("400x280")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center on main window
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (280 // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Header with icon
+        header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        header_frame.pack(pady=20, padx=20, fill="x")
+        
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="📐 Custom Canvas Size",
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        title_label.pack()
+        
+        # Input frame
+        input_frame = ctk.CTkFrame(dialog)
+        input_frame.pack(padx=20, pady=10, fill="x")
+        
+        # Width input
+        width_label = ctk.CTkLabel(input_frame, text="Width (pixels):", font=ctk.CTkFont(size=14))
+        width_label.pack(pady=(10, 5))
+        
+        width_entry = ctk.CTkEntry(
+            input_frame,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=16),
+            placeholder_text="e.g., 48"
+        )
+        width_entry.pack(pady=5)
+        width_entry.insert(0, str(self.canvas.width))
+        
+        # Height input
+        height_label = ctk.CTkLabel(input_frame, text="Height (pixels):", font=ctk.CTkFont(size=14))
+        height_label.pack(pady=(10, 5))
+        
+        height_entry = ctk.CTkEntry(
+            input_frame,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=16),
+            placeholder_text="e.g., 48"
+        )
+        height_entry.pack(pady=5)
+        height_entry.insert(0, str(self.canvas.height))
+        
+        # Result storage
+        result = [None, None]
+        
+        def on_apply():
+            try:
+                width = int(width_entry.get())
+                height = int(height_entry.get())
+                
+                # Validate dimensions
+                if width < 1 or height < 1:
+                    from tkinter import messagebox
+                    messagebox.showerror("Invalid Size", "Width and height must be at least 1 pixel!")
+                    return
+                
+                if width > 512 or height > 512:
+                    from tkinter import messagebox
+                    messagebox.showerror("Invalid Size", "Maximum size is 512x512 pixels!")
+                    return
+                
+                result[0] = width
+                result[1] = height
+                dialog.destroy()
+            except ValueError:
+                from tkinter import messagebox
+                messagebox.showerror("Invalid Input", "Please enter valid numbers!")
+        
+        def on_cancel():
+            dialog.destroy()
+        
+        # Button frame
+        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_frame.pack(pady=20, padx=20, fill="x")
+        
+        cancel_btn = ctk.CTkButton(
+            button_frame,
+            text="Cancel",
+            width=120,
+            height=35,
+            fg_color="#4a4a4a",
+            hover_color="#5a5a5a",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_cancel
+        )
+        cancel_btn.pack(side="right", padx=5)
+        
+        apply_btn = ctk.CTkButton(
+            button_frame,
+            text="Apply",
+            width=120,
+            height=35,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_apply
+        )
+        apply_btn.pack(side="right", padx=5)
+        
+        # Focus width entry and select all
+        width_entry.focus()
+        width_entry.select_range(0, 'end')
+        
+        # Bind Enter key to apply
+        width_entry.bind("<Return>", lambda e: height_entry.focus())
+        height_entry.bind("<Return>", lambda e: on_apply())
+        
+        # Wait for dialog
+        self.root.wait_window(dialog)
+        
+        return result[0], result[1]
+    
     def _on_size_change(self, size_str: str):
         """Handle canvas size change - WARNING: Downsizing clips pixels!"""
         from tkinter import messagebox
+        
+        # Handle custom size dialog
+        if size_str == "Custom...":
+            width, height = self._open_custom_size_dialog()
+            
+            if width is None or height is None:
+                # User cancelled - restore previous size
+                if self.custom_canvas_size:
+                    self.size_var.set(f"CUSTOM ({self.custom_canvas_size[0]}x{self.custom_canvas_size[1]})")
+                else:
+                    # Restore to current actual size
+                    current_size = f"{self.canvas.width}x{self.canvas.height}"
+                    if current_size in ["16x16", "32x32", "16x32", "32x64", "64x64"]:
+                        self.size_var.set(current_size)
+                    else:
+                        self.size_var.set("32x32")
+                return
+            
+            # Apply custom size
+            self._apply_custom_canvas_size(width, height)
+            return
         
         size_map = {
             "16x16": CanvasSize.SMALL,
@@ -1830,6 +1981,9 @@ class MainWindow:
             "32x64": CanvasSize.LARGE,
             "64x64": CanvasSize.XLARGE
         }
+        
+        # Clear custom size when switching to preset
+        self.custom_canvas_size = None
         
         if size_str in size_map:
             # Store old dimensions for preservation info
