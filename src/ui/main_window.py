@@ -604,11 +604,21 @@ class MainWindow:
         color_display_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
         color_display_container.pack(fill="both", expand=True, pady=5)
         
-        self.color_display_frame = ctk.CTkFrame(color_display_container)
-        self.color_display_frame.pack(expand=True)
+        # Create container frames for each view (create once, toggle visibility)
+        self.grid_view_frame = ctk.CTkFrame(color_display_container)
+        self.primary_view_frame = ctk.CTkFrame(color_display_container)
+        self.wheel_view_frame = ctk.CTkFrame(color_display_container)
+        self.constants_view_frame = ctk.CTkFrame(color_display_container)
+        self.saved_view_frame = ctk.CTkFrame(color_display_container)
         
-        # Initialize with grid view
-        self._create_color_grid()
+        # Keep reference to old color_display_frame for compatibility
+        self.color_display_frame = self.grid_view_frame
+        
+        # Initialize all views once (expensive but only happens once)
+        self._initialize_all_views()
+        
+        # Show grid view by default
+        self._show_view("grid")
         self.color_wheel = None
         
         # Primary colors state
@@ -1908,24 +1918,63 @@ class MainWindow:
         else:
             self._create_color_wheel()
     
-    def _on_view_mode_change(self):
-        """Handle view mode change between grid, primary colors, color wheel, constants, and saved"""
-        mode = self.view_mode_var.get()
+    def _initialize_all_views(self):
+        """Initialize all palette views once at startup (OPTIMIZED)"""
+        # Create grid view
+        self.color_display_frame = self.grid_view_frame
+        self._create_color_grid()
         
-        # Clear saved view created flag when switching away from saved view
-        if mode != "saved" and hasattr(self, '_saved_view_created'):
-            self._saved_view_created = False
+        # Create primary view
+        self.color_display_frame = self.primary_view_frame
+        self._create_primary_colors()
         
+        # Create wheel view
+        self.color_display_frame = self.wheel_view_frame
+        self._create_color_wheel()
+        
+        # Create saved view
+        self.color_display_frame = self.saved_view_frame
+        self._create_saved_colors_view()
+        
+        # Constants view is dynamic, create on demand
+        # Reset to grid view frame
+        self.color_display_frame = self.grid_view_frame
+    
+    def _show_view(self, mode: str):
+        """Show specific view by toggling visibility (INSTANT)"""
+        # Hide all views
+        self.grid_view_frame.pack_forget()
+        self.primary_view_frame.pack_forget()
+        self.wheel_view_frame.pack_forget()
+        self.constants_view_frame.pack_forget()
+        self.saved_view_frame.pack_forget()
+        
+        # Show requested view
         if mode == "grid":
-            self._create_color_grid()
+            self.grid_view_frame.pack(expand=True)
+            self.color_display_frame = self.grid_view_frame
         elif mode == "primary":
-            self._create_primary_colors()
+            self.primary_view_frame.pack(expand=True)
+            self.color_display_frame = self.primary_view_frame
+        elif mode == "wheel":
+            self.wheel_view_frame.pack(expand=True)
+            self.color_display_frame = self.wheel_view_frame
         elif mode == "constants":
+            # Constants view is dynamic - recreate each time
+            self.constants_view_frame.pack(expand=True)
+            self.color_display_frame = self.constants_view_frame
             self._create_constants_grid()
         elif mode == "saved":
-            self._create_saved_colors_view()
-        else:  # wheel
-            self._create_color_wheel()
+            self.saved_view_frame.pack(expand=True)
+            self.color_display_frame = self.saved_view_frame
+            # Update button states in case colors changed
+            if hasattr(self, '_saved_view_created') and self._saved_view_created:
+                self._update_saved_color_buttons()
+    
+    def _on_view_mode_change(self):
+        """Handle view mode change - now instant!"""
+        mode = self.view_mode_var.get()
+        self._show_view(mode)
     
     def _create_constants_grid(self):
         """Create grid showing only colors currently used on the canvas"""
