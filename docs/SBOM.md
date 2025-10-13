@@ -1,15 +1,15 @@
 # Software Bill of Materials (SBOM)
 
 **Last Updated**: October 13, 2025  
-**Project Version**: 1.25 - Pixel Perfect
+**Project Version**: 1.26 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 1.25 (Grid Overlay)
+- **Version**: 1.26 (Panel Width Adjustments)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: October 13, 2025 (Grid Overlay Feature)
+- **Last Updated**: October 13, 2025 (Panel Width Adjustments)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
-- **Status**: Production Ready - Full Feature Set with Enhanced Grid Controls
+- **Status**: Production Ready - Full Feature Set with Optimized UI Layout
 
 ## Python Environment
 - **Python Version**: 3.13.6 (Tested and Verified)

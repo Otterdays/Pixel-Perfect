@@ -203,7 +203,7 @@ class MainWindow:
         
         # Left panel container (wrapper for CTk widget)
         self.left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
-        self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never")
+        self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
         
         # Left collapse button (visible when expanded)
         left_collapse_btn = ctk.CTkButton(
@@ -222,7 +222,7 @@ class MainWindow:
         # Left panel (tools and palette) - with scrollbar (optimized for smooth resize)
         self.left_panel = ctk.CTkScrollableFrame(
             self.left_container, 
-            width=500
+            width=520
         )
         self.left_panel.pack(side="left", fill="both", expand=True)
         
@@ -236,7 +236,7 @@ class MainWindow:
         
         # Right panel container (wrapper for CTk widget)
         self.right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
-        self.paned_window.add(self.right_container, minsize=220, width=300, stretch="never")
+        self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
         
         # Right collapse button (visible when expanded)
         right_collapse_btn = ctk.CTkButton(
@@ -255,7 +255,7 @@ class MainWindow:
         # Right panel (layers, etc.) - with scrollbar (optimized for smooth resize)
         self.right_panel = ctk.CTkScrollableFrame(
             self.right_container, 
-            width=300
+            width=500
         )
         self.right_panel.pack(side="right", fill="both", expand=True)
         
@@ -572,7 +572,16 @@ class MainWindow:
             value="wheel",
             command=self._on_view_mode_change
         )
-        self.wheel_view_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=2)
+        self.wheel_view_btn.grid(row=1, column=0, padx=5, pady=2)
+        
+        self.constants_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Constants",
+            variable=self.view_mode_var,
+            value="constants",
+            command=self._on_view_mode_change
+        )
+        self.constants_view_btn.grid(row=1, column=1, padx=5, pady=2)
         
         # Color display container - centered
         color_display_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
@@ -1149,9 +1158,9 @@ class MainWindow:
             # Get the current first pane to insert before it
             panes = self.paned_window.panes()
             if len(panes) > 0:
-                self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never", before=panes[0])
+                self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never", before=panes[0])
             else:
-                self.paned_window.add(self.left_container, minsize=220, width=500, stretch="never")
+                self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
             
             self.left_collapse_btn.configure(text="◀")
             self.left_panel_collapsed = False
@@ -1204,7 +1213,7 @@ class MainWindow:
                     pass
             
             # Re-add the container at the end
-            self.paned_window.add(self.right_container, minsize=220, width=300, stretch="never")
+            self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
             
             self.right_collapse_btn.configure(text="▶")
             self.right_panel_collapsed = False
@@ -1878,14 +1887,125 @@ class MainWindow:
             self._create_color_wheel()
     
     def _on_view_mode_change(self):
-        """Handle view mode change between grid, primary colors, and color wheel"""
+        """Handle view mode change between grid, primary colors, color wheel, and constants"""
         mode = self.view_mode_var.get()
         if mode == "grid":
             self._create_color_grid()
         elif mode == "primary":
             self._create_primary_colors()
+        elif mode == "constants":
+            self._create_constants_grid()
         else:  # wheel
             self._create_color_wheel()
+    
+    def _create_constants_grid(self):
+        """Create grid showing only colors currently used on the canvas"""
+        # Clear existing widgets
+        for widget in self.color_display_frame.winfo_children():
+            widget.destroy()
+        
+        # Extract unique colors from canvas
+        used_colors = self._get_canvas_colors()
+        
+        if not used_colors:
+            # Show message if no colors are used yet
+            no_colors_label = ctk.CTkLabel(
+                self.color_display_frame,
+                text="No colors used yet.\nDraw on canvas to see\ncolors here.",
+                font=ctk.CTkFont(size=12),
+                text_color="gray"
+            )
+            no_colors_label.pack(pady=20)
+            return
+        
+        # Create grid of used colors
+        grid_frame = ctk.CTkFrame(self.color_display_frame)
+        grid_frame.pack()
+        
+        # Configure grid - 4 columns
+        for col in range(4):
+            grid_frame.grid_columnconfigure(col, weight=1)
+        
+        # Create buttons for each unique color
+        self.color_buttons = []
+        for idx, color in enumerate(used_colors):
+            row = idx // 4
+            col = idx % 4
+            
+            r, g, b, a = color
+            if a == 0:  # Skip transparent pixels
+                continue
+                
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            btn = ctk.CTkButton(
+                grid_frame,
+                text="",
+                width=50,
+                height=50,
+                fg_color=hex_color,
+                hover_color=hex_color,
+                border_width=2,
+                border_color="gray",
+                corner_radius=3,
+                command=lambda c=color: self._on_constant_color_click(c)
+            )
+            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
+            self.color_buttons.append(btn)
+        
+        # Show count label
+        count_label = ctk.CTkLabel(
+            self.color_display_frame,
+            text=f"{len(used_colors)} colors in use",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        count_label.pack(pady=(5, 0))
+    
+    def _get_canvas_colors(self):
+        """Extract unique colors from the canvas (all layers combined)"""
+        unique_colors = set()
+        
+        # Get all pixels from all visible layers
+        for y in range(self.canvas.height):
+            for x in range(self.canvas.width):
+                # Get pixel from the composited canvas (all visible layers)
+                pixel_color = self.canvas.get_pixel(x, y)
+                
+                # Only add non-transparent pixels
+                if pixel_color[3] > 0:
+                    unique_colors.add(tuple(pixel_color))
+        
+        # Convert set to sorted list for consistent ordering
+        return sorted(list(unique_colors))
+    
+    def _on_constant_color_click(self, color):
+        """Handle click on a constant color button"""
+        # Find if this color exists in the current palette
+        r, g, b, a = color
+        rgb_color = (r, g, b)
+        
+        # Try to find the color in the palette
+        palette_colors = self.palette.colors
+        found_index = None
+        
+        for i, pal_color in enumerate(palette_colors):
+            if (pal_color[0], pal_color[1], pal_color[2]) == rgb_color:
+                found_index = i
+                break
+        
+        if found_index is not None:
+            # Color found in palette, select it
+            self.palette.set_primary_color(found_index)
+            print(f"[OK] Selected color from constants: {rgb_color}")
+        else:
+            # Color not in current palette, switch to color wheel and set the color
+            self.view_mode_var.set("wheel")
+            self._create_color_wheel()
+            
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                self.color_wheel.set_color(rgb_color)
+                print(f"[OK] Selected color from constants (not in palette): {rgb_color}")
     
     def _create_color_wheel(self):
         """Create color wheel view"""

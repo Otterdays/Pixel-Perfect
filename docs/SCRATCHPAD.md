@@ -1,5 +1,41 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.26 - Panel Width Adjustments
+**Date**: October 13, 2025
+**Status**: Complete ✅
+
+### Changes:
+**Panel Width Optimization** - Expanded side panels for better workspace
+- Left panel: 500px → 510px → 520px (final)
+- Right panel: 300px → 580px → 500px (final, user adjusted)
+
+### Implementation:
+1. **Left Panel Updates**:
+   - Initial paned_window.add(): `width=520`
+   - CTkScrollableFrame: `width=520`
+   - Restore operations (2 locations): `width=520`
+   - Total: 4 locations updated
+
+2. **Right Panel Updates**:
+   - Initial paned_window.add(): `width=500`
+   - CTkScrollableFrame: `width=500`
+   - Restore operation: `width=500`
+   - Total: 3 locations updated
+
+3. **User Feedback**:
+   - Initial request: "make it a little bit wider" (left panel)
+   - Second request: "nearly doubled" (right panel to 580px)
+   - Third request: "expand left panel to 520 pixels"
+   - Final adjustment: User manually changed right panel from 580px to 500px
+
+### Result:
+- Left panel now 4% wider (520px vs 500px)
+- Right panel now 66% wider (500px vs 300px)
+- Both panels provide more room for tools, layers, and animation controls
+- All collapse/expand operations maintain correct widths
+
+---
+
 ## Version 1.22 - Theme System
 **Date**: October 13, 2025
 **Status**: Theme System Complete ✅
@@ -1586,3 +1622,22 @@ All comprehensive tests passed successfully:
   - Copied logo to `assets/icons/dcs.png` for bundling
 - **Tooltip**: Updated to "Color Theme - Diamond Clad Studios"
 - **Result**: Professional brand logo now displayed in toolbar! ✅
+
+### Constants Palette View
+**Date**: 2025-01-13
+- User requested: "add a button for 'Constants' It will be a new grid, only loading in the colors that are actively placed on the grid"
+- **New Palette Mode**: "Constants" button added to palette view options
+- **Functionality**: Shows only colors currently used on the canvas
+- **Implementation**:
+  - Added 4th radio button "Constants" in palette panel (row 1, column 1)
+  - `_create_constants_grid()`: Extracts and displays unique colors from canvas
+  - `_get_canvas_colors()`: Scans all pixels across all layers for unique colors
+  - `_on_constant_color_click()`: Clicking a constant color selects it
+  - 4-column grid layout with 50x50px color buttons
+  - Shows "X colors in use" count label
+  - Empty state message: "No colors used yet. Draw on canvas to see colors here."
+- **Smart Color Selection**:
+  - If color exists in current palette: selects it directly
+  - If color not in palette: switches to color wheel and sets the color
+- **Use Case**: Quickly see and select from your actual used colors
+- **Result**: Dynamic palette that updates based on artwork! ✅

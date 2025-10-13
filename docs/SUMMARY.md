@@ -1,8 +1,16 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.25  
-**Last Updated**: October 13, 2025 - Grid Overlay
+**Version**: 1.26  
+**Last Updated**: October 13, 2025 - Panel Width Adjustments
+
+## Latest Updates (v1.26)
+
+- **Optimized Panel Widths**: Expanded side panels for better workspace
+- Left panel: 500px → 520px (4% wider for tools/palette)
+- Right panel: 300px → 500px (66% wider for layers/animation)
+- All collapse/restore operations maintain correct widths
+- User-requested adjustments for improved workflow
 
 ## Latest Updates (v1.25)
 

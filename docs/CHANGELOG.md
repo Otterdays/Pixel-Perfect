@@ -1,6 +1,20 @@
 # Pixel Perfect - Changelog
 
-## Version 1.25 - Grid Overlay & Branding (October 13, 2025) ✅
+## Version 1.26 - Panel Width Adjustments (October 13, 2025) ✅
+
+### UI Enhancements
+- **Optimized Panel Widths**: Adjusted side panel dimensions for better workspace
+  - Left panel: Expanded from 500px to 520px (more room for tools and palette)
+  - Right panel: Expanded from 300px to 500px (66% larger for layers/animation)
+  - User requested wider panels for improved visibility and workflow
+  - All collapse/restore operations updated to use new widths
+
+### Technical Implementation
+- Updated 4 instances of left panel width (initial setup, scrollable frame, 2x restore operations)
+- Updated 3 instances of right panel width (initial setup, scrollable frame, restore operation)
+- Panel widths maintained consistently across all UI states
+
+## Version 1.25 - Grid Overlay, Branding & Constants Palette (October 13, 2025) ✅
 
 ### New Features
 - **Grid Overlay Button**: Toggle grid lines on top of pixels
@@ -16,6 +30,16 @@
   - Tooltip: "Color Theme - Diamond Clad Studios"
   - Logo stored in `assets/icons/dcs.png` for bundling
   - Error handling with fallback to emoji
+
+- **Constants Palette View**: Dynamic color palette from canvas
+  - New "Constants" radio button in palette panel (4th view mode)
+  - Shows only colors actively used on the canvas
+  - Scans all layers and extracts unique colors automatically
+  - 4-column grid layout with clickable color buttons
+  - Shows color count: "X colors in use"
+  - Empty state: "No colors used yet. Draw on canvas to see colors here."
+  - Smart selection: uses palette if color exists, switches to wheel if not
+  - Perfect for seeing your actual color usage at a glance
 
 ### Technical Implementation
 - Added `self.grid_overlay` state flag to main window

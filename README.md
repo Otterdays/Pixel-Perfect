@@ -8,6 +8,13 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## 🆕 Latest Updates
 
+### Version 1.26 (October 2025)
+🖥️ **Panel Width Adjustments**
+- **Expanded left panel** - Now 520px wide (was 500px) for better tool/palette visibility
+- **Expanded right panel** - Now 500px wide (was 300px) for improved layers/animation controls
+- **66% larger right panel** - Much more room for layer management and animation timeline
+- **User-optimized workspace** - Panel sizes adjusted based on workflow feedback
+
 ### Version 1.25 (October 2025)
 🔲 **Grid Overlay Feature**
 - **Grid overlay button** - Toggle grid lines to appear on top of pixels
@@ -78,16 +85,17 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## ✅ Complete Feature Set
 
-### 🎨 **Drawing Tools** (9 Complete Tools)
+### 🎨 **Drawing Tools** (10 Complete Tools)
 - **Pixel Brush**: Precise single-pixel placement with mouse drag
 - **Eraser**: Clean pixel removal
 - **Fill Bucket**: Flood fill with customizable tolerance
-- **Eyedropper**: Color sampling from canvas
+- **Eyedropper**: Color sampling from canvas (left-click primary, right-click secondary)
 - **Selection Tool**: Rectangle selection and move
 - **Line Tool**: Pixel-perfect line drawing (Bresenham's algorithm)
 - **Rectangle Tool**: Rectangle and square drawing (hollow/filled)
 - **Circle Tool**: Circle drawing with midpoint algorithm
 - **Move Tool**: Move selected pixels around canvas
+- **Pan Tool**: Drag canvas view for navigation on large canvases
 
 ### 🖼️ **Canvas System**
 - **Preset Sizes**: 16x16, 32x32, 16x32, 32x64, 64x64 pixels
@@ -96,18 +104,28 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **Custom Backgrounds**: Checkerboard transparency pattern
 - **Mouse Integration**: Click and drag to draw pixels
 
-### 🎨 **Color Management** (6 Complete Palettes + Color Wheel + Custom Colors)
-- **SNES Classic**: 16 colors matching original SNES palette
-- **Curse of Aros**: Muted, earthy tones matching the game aesthetic
-- **Heartwood Online**: Forest-themed palette
-- **Definya**: Bright, vibrant colors
-- **Kakele Online**: Warm, golden palette
-- **Rucoy Online**: Grayscale palette with earth tones
-- **Custom Palettes**: Create and save your own color sets
-- **Primary/Secondary**: Quick color switching with visual feedback
-- **HSV Color Wheel**: Complete color picker with hue, saturation, and value controls
+### 🎨 **Color Management** (6 Complete Palettes + 4 View Modes + Custom Colors)
+- **6 Game-Inspired Palettes**:
+  - **SNES Classic**: 16 colors matching original SNES palette
+  - **Curse of Aros**: Muted, earthy tones matching the game aesthetic
+  - **Heartwood Online**: Forest-themed palette
+  - **Definya**: Bright, vibrant colors
+  - **Kakele Online**: Warm, golden palette
+  - **Rucoy Online**: Grayscale palette with earth tones
+- **4 Palette View Modes**:
+  - **Grid View**: Full palette in 4-column grid
+  - **Primary Colors**: 8 main colors + 24 variations per color
+  - **Color Wheel**: Full HSV color picker with hue, saturation, and value sliders
+  - **Constants**: Shows only colors actively used on canvas (auto-updates)
 - **Custom Colors**: Save up to 32 favorite colors permanently (user-specific, persists across sessions)
-- **Mode Switching**: Seamlessly switch between palette grid and color wheel modes
+- **Primary/Secondary**: Quick color switching with visual feedback (white/gray borders)
+- **Tooltips**: Hover hints for every color and control element
+
+### ✂️ **Selection Operations** (4 Pixel Manipulation Tools)
+- **Mirror**: Flip selected pixels horizontally
+- **Rotate**: Rotate selected pixels 90° clockwise
+- **Copy**: Copy and paste selected pixels anywhere on canvas
+- **Scale**: Interactive scaling with corner/edge handles (scipy or numpy fallback)
 
 ### 📚 **Layer System**
 - **Multiple Layers**: Up to 10 layers per project
@@ -133,9 +151,11 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### 💾 **Export & Project Management**
 - **PNG Export**: Single frames with transparency (1x-8x scaling)
+- **PNG Import**: Load PNG files directly into canvas (auto-scales to fit)
 - **GIF Export**: Animated sprite export with frame timing
 - **Sprite Sheets**: Horizontal, vertical, grid layouts with JSON metadata
 - **Project Files**: Custom .pixpf format with full project data ([format documentation](docs/features/PIXPF_FORMAT.md))
+- **File Association**: Register .pixpf extension to open projects by double-clicking
 - **Auto-Save**: Automatic save functionality
 - **Recent Files**: Track and access recent projects
 
@@ -149,6 +169,17 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - 32x16 Button (UI)
 - 16x16 Icon (UI)
 
+### 🎨 **UI & UX Features**
+- **Theme System**: Real-time theme switching (Basic Grey, Angelic themes)
+- **Collapsible Panels**: Hide/show left and right panels for maximum canvas space
+- **Resizable Panels**: Drag dividers to adjust panel widths (left: 520px, right: 500px)
+- **Smooth Panel Transitions**: Optimized divider dragging with outline-only resize
+- **Tooltips**: Comprehensive hover hints for every button and control
+- **Grid Overlay**: Toggle grid lines on top of pixels for dense artwork
+- **Custom Icon**: Diamond Clad Studios brand integration with colorful pixel logo
+- **Keyboard Cursor Feedback**: Visual tool cursors that follow the mouse
+- **Professional Styling**: Blue theme with rounded buttons and clean UI
+
 ### ⌨️ **Complete Keyboard Shortcuts**
 #### Drawing Tools
 - `B` - Brush tool
@@ -157,6 +188,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - `I` - Eyedropper
 - `S` - Selection tool
 - `M` - Move tool
+- `P` - Pan tool
 - `L` - Line tool
 - `R` - Rectangle tool
 - `C` - Circle tool
