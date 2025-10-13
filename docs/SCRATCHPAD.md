@@ -186,6 +186,23 @@ def _on_palette_change(self, palette_name: str):
 
 **5. Bug Fixes**:
 
+**Constants Panel Always Shows Red**:
+- **Problem**: "in the constants panel, when clicking the box of a color that's displayed as a constant, it properly jumps to the color wheel, but seems to just select red"
+- **Root Cause**: `_on_constant_color_click()` was calling `_create_color_wheel()` which recreated the entire color wheel, resetting it to default (red)
+- **Fix**: Use the new optimized view system instead:
+```python
+# BEFORE (BUG):
+self.view_mode_var.set("wheel")
+self._create_color_wheel()  # Recreates wheel, resets to red!
+self.color_wheel.set_color(rgb_color)  # Too late, wheel already reset
+
+# AFTER (FIXED):
+self.view_mode_var.set("wheel")
+self._show_view("wheel")  # Show pre-rendered wheel (instant!)
+self.color_wheel.set_color(rgb_color)  # Set color on existing wheel
+```
+- **Impact**: Constants panel now correctly displays the clicked color in the wheel view
+
 **Crash on Startup**: `'MainWindow' object has no attribute 'primary_colors_mode'`
 - **Root Cause**: `_initialize_all_views()` was called before `self.primary_colors_mode` was initialized
 - **Fix**: Moved initialization order in `__init__`:
