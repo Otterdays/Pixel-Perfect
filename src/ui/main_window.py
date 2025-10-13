@@ -466,7 +466,7 @@ class MainWindow:
             fg_color="#4a4a4a",  # Different color to distinguish from tools
             hover_color="#5a5a5a"
         )
-        texture_btn.grid(row=4, column=0, columnspan=2, padx=2, pady=2)
+        texture_btn.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
         create_tooltip(texture_btn, "Open texture panel", delay=1000)
         
         # Configure grid columns - buttons stay fixed size
