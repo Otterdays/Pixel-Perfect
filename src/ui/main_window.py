@@ -614,16 +614,16 @@ class MainWindow:
         # Keep reference to old color_display_frame for compatibility
         self.color_display_frame = self.grid_view_frame
         
+        # Primary colors state (must be set BEFORE initializing views)
+        self.primary_colors_mode = "primary"  # "primary" or "variations"
+        self.selected_primary_color = None
+        self.color_wheel = None
+        
         # Initialize all views once (expensive but only happens once)
         self._initialize_all_views()
         
         # Show grid view by default
         self._show_view("grid")
-        self.color_wheel = None
-        
-        # Primary colors state
-        self.primary_colors_mode = "primary"  # "primary" or "variations"
-        self.selected_primary_color = None
     
     def _create_color_grid(self):
         """Create color palette grid"""
