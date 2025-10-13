@@ -185,6 +185,17 @@ class ColorWheel:
         self.custom_color_buttons = []
         self.selected_custom_color = None  # Track selected color for deletion
     
+    def _get_bg_color_rgb(self):
+        """Get background color as RGB tuple for PIL Image"""
+        if self.theme and hasattr(self.theme, 'bg_secondary'):
+            hex_color = self.theme.bg_secondary
+        else:
+            hex_color = "#2b2b2b"  # Fallback to dark grey
+        
+        # Convert hex to RGB tuple
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    
     def _draw_hue_wheel(self):
         """Draw the HSV hue wheel"""
         self.wheel_canvas.delete("all")
@@ -195,8 +206,8 @@ class ColorWheel:
         center_y = self.size // 2
         radius = wheel_size // 2
         
-        # Create PIL image for the wheel
-        img = Image.new('RGB', (self.size, self.size), (0, 0, 0))
+        # Create PIL image with transparency (RGBA mode)
+        img = Image.new('RGBA', (self.size, self.size), (0, 0, 0, 0))  # Fully transparent
         draw = ImageDraw.Draw(img)
         
         # Draw hue wheel
@@ -210,7 +221,7 @@ class ColorWheel:
                     angle = math.atan2(dy, dx)
                     hue = (math.degrees(angle) + 180) % 360
                     rgb = self._hsv_to_rgb(hue, 1.0, 1.0)
-                    img.putpixel((x, y), rgb)
+                    img.putpixel((x, y), rgb + (255,))  # Add full opacity to colored pixels
         
         # Convert to PhotoImage and display
         self.wheel_image = ImageTk.PhotoImage(img)
@@ -223,9 +234,9 @@ class ColorWheel:
         """Draw the saturation square (respects current brightness)"""
         self.saturation_canvas.delete("all")
         
-        # Create saturation square image
+        # Create saturation square image (no transparency needed - fills entire square)
         square_size = 180
-        img = Image.new('RGB', (square_size, square_size), (0, 0, 0))
+        img = Image.new('RGB', (square_size, square_size))
         
         # Get current hue and brightness (value)
         current_hue = self.hue
