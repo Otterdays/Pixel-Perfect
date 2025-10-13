@@ -213,31 +213,36 @@ class ColorWheel:
         self._draw_hue_indicator()
     
     def _draw_saturation_square(self):
-        """Draw the saturation/value square"""
+        """Draw the saturation square (respects current brightness)"""
         self.saturation_canvas.delete("all")
         
-        # Create saturation/value square image
-        square_size = 150
+        # Create saturation square image
+        square_size = 180
         img = Image.new('RGB', (square_size, square_size), (0, 0, 0))
-        draw = ImageDraw.Draw(img)
         
-        # Get current hue
+        # Get current hue and brightness (value)
         current_hue = self.hue
+        current_value = self.value  # Use current brightness from slider
         
-        # Draw saturation/value gradient
+        # Draw saturation gradient from white (left) to full color (right) at current brightness
         for y in range(square_size):
             for x in range(square_size):
+                # X-axis: 0% saturation (left/white) to 100% saturation (right/full color)
                 saturation = x / (square_size - 1)
-                value = 1.0 - (y / (square_size - 1))  # Invert Y for value
                 
-                rgb = self._hsv_to_rgb(current_hue, saturation, value)
+                # Y-axis: White (top) to Black (bottom) - controls lightness at current saturation
+                # This creates a natural gradient from light to dark
+                brightness_mod = 1.0 - (y / (square_size - 1))
+                adjusted_value = current_value * brightness_mod
+                
+                rgb = self._hsv_to_rgb(current_hue, saturation, adjusted_value)
                 img.putpixel((x, y), rgb)
         
         # Convert to PhotoImage and display
         self.saturation_image = ImageTk.PhotoImage(img)
         self.saturation_canvas.create_image(square_size//2, square_size//2, image=self.saturation_image)
         
-        # Draw saturation/value indicator
+        # Draw saturation indicator
         self._draw_saturation_indicator()
     
     def _draw_hue_indicator(self):
@@ -261,21 +266,23 @@ class ColorWheel:
         )
     
     def _draw_saturation_indicator(self):
-        """Draw the saturation/value selection indicator"""
-        square_size = 150
+        """Draw the saturation selection indicator"""
+        square_size = 180
         
-        # Calculate position based on current saturation and value
+        # Calculate position based on current saturation
+        # X-axis represents saturation (0% left to 100% right)
         x = self.saturation * (square_size - 1)
-        y = (1.0 - self.value) * (square_size - 1)  # Invert Y for value
+        # Y-axis is controlled by brightness slider, so indicator stays at middle
+        y = square_size // 2
         
-        # Draw indicator cross
-        self.saturation_canvas.create_line(
-            x-8, y, x+8, y,
-            fill="white", width=2
+        # Draw indicator circle (easier to see than cross)
+        self.saturation_canvas.create_oval(
+            x-6, y-6, x+6, y+6,
+            fill="", outline="white", width=3
         )
-        self.saturation_canvas.create_line(
-            x, y-8, x, y+8,
-            fill="white", width=2
+        self.saturation_canvas.create_oval(
+            x-5, y-5, x+5, y+5,
+            fill="", outline="black", width=1
         )
     
     def _hsv_to_rgb(self, h: float, s: float, v: float) -> Tuple[int, int, int]:
@@ -400,15 +407,15 @@ class ColorWheel:
             self._update_displays()
     
     def _update_saturation_from_position(self, x: int, y: int):
-        """Update saturation and value based on square position"""
-        square_size = 150
+        """Update saturation from horizontal position only"""
+        square_size = 180
         
-        # Clamp coordinates
+        # Clamp X coordinate only (horizontal = saturation)
         x = max(0, min(square_size - 1, x))
-        y = max(0, min(square_size - 1, y))
         
+        # Only update saturation (X-axis controls saturation)
         self.saturation = x / (square_size - 1)
-        self.value = 1.0 - (y / (square_size - 1))  # Invert Y for value
+        # Brightness/Value is controlled by the slider only
         
         # Update displays and trigger callback
         self._update_displays()
