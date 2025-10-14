@@ -1334,8 +1334,10 @@ class MainWindow:
     def _on_focus_in(self, event):
         """Handle focus in event - redraw canvas to show selection"""
         # Redraw canvas when window gains focus to ensure selection is visible
-        if hasattr(self, 'drawing_canvas'):
-            self._update_pixel_display()
+        if hasattr(self, 'drawing_canvas') and hasattr(self, 'canvas'):
+            # Schedule redraw to ensure window is fully restored
+            self.root.after(10, self._update_pixel_display)
+            print("[FOCUS] Window regained focus - redrawing selection")
     
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""

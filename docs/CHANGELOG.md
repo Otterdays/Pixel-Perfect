@@ -4,25 +4,38 @@
 
 ### 🐛 Critical Bug Fixes
 
-**Fixed: Empty Selection Spaces Erasing Pixels** 🔥
+**Fixed: Empty Selection Spaces Erasing Pixels** 🔥🔥 **(CRITICAL - TWO-PART FIX)**
 - **Problem**: Moving a selection with empty spaces over existing pixels would delete those pixels
-- **Root Cause**: `on_mouse_up()` in MoveTool was clearing the ENTIRE selection rectangle before placing pixels
-- **Visual**: Selection box with scattered pixels acts like an eraser for everything underneath empty spaces
-- **Solution**: Removed the clearing step - now ONLY places non-transparent pixels from selection
-- **Impact**: Empty spaces in selection are truly transparent - underlying pixels preserved!
+- **Root Cause #1**: `on_mouse_down()` in MoveTool was clearing the ENTIRE selection rectangle when picking up
+- **Root Cause #2**: `on_mouse_up()` in MoveTool was also clearing the entire rectangle before placing
+- **Visual**: Selection box with scattered pixels acts like an eraser at BOTH pickup and placement
+- **Solution**: 
+  - **Part 1 (Pickup)**: Only clear actual pixels when picking up, not empty spaces
+  - **Part 2 (Placement)**: Only draw non-transparent pixels, skip empty spaces entirely
+- **Impact**: Empty spaces in selection are now truly transparent at BOTH stages!
 - **Technical**: 
   ```python
-  # OLD (BUGGY): Cleared entire box, then drew pixels
+  # OLD PICKUP (BUGGY):
   for py in range(height):
       canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))  # ❌ Clears EVERYTHING!
-  for py in range(height):
-      canvas.set_pixel(canvas_x, canvas_y, pixel_color)  # Only non-transparent
   
-  # NEW (FIXED): Only draw non-transparent pixels
+  # NEW PICKUP (FIXED):
   for py in range(height):
-      if pixel_color[3] > 0:  # ✅ Skip transparent - preserves underneath!
+      pixel_color = selected_pixels[py, px]
+      if pixel_color[3] > 0:  # ✅ Only clear actual pixels!
+          canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+  
+  # NEW PLACEMENT (ALSO FIXED):
+  for py in range(height):
+      if pixel_color[3] > 0:  # ✅ Only draw actual pixels!
           canvas.set_pixel(canvas_x, canvas_y, pixel_color)
   ```
+
+**Fixed: Selection Box Vanishes on Minimize/Focus Loss** 🔍
+- **Problem**: Minimizing app and restoring would hide selection box until clicking canvas
+- **Root Cause**: `_on_focus_in()` was calling `_update_pixel_display()` immediately, before window fully restored
+- **Solution**: Added 10ms delay using `root.after()` to ensure window is ready, plus debug logging
+- **Impact**: Selection box now redraws correctly when app regains focus!
 
 **Fixed: Selection Tool Pixel Loss on Move**
 - **Problem**: Moving a selection and picking it up again would capture transparent/wrong pixels

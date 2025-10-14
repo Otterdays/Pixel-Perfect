@@ -137,16 +137,22 @@ class MoveTool(Tool):
                     self.is_moving = True
                     self.move_offset = (x - left, y - top)
                     
-                    # Store original position and clear pixels from old location
+                    # Store original position
                     self.original_selection = (left, top)
                     
-                    # Clear the selected area (make it transparent)
+                    # ONLY clear non-transparent pixels from old location
+                    # This prevents erasing pixels underneath empty spaces in the selection
                     for py in range(height):
                         for px in range(width):
-                            canvas_x = left + px
-                            canvas_y = top + py
-                            if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                            if (py < self.selection_tool.selected_pixels.shape[0] and 
+                                px < self.selection_tool.selected_pixels.shape[1]):
+                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                                # CRITICAL: Only clear where we actually have pixels
+                                if pixel_color[3] > 0:  # Non-transparent pixel
+                                    canvas_x = left + px
+                                    canvas_y = top + py
+                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                        canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
