@@ -1476,6 +1476,16 @@ class MainWindow:
             self.scale_btn.configure(fg_color="gray")
             print("[INFO] Exited scaling mode")
         
+        # If switching away from selection/move tools while in Constants view, switch to Grid
+        if (self.current_tool in ["selection", "move"] and 
+            tool_id not in ["selection", "move"] and 
+            hasattr(self, 'view_mode_var') and 
+            self.view_mode_var.get() == "constants"):
+            # Switch back to grid view
+            self.view_mode_var.set("grid")
+            self._show_view("grid")
+            print("[INFO] Switched from Constants to Grid view after selection")
+        
         self.current_tool = tool_id
         self._update_tool_selection()
         
