@@ -26,6 +26,7 @@ from tools.eyedropper import EyedropperTool
 from tools.selection import SelectionTool, MoveTool
 from tools.shapes import LineTool, RectangleTool, CircleTool
 from tools.pan import PanTool
+from tools.texture import TextureTool, TextureLibrary
 from core.layer_manager import LayerManager
 from core.undo_manager import UndoManager, UndoState
 from ui.layer_panel import LayerPanel
@@ -126,9 +127,13 @@ class MainWindow:
             "line": LineTool(),
             "rectangle": RectangleTool(),
             "circle": CircleTool(),
-            "pan": PanTool()
+            "pan": PanTool(),
+            "texture": TextureTool()
         }
         self.current_tool = "brush"
+        
+        # Texture library
+        self.texture_library = TextureLibrary()
         
         # Brush size (1x1, 2x2, 3x3)
         self.brush_size = 1
@@ -2788,42 +2793,131 @@ class MainWindow:
             self.color_wheel.update_custom_colors_grid(colors)
     
     def _open_texture_panel(self):
-        """Open texture panel (blank for now)"""
+        """Open texture panel with clickable textures"""
         # Create texture panel window
         texture_window = ctk.CTkToplevel(self.root)
-        texture_window.title("Texture Panel")
-        texture_window.geometry("600x500")
-        texture_window.resizable(True, True)
+        texture_window.title("Texture Library")
+        texture_window.geometry("400x300")
+        texture_window.resizable(False, False)
         texture_window.transient(self.root)
+        texture_window.grab_set()  # Modal
         
         # Center on main window
         texture_window.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (600 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (500 // 2)
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (300 // 2)
         texture_window.geometry(f"+{x}+{y}")
         
         # Header
         header_frame = ctk.CTkFrame(texture_window, fg_color="transparent")
-        header_frame.pack(pady=20, padx=20, fill="x")
+        header_frame.pack(pady=15, padx=20, fill="x")
         
         title_label = ctk.CTkLabel(
             header_frame,
-            text="🎨 Texture Panel",
-            font=ctk.CTkFont(size=24, weight="bold")
+            text="🎨 Texture Library",
+            font=ctk.CTkFont(size=20, weight="bold")
         )
         title_label.pack()
         
-        # Placeholder content
+        subtitle_label = ctk.CTkLabel(
+            header_frame,
+            text="Select a texture to apply to canvas",
+            font=ctk.CTkFont(size=12),
+            text_color="#a0a0a0"
+        )
+        subtitle_label.pack(pady=(5, 0))
+        
+        # Textures grid
         content_frame = ctk.CTkFrame(texture_window)
         content_frame.pack(expand=True, fill="both", padx=20, pady=(0, 20))
         
-        placeholder_label = ctk.CTkLabel(
-            content_frame,
-            text="Texture features coming soon!\n\nThis panel will contain:\n• Texture library\n• Pattern generation\n• Texture application tools",
-            font=ctk.CTkFont(size=14),
-            text_color="#a0a0a0"
+        # Get all textures
+        textures = self.texture_library.get_all_textures()
+        
+        # Create texture buttons
+        for idx, (name, texture_data) in enumerate(textures.items()):
+            self._create_texture_button(content_frame, name, texture_data, texture_window, idx)
+    
+    def _create_texture_button(self, parent, name, texture_data, window, index):
+        """Create a clickable texture preview button"""
+        # Container for texture button
+        texture_frame = ctk.CTkFrame(parent, fg_color="#2a2a2a", corner_radius=8)
+        texture_frame.pack(pady=10, padx=10, fill="x")
+        
+        # Create canvas to render texture preview
+        preview_size = 64  # 8x8 texture * 8 scale = 64px
+        preview_canvas = tk.Canvas(
+            texture_frame,
+            width=preview_size,
+            height=preview_size,
+            bg="#1a1a1a",
+            highlightthickness=0
         )
-        placeholder_label.pack(expand=True)
+        preview_canvas.pack(side="left", padx=10, pady=10)
+        
+        # Render texture on canvas (scaled up)
+        scale = 8
+        for y in range(texture_data.shape[0]):
+            for x in range(texture_data.shape[1]):
+                color = texture_data[y, x]
+                hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+                preview_canvas.create_rectangle(
+                    x * scale, y * scale,
+                    (x + 1) * scale, (y + 1) * scale,
+                    fill=hex_color,
+                    outline=""
+                )
+        
+        # Texture info
+        info_frame = ctk.CTkFrame(texture_frame, fg_color="transparent")
+        info_frame.pack(side="left", fill="both", expand=True, padx=10)
+        
+        name_label = ctk.CTkLabel(
+            info_frame,
+            text=name,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            anchor="w"
+        )
+        name_label.pack(anchor="w")
+        
+        dims = f"{texture_data.shape[1]}×{texture_data.shape[0]} pixels"
+        dims_label = ctk.CTkLabel(
+            info_frame,
+            text=dims,
+            font=ctk.CTkFont(size=11),
+            text_color="#a0a0a0",
+            anchor="w"
+        )
+        dims_label.pack(anchor="w", pady=(2, 0))
+        
+        # Select button
+        select_btn = ctk.CTkButton(
+            info_frame,
+            text="Select",
+            width=80,
+            height=28,
+            fg_color="#4a9eff",
+            hover_color="#3a8eef",
+            command=lambda: self._select_texture(texture_data, window)
+        )
+        select_btn.pack(anchor="w", pady=(8, 0))
+        
+        # Make entire frame clickable
+        texture_frame.bind("<Button-1>", lambda e: self._select_texture(texture_data, window))
+        preview_canvas.bind("<Button-1>", lambda e: self._select_texture(texture_data, window))
+    
+    def _select_texture(self, texture_data, window):
+        """Select a texture and activate texture tool"""
+        # Set texture on tool
+        self.tools["texture"].set_texture(texture_data)
+        
+        # Switch to texture tool
+        self._select_tool("texture")
+        
+        # Close texture panel
+        window.destroy()
+        
+        print(f"[TEXTURE] Selected {texture_data.shape[1]}x{texture_data.shape[0]} texture")
     
     def _toggle_grid(self):
         """Toggle grid visibility"""
@@ -3951,6 +4045,15 @@ class MainWindow:
                 # Draw live preview on canvas (doesn't affect pixel data yet!)
                 self._draw_shape_preview(tool, canvas_x, canvas_y, color)
                 return  # Don't apply pixels until mouse up!
+            
+            # LIVE PREVIEW for texture tool
+            if self.current_tool == "texture":
+                # Update tool's preview position
+                tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+                
+                # Draw live texture preview on canvas
+                self._draw_texture_preview(tool, canvas_x, canvas_y)
+                return  # Don't apply texture until click!
 
             # Store the previous pixel color for efficient updating
             old_color = self.canvas.get_pixel(canvas_x, canvas_y)
@@ -4174,6 +4277,63 @@ class MainWindow:
 
         return canvas_coord_x, canvas_coord_y
     
+    def _draw_texture_preview(self, tool, canvas_x: int, canvas_y: int):
+        """Draw live preview of texture tool on tkinter canvas"""
+        # Clear any existing preview
+        self.drawing_canvas.delete("texture_preview")
+        
+        # Get texture data
+        texture_data = tool.get_preview_texture()
+        if texture_data is None:
+            return
+        
+        # Get canvas dimensions and offsets
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
+        
+        # Get texture dimensions
+        tex_height, tex_width = texture_data.shape[0], texture_data.shape[1]
+        
+        # Draw each pixel of the texture
+        for ty in range(tex_height):
+            for tx in range(tex_width):
+                pixel_color = texture_data[ty, tx]
+                if pixel_color[3] > 0:  # Only draw non-transparent pixels
+                    # Calculate screen position
+                    px = canvas_x + tx
+                    py = canvas_y + ty
+                    
+                    # Check bounds
+                    if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
+                        screen_x = x_offset + (px * self.canvas.zoom)
+                        screen_y = y_offset + (py * self.canvas.zoom)
+                        
+                        # Convert color to hex
+                        color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
+                        
+                        # Draw pixel rectangle with semi-transparency effect
+                        self.drawing_canvas.create_rectangle(
+                            screen_x, screen_y,
+                            screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
+                            fill=color_hex, outline=color_hex, stipple="gray50",
+                            tags="texture_preview"
+                        )
+        
+        # Draw outline around texture area
+        screen_x1 = x_offset + (canvas_x * self.canvas.zoom)
+        screen_y1 = y_offset + (canvas_y * self.canvas.zoom)
+        screen_x2 = x_offset + ((canvas_x + tex_width) * self.canvas.zoom)
+        screen_y2 = y_offset + ((canvas_y + tex_height) * self.canvas.zoom)
+        
+        self.drawing_canvas.create_rectangle(
+            screen_x1, screen_y1, screen_x2, screen_y2,
+            outline="#ffffff", width=2, dash=(4, 4),
+            tags="texture_preview"
+        )
 
     def _update_pixel_display(self):
         """Update tkinter display to show all pixel changes (full redraw)"""
