@@ -1,5 +1,47 @@
 # Pixel Perfect - Changelog
 
+## Version 1.36 - Selection & Move Tool Bug Fixes (October 14, 2025) ✅
+
+### 🐛 Critical Bug Fixes
+
+**Fixed: Selection Tool Pixel Loss on Move**
+- **Problem**: Moving a selection and picking it up again would capture transparent/wrong pixels
+- **Root Cause**: `_finalize_selection()` was re-capturing pixels from canvas after every move
+- **Solution**: Modified selection tool to preserve original `selected_pixels` after initial capture
+- **Impact**: Selections now maintain their original pixels through multiple moves
+- **Technical**: Added conditional check in `_finalize_selection()` - only captures if `selected_pixels is None`
+
+**Fixed: No Visual Preview While Moving Selection**
+- **Problem**: Selected pixels invisible while dragging with move tool
+- **Root Cause**: Move tool only updated selection rect, didn't trigger visual redraw
+- **Solution**: 
+  - Added move preview rendering in `_draw_selection_on_tkinter()` 
+  - Renders stored `selected_pixels` at current position during drag
+  - Triggers `_update_pixel_display()` on mouse move when `is_moving` is true
+- **Impact**: Full visual feedback during selection movement - see exactly where pixels will land
+- **Technical**: Drawing tagged as "move_preview" for efficient cleanup
+
+**Fixed: Selection Box Disappears on Window Focus Loss**
+- **Problem**: Selection marching ants disappeared when tabbing out/back to application
+- **Root Cause**: Canvas not automatically redrawing on focus events
+- **Solution**: 
+  - Added `<FocusIn>` event handlers to root window and drawing canvas
+  - `_on_focus_in()` method triggers full `_update_pixel_display()` 
+- **Impact**: Selection remains visible when switching between applications
+- **Technical**: Bound both root and canvas for comprehensive focus detection
+
+**Enhanced: Move Tool Pixel Placement**
+- Clears target area before placing to prevent overlap artifacts
+- Properly handles overlapping source/destination regions
+- Logs successful moves: `[MOVE] Pixels placed at new position`
+
+**Enhanced: Selection Tool Reset**
+- New selection properly clears old `selection_rect` and `selected_pixels`
+- Prevents interference from previous selections
+- Cleaner state management
+
+---
+
 ## Version 1.35 - Brush Size System (October 14, 2025) ✅
 
 ### 🖌️ Multi-Size Brush Feature

@@ -1,5 +1,124 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.36 - Selection & Move Tool Bug Fixes
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Critical Bug Fixes:
+
+**Bug #1: Selection Tool - Pixel Loss on Move** 🐛
+- **User Report**: "Another bug when moving the selection box to move selected pixels: moving the selection box somewhere-, then picking it back up again, it seems to also pick up invisible pixels in that box, and deleted existing pixels that were already on the canvas."
+- **Problem**: After moving a selection to a new position, picking it up again would capture the NEW pixels at that location (often transparent) instead of preserving the original selected pixels
+- **Root Cause**: `_finalize_selection()` in `src/tools/selection.py` was ALWAYS re-capturing pixels from the canvas, even after a move operation
+  ```python
+  # OLD CODE (BUGGY):
+  def _finalize_selection(self, canvas):
+      # Always captured pixels from canvas
+      self.selected_pixels = np.zeros((height, width, 4), dtype=np.uint8)
+      for y in range(height):
+          for x in range(width):
+              self.selected_pixels[y, x] = canvas.get_pixel(canvas_x, canvas_y)
+  ```
+- **Fix**: Only capture pixels if `selected_pixels is None` (first selection), otherwise preserve existing data
+  ```python
+  # NEW CODE (FIXED):
+  def _finalize_selection(self, canvas):
+      # ONLY capture if we don't already have them
+      if self.selected_pixels is None:
+          self.selected_pixels = np.zeros((height, width, 4), dtype=np.uint8)
+          # ... capture pixels ...
+  ```
+- **Also Modified**: `on_mouse_down()` now explicitly clears `selected_pixels = None` when starting a NEW selection
+- **Impact**: Selections now maintain their original pixels through unlimited moves - no data loss!
+
+---
+
+**Bug #2: Move Tool - No Visual Preview While Dragging** 🐛
+- **User Report**: "Then, image two shows what happens when i drag the pixels i have selected. it seems to not show the pixels visually moving while i use the move tool."
+- **Problem**: When dragging a selection with the move tool, the pixels were invisible - only the marching ants box moved
+- **Root Cause**: Move tool's `on_mouse_move()` only updated `selection_rect` coordinates but never triggered a visual redraw
+- **Fix - Part 1**: Added move preview rendering in `_draw_selection_on_tkinter()`
+  ```python
+  # Draw move preview if actively moving selection
+  move_tool = self.tools.get("move")
+  if (move_tool and move_tool.is_moving and selection_tool and 
+      selection_tool.selected_pixels is not None):
+      left, top, width, height = selection_tool.selection_rect
+      # Draw each pixel at current position
+      for py in range(height):
+          for px in range(width):
+              pixel_color = tuple(selection_tool.selected_pixels[py, px])
+              if pixel_color[3] > 0:  # Only non-transparent
+                  # Draw pixel rectangle at screen coords
+                  self.drawing_canvas.create_rectangle(...)
+  ```
+- **Fix - Part 2**: Trigger redraw on mouse move in `_on_tkinter_canvas_mouse_move()`
+  ```python
+  tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+  
+  # Redraw if moving selection to show preview
+  move_tool = self.tools.get("move")
+  if move_tool and move_tool.is_moving:
+      self._update_pixel_display()
+  ```
+- **Impact**: Full visual feedback while dragging - see exactly where pixels will land, like in professional editors!
+
+---
+
+**Bug #3: Selection Box Disappears on Focus Loss** 🐛
+- **User Report**: "Bug, when tabbing out and back in, it makes the selection box disappear until i click back in the canvas."
+- **Problem**: When switching to another app and back, the selection marching ants were invisible until clicking the canvas
+- **Root Cause**: No event handlers for window focus changes - canvas didn't redraw when regaining focus
+- **Fix - Part 1**: Added focus event bindings
+  ```python
+  # Bind focus events to ensure selection redraws when window gains focus
+  self.root.bind("<FocusIn>", self._on_focus_in)
+  self.drawing_canvas.bind("<FocusIn>", self._on_focus_in)
+  ```
+- **Fix - Part 2**: Implemented focus handler
+  ```python
+  def _on_focus_in(self, event):
+      """Handle focus in event - redraw canvas to show selection"""
+      if hasattr(self, 'drawing_canvas'):
+          self._update_pixel_display()
+  ```
+- **Impact**: Selection state persists across window focus changes - professional behavior!
+
+---
+
+**Enhancement: Move Tool - Better Pixel Placement**
+- Modified `on_mouse_up()` in move tool to clear target area BEFORE placing pixels
+- Prevents overlap artifacts when moving to areas that already have pixels
+- Ensures clean placement regardless of source/destination overlap
+
+---
+
+**Enhancement: Selection Tool - Cleaner State Management**
+- Modified `on_mouse_down()` to explicitly clear old selection state when starting new selection
+- Prevents interference from previous selections
+- More predictable behavior
+
+---
+
+### Files Modified:
+1. **`src/tools/selection.py`** (Major changes)
+   - Fixed `_finalize_selection()` to preserve pixels
+   - Enhanced `on_mouse_down()` to clear old state
+   - Improved `on_mouse_up()` in MoveTool for better placement
+   - Added `cleared_background` tracking to MoveTool
+
+2. **`src/ui/main_window.py`** (Major changes)
+   - Added move preview rendering in `_draw_selection_on_tkinter()`
+   - Added redraw trigger in `_on_tkinter_canvas_mouse_move()`
+   - Added focus event bindings (lines 1047-1048)
+   - Implemented `_on_focus_in()` handler (lines 1334-1338)
+
+3. **`docs/CHANGELOG.md`** - Documented all fixes
+4. **`docs/SUMMARY.md`** - Updated to v1.36
+5. **`docs/SCRATCHPAD.md`** - This entry!
+
+---
+
 ## Version 1.34 - Eyedropper Refinements & Custom Dialogs
 **Date**: October 13, 2025
 **Status**: Complete ✅

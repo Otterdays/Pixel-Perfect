@@ -1,10 +1,22 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.35  
-**Last Updated**: October 14, 2025 - Brush Size System
+**Version**: 1.36  
+**Last Updated**: October 14, 2025 - Selection & Move Tool Fixes
 
-## Latest Updates (v1.35)
+## Latest Updates (v1.36)
+
+### 🐛 Selection & Move Tool Bug Fixes
+**Critical issues resolved for professional workflow**
+- **Fixed: Pixel loss on move** - Selections preserve original pixels through multiple moves
+- **Fixed: No visual preview** - See pixels while dragging with move tool
+- **Fixed: Focus loss bug** - Selection box stays visible when tabbing out/in
+- **Enhanced: Move placement** - Clears target area to prevent overlap artifacts
+- **Enhanced: Selection reset** - New selections properly clear old state
+
+---
+
+## Previous Updates (v1.35)
 
 ### 🖌️ Multi-Size Brush System
 **Elegant brush size selection with right-click menu**

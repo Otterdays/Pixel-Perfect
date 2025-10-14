@@ -1043,6 +1043,10 @@ class MainWindow:
         self.drawing_canvas.bind("<B1-Motion>", self._on_tkinter_canvas_mouse_drag)
         self.drawing_canvas.bind("<Motion>", self._on_tkinter_canvas_mouse_move)
         
+        # Bind focus events to ensure selection redraws when window gains focus
+        self.root.bind("<FocusIn>", self._on_focus_in)
+        self.drawing_canvas.bind("<FocusIn>", self._on_focus_in)
+        
         # Set initial cursor (brush tool is default)
         self.drawing_canvas.configure(cursor=self.tools[self.current_tool].cursor)
 
@@ -1326,6 +1330,12 @@ class MainWindow:
                 self._initial_draw()
         except Exception as e:
             print(f"Error redrawing canvas after resize: {e}")
+    
+    def _on_focus_in(self, event):
+        """Handle focus in event - redraw canvas to show selection"""
+        # Redraw canvas when window gains focus to ensure selection is visible
+        if hasattr(self, 'drawing_canvas'):
+            self._update_pixel_display()
     
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""
@@ -4021,6 +4031,11 @@ class MainWindow:
                 color = self.palette.get_primary_color()
 
             tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+            
+            # Redraw if moving selection to show preview
+            move_tool = self.tools.get("move")
+            if move_tool and move_tool.is_moving:
+                self._update_pixel_display()
     
     def _draw_shape_preview(self, tool, canvas_x: int, canvas_y: int, color: Tuple[int, int, int, int]):
         """Draw live preview of shape tools (Line, Square, Circle) on tkinter canvas"""
@@ -4250,6 +4265,34 @@ class MainWindow:
                 self._draw_scale_handle(mid_x, screen_y2, handle_size, "orange")  # Bottom
                 self._draw_scale_handle(screen_x1, mid_y, handle_size, "orange")  # Left
                 self._draw_scale_handle(screen_x2, mid_y, handle_size, "orange")  # Right
+        
+        # Draw move preview if actively moving selection
+        move_tool = self.tools.get("move")
+        if (move_tool and move_tool.is_moving and selection_tool and 
+            selection_tool.selected_pixels is not None and selection_tool.selection_rect):
+            left, top, width, height = selection_tool.selection_rect
+            zoom = self.canvas.zoom
+            
+            # Draw the selected pixels at the current position
+            for py in range(height):
+                for px in range(width):
+                    if (py < selection_tool.selected_pixels.shape[0] and 
+                        px < selection_tool.selected_pixels.shape[1]):
+                        pixel_color = tuple(selection_tool.selected_pixels[py, px])
+                        # Only draw non-transparent pixels for preview
+                        if pixel_color[3] > 0:
+                            screen_x = x_offset + ((left + px) * zoom)
+                            screen_y = y_offset + ((top + py) * zoom)
+                            
+                            # Convert RGBA to hex for tkinter
+                            hex_color = f"#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}"
+                            
+                            # Draw pixel
+                            self.drawing_canvas.create_rectangle(
+                                screen_x, screen_y,
+                                screen_x + zoom, screen_y + zoom,
+                                fill=hex_color, outline="", tags="move_preview"
+                            )
         
         # Draw copy preview if in placement mode
         if self.is_placing_copy and self.copy_preview_pos and self.copy_buffer is not None and self.copy_dimensions:

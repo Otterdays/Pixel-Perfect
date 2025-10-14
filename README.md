@@ -118,13 +118,13 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### 🎨 **Color Management** (7 Complete Palettes + 5 View Modes + Custom & Saved Colors)
 - **7 Game-Inspired Palettes**:
-  - **SNES Classic**: 16 colors matching original SNES palette
+- **SNES Classic**: 16 colors matching original SNES palette
   - **Old School RuneScape**: Classic OSRS color palette for authentic retro MMORPG sprites
-  - **Curse of Aros**: Muted, earthy tones matching the game aesthetic
-  - **Heartwood Online**: Forest-themed palette
-  - **Definya**: Bright, vibrant colors
-  - **Kakele Online**: Warm, golden palette
-  - **Rucoy Online**: Grayscale palette with earth tones
+- **Curse of Aros**: Muted, earthy tones matching the game aesthetic
+- **Heartwood Online**: Forest-themed palette
+- **Definya**: Bright, vibrant colors
+- **Kakele Online**: Warm, golden palette
+- **Rucoy Online**: Grayscale palette with earth tones
 - **5 Palette View Modes**:
   - **Grid View**: Full palette in 4-column grid (auto-switches when changing palettes)
   - **Primary Colors**: 8 main colors + 24 variations per color

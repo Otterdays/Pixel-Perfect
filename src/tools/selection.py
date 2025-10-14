@@ -27,6 +27,9 @@ class SelectionTool(Tool):
             self.selection_start = (x, y)
             self.selection_end = (x, y)
             self.has_selection = False
+            # Clear old selection to start fresh
+            self.selection_rect = None
+            self.selected_pixels = None
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End selection"""
@@ -71,15 +74,18 @@ class SelectionTool(Tool):
             self.has_selection = False
             return
         
-        # Capture selected pixels
-        self.selected_pixels = np.zeros((height, width, 4), dtype=np.uint8)
-        
-        for y in range(height):
-            for x in range(width):
-                canvas_x = left + x
-                canvas_y = top + y
-                if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                    self.selected_pixels[y, x] = canvas.get_pixel(canvas_x, canvas_y)
+        # ONLY capture pixels if we don't already have them stored
+        # This prevents re-capturing after a move operation
+        if self.selected_pixels is None:
+            # Capture selected pixels
+            self.selected_pixels = np.zeros((height, width, 4), dtype=np.uint8)
+            
+            for y in range(height):
+                for x in range(width):
+                    canvas_x = left + x
+                    canvas_y = top + y
+                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                        self.selected_pixels[y, x] = canvas.get_pixel(canvas_x, canvas_y)
         
         self.has_selection = True
         self.selection_rect = (left, top, width, height)
@@ -112,6 +118,7 @@ class MoveTool(Tool):
         self.move_offset = (0, 0)
         self.original_selection = None
         self.selection_tool = None
+        self.cleared_background = None  # Store what was cleared for undo if needed
     
     def set_selection_tool(self, selection_tool: SelectionTool):
         """Set reference to selection tool"""
@@ -152,7 +159,15 @@ class MoveTool(Tool):
                 if bounds:
                     left, top, width, height = bounds
                     
-                    # Draw selected pixels at new position
+                    # First clear the target area (in case it overlaps with original)
+                    for py in range(height):
+                        for px in range(width):
+                            canvas_x = left + px
+                            canvas_y = top + py
+                            if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                    
+                    # Then draw selected pixels at new position
                     for py in range(height):
                         for px in range(width):
                             if py < self.selection_tool.selected_pixels.shape[0] and px < self.selection_tool.selected_pixels.shape[1]:
@@ -160,9 +175,10 @@ class MoveTool(Tool):
                                 canvas_x = left + px
                                 canvas_y = top + py
                                 if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                    # Only draw non-transparent pixels
-                                    if pixel_color[3] > 0:
-                                        canvas.set_pixel(canvas_x, canvas_y, pixel_color)
+                                    # Draw all pixels (including transparent to properly clear background)
+                                    canvas.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            print(f"[MOVE] Pixels placed at new position")
     
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Update selection position while moving"""
