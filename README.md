@@ -143,7 +143,12 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **⚡ INSTANT Switching**: All view modes load instantly (<10ms, 50-100× faster!)
 - **Tooltips**: Hover hints for every color and control element
 
-### ✂️ **Selection Operations** (4 Pixel Manipulation Tools)
+### ✂️ **Selection & Move Operations** (5 Pixel Manipulation Tools + Smart Move System)
+- **Selection Tool**: Rectangle selection with marching ants
+- **Move Tool** 🌟NEW: Smart two-phase non-destructive move system
+  - **First pickup**: Clears original pixels (move, not copy)
+  - **Adjustments**: Unlimited repositioning with background preservation
+  - **Result**: Move pixels over others without destroying underlying content!
 - **Mirror**: Flip selected pixels horizontally
 - **Rotate**: Rotate selected pixels 90° clockwise
 - **Copy**: Copy and paste selected pixels anywhere on canvas

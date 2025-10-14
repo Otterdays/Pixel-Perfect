@@ -1,42 +1,55 @@
 # Pixel Perfect - Changelog
 
-## Version 1.37 - Non-Destructive Move Mode (October 14, 2025) ✅
+## Version 1.37 - Smart Non-Destructive Move System (October 14, 2025) ✅
 
-### 🎨 Major Feature: Non-Destructive Move
+### 🎨 Major Feature: Two-Phase Move with Background Preservation
 
 **Revolutionary Move Workflow** 🚀
-- **Old Behavior**: Picking up selection immediately erased original pixels
-- **New Behavior**: Original pixels stay intact until you switch tools!
-- **Why It Matters**: Allows unlimited repositioning adjustments without pixel loss
+- **Old Behavior**: Moving pixels over others would permanently delete underlying pixels
+- **New Behavior**: Unlimited position adjustments without destroying underlying pixels!
+- **Why It Matters**: Professional-grade non-destructive editing for precise pixel placement
 
-**How It Works:**
-1. **Select & Move**: Original pixels remain visible while you adjust position
-2. **Keep Adjusting**: Pick up and reposition as many times as needed
-3. **Finalize**: Switch to any other tool → pixels are cleared from original spot and placed at final position
-4. **Result**: Non-destructive workflow for precise pixel placement!
+**The Two-Phase System:**
+
+**Phase 1 - First Pickup (Move Operation Starts):**
+1. Click selection to pick up
+2. **Original pixels are cleared** from canvas
+3. Pixels are now "floating" - no longer on canvas
+4. Drop at new position → Pixels placed, **background saved**
+5. **Result**: Pixels moved, not copied!
+
+**Phase 2 - Adjustment Pickups (Unlimited Repositioning):**
+1. Pick up again from new position
+2. **Saved background is restored** → Underlying pixels come back! ✨
+3. Pixels lift off, background preserved
+4. Drop at another position → Pixels placed, **new background saved**
+5. **Result**: Can adjust position infinitely without destroying pixels underneath!
 
 **User Workflow:**
 ```
-1. Select pixels with selection tool
-2. Switch to move tool
-3. Drag to new position → Original pixels still visible!
-4. Release → Can still see both original and preview
-5. Pick up again → Adjust position freely
-6. Release → Still non-destructive
-7. Switch to brush tool → NOW original pixels are cleared, final position set
+1. Select black pixels → White selection box appears
+2. Pick up (first time) → Original black pixels cleared from canvas
+3. Drop on red pixels → Black appears, red is saved in memory
+4. Pick up again → Red pixels restored! (Non-destructive!)
+5. Drop elsewhere → Black moves, new background saved
+6. Pick up again → Previous background restored again!
+7. Repeat infinitely → Never lose underlying pixels!
 ```
 
 **Technical Implementation:**
-- `has_been_moved` flag tracks if selection has been repositioned
-- `finalize_move()` method handles final pixel clearing and placement
-- Called automatically when switching away from selection/move tools
-- Preserves underlying pixels during adjustment phase
+- `original_selection`: Tracks initial position for first-pickup detection
+- `saved_background`: 2D array storing pixels underneath current position
+- `last_drawn_position`: Tracks where pixels are currently placed
+- **First pickup**: Clears original pixels (move, not copy)
+- **Subsequent pickups**: Restores `saved_background` (non-destructive adjustments)
+- **Every drop**: Saves new background, draws pixels at position
 
 **Benefits:**
-- ✅ Experiment with positioning without committing
-- ✅ See original pixels as reference while adjusting
-- ✅ No more "oops, I dropped it 1 pixel off!" frustration
-- ✅ Professional-grade non-destructive editing workflow
+- ✅ **Move, not copy**: First pickup clears original (no duplicates)
+- ✅ **Non-destructive adjustments**: Unlimited repositioning without pixel loss
+- ✅ **Background preservation**: Red pixels safe when moving black over them
+- ✅ **Professional workflow**: Experiment with positioning, underlying pixels stay intact
+- ✅ **Pixel-perfect placement**: Adjust as many times as needed to get it right!
 
 ---
 
