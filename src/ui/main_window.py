@@ -344,7 +344,7 @@ class MainWindow:
                 self.theme_label = ctk.CTkLabel(self.toolbar, image=logo_ctk, text="")
             else:
                 # Fallback to emoji if image not found
-        self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
+                self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
         except Exception as e:
             print(f"[WARN] Could not load DCS logo: {e}")
             # Fallback to emoji if image loading fails
