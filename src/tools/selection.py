@@ -122,6 +122,7 @@ class MoveTool(Tool):
         self.pixels_cleared = False  # Track if we've cleared original pixels yet
         self.has_been_moved = False  # Track if selection has been moved from original position
         self.last_drawn_position = None  # Track where pixels are currently drawn on canvas
+        self.saved_background = None  # Store background pixels before placing selection
     
     def set_selection_tool(self, selection_tool: SelectionTool):
         """Set reference to selection tool"""
@@ -144,36 +145,46 @@ class MoveTool(Tool):
                     if not self.original_selection:
                         self.original_selection = (left, top)
                     
-                    # Clear pixels from last drawn position (not original position)
-                    clear_pos = self.last_drawn_position if self.last_drawn_position else (left, top)
-                    if clear_pos:
-                        clear_left, clear_top = clear_pos
-                        for py in range(height):
-                            for px in range(width):
-                                if (py < self.selection_tool.selected_pixels.shape[0] and 
-                                    px < self.selection_tool.selected_pixels.shape[1]):
-                                    pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                    if pixel_color[3] > 0:  # Non-transparent
-                                        canvas_x = clear_left + px
-                                        canvas_y = clear_top + py
-                                        if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                            # Only clear if it matches our pixel
-                                            current = canvas.get_pixel(canvas_x, canvas_y)
-                                            if current == pixel_color:
-                                                canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                    # Restore saved background if it exists (from last drop)
+                    if self.saved_background and self.last_drawn_position:
+                        restore_left, restore_top = self.last_drawn_position
+                        for py in range(len(self.saved_background)):
+                            for px in range(len(self.saved_background[0])):
+                                bg_pixel = self.saved_background[py][px]
+                                canvas_x = restore_left + px
+                                canvas_y = restore_top + py
+                                if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                    canvas.set_pixel(canvas_x, canvas_y, bg_pixel)
+                        print("[MOVE] Restored background pixels from last position")
                     
-                    print("[MOVE] Picked up selection (clearing from last position)")
+                    # Clear saved background for new move
+                    self.saved_background = None
+                    
+                    print("[MOVE] Picked up selection")
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
         if button == 1 and self.is_moving:
             self.is_moving = False
             
-            # Draw pixels at new position
+            # Save background and draw pixels at new position
             if self.selection_tool and self.selection_tool.selected_pixels is not None:
                 bounds = self.selection_tool.get_selection_bounds()
                 if bounds:
                     left, top, width, height = bounds
+                    
+                    # Save background pixels before overwriting
+                    self.saved_background = []
+                    for py in range(height):
+                        row = []
+                        for px in range(width):
+                            canvas_x = left + px
+                            canvas_y = top + py
+                            if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                row.append(canvas.get_pixel(canvas_x, canvas_y))
+                            else:
+                                row.append((0, 0, 0, 0))
+                        self.saved_background.append(row)
                     
                     # Draw pixels at new position
                     for py in range(height):
@@ -195,7 +206,7 @@ class MoveTool(Tool):
                         orig_left, orig_top = self.original_selection
                         if left != orig_left or top != orig_top:
                             self.has_been_moved = True
-                            print(f"[MOVE] Pixels drawn at new position (non-destructive - original preserved)")
+                            print(f"[MOVE] Pixels drawn (background saved for non-destructive adjustment)")
     
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Update selection position while moving"""

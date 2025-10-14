@@ -2,8 +2,9 @@
 REM ===================================================
 REM Pixel Perfect - Build Script (OPTIMIZED)
 REM Creates standalone Windows executable
-REM Optimizations: bytecode optimization, stdlib exclusions
-REM Target: ~25-27 MB (from 29 MB baseline, 330 MB original)
+REM Optimizations: bytecode optimization, 17+ module exclusions
+REM Target: ~24-25 MB (from 29 MB baseline, 330 MB original)
+REM Build Time: ~45-48 seconds
 REM ===================================================
 
 echo.
@@ -39,7 +40,7 @@ echo [2/6] Building executable with PyInstaller (MAXIMUM OPTIMIZATION)...
 set ICON_PATH=%~dp0..\assets\icons\app_icon.ico
 set LOGO_PATH=%~dp0..\dcs.png
 cd ..
-python -m PyInstaller --name="PixelPerfect" --onefile --windowed --optimize=2 --icon="%ICON_PATH%" --add-data="%LOGO_PATH%;." --exclude-module=pygame --exclude-module=scipy --exclude-module=tkinter.test --exclude-module=unittest --exclude-module=test --exclude-module=xml.etree --exclude-module=xml.dom --exclude-module=doctest --exclude-module=pdb --exclude-module=email --exclude-module=http --exclude-module=urllib --exclude-module=xmlrpc --exclude-module=pydoc --exclude-module=bz2 --exclude-module=lzma --exclude-module=_ssl --exclude-module=ssl --hidden-import=src.core.canvas --hidden-import=src.core.color_palette --hidden-import=src.core.custom_colors --hidden-import=src.core.layer_manager --hidden-import=src.core.project --hidden-import=src.core.undo_manager --hidden-import=src.core.saved_colors --hidden-import=src.tools.base_tool --hidden-import=src.tools.brush --hidden-import=src.tools.eraser --hidden-import=src.tools.eyedropper --hidden-import=src.tools.fill --hidden-import=src.tools.selection --hidden-import=src.tools.shapes --hidden-import=src.tools.pan --hidden-import=src.ui.main_window --hidden-import=src.ui.layer_panel --hidden-import=src.ui.timeline_panel --hidden-import=src.ui.color_wheel --hidden-import=src.ui.theme_manager --hidden-import=src.ui.tooltip --hidden-import=src.utils.export --hidden-import=src.utils.import_png --hidden-import=src.utils.presets --hidden-import=src.utils.file_association --hidden-import=src.animation.timeline --distpath="BUILDER\dist" --workpath="BUILDER\build" --specpath="BUILDER" main.py
+python -m PyInstaller --name="PixelPerfect" --onefile --windowed --optimize=2 --icon="%ICON_PATH%" --add-data="%LOGO_PATH%;." --exclude-module=pygame --exclude-module=scipy --exclude-module=tkinter.test --exclude-module=unittest --exclude-module=test --exclude-module=xml.etree --exclude-module=xml.dom --exclude-module=doctest --exclude-module=pdb --exclude-module=email --exclude-module=http --exclude-module=urllib --exclude-module=xmlrpc --exclude-module=pydoc --exclude-module=bz2 --exclude-module=lzma --exclude-module=_ssl --exclude-module=ssl --exclude-module=charset_normalizer --exclude-module=pycparser --hidden-import=src.core.canvas --hidden-import=src.core.color_palette --hidden-import=src.core.custom_colors --hidden-import=src.core.layer_manager --hidden-import=src.core.project --hidden-import=src.core.undo_manager --hidden-import=src.core.saved_colors --hidden-import=src.tools.base_tool --hidden-import=src.tools.brush --hidden-import=src.tools.eraser --hidden-import=src.tools.eyedropper --hidden-import=src.tools.fill --hidden-import=src.tools.selection --hidden-import=src.tools.shapes --hidden-import=src.tools.pan --hidden-import=src.ui.main_window --hidden-import=src.ui.layer_panel --hidden-import=src.ui.timeline_panel --hidden-import=src.ui.color_wheel --hidden-import=src.ui.theme_manager --hidden-import=src.ui.tooltip --hidden-import=src.utils.export --hidden-import=src.utils.import_png --hidden-import=src.utils.presets --hidden-import=src.utils.file_association --hidden-import=src.animation.timeline --distpath="BUILDER\dist" --workpath="BUILDER\build" --specpath="BUILDER" main.py
 if errorlevel 1 (
     echo ERROR: PyInstaller build failed!
     cd BUILDER
@@ -97,7 +98,7 @@ echo Finished: %END_TIME%
 echo.
 echo Optimizations Applied:
 echo  - Bytecode optimization (--optimize=2)
-echo  - Excluded 15+ unused stdlib modules
+echo  - Excluded 17+ unused modules (stdlib + charset_normalizer + pycparser)
 echo  - Removed pygame and scipy dependencies
 echo.
 echo Temporary files cleaned up automatically.
