@@ -344,7 +344,7 @@ class MainWindow:
                 self.theme_label = ctk.CTkLabel(self.toolbar, image=logo_ctk, text="")
             else:
                 # Fallback to emoji if image not found
-                self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
+        self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
         except Exception as e:
             print(f"[WARN] Could not load DCS logo: {e}")
             # Fallback to emoji if image loading fails
@@ -482,11 +482,12 @@ class MainWindow:
             width=175,  # Span 2 columns
             height=28,
             command=self._open_texture_panel,
-            fg_color="#4a4a4a",  # Different color to distinguish from tools
+            fg_color="gray",  # Match other tool buttons
             hover_color="#5a5a5a"
         )
         texture_btn.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
-        create_tooltip(texture_btn, "Open texture panel", delay=1000)
+        self.tool_buttons["texture"] = texture_btn  # Add to tool buttons for highlighting
+        create_tooltip(texture_btn, "Open texture panel (T)", delay=1000)
         
         # Configure grid columns - buttons stay fixed size
         for col in range(3):
@@ -1732,7 +1733,7 @@ class MainWindow:
             return
         
         # Scale the pixels using nearest neighbor (simple fallback method)
-        self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
+            self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
     
     def _simple_scale(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
         """Simple scaling without scipy"""
@@ -2249,9 +2250,9 @@ class MainWindow:
                 self.zoom_var.set("16x")
         elif width >= 64 or height >= 64:
             if self.canvas.zoom > 8:
-                self.canvas.set_zoom(8)
-                self.zoom_var.set("8x")
-        
+                    self.canvas.set_zoom(8)
+                    self.zoom_var.set("8x")
+            
         # Resize layer manager and timeline
         preserve_width = min(old_width, width)
         preserve_height = min(old_height, height)
@@ -2260,10 +2261,10 @@ class MainWindow:
         self.timeline.resize_frames(width, height)
         
         # Sync canvas display with resized layer data
-        self._update_canvas_from_layers()
-        
+            self._update_canvas_from_layers()
+            
         # Update display
-        self._force_tkinter_canvas_update()
+            self._force_tkinter_canvas_update()
         
         print(f"[Custom Canvas Resize] Resized to {width}x{height}, preserved {preserve_width}x{preserve_height} pixels")
     
@@ -2287,7 +2288,7 @@ class MainWindow:
         
         # Update grid view with new palette
         self.color_display_frame = self.grid_view_frame
-        self._create_color_grid()
+            self._create_color_grid()
         
         # Show grid view
         self._show_view("grid")
@@ -2296,15 +2297,15 @@ class MainWindow:
         """Initialize all palette views once at startup (OPTIMIZED)"""
         # Create grid view
         self.color_display_frame = self.grid_view_frame
-        self._create_color_grid()
+            self._create_color_grid()
         
         # Create primary view
         self.color_display_frame = self.primary_view_frame
-        self._create_primary_colors()
+            self._create_primary_colors()
         
         # Create wheel view
         self.color_display_frame = self.wheel_view_frame
-        self._create_color_wheel()
+            self._create_color_wheel()
         
         # Create saved view
         self.color_display_frame = self.saved_view_frame
@@ -3854,7 +3855,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
                 else:
-                    tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
+                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -3868,7 +3869,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._update_pixel_display()
                 else:
-                    self._update_single_pixel(canvas_x, canvas_y, old_color)
+                self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
@@ -3967,7 +3968,7 @@ class MainWindow:
 
             # Clear shape preview after finalizing shape
             self.drawing_canvas.delete("shape_preview")
-            
+
             # Clear drawing state
             self.is_drawing = False
 
@@ -4065,7 +4066,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
                 else:
-                    tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
+                tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -4079,7 +4080,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._update_pixel_display()
                 else:
-                    self._update_single_pixel(canvas_x, canvas_y, old_color)
+                self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas"""
@@ -4150,6 +4151,10 @@ class MainWindow:
                 color = self.palette.get_primary_color()
 
             tool.on_mouse_move(self.canvas, canvas_x, canvas_y, color)
+            
+            # LIVE PREVIEW for texture tool (hover)
+            if self.current_tool == "texture":
+                self._draw_texture_preview(tool, canvas_x, canvas_y)
             
             # Redraw if moving selection to show preview
             move_tool = self.tools.get("move")
