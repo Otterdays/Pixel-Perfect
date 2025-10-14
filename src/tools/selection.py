@@ -143,7 +143,8 @@ class MoveTool(Tool):
                     if not self.original_selection:
                         self.original_selection = (left, top)
                     
-                    # Clear pixels at current position (they'll be redrawn on mouse_up)
+                    # Clear ONLY our selected pixels at current position
+                    # Must match exactly to avoid clearing pixels underneath
                     for py in range(height):
                         for px in range(width):
                             if (py < self.selection_tool.selected_pixels.shape[0] and 
@@ -153,9 +154,12 @@ class MoveTool(Tool):
                                     canvas_x = left + px
                                     canvas_y = top + py
                                     if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                        canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                                        # CRITICAL: Only clear if pixel matches our selection
+                                        current_pixel = canvas.get_pixel(canvas_x, canvas_y)
+                                        if current_pixel == pixel_color:
+                                            canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
                     
-                    print("[MOVE] Picked up selection (non-destructive mode)")
+                    print("[MOVE] Picked up selection (non-destructive mode - preserving underlying pixels)")
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
