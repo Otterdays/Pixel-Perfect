@@ -2495,8 +2495,14 @@ class MainWindow:
     
     def _on_saved_slot_click(self, slot_index: int):
         """Handle click on empty saved color slot - save current color"""
-        # Get current primary color
-        current_color = self.palette.get_primary_color()
+        # Get current color from appropriate source
+        # If color wheel view is active, get from wheel; otherwise from palette
+        if (hasattr(self, 'color_wheel') and self.color_wheel and 
+            self.view_mode_var.get() == "wheel"):
+            rgb_color = self.color_wheel.get_color()
+            current_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        else:
+            current_color = self.palette.get_primary_color()
         
         # Save to slot
         self.saved_colors.set_color(slot_index, current_color)
