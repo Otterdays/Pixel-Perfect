@@ -1,10 +1,25 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.41  
-**Last Updated**: October 14, 2025 - Multi-Size Eraser Tool
+**Version**: 1.42  
+**Last Updated**: October 14, 2025 - Settings Button & Placeholder Dialog
 
-## Latest Updates (v1.41)
+## Latest Updates (v1.42)
+
+### ⚙️ Settings Button & Dialog Placeholder
+**First step toward comprehensive settings system**
+- **⚙️ Gear icon button** - Added to top toolbar (between Grid and Theme)
+- **Professional placeholder** - "Coming Soon" dialog with feature preview
+- **127 planned settings** - References MAX_SETTINGS.md documentation
+- **6 feature categories** - Canvas, Tools, Colors, UI, Shortcuts, and more
+- **Modal dialog** - Large 64pt gear icon with blue accent styling
+- **Easy access** - Click gear to see what's planned
+- **Tooltip** - "Settings (Coming Soon)" on hover
+- **Consistent styling** - Matches app's CustomTkinter dark theme
+
+---
+
+## Previous Updates (v1.41)
 
 ### 🧹 Multi-Size Eraser Tool (1x1, 2x2, 3x3)
 **Eraser tool now matches brush with multiple sizes**

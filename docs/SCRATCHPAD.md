@@ -1,5 +1,70 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.42 - Settings Button & Dialog Placeholder
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Feature: Settings Button with Gear Icon
+
+**Purpose:**
+First step toward comprehensive settings system - add UI access point and placeholder dialog.
+
+**Problem:**
+With 127 planned settings documented in MAX_SETTINGS.md, need a clear access point for future settings panel.
+
+**Solution: Settings Gear Button in Top Toolbar**
+
+**Implementation:**
+
+**1. Settings Button Added:**
+- Location: Top toolbar, between Grid button and Theme dropdown
+- Icon: ⚙️ gear emoji (size 18)
+- Width: 40px (compact button)
+- Tooltip: "Settings (Coming Soon)"
+
+**2. Button Placement:**
+```python
+self.settings_button = ctk.CTkButton(
+    self.toolbar, 
+    text="⚙️", 
+    width=40,
+    command=self._show_settings_dialog,
+    font=ctk.CTkFont(size=18)
+)
+self.settings_button.pack(side="right", padx=5)
+```
+
+**3. Coming Soon Dialog:**
+- Modal dialog (500x350)
+- Centered on screen
+- Large gear icon (64pt)
+- Blue title "SETTINGS"
+- Lists planned feature categories
+- References MAX_SETTINGS.md
+- Single "OK" button to close
+
+**4. Dialog Content:**
+- "Settings System Coming Soon!"
+- 6 feature categories listed
+- Reference to 127 planned settings
+- Professional, polished placeholder
+
+**Visual Design:**
+- Matches app's CustomTkinter styling
+- Consistent with other dialogs (downsize warning, clear slots)
+- Blue accent color (#1a73e8)
+- Dark theme compatible
+
+**Benefits:**
+✅ Clear UI indicator that settings are planned
+✅ Professional placeholder instead of "not implemented"
+✅ Easy for users to discover
+✅ Ready to replace with full settings panel
+✅ Maintains UI consistency
+✅ Generates user anticipation for features
+
+---
+
 ## Version 1.41 - Multi-Size Eraser Tool
 **Date**: October 14, 2025
 **Status**: Complete ✅

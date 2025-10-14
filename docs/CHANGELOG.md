@@ -1,5 +1,90 @@
 # Pixel Perfect - Changelog
 
+## Version 1.42 - Settings Button & Placeholder Dialog (October 14, 2025) ✅
+
+### ⚙️ Feature: Settings Button with Gear Icon
+
+**Purpose:**
+First step toward implementing the comprehensive settings system documented in MAX_SETTINGS.md (127 planned settings).
+
+**New Settings Button** 🎛️
+- **Location** - Top toolbar, positioned between "Grid: ON" button and "Basic Grey" theme dropdown
+- **Icon** - ⚙️ Gear emoji (18pt font size)
+- **Size** - Compact 40px width button
+- **Tooltip** - "Settings (Coming Soon)" (500ms delay)
+- **Command** - Opens settings placeholder dialog
+
+**Settings Dialog (Placeholder)** 📋
+- **Modal dialog** - 500x350, centered on screen, non-resizable
+- **Professional design** - Matches app's CustomTkinter styling
+- **Large gear icon** - 64pt ⚙️ at top
+- **Blue title** - "SETTINGS" in #1a73e8 (24pt bold)
+- **Coming Soon message** - Professional announcement of feature
+- **Feature preview** - Lists 6 planned setting categories:
+  - Canvas & Grid preferences
+  - Tool defaults & behavior
+  - Color & Palette options
+  - UI customization
+  - Keyboard shortcuts
+  - And much more!
+- **Documentation reference** - Points users to MAX_SETTINGS.md for full list
+- **Close button** - Blue "OK" button to dismiss
+
+**Technical Implementation:**
+```python
+# Settings button in toolbar (line ~370)
+self.settings_button = ctk.CTkButton(
+    self.toolbar, 
+    text="⚙️", 
+    width=40,
+    command=self._show_settings_dialog,
+    font=ctk.CTkFont(size=18)
+)
+self.settings_button.pack(side="right", padx=5)
+
+# Dialog method (line ~3111)
+def _show_settings_dialog(self):
+    # Creates modal CTkToplevel dialog
+    # Centers on screen
+    # Displays gear icon, title, coming soon message
+    # Lists planned features
+    # References MAX_SETTINGS.md
+```
+
+**Code Changes:**
+- `src/ui/main_window.py`:
+  - Added `self.settings_button` with gear icon
+  - Added `_show_settings_dialog()` method
+  - Added tooltip with "Settings (Coming Soon)"
+  - Positioned between grid toggle and theme selector
+
+**Consistency with App Design:**
+- Uses same dialog structure as downsize warning and clear slots
+- Dark theme colors (#2d2d2d backgrounds, #e0e0e0 text)
+- Blue accent color (#1a73e8) for titles and buttons
+- Proper modal behavior (transient, grab_set)
+- Centered positioning relative to main window
+
+**User Experience Flow:**
+1. User sees gear icon ⚙️ in top toolbar
+2. Hovers to see "Settings (Coming Soon)" tooltip
+3. Clicks to open professional placeholder dialog
+4. Reads about planned settings categories
+5. Sees reference to MAX_SETTINGS.md documentation
+6. Clicks OK to close
+7. User has clear expectation that settings are coming
+
+**Benefits:**
+✅ Clear UI indicator for planned settings system
+✅ Professional "coming soon" instead of "not implemented" error
+✅ Generates user anticipation and excitement
+✅ Easy to discover and access
+✅ Ready to be replaced with full settings panel
+✅ Maintains UI consistency with rest of app
+✅ References comprehensive MAX_SETTINGS.md documentation
+
+---
+
 ## Version 1.41 - Multi-Size Eraser Tool (October 14, 2025) ✅
 
 ### 🧹 Feature: Multi-Size Eraser (1x1, 2x2, 3x3)

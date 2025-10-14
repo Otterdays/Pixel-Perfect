@@ -366,6 +366,17 @@ class MainWindow:
         )
         self.theme_menu.pack(side="right", padx=5)
         
+        # Settings button with gear icon
+        self.settings_button = ctk.CTkButton(
+            self.toolbar, 
+            text="⚙️", 
+            width=40,
+            command=self._show_settings_dialog,
+            font=ctk.CTkFont(size=18)
+        )
+        self.settings_button.pack(side="right", padx=5)
+        create_tooltip(self.settings_button, "Settings (Coming Soon)", delay=500)
+        
         # Grid toggle
         self.grid_button = ctk.CTkButton(self.toolbar, text="Grid", width=60)
         self.grid_button.pack(side="right", padx=5)
@@ -3096,6 +3107,87 @@ class MainWindow:
         """Handle theme selection from dropdown"""
         self.theme_manager.set_theme(theme_name)
         print(f"[OK] Theme changed to: {theme_name}")
+    
+    def _show_settings_dialog(self):
+        """Show settings dialog (placeholder for future settings system)"""
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Settings")
+        dialog.geometry("500x350")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center dialog
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (350 // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Header frame with gear icon
+        header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        header_frame.pack(pady=20, padx=20, fill="x")
+        
+        icon_label = ctk.CTkLabel(
+            header_frame,
+            text="⚙️",
+            font=ctk.CTkFont(size=64)
+        )
+        icon_label.pack(pady=10)
+        
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="SETTINGS",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color="#1a73e8"
+        )
+        title_label.pack()
+        
+        # Coming soon message
+        message_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        message_frame.pack(pady=20, padx=20, fill="both", expand=True)
+        
+        message_label = ctk.CTkLabel(
+            message_frame,
+            text="Settings System Coming Soon!",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#e0e0e0"
+        )
+        message_label.pack(pady=(10, 20))
+        
+        info_text = "A comprehensive settings panel is in development.\n\n"
+        info_text += "Planned features:\n"
+        info_text += "• Canvas & Grid preferences\n"
+        info_text += "• Tool defaults & behavior\n"
+        info_text += "• Color & Palette options\n"
+        info_text += "• UI customization\n"
+        info_text += "• Keyboard shortcuts\n"
+        info_text += "• And much more!\n\n"
+        info_text += "See MAX_SETTINGS.md for the full list of 127 planned settings."
+        
+        info_label = ctk.CTkLabel(
+            message_frame,
+            text=info_text,
+            font=ctk.CTkFont(size=13),
+            text_color="#b0b0b0",
+            justify="left"
+        )
+        info_label.pack(pady=10)
+        
+        # Close button
+        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_frame.pack(pady=(0, 20), padx=20, fill="x")
+        
+        close_btn = ctk.CTkButton(
+            button_frame,
+            text="OK",
+            width=140,
+            height=40,
+            fg_color="#1a73e8",
+            hover_color="#1557b0",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=dialog.destroy
+        )
+        close_btn.pack()
     
     def _apply_theme(self, theme):
         """Apply theme colors to all UI elements - optimized for instant switching"""
