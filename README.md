@@ -224,6 +224,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ### 🎨 **UI & UX Features**
 - **⚡ Lightning Fast**: Instant view switching (50-100× faster with pre-rendered views!)
 - **Theme System**: Real-time theme switching (Basic Grey, Angelic themes)
+- **⚙️ Settings Button** ⭐NEW: Gear icon in top toolbar with placeholder dialog (127 settings planned!)
 - **Collapsible Panels**: Hide/show left and right panels for maximum canvas space
 - **Resizable Panels**: Drag dividers to adjust panel widths (left: 520px, right: 500px)
 - **Smooth Panel Transitions**: Optimized divider dragging with outline-only resize
@@ -789,6 +790,46 @@ This is proprietary software. All source code, documentation, assets, and relate
 **Version History & Release Notes**
 
 </div>
+
+### Version 1.42 (October 14, 2025)
+⚙️ **Settings Button & Placeholder Dialog**
+- **⚙️ Gear Icon Button** - Added to top toolbar (between Grid and Theme dropdown)
+- **Professional Placeholder** - "Coming Soon" dialog with feature preview
+- **127 Planned Settings** - References MAX_SETTINGS.md documentation
+- **6 Feature Categories** - Canvas, Tools, Colors, UI, Shortcuts, and more
+- **Modal Dialog** - Large 64pt gear icon with blue accent styling
+- **Easy Access** - Click gear to see what's planned
+- **Consistent Styling** - Matches app's CustomTkinter dark theme
+
+### Version 1.41 (October 14, 2025)
+🧹✨ **Multi-Size Eraser Tool & Brush/Eraser Preview**
+- **Multi-Size Eraser** - 1×1, 2×2, 3×3 eraser sizes with right-click menu
+- **Visual Size Indicator** - Button shows `Eraser [2x2]` like brush
+- **Checkmark Display** - Selected size marked with ✓ in menu
+- **Live Brush Preview** - Semi-transparent color preview shows where pixels will land
+- **Live Eraser Preview** - Red semi-transparent preview shows erase area
+- **Centered NxN Squares** - Previews match actual placement perfectly
+- **Dashed Outlines** - White for brush, red for eraser
+- **Matches Texture/Move** - Consistent preview system across all tools
+
+### Version 1.40 (October 14, 2025)
+⚠️ **Styled Canvas Downsize Warning Dialog**
+- **Custom Warning Dialog** - Beautiful styled warning instead of plain system messagebox
+- **Large Warning Emoji** - ⚠️ 48pt icon with orange title
+- **Clear Size Comparison** - Shows current vs. new dimensions
+- **Danger Messaging** - Strong language about permanent pixel loss
+- **Professional Buttons** - Grey "No" (safe), Red "Yes" (destructive)
+- **Consistent Styling** - Matches "Clear All Slots" dialog design
+
+### Version 1.39 (October 14, 2025)
+📚 **MAX SETTINGS Documentation**
+- **127 Settings Cataloged** - Comprehensive settings planning document
+- **14 Categories** - Canvas, Grid, Tools, Colors, Layers, Animation, and more
+- **Impact Ratings** - Each setting rated 1-5 stars for user value
+- **Complexity Assessment** - Easy/Medium/Hard/Very Hard implementation difficulty
+- **Implementation Checklist** - Track what gets built with 🔴🟡🟢 status
+- **JSON Schema** - Defined structure for future settings storage
+- **Priority Recommendations** - High-impact, easy-to-implement settings highlighted
 
 ### Version 1.38 (October 14, 2025)
 🌿✨ **Texture Tool with Live Preview**
