@@ -3,7 +3,7 @@
 # 🎨 Pixel Perfect
 ### Professional Retro Pixel Art Editor
 
-<img src="dcs.png" alt="Diamond Clad Studios" width="120"/>
+<img src="dcs.png" alt="Diamond Clad Studios" width="160"/>
 
 **by Diamond Clad Studios**
 
