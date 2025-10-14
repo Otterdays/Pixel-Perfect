@@ -141,12 +141,24 @@ class MoveTool(Tool):
                     self.is_moving = True
                     self.move_offset = (x - left, y - top)
                     
-                    # Store original position if not already stored
+                    # FIRST PICKUP: Clear original pixels
                     if not self.original_selection:
                         self.original_selection = (left, top)
+                        # Clear the original pixels from canvas
+                        for py in range(height):
+                            for px in range(width):
+                                if (py < self.selection_tool.selected_pixels.shape[0] and 
+                                    px < self.selection_tool.selected_pixels.shape[1]):
+                                    pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                                    if pixel_color[3] > 0:  # Non-transparent
+                                        canvas_x = left + px
+                                        canvas_y = top + py
+                                        if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                            canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                        print("[MOVE] First pickup - cleared original pixels")
                     
-                    # Restore saved background if it exists (from last drop)
-                    if self.saved_background and self.last_drawn_position:
+                    # SUBSEQUENT PICKUPS: Restore saved background (from last drop)
+                    elif self.saved_background and self.last_drawn_position:
                         restore_left, restore_top = self.last_drawn_position
                         for py in range(len(self.saved_background)):
                             for px in range(len(self.saved_background[0])):
@@ -155,7 +167,7 @@ class MoveTool(Tool):
                                 canvas_y = restore_top + py
                                 if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
                                     canvas.set_pixel(canvas_x, canvas_y, bg_pixel)
-                        print("[MOVE] Restored background pixels from last position")
+                        print("[MOVE] Adjustment pickup - restored background from last drop")
                     
                     # Clear saved background for new move
                     self.saved_background = None
