@@ -1,5 +1,45 @@
 # Pixel Perfect - Changelog
 
+## Version 1.37 - Non-Destructive Move Mode (October 14, 2025) ✅
+
+### 🎨 Major Feature: Non-Destructive Move
+
+**Revolutionary Move Workflow** 🚀
+- **Old Behavior**: Picking up selection immediately erased original pixels
+- **New Behavior**: Original pixels stay intact until you switch tools!
+- **Why It Matters**: Allows unlimited repositioning adjustments without pixel loss
+
+**How It Works:**
+1. **Select & Move**: Original pixels remain visible while you adjust position
+2. **Keep Adjusting**: Pick up and reposition as many times as needed
+3. **Finalize**: Switch to any other tool → pixels are cleared from original spot and placed at final position
+4. **Result**: Non-destructive workflow for precise pixel placement!
+
+**User Workflow:**
+```
+1. Select pixels with selection tool
+2. Switch to move tool
+3. Drag to new position → Original pixels still visible!
+4. Release → Can still see both original and preview
+5. Pick up again → Adjust position freely
+6. Release → Still non-destructive
+7. Switch to brush tool → NOW original pixels are cleared, final position set
+```
+
+**Technical Implementation:**
+- `has_been_moved` flag tracks if selection has been repositioned
+- `finalize_move()` method handles final pixel clearing and placement
+- Called automatically when switching away from selection/move tools
+- Preserves underlying pixels during adjustment phase
+
+**Benefits:**
+- ✅ Experiment with positioning without committing
+- ✅ See original pixels as reference while adjusting
+- ✅ No more "oops, I dropped it 1 pixel off!" frustration
+- ✅ Professional-grade non-destructive editing workflow
+
+---
+
 ## Version 1.36 - Selection & Move Tool Bug Fixes (October 14, 2025) ✅
 
 ### 🐛 Critical Bug Fixes
@@ -31,11 +71,27 @@
           canvas.set_pixel(canvas_x, canvas_y, pixel_color)
   ```
 
-**Fixed: Selection Box Vanishes on Minimize/Focus Loss** 🔍
+**Fixed: Selection Box Vanishes on Minimize/Focus Loss** 🔍🔍 **(ENHANCED)**
 - **Problem**: Minimizing app and restoring would hide selection box until clicking canvas
-- **Root Cause**: `_on_focus_in()` was calling `_update_pixel_display()` immediately, before window fully restored
-- **Solution**: Added 10ms delay using `root.after()` to ensure window is ready, plus debug logging
-- **Impact**: Selection box now redraws correctly when app regains focus!
+- **Root Cause**: `_on_focus_in()` wasn't catching all window visibility events
+- **Solution**: 
+  - Bound to multiple events: `<FocusIn>`, `<Map>` (unminimize), `<Visibility>` (canvas visible)
+  - Multiple redraw attempts: immediate, 50ms, 150ms to catch all timing scenarios
+  - Added debug logging to track which events fire
+- **Impact**: Selection box now redraws reliably across all focus/visibility scenarios!
+- **Technical**: 
+  ```python
+  # Bind all relevant events
+  self.root.bind("<FocusIn>", self._on_focus_in)
+  self.root.bind("<Map>", self._on_focus_in)  # Window unminimized
+  self.drawing_canvas.bind("<FocusIn>", self._on_focus_in)
+  self.drawing_canvas.bind("<Visibility>", self._on_focus_in)  # Canvas visible
+  
+  # Multiple redraw attempts for reliability
+  self._update_pixel_display()  # Immediate
+  self.root.after(50, self._update_pixel_display)  # After 50ms
+  self.root.after(150, self._update_pixel_display)  # After 150ms
+  ```
 
 **Fixed: Selection Tool Pixel Loss on Move**
 - **Problem**: Moving a selection and picking it up again would capture transparent/wrong pixels
