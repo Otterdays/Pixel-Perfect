@@ -2261,10 +2261,10 @@ class MainWindow:
         self.timeline.resize_frames(width, height)
         
         # Sync canvas display with resized layer data
-            self._update_canvas_from_layers()
-            
+        self._update_canvas_from_layers()
+        
         # Update display
-            self._force_tkinter_canvas_update()
+        self._force_tkinter_canvas_update()
         
         print(f"[Custom Canvas Resize] Resized to {width}x{height}, preserved {preserve_width}x{preserve_height} pixels")
     
