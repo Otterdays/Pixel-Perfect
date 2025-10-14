@@ -1,5 +1,177 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.40 - Styled Canvas Downsize Warning Dialog
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Feature: Custom Styled Downsize Warning
+
+**Problem:**
+Canvas downsize warning used plain system `messagebox.askyesno()` dialog - inconsistent with app's modern CustomTkinter design.
+
+**Solution: Custom CTkToplevel Warning Dialog**
+
+**Implementation:**
+
+**1. New Method: `_show_downsize_warning()`**
+```python
+def _show_downsize_warning(self, old_width, old_height, new_width, new_height):
+    - Custom CTkToplevel dialog (500x280px)
+    - Centered on main window
+    - Modal (grab_set + wait_window)
+    - Returns boolean (True = Yes, False = No)
+```
+
+**2. Visual Design:**
+- ⚠️ **Large warning emoji** (48px) - Immediate visual alert
+- **Orange title** (#ff9800) - "DOWNSIZING WARNING" in bold 20px
+- **Size comparison** - Current size vs. New size clearly displayed
+- **Danger messaging** - "PERMANENTLY DELETE" with strong language
+- **Bold question** - "Continue with resize?" in white
+
+**3. Button Styling:**
+- **"No" button** (safe option):
+  - Grey fg_color: #4a4a4a
+  - Hover: #5a5a5a
+  - 140×40px, bold 14px font
+  - Positioned on right
+  
+- **"Yes" button** (destructive):
+  - Red fg_color: #d32f2f
+  - Hover: #b71c1c
+  - 140×40px, bold 14px font
+  - Positioned on right (next to No)
+
+**4. Replaced Both Occurrences:**
+- ✅ Preset canvas size change (line ~2123)
+- ✅ Custom canvas size change (line ~2185)
+- Removed old messagebox code and imports
+
+**5. Consistent Design:**
+Matches the "Clear All Slots" dialog style:
+- Same button sizing and colors
+- Same layout (icon left, title, message, buttons)
+- Same modal behavior
+- Professional CustomTkinter styling throughout
+
+**User Experience:**
+```
+User tries to downsize 32×32 → 16×16
+↓
+Beautiful custom dialog appears
+↓
+⚠️ DOWNSIZING WARNING (orange title)
+Current size: 32x32
+New size: 16x16
+This will PERMANENTLY DELETE pixels outside the 16x16 region!
+Lost pixels CANNOT be recovered!
+Continue with resize?
+[Yes - Red] [No - Grey]
+↓
+User clicks No → Safe, size restored
+User clicks Yes → Resize proceeds
+```
+
+**Benefits:**
+- ✅ **Consistent UI** - Matches app design language
+- ✅ **Clear Warning** - Danger is obvious with colors/emoji
+- ✅ **Professional Look** - Modern dialog instead of system popup
+- ✅ **Better UX** - Sized appropriately, centered, readable
+- ✅ **Accessible** - Large text, clear messaging, obvious buttons
+
+**Files Modified:**
+- `src/ui/main_window.py`:
+  - Added `_show_downsize_warning()` method (100+ lines)
+  - Replaced 2 messagebox.askyesno() calls
+  - Removed unused messagebox imports
+
+**Technical Details:**
+- Dialog geometry: 500×280px (larger than Clear Slots for more text)
+- Centered: `x = root.x + (root.width/2) - (dialog.width/2)`
+- Modal: `transient()` + `grab_set()` + `wait_window()`
+- Result storage: `result = [False]` for closure access
+- Clean up: `dialog.destroy()` on button click
+
+---
+
+## Version 1.39 - MAX SETTINGS Documentation
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Feature: Comprehensive Settings Planning Document
+
+**Purpose:**
+Created exhaustive documentation of every possible setting opportunity for Pixel Perfect to guide future development.
+
+**What Was Created:**
+- **docs/MAX_SETTINGS.md** - 47-page comprehensive settings catalog
+- **127 total settings** organized into 14 categories
+- Complete impact ratings (1-5 stars)
+- Complexity assessments (Easy/Medium/Hard/Very Hard)
+- Implementation checklists for each setting
+- Status tracking system (🔴 Not Started / 🟡 In Progress / 🟢 Complete)
+- Priority matrix for implementation planning
+
+**Categories:**
+1. **Canvas Preferences** (15 settings) - Default sizes, zoom, backgrounds
+2. **Grid & Visual** (12 settings) - Grid colors, rulers, guides, snap
+3. **Tool Defaults** (18 settings) - Default tools, sizes, behaviors
+4. **Color & Palette** (16 settings) - Palettes, views, color management
+5. **Layer System** (10 settings) - Layer defaults, locking, blend modes
+6. **Animation** (11 settings) - FPS, frames, onion skinning
+7. **Performance & History** (9 settings) - Undo, auto-save, memory
+8. **Export & Import** (14 settings) - Formats, scales, templates
+9. **UI & UX** (15 settings) - Panels, tooltips, status bar
+10. **Theme & Appearance** (12 settings) - Themes, fonts, accessibility
+11. **File Management** (10 settings) - Locations, backups, cloud sync
+12. **Keyboard Shortcuts** (8 settings) - Custom hotkeys, profiles
+13. **Accessibility** (7 settings) - Screen readers, motion reduction
+14. **Advanced & Debug** (10 settings) - Debug mode, GPU, plugins
+
+**Priority Recommendations:**
+**High Impact + Easy (Do First):**
+- Default Canvas Size, Palette, Export Format
+- Auto-Save Interval, Undo History Size
+- Grid Color/Opacity
+- Tooltip Delay, Status Bar
+- Panel State Memory
+
+**High Impact + Medium (Do Next):**
+- Customizable Hotkeys
+- Major Grid Lines, Rulers
+- Layer Locking/Alpha Lock
+- Custom Theme Creation
+- Export Templates
+
+**High Impact + Hard (Long-term):**
+- Layer Blend Modes & Groups
+- Guides System
+- Onion Skinning
+- Plugin System
+- GPU Acceleration
+
+**Settings File Structure:**
+Defined JSON structure for storing all settings with sensible defaults.
+
+**Benefits:**
+- **Complete Vision** - Every setting possibility documented
+- **Smart Prioritization** - Impact vs. complexity matrix
+- **Implementation Tracking** - Checkboxes for each feature
+- **Team Coordination** - Clear roadmap for developers
+- **User Value** - Focus on highest-impact features first
+
+**Next Steps for Settings Implementation:**
+1. Create SettingsManager class (backend)
+2. Design tabbed settings dialog UI
+3. Implement high-priority settings first
+4. Add settings persistence (JSON file)
+5. Test with users and iterate
+
+**Files Modified:**
+- Created: `docs/MAX_SETTINGS.md` (new 47-page document)
+
+---
+
 ## Version 1.38 - Texture Tool with Live Preview
 **Date**: October 14, 2025
 **Status**: Complete ✅

@@ -1,10 +1,38 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.38  
-**Last Updated**: October 14, 2025 - Texture Tool with Live Preview
+**Version**: 1.40  
+**Last Updated**: October 14, 2025 - Styled Canvas Downsize Warning
 
-## Latest Updates (v1.38)
+## Latest Updates (v1.40)
+
+### ⚠️ Styled Canvas Downsize Warning Dialog
+**Beautiful custom warning for canvas resize operations**
+- ⚠️ **Large warning emoji** with orange title for visibility
+- **Clear size comparison** (Current vs. New dimensions)
+- **Danger messaging** - Strong language about permanent pixel loss
+- **Professional buttons** - Grey "No" (safe), Red "Yes" (destructive)
+- **Consistent design** - Matches "Clear All Slots" dialog style
+- **500×280px modal** - Centered, properly sized, accessible
+- Replaced both system messagebox dialogs with custom CTkToplevel
+
+---
+
+## Previous Updates (v1.39)
+
+### 📋 MAX SETTINGS Documentation
+**Comprehensive settings catalog for future development**
+- **127 total settings** across 14 categories
+- **Impact ratings** (1-5 stars) for each setting
+- **Complexity assessments** (Easy/Medium/Hard/Very Hard)
+- **Implementation checklists** with status tracking
+- **Priority matrix** for smart development planning
+- **Complete vision** for settings system
+- See `docs/MAX_SETTINGS.md` for full details
+
+---
+
+## Previous Updates (v1.38)
 
 ### 🌿 Texture Tool with Live Preview
 **Complete texture application system with grass 8x8 pattern**

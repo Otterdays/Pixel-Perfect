@@ -372,6 +372,7 @@ Pixel Perfect/
 - **[REQUIREMENTS](docs/REQUIREMENTS.md)** - Complete functional and non-functional requirements
 - **[ARCHITECTURE](docs/ARCHITECTURE.md)** - System design and technical architecture
 - **[CHANGELOG](docs/CHANGELOG.md)** - Version history and changes
+- **[MAX SETTINGS](docs/MAX_SETTINGS.md)** - Comprehensive settings catalog (127 settings planning document)
 - **[SBOM](docs/SBOM.md)** - Software Bill of Materials and security tracking
 - **[SCRATCHPAD](docs/SCRATCHPAD.md)** - Development notes and version history
 - **[Style Guide](docs/style_guide.md)** - UI design system and patterns

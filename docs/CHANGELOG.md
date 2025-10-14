@@ -1,5 +1,169 @@
 # Pixel Perfect - Changelog
 
+## Version 1.40 - Styled Canvas Downsize Warning Dialog (October 14, 2025) ✅
+
+### ⚠️ UI Enhancement: Custom Downsize Warning Dialog
+
+**Problem Solved:**
+- Old canvas downsize warning used plain system `messagebox.askyesno()` 
+- Inconsistent with app's modern CustomTkinter design
+- Generic look didn't match polished UI
+
+**New Custom Dialog Implementation:**
+
+**Visual Design** 🎨
+- ⚠️ **48px warning emoji** - Immediate visual alert
+- **Orange title** (#ff9800) - "DOWNSIZING WARNING" in bold 20px
+- **Size comparison display** - "Current size: 32x32" → "New size: 16x16"
+- **Strong danger messaging** - "PERMANENTLY DELETE" language
+- **Bold question** - "Continue with resize?" in white
+
+**Professional Button Styling** 🔘
+- **"No" Button** (Safe Option):
+  - Grey color (#4a4a4a, hover #5a5a5a)
+  - 140×40px with bold 14px font
+  - Right-side positioning
+  
+- **"Yes" Button** (Destructive Action):
+  - Red color (#d32f2f, hover #b71c1c)
+  - 140×40px with bold 14px font
+  - Next to "No" button
+
+**Technical Implementation:**
+- New `_show_downsize_warning()` method in MainWindow
+- Custom CTkToplevel dialog (500×280px)
+- Modal behavior: `transient()` + `grab_set()` + `wait_window()`
+- Centered on main window dynamically
+- Returns boolean result (True = Yes, False = No)
+
+**Code Changes:**
+- ✅ Added `_show_downsize_warning()` method (~100 lines)
+- ✅ Replaced preset canvas size warning (line ~2123)
+- ✅ Replaced custom canvas size warning (line ~2185)
+- ✅ Removed unused `messagebox` imports
+
+**Consistency with App Design:**
+- Matches "Clear All Slots" dialog styling
+- Same button dimensions and colors
+- Same layout pattern (icon left, title, message, buttons)
+- Same modal behavior
+- Professional CustomTkinter throughout
+
+**User Experience Flow:**
+```
+User: Tries to downsize 32×32 → 16×16
+↓
+System: Beautiful custom dialog appears centered
+↓
+Dialog: ⚠️ DOWNSIZING WARNING (orange, bold)
+        Current size: 32x32
+        New size: 16x16
+        This will PERMANENTLY DELETE pixels outside the 16x16 region!
+        Lost pixels CANNOT be recovered!
+        Continue with resize?
+        [Yes - Red] [No - Grey]
+↓
+User clicks "No" → Size safely restored, operation cancelled
+User clicks "Yes" → Resize proceeds with pixel loss
+```
+
+**Benefits:**
+- ✅ **Consistent UI** - Matches app's modern design language
+- ✅ **Clear Warning** - Danger obvious with orange + red colors
+- ✅ **Professional Look** - Custom dialog instead of system popup
+- ✅ **Better UX** - Properly sized, centered, highly readable
+- ✅ **Accessible** - Large text, clear messaging, obvious action buttons
+
+**Files Modified:**
+- `src/ui/main_window.py` - Dialog implementation
+
+**Documentation Updated:**
+- `docs/SCRATCHPAD.md` - v1.40 entry with full details
+- `docs/SUMMARY.md` - Updated to v1.40
+- `docs/CHANGELOG.md` - This entry
+
+---
+
+## Version 1.39 - MAX SETTINGS Documentation (October 14, 2025) ✅
+
+### 📋 Documentation: Comprehensive Settings Planning
+
+**MAX_SETTINGS.md Created** 📖
+- **47-page comprehensive catalog** of all possible settings
+- **127 total settings** organized into 14 categories
+- Complete planning document for future settings system implementation
+
+**Categories Documented:**
+1. **Canvas Preferences** (15 settings) - Default sizes, zoom, backgrounds, borders
+2. **Grid & Visual** (12 settings) - Grid colors, rulers, guides, snap-to-grid
+3. **Tool Defaults** (18 settings) - Default tools, brush sizes, tool behaviors
+4. **Color & Palette** (16 settings) - Palettes, views, color management, gradients
+5. **Layer System** (10 settings) - Layer defaults, locking, blend modes, groups
+6. **Animation** (11 settings) - FPS, frames, onion skinning, playback
+7. **Performance & History** (9 settings) - Undo, auto-save, memory, caching
+8. **Export & Import** (14 settings) - Formats, scales, templates, metadata
+9. **UI & UX** (15 settings) - Panels, tooltips, status bar, window behavior
+10. **Theme & Appearance** (12 settings) - Themes, fonts, colors, accessibility
+11. **File Management** (10 settings) - Locations, backups, cloud sync, portable mode
+12. **Keyboard Shortcuts** (8 settings) - Custom hotkeys, profiles, gestures
+13. **Accessibility** (7 settings) - Screen readers, motion reduction, audio feedback
+14. **Advanced & Debug** (10 settings) - Debug mode, GPU, plugins, scripting
+
+**Each Setting Includes:**
+- ⭐ **Impact Rating** (1-5 stars) - How valuable to users
+- 🔧 **Complexity Rating** (Easy/Medium/Hard/Very Hard) - Implementation difficulty
+- 📝 **Purpose** - Why this setting exists and who benefits
+- ☑️ **Status Tracking** (🔴 Not Started / 🟡 In Progress / 🟢 Complete)
+- ✅ **Implementation Checklist** - Specific tasks for each setting
+
+**Priority Matrix Defined:**
+- **15 High-Impact + Easy** settings identified for first implementation
+- **15 High-Impact + Medium** settings for second phase
+- **10 High-Impact + Hard** settings for long-term development
+- Smart prioritization for maximum user value with minimal effort
+
+**Top Priority Settings (Do First):**
+1. Default Canvas Size - Save clicks on every new project
+2. Auto-Save Interval - Critical data safety feature
+3. Undo History Size - Balance features vs. memory
+4. Grid Color/Opacity - High visibility impact
+5. Default Palette - Workflow efficiency
+6. Status Bar - Show cursor position, canvas info, memory
+7. Tooltip Delay - Accessibility improvement
+8. Panel State Memory - Remember collapsed/expanded panels
+9. Export Defaults - Streamline export workflow
+10. Confirm Destructive Actions - Prevent accidental data loss
+
+**Settings File Structure:**
+- Complete JSON schema defined with sensible defaults
+- Organized by category matching documentation
+- Ready for implementation
+
+**Benefits:**
+- ✅ **Complete Vision** - Every setting possibility cataloged
+- ✅ **Smart Planning** - Impact vs. complexity matrix guides development
+- ✅ **Implementation Tracking** - Checkboxes for project management
+- ✅ **Team Coordination** - Clear roadmap for developers
+- ✅ **User Value First** - Prioritize highest-impact features
+
+**Next Steps for Implementation:**
+1. Create SettingsManager class (backend data model)
+2. Design tabbed settings dialog UI (14 tabs, one per category)
+3. Implement high-priority settings first (15 easy + high-impact)
+4. Add settings persistence (JSON file in AppData)
+5. Test with real users and iterate
+
+**Files Created:**
+- `docs/MAX_SETTINGS.md` - Complete settings catalog
+
+**Documentation Updated:**
+- `docs/SCRATCHPAD.md` - Added v1.39 entry with full details
+- `docs/SUMMARY.md` - Updated to v1.39 with MAX_SETTINGS reference
+- `docs/DOC_ORGANIZATION.md` - Added MAX_SETTINGS to core documentation
+- `docs/CHANGELOG.md` - This entry
+
+---
+
 ## Version 1.38 - Texture Tool with Live Preview (October 14, 2025) ✅
 
 ### 🎨 Major Feature: Texture Application System

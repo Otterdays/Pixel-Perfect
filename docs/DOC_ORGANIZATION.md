@@ -19,7 +19,8 @@ Located in `docs/` - These are the primary reference documents:
 6. **SCRATCHPAD.md** - Development notes and version history
 7. **SUMMARY.md** - Feature summary and current status
 8. **SUGGESTIONS.md** - Feature suggestions and future enhancements
-9. **style_guide.md** - UI design system and patterns
+9. **MAX_SETTINGS.md** - Comprehensive settings catalog (127 settings across 14 categories)
+10. **style_guide.md** - UI design system and patterns
 
 ### Feature Documentation
 
@@ -57,6 +58,7 @@ Located in `docs/technical/` - Technical implementation notes:
 2. Check `SCRATCHPAD.md` for development history
 3. Review `CHANGELOG.md` for version changes
 4. Consult `SBOM.md` for dependencies
+5. See `MAX_SETTINGS.md` for settings implementation planning
 
 ### For Feature-Specific Information
 1. Browse `docs/features/` for detailed feature guides

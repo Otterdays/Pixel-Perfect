@@ -2070,8 +2070,6 @@ class MainWindow:
     
     def _on_size_change(self, size_str: str):
         """Handle canvas size change - WARNING: Downsizing clips pixels!"""
-        from tkinter import messagebox
-        
         # Handle custom size dialog
         if size_str == "Custom...":
             width, height = self._open_custom_size_dialog()
@@ -2119,26 +2117,8 @@ class MainWindow:
             
             if will_clip_width or will_clip_height:
                 # WARN USER: Pixels will be permanently lost!
-                clip_msg = f"⚠️ DOWNSIZING WARNING\n\n"
-                clip_msg += f"Current size: {old_width}x{old_height}\n"
-                clip_msg += f"New size: {new_width}x{new_height}\n\n"
-                
-                if will_clip_width and will_clip_height:
-                    clip_msg += f"This will PERMANENTLY DELETE pixels outside the {new_width}x{new_height} region!\n\n"
-                elif will_clip_width:
-                    clip_msg += f"This will PERMANENTLY DELETE pixels beyond column {new_width-1} (right side)!\n\n"
-                else:
-                    clip_msg += f"This will PERMANENTLY DELETE pixels beyond row {new_height-1} (bottom)!\n\n"
-                
-                clip_msg += "Lost pixels CANNOT be recovered!\n\n"
-                clip_msg += "Continue with resize?"
-                
-                # Show warning dialog
-                result = messagebox.askyesno(
-                    "Canvas Downsize Warning",
-                    clip_msg,
-                    icon='warning'
-                )
+                # Show custom styled warning dialog
+                result = self._show_downsize_warning(old_width, old_height, new_width, new_height)
                 
                 if not result:
                     # User cancelled - restore old size in dropdown
@@ -2187,8 +2167,6 @@ class MainWindow:
     
     def _apply_custom_canvas_size(self, width: int, height: int):
         """Apply custom canvas size with same safety checks as preset sizes"""
-        from tkinter import messagebox
-        
         # Store old dimensions
         old_width = self.canvas.width
         old_height = self.canvas.height
@@ -2199,26 +2177,8 @@ class MainWindow:
         
         if will_clip_width or will_clip_height:
             # WARN USER: Pixels will be permanently lost!
-            clip_msg = f"⚠️ DOWNSIZING WARNING\n\n"
-            clip_msg += f"Current size: {old_width}x{old_height}\n"
-            clip_msg += f"New size: {width}x{height}\n\n"
-            
-            if will_clip_width and will_clip_height:
-                clip_msg += f"This will PERMANENTLY DELETE pixels outside the {width}x{height} region!\n\n"
-            elif will_clip_width:
-                clip_msg += f"This will PERMANENTLY DELETE pixels beyond column {width-1} (right side)!\n\n"
-            else:
-                clip_msg += f"This will PERMANENTLY DELETE pixels beyond row {height-1} (bottom)!\n\n"
-            
-            clip_msg += "Lost pixels CANNOT be recovered!\n\n"
-            clip_msg += "Continue with resize?"
-            
-            # Show warning dialog
-            result = messagebox.askyesno(
-                "Canvas Downsize Warning",
-                clip_msg,
-                icon='warning'
-            )
+            # Show custom styled warning dialog
+            result = self._show_downsize_warning(old_width, old_height, width, height)
             
             if not result:
                 # User cancelled - restore previous size in dropdown
@@ -2594,6 +2554,114 @@ class MainWindow:
                 print(f"[IMPORT] Saved colors imported from: {filepath}")
             else:
                 print("[IMPORT] Failed to import saved colors")
+    
+    def _show_downsize_warning(self, old_width, old_height, new_width, new_height):
+        """Show custom styled downsize warning dialog"""
+        # Create custom warning dialog
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Canvas Downsize Warning")
+        dialog.geometry("500x280")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog on the main window
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (280 // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Icon and title frame
+        header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        header_frame.pack(pady=20, padx=20, fill="x")
+        
+        # Large warning icon (⚠️ emoji)
+        icon_label = ctk.CTkLabel(
+            header_frame,
+            text="⚠️",
+            font=ctk.CTkFont(size=48)
+        )
+        icon_label.pack(side="left", padx=(10, 20))
+        
+        # Title text
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="DOWNSIZING WARNING",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#ff9800"  # Orange warning color
+        )
+        title_label.pack(side="left", anchor="w")
+        
+        # Warning details
+        details_text = f"Current size: {old_width}x{old_height}\n"
+        details_text += f"New size: {new_width}x{new_height}\n\n"
+        details_text += f"This will PERMANENTLY DELETE pixels outside the {new_width}x{new_height} region!\n"
+        details_text += "Lost pixels CANNOT be recovered!"
+        
+        message_label = ctk.CTkLabel(
+            dialog,
+            text=details_text,
+            font=ctk.CTkFont(size=14),
+            text_color="#e0e0e0",
+            justify="left"
+        )
+        message_label.pack(pady=(0, 10), padx=20)
+        
+        # Continue question
+        question_label = ctk.CTkLabel(
+            dialog,
+            text="Continue with resize?",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ffffff"
+        )
+        question_label.pack(pady=(0, 20), padx=20)
+        
+        # Button frame
+        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        button_frame.pack(pady=(0, 20), padx=20, fill="x")
+        
+        # Result storage
+        result = [False]
+        
+        def on_yes():
+            result[0] = True
+            dialog.destroy()
+        
+        def on_no():
+            result[0] = False
+            dialog.destroy()
+        
+        # No button (safe option)
+        no_btn = ctk.CTkButton(
+            button_frame,
+            text="No",
+            width=140,
+            height=40,
+            fg_color="#4a4a4a",
+            hover_color="#5a5a5a",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_no
+        )
+        no_btn.pack(side="right", padx=5)
+        
+        # Yes button (destructive action)
+        yes_btn = ctk.CTkButton(
+            button_frame,
+            text="Yes",
+            width=140,
+            height=40,
+            fg_color="#d32f2f",
+            hover_color="#b71c1c",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=on_yes
+        )
+        yes_btn.pack(side="right", padx=5)
+        
+        # Wait for dialog to close
+        self.root.wait_window(dialog)
+        
+        # Return result
+        return result[0]
     
     def _clear_all_saved_colors(self):
         """Clear all saved color slots with confirmation"""
