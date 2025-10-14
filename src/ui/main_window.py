@@ -1476,15 +1476,14 @@ class MainWindow:
             self.scale_btn.configure(fg_color="gray")
             print("[INFO] Exited scaling mode")
         
-        # If switching away from selection/move tools while in Constants view, switch to Grid
+        # Clear selection when switching away from selection/move tools
         if (self.current_tool in ["selection", "move"] and 
-            tool_id not in ["selection", "move"] and 
-            hasattr(self, 'view_mode_var') and 
-            self.view_mode_var.get() == "constants"):
-            # Switch back to grid view
-            self.view_mode_var.set("grid")
-            self._show_view("grid")
-            print("[INFO] Switched from Constants to Grid view after selection")
+            tool_id not in ["selection", "move"]):
+            selection_tool = self.tools.get("selection")
+            if selection_tool and selection_tool.has_selection:
+                selection_tool.clear_selection()
+                self._update_pixel_display()
+                print("[INFO] Selection cleared - switched to different tool")
         
         self.current_tool = tool_id
         self._update_tool_selection()
@@ -3687,6 +3686,19 @@ class MainWindow:
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
             # Get current tool
             tool = self.tools[self.current_tool]
+            
+            # Clear selection when clicking with non-selection tools
+            if self.current_tool not in ["selection", "move"]:
+                selection_tool = self.tools.get("selection")
+                if selection_tool and selection_tool.has_selection:
+                    # Check if clicking outside the selection area
+                    if selection_tool.selection_rect:
+                        left, top, width, height = selection_tool.selection_rect
+                        # If clicking outside selection bounds, clear it
+                        if not (left <= canvas_x < left + width and top <= canvas_y < top + height):
+                            selection_tool.clear_selection()
+                            self._update_pixel_display()
+                            print("[INFO] Selection cleared - clicked outside selection area")
             
             # Special handling for eyedropper tool
             if self.current_tool == "eyedropper":
