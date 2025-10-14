@@ -1889,6 +1889,10 @@ class MainWindow:
         # Update the color grid to show new selection
         if hasattr(self, 'color_frame'):
             self._update_color_grid_selection()
+        
+        # Auto-switch to brush tool for immediate painting
+        if self.current_tool != "brush":
+            self._select_tool("brush")
     
     def _update_color_grid_selection(self):
         """Update color grid selection without recreating the grid"""
