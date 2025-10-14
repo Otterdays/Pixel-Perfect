@@ -377,6 +377,10 @@ class MainWindow:
         self.settings_button.pack(side="right", padx=5)
         create_tooltip(self.settings_button, "Settings (Coming Soon)", delay=500)
         
+        # Pre-create settings dialog for instant display (create once, show/hide)
+        self.settings_dialog = None
+        self._create_settings_dialog()
+        
         # Grid toggle
         self.grid_button = ctk.CTkButton(self.toolbar, text="Grid", width=60)
         self.grid_button.pack(side="right", padx=5)
@@ -3108,20 +3112,13 @@ class MainWindow:
         self.theme_manager.set_theme(theme_name)
         print(f"[OK] Theme changed to: {theme_name}")
     
-    def _show_settings_dialog(self):
-        """Show settings dialog (placeholder for future settings system)"""
+    def _create_settings_dialog(self):
+        """Create settings dialog once at startup (OPTIMIZED - pre-render for instant display)"""
         dialog = ctk.CTkToplevel(self.root)
         dialog.title("Settings")
         dialog.geometry("500x350")
         dialog.resizable(False, False)
         dialog.transient(self.root)
-        dialog.grab_set()
-        
-        # Center dialog
-        dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (350 // 2)
-        dialog.geometry(f"+{x}+{y}")
         
         # Header frame with gear icon
         header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
@@ -3185,9 +3182,36 @@ class MainWindow:
             fg_color="#1a73e8",
             hover_color="#1557b0",
             font=ctk.CTkFont(size=14, weight="bold"),
-            command=dialog.destroy
+            command=self._hide_settings_dialog
         )
         close_btn.pack()
+        
+        # Store dialog reference
+        self.settings_dialog = dialog
+        
+        # Hide dialog initially (withdraw instead of destroy)
+        dialog.withdraw()
+    
+    def _show_settings_dialog(self):
+        """Show pre-created settings dialog instantly (INSTANT - no widget creation)"""
+        if self.settings_dialog:
+            # Center dialog on screen
+            self.settings_dialog.update_idletasks()
+            x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
+            y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (350 // 2)
+            self.settings_dialog.geometry(f"+{x}+{y}")
+            
+            # Show dialog instantly
+            self.settings_dialog.deiconify()
+            self.settings_dialog.grab_set()
+            self.settings_dialog.lift()
+            self.settings_dialog.focus_force()
+    
+    def _hide_settings_dialog(self):
+        """Hide settings dialog (withdraw for instant re-show)"""
+        if self.settings_dialog:
+            self.settings_dialog.grab_release()
+            self.settings_dialog.withdraw()
     
     def _apply_theme(self, theme):
         """Apply theme colors to all UI elements - optimized for instant switching"""
