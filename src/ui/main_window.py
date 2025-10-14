@@ -2511,7 +2511,7 @@ class MainWindow:
         saved_color = self.saved_colors.get_color(slot_index)
         if saved_color:
             # Set as primary color
-            self.palette.set_primary_color_rgba(saved_color)
+            self.palette.set_primary_color_by_rgba(saved_color)
             self._update_pixel_display()
             print(f"[SAVED] Loaded color {saved_color} from slot {slot_index}")
     
@@ -2681,7 +2681,7 @@ class MainWindow:
             
             # Set the color on the existing color wheel
             if hasattr(self, 'color_wheel') and self.color_wheel:
-                self.color_wheel.set_color(rgb_color)
+                self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
     
     def _create_color_wheel(self):
         """Create color wheel view"""
