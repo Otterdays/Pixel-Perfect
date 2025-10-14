@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-**Mission Accomplished!** Reduced executable size from **330 MB to ~24-26 MB** (92-93% reduction) while maintaining full functionality.
+**Mission Accomplished!** Reduced executable size from **330 MB to ~25-27 MB** (92% reduction) while maintaining full functionality.
 
-**Latest Update (v1.31):** Further optimized from 29 MB to ~24-26 MB through bytecode optimization, symbol stripping, and stdlib exclusions.
+**Latest Update (v1.31):** Further optimized from 29 MB to ~25-27 MB through bytecode optimization and stdlib exclusions.
 
 ---
 
@@ -106,14 +106,14 @@ def _simple_scale(self, pixels: np.ndarray, zoom_factor: int) -> np.ndarray:
 **Effect:** Removes docstrings and `assert` statements from all Python bytecode.
 
 #### 1.5B. Debug Symbol Stripping (~1-2 MB savings)
-**Status:** ✅ Complete (v1.31)
+**Status:** ❌ Removed (Windows incompatibility)
 
 **Implementation:**
 ```batch
---strip
+--strip  # REMOVED - causes warnings on Windows system DLLs
 ```
 
-**Effect:** Removes debug symbols from compiled binaries.
+**Effect:** Would remove debug symbols, but on Windows it attempts to strip system DLLs which cannot be modified, causing numerous warnings without providing benefits.
 
 #### 1.5C. Stdlib Module Exclusions (~1-3 MB savings)
 **Status:** ✅ Complete (v1.31)
@@ -127,9 +127,11 @@ def _simple_scale(self, pixels: np.ndarray, zoom_factor: int) -> np.ndarray:
 - `bz2`, `lzma` - Compression libraries (not used)
 - `_ssl`, `ssl` - SSL/TLS support (not used)
 
-**Total Savings:** ~3-5 MB combined
+**Total Savings:** ~2-4 MB combined (bytecode optimization + stdlib exclusions)
 
 **Safety:** ✅ Verified - No functionality uses these modules
+
+**Note on --strip:** Removed due to Windows system DLL incompatibility. On Windows, PyInstaller attempts to strip system DLLs which cannot be modified, causing build warnings without size benefits.
 
 ---
 
@@ -141,7 +143,7 @@ def _simple_scale(self, pixels: np.ndarray, zoom_factor: int) -> np.ndarray:
 |---------|------|-----------|-------|
 | **Baseline (v1.29)** | 330 MB | - | With pygame + scipy |
 | **Optimized (v1.30)** | 29 MB | -301 MB (-91%) | Removed pygame/scipy |
-| **Maximum Optimization (v1.31)** | ~24-26 MB | -304-306 MB (-92-93%) | ✅ Current build |
+| **Maximum Optimization (v1.31)** | ~25-27 MB | -303-305 MB (-92%) | ✅ Current build |
 
 ### Build Configuration
 
@@ -152,7 +154,6 @@ python -m PyInstaller ^
   --onefile ^
   --windowed ^
   --optimize=2 ^
-  --strip ^
   --icon="%ICON_PATH%" ^
   --exclude-module=pygame ^
   --exclude-module=scipy ^
@@ -208,9 +209,10 @@ python -m PyInstaller ^
 - `--onefile`: Single executable (easier distribution)
 - `--windowed`: No console window (clean UX)
 - `--optimize=2`: Maximum bytecode optimization (removes docstrings, assertions)
-- `--strip`: Remove debug symbols from executable
 - `--exclude-module`: Block specific dependencies (pygame, scipy, 15+ stdlib modules)
 - `--hidden-import`: Ensure all project modules are included
+
+**Note:** `--strip` flag excluded due to Windows compatibility issues with system DLLs
 
 ---
 
@@ -410,13 +412,13 @@ After build optimization, verify:
 ## Version History
 
 ### v1.31 - Advanced Build Optimization (October 14, 2025)
-- **Size:** ~24-26 MB (from 29 MB)
-- **Changes:** Added --optimize=2, --strip, excluded 15+ unused stdlib modules
+- **Size:** ~25-27 MB (from 29 MB)
+- **Changes:** Added --optimize=2, excluded 15+ unused stdlib modules
 - **Optimizations:**
   - Bytecode optimization level 2 (removes docstrings, assertions)
-  - Debug symbol stripping
   - Excluded: tkinter.test, unittest, test, xml.etree, xml.dom, doctest, pdb, email, http, urllib, xmlrpc, pydoc, bz2, lzma, _ssl, ssl
   - Added src.core.saved_colors to hidden imports
+- **Note:** --strip flag removed due to Windows system DLL incompatibility warnings
 - **Status:** ✅ Production Ready - Maximum Optimization
 
 ### v1.30 - Build Size Optimization (October 2025)
@@ -496,7 +498,7 @@ At 29 MB, we're in the **sweet spot:**
 **Testing & Validation:** User (Ry)  
 **Project:** Pixel Perfect v1.31  
 **Date:** October 14, 2025  
-**Achievement:** 92-93% size reduction (330 MB → ~24-26 MB) while maintaining 100% functionality
+**Achievement:** 92% size reduction (330 MB → ~25-27 MB) while maintaining 100% functionality
 
 ---
 

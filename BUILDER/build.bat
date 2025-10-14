@@ -2,8 +2,8 @@
 REM ===================================================
 REM Pixel Perfect - Build Script (OPTIMIZED)
 REM Creates standalone Windows executable
-REM Optimizations: bytecode, stripping, stdlib exclusions
-REM Target: <25 MB (from 29 MB baseline)
+REM Optimizations: bytecode optimization, stdlib exclusions
+REM Target: ~25-27 MB (from 29 MB baseline, 330 MB original)
 REM ===================================================
 
 echo.
@@ -97,8 +97,8 @@ echo Finished: %END_TIME%
 echo.
 echo Optimizations Applied:
 echo  - Bytecode optimization (--optimize=2)
-echo  - Debug symbol stripping (--strip)
 echo  - Excluded 15+ unused stdlib modules
+echo  - Removed pygame and scipy dependencies
 echo.
 echo Temporary files cleaned up automatically.
 echo You can now distribute the contents of release\PixelPerfect\

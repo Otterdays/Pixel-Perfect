@@ -1046,6 +1046,9 @@ class MainWindow:
         # Bind focus events to ensure selection redraws when window gains focus
         self.root.bind("<FocusIn>", self._on_focus_in)
         self.drawing_canvas.bind("<FocusIn>", self._on_focus_in)
+        # Also bind to visibility events for when window is restored/unminimized
+        self.root.bind("<Map>", self._on_focus_in)
+        self.drawing_canvas.bind("<Visibility>", self._on_focus_in)
         
         # Set initial cursor (brush tool is default)
         self.drawing_canvas.configure(cursor=self.tools[self.current_tool].cursor)
@@ -1335,9 +1338,12 @@ class MainWindow:
         """Handle focus in event - redraw canvas to show selection"""
         # Redraw canvas when window gains focus to ensure selection is visible
         if hasattr(self, 'drawing_canvas') and hasattr(self, 'canvas'):
-            # Schedule redraw to ensure window is fully restored
-            self.root.after(10, self._update_pixel_display)
-            print("[FOCUS] Window regained focus - redrawing selection")
+            # Force immediate update
+            self._update_pixel_display()
+            # Schedule another update after delay for visibility events
+            self.root.after(50, self._update_pixel_display)
+            self.root.after(150, self._update_pixel_display)
+            print(f"[FOCUS] Window event: {event.type} - redrawing selection")
     
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""
@@ -1488,9 +1494,17 @@ class MainWindow:
             self.scale_btn.configure(fg_color="gray")
             print("[INFO] Exited scaling mode")
         
-        # Clear selection when switching away from selection/move tools
+        # Finalize move and clear selection when switching away from selection/move tools
         if (self.current_tool in ["selection", "move"] and 
             tool_id not in ["selection", "move"]):
+            # Finalize any pending move operation first
+            move_tool = self.tools.get("move")
+            if move_tool and hasattr(move_tool, 'finalize_move'):
+                draw_layer = self._get_drawing_layer()
+                if draw_layer:
+                    move_tool.finalize_move(draw_layer)
+                    print("[INFO] Finalized move operation before tool switch")
+            
             selection_tool = self.tools.get("selection")
             if selection_tool and selection_tool.has_selection:
                 selection_tool.clear_selection()
