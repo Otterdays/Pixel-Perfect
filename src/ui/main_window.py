@@ -4471,7 +4471,7 @@ class MainWindow:
                     screen_y = y_offset + (py * self.canvas.zoom)
                     
                     # Draw semi-transparent preview with current color
-                    r, g, b, a = self.palette.get_current_color()
+                    r, g, b, a = self.palette.get_primary_color()
                     color_hex = f"#{r:02x}{g:02x}{b:02x}"
                     
                     self.drawing_canvas.create_rectangle(
