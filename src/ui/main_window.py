@@ -139,6 +139,9 @@ class MainWindow:
         self.brush_size = 1
         self.brush_drawing = False
         
+        # Eraser size (1x1, 2x2, 3x3)
+        self.eraser_size = 1
+        
         # Connect selection and move tools
         self.tools["move"].set_selection_tool(self.tools["selection"])
         
@@ -439,7 +442,7 @@ class MainWindow:
         self.tool_buttons = {}
         tools = [
             ("brush", "Brush", "Draw pixels (B) | Right-click for size"),
-            ("eraser", "Eraser", "Erase pixels (E)"),
+            ("eraser", "Eraser", "Erase pixels (E) | Right-click for size"),
             ("fill", "Fill", "Fill areas with color (F)"),
             ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
             ("selection", "Select", "Select rectangular areas (S)"),
@@ -469,11 +472,18 @@ class MainWindow:
             if tool_id == "brush":
                 btn.bind("<Button-3>", self._show_brush_size_menu)
             
+            # Add right-click menu for eraser size
+            if tool_id == "eraser":
+                btn.bind("<Button-3>", self._show_eraser_size_menu)
+            
             # Add tooltip
             create_tooltip(btn, tooltip_text, delay=1000)
         
         # Update brush button text to show size
         self._update_brush_button_text()
+        
+        # Update eraser button text to show size
+        self._update_eraser_button_text()
         
         # Texture button (special - opens panel, not a drawing tool)
         texture_btn = ctk.CTkButton(
@@ -1487,6 +1497,65 @@ class MainWindow:
                 # Check bounds
                 if 0 <= px < layer.width and 0 <= py < layer.height:
                     layer.set_pixel(px, py, color)
+    
+    def _show_eraser_size_menu(self, event):
+        """Show eraser size selection popup menu"""
+        # Create popup menu
+        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white", 
+                      activebackground="#1a73e8", activeforeground="white",
+                      relief=tk.FLAT, borderwidth=0)
+        
+        # Eraser sizes
+        sizes = [
+            (1, "1×1 (Single Pixel)"),
+            (2, "2×2 (Small)"),
+            (3, "3×3 (Medium)")
+        ]
+        
+        for size, label in sizes:
+            # Add checkmark for current size
+            display_label = f"✓ {label}" if size == self.eraser_size else f"   {label}"
+            menu.add_command(
+                label=display_label,
+                command=lambda s=size: self._set_eraser_size(s),
+                font=("Segoe UI", 10)
+            )
+        
+        # Show menu at mouse position
+        try:
+            menu.post(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+    
+    def _set_eraser_size(self, size: int):
+        """Set eraser size"""
+        self.eraser_size = size
+        self._update_eraser_button_text()
+        
+        # Auto-select eraser tool
+        if self.current_tool != "eraser":
+            self._select_tool("eraser")
+    
+    def _update_eraser_button_text(self):
+        """Update eraser button to show current size"""
+        if "eraser" in self.tool_buttons:
+            size_text = f"{self.eraser_size}x{self.eraser_size}"
+            self.tool_buttons["eraser"].configure(text=f"Eraser [{size_text}]")
+    
+    def _erase_at(self, layer, x: int, y: int):
+        """Erase at position with current size"""
+        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
+        offset = self.eraser_size // 2
+        
+        # Erase NxN square (set to transparent)
+        for dy in range(self.eraser_size):
+            for dx in range(self.eraser_size):
+                px = x - offset + dx
+                py = y - offset + dy
+                
+                # Check bounds
+                if 0 <= px < layer.width and 0 <= py < layer.height:
+                    layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
     
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
@@ -3922,6 +3991,9 @@ class MainWindow:
                 # Special handling for brush tool with size
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
+                # Special handling for eraser tool with size
+                elif self.current_tool == "eraser":
+                    self._erase_at(draw_layer, canvas_x, canvas_y)
                 else:
                     tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
                 
@@ -3933,8 +4005,8 @@ class MainWindow:
                 # Update canvas to show all visible layers
                 self._update_canvas_from_layers()
                 
-                # Update only the pixel that was drawn (or brush area)
-                if self.current_tool == "brush":
+                # Update only the pixel that was drawn (or brush/eraser area)
+                if self.current_tool == "brush" or self.current_tool == "eraser":
                     self._update_pixel_display()
                 else:
                     self._update_single_pixel(canvas_x, canvas_y, old_color)
@@ -4133,6 +4205,9 @@ class MainWindow:
                 # Special handling for brush tool with size
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
+                # Special handling for eraser tool with size
+                elif self.current_tool == "eraser":
+                    self._erase_at(draw_layer, canvas_x, canvas_y)
                 else:
                     tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
                 
@@ -4145,7 +4220,7 @@ class MainWindow:
                 self._update_canvas_from_layers()
 
                 # Only update the specific pixel that changed for better performance
-                if self.current_tool == "brush":
+                if self.current_tool == "brush" or self.current_tool == "eraser":
                     self._update_pixel_display()
                 else:
                     self._update_single_pixel(canvas_x, canvas_y, old_color)

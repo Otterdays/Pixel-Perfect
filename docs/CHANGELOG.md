@@ -1,5 +1,110 @@
 # Pixel Perfect - Changelog
 
+## Version 1.41 - Multi-Size Eraser Tool (October 14, 2025) ✅
+
+### 🧹 Feature: Multi-Size Eraser (1x1, 2x2, 3x3)
+
+**Problem Solved:**
+- Eraser tool only erased single pixels
+- Slow to clean up large areas
+- Inconsistent with brush tool which had multi-size support
+
+**New Multi-Size Eraser Implementation:**
+
+**Three Eraser Sizes** 📏
+- **1×1 (Single Pixel)** - Precise cleanup and detail work
+- **2×2 (Small)** - Faster erasing for small areas
+- **3×3 (Medium)** - Quick cleanup of large regions
+
+**User Interface** 🎨
+- **Right-click menu** - Right-click eraser button to select size
+- **Visual size indicator** - Button displays `Eraser [1x1]`, `Eraser [2x2]`, `Eraser [3x3]`
+- **Checkmark display** - Current size marked with ✓ in popup menu
+- **Dark theme styling** - Menu background #2d2d2d with blue highlight #1a73e8
+- **Updated tooltip** - "Erase pixels (E) | Right-click for size"
+- **Auto-select tool** - Changing size automatically switches to eraser
+
+**Technical Implementation:**
+```python
+# New eraser size variable
+self.eraser_size = 1  # Default 1x1
+
+# New methods implemented
+_show_eraser_size_menu(event)  # Right-click popup menu
+_set_eraser_size(size)         # Set size and update button
+_update_eraser_button_text()   # Display "Eraser [2x2]"
+_erase_at(layer, x, y)         # Erase NxN square centered
+
+# Centered erasing logic
+offset = self.eraser_size // 2
+for dy in range(self.eraser_size):
+    for dx in range(self.eraser_size):
+        px = x - offset + dx
+        py = y - offset + dy
+        if bounds_check:
+            layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
+```
+
+**Mouse Event Integration:**
+- Special handling in mouse down: `if self.current_tool == "eraser": self._erase_at()`
+- Special handling in mouse drag for continuous erasing
+- Updates entire erased area, not just single pixel
+- Full bounds checking to prevent overflow
+
+**Code Changes:**
+- ✅ Added `self.eraser_size = 1` variable
+- ✅ Added 4 new eraser methods (~65 lines)
+- ✅ Updated mouse event handlers (2 locations)
+- ✅ Added right-click binding for eraser button
+- ✅ Updated tooltip text
+- ✅ Initialize button text on startup
+
+**Consistency with Brush Tool:**
+- Identical menu styling
+- Same size options (1×1, 2×2, 3×3)
+- Same button text format
+- Same auto-select behavior
+- Same keyboard shortcut hint pattern
+- Same centering logic
+
+**User Workflow:**
+```
+1. User right-clicks "Eraser" button
+   ↓
+2. Popup menu appears with three sizes
+   ✓ 1×1 (Single Pixel)
+     2×2 (Small)
+     3×3 (Medium)
+   ↓
+3. User selects "3×3 (Medium)"
+   ↓
+4. Button updates: "Eraser [3x3]"
+   Eraser tool automatically selected
+   ↓
+5. User clicks or drags on canvas
+   ↓
+6. Erases 3×3 square centered on cursor!
+```
+
+**Benefits:**
+- ✅ **Faster Cleanup** - Erase large areas 9× faster with 3×3 size
+- ✅ **Consistent UX** - Matches brush tool exactly
+- ✅ **Flexible** - Switch between precision and speed
+- ✅ **Professional** - Same quality as brush implementation
+- ✅ **Centered Erasing** - NxN squares perfectly centered
+- ✅ **Safe Bounds** - No overflow errors with checking
+- ✅ **Full Undo/Redo** - Inherited from layer system
+
+**Files Modified:**
+- `src/ui/main_window.py` - Eraser multi-size implementation
+
+**Documentation Updated:**
+- `docs/SCRATCHPAD.md` - v1.41 entry with full technical details
+- `docs/SUMMARY.md` - Updated to v1.41
+- `docs/CHANGELOG.md` - This entry
+
+---
+
 ## Version 1.40 - Styled Canvas Downsize Warning Dialog (October 14, 2025) ✅
 
 ### ⚠️ UI Enhancement: Custom Downsize Warning Dialog

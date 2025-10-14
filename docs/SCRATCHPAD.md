@@ -1,5 +1,113 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.41 - Multi-Size Eraser Tool
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Feature: Multi-Size Eraser (1x1, 2x2, 3x3)
+
+**Problem:**
+Eraser tool only erased single pixels, making it slow to clean up larger areas. Brush tool had multi-size support but eraser didn't.
+
+**Solution: Multi-Size Eraser Matching Brush System**
+
+**Implementation:**
+
+**1. Added Eraser Size Variable:**
+```python
+self.eraser_size = 1  # Default 1x1
+```
+
+**2. Created Eraser Size Menu:**
+- Right-click eraser button opens popup menu
+- 3 sizes: 1×1 (Single Pixel), 2×2 (Small), 3×3 (Medium)
+- Checkmark (✓) shows current size
+- Dark theme (#2d2d2d) with blue highlight (#1a73e8)
+- Matches brush menu styling exactly
+
+**3. Methods Implemented:**
+```python
+_show_eraser_size_menu(event)  # Show right-click popup
+_set_eraser_size(size)         # Set size and update button
+_update_eraser_button_text()   # Update button to show "Eraser [2x2]"
+_erase_at(layer, x, y)         # Erase NxN square centered
+```
+
+**4. Button Text Display:**
+- Shows size like brush: `Eraser [1x1]`, `Eraser [2x2]`, `Eraser [3x3]`
+- Updates on size change
+- Initialized on startup
+
+**5. Mouse Event Integration:**
+- Special handling in `_on_tkinter_canvas_mouse_down()`
+- Special handling in mouse drag via button press handler
+- Calls `_erase_at()` instead of `tool.on_mouse_down()`
+- Updates entire erased area, not just single pixel
+
+**6. Eraser Logic:**
+```python
+def _erase_at(self, layer, x: int, y: int):
+    offset = self.eraser_size // 2  # Center the square
+    
+    for dy in range(self.eraser_size):
+        for dx in range(self.eraser_size):
+            px = x - offset + dx
+            py = y - offset + dy
+            
+            if 0 <= px < layer.width and 0 <= py < layer.height:
+                layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
+```
+
+**7. UI Updates:**
+- Right-click binding: `btn.bind("<Button-3>", self._show_eraser_size_menu)`
+- Updated tooltip: "Erase pixels (E) | Right-click for size"
+- Auto-select eraser when changing size (like brush)
+
+**User Experience:**
+```
+User: Right-clicks Eraser button
+↓
+Popup menu appears:
+  ✓ 1×1 (Single Pixel)
+    2×2 (Small)
+    3×3 (Medium)
+↓
+User: Selects 3×3
+↓
+Button updates: "Eraser [3x3]"
+Tool auto-selected
+↓
+User: Clicks/drags on canvas
+↓
+Erases 3×3 square centered on cursor!
+```
+
+**Benefits:**
+- ✅ **Faster Cleanup** - Erase large areas quickly with 2×2/3×3
+- ✅ **Consistent UX** - Matches brush multi-size system exactly
+- ✅ **Flexible** - Switch between sizes for detail vs. broad work
+- ✅ **Professional** - Same quality implementation as brush
+- ✅ **Centered Erasing** - NxN squares centered on click point
+- ✅ **Bounds Checking** - No overflow errors
+
+**Files Modified:**
+- `src/ui/main_window.py`:
+  - Added `self.eraser_size = 1`
+  - Added 4 eraser methods (~65 lines)
+  - Updated mouse event handlers (2 locations)
+  - Updated tooltip text
+  - Added right-click binding
+
+**Technical Details:**
+- Eraser sizes: 1×1, 2×2, 3×3
+- Centering offset: `self.eraser_size // 2`
+- Transparent pixel: `(0, 0, 0, 0)`
+- Menu styling: Dark theme matching brush
+- Auto-select on size change
+- Full undo/redo support (inherited from layer system)
+
+---
+
 ## Version 1.40 - Styled Canvas Downsize Warning Dialog
 **Date**: October 14, 2025
 **Status**: Complete ✅

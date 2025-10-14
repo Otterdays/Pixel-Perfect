@@ -1,10 +1,26 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.40  
-**Last Updated**: October 14, 2025 - Styled Canvas Downsize Warning
+**Version**: 1.41  
+**Last Updated**: October 14, 2025 - Multi-Size Eraser Tool
 
-## Latest Updates (v1.40)
+## Latest Updates (v1.41)
+
+### 🧹 Multi-Size Eraser Tool (1x1, 2x2, 3x3)
+**Eraser tool now matches brush with multiple sizes**
+- **3 eraser sizes**: 1×1 (single pixel), 2×2 (small), 3×3 (medium)
+- **Right-click menu** - Click eraser button with right mouse to select size
+- **Visual size indicator** - Button shows `Eraser [2x2]` like brush
+- **Checkmark display** - Selected size marked with ✓ in menu
+- **Dark theme menu** - Matches brush styling (#2d2d2d with blue highlight)
+- **Auto-select tool** - Selecting size switches to eraser automatically
+- **Centered erasing** - NxN squares centered on cursor position
+- **Fast cleanup** - Erase large areas quickly with 2×2/3×3 sizes
+- Full undo/redo support
+
+---
+
+## Previous Updates (v1.40)
 
 ### ⚠️ Styled Canvas Downsize Warning Dialog
 **Beautiful custom warning for canvas resize operations**
