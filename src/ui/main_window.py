@@ -1559,6 +1559,11 @@ class MainWindow:
     
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
+        # Clear any tool previews when changing tools
+        self.drawing_canvas.delete("brush_preview")
+        self.drawing_canvas.delete("eraser_preview")
+        self.drawing_canvas.delete("texture_preview")
+        
         # Exit scaling mode if active
         if self.is_scaling:
             self.is_scaling = False
@@ -3892,6 +3897,11 @@ class MainWindow:
     
     def _on_tkinter_canvas_mouse_down(self, event):
         """Handle mouse down on tkinter canvas"""
+        # Clear any tool previews when starting to draw
+        self.drawing_canvas.delete("brush_preview")
+        self.drawing_canvas.delete("eraser_preview")
+        self.drawing_canvas.delete("texture_preview")
+        
         # Handle pan tool start (use raw screen coords, not canvas coords!)
         if self.current_tool == "pan":
             tool = self.tools["pan"]
@@ -4299,6 +4309,14 @@ class MainWindow:
             if self.current_tool == "texture":
                 self._draw_texture_preview(tool, canvas_x, canvas_y)
             
+            # LIVE PREVIEW for brush tool (hover)
+            elif self.current_tool == "brush":
+                self._draw_brush_preview(canvas_x, canvas_y)
+            
+            # LIVE PREVIEW for eraser tool (hover)
+            elif self.current_tool == "eraser":
+                self._draw_eraser_preview(canvas_x, canvas_y)
+            
             # Redraw if moving selection to show preview
             move_tool = self.tools.get("move")
             if move_tool and move_tool.is_moving:
@@ -4424,6 +4442,103 @@ class MainWindow:
         canvas_coord_y -= self.pan_offset_y
 
         return canvas_coord_x, canvas_coord_y
+    
+    def _draw_brush_preview(self, canvas_x: int, canvas_y: int):
+        """Draw live preview of brush tool on tkinter canvas"""
+        # Clear any existing preview
+        self.drawing_canvas.delete("brush_preview")
+        
+        # Get canvas dimensions and offsets
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
+        
+        # Calculate offset for centering (like _draw_brush_at)
+        offset = self.brush_size // 2
+        
+        # Draw preview for each pixel in the brush
+        for dy in range(self.brush_size):
+            for dx in range(self.brush_size):
+                px = canvas_x - offset + dx
+                py = canvas_y - offset + dy
+                
+                # Check bounds
+                if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
+                    screen_x = x_offset + (px * self.canvas.zoom)
+                    screen_y = y_offset + (py * self.canvas.zoom)
+                    
+                    # Draw semi-transparent preview with current color
+                    r, g, b, a = self.palette.get_current_color()
+                    color_hex = f"#{r:02x}{g:02x}{b:02x}"
+                    
+                    self.drawing_canvas.create_rectangle(
+                        screen_x, screen_y,
+                        screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
+                        fill=color_hex, outline=color_hex, stipple="gray50",
+                        tags="brush_preview"
+                    )
+        
+        # Draw outline around brush area
+        screen_x1 = x_offset + ((canvas_x - offset) * self.canvas.zoom)
+        screen_y1 = y_offset + ((canvas_y - offset) * self.canvas.zoom)
+        screen_x2 = x_offset + ((canvas_x - offset + self.brush_size) * self.canvas.zoom)
+        screen_y2 = y_offset + ((canvas_y - offset + self.brush_size) * self.canvas.zoom)
+        
+        self.drawing_canvas.create_rectangle(
+            screen_x1, screen_y1, screen_x2, screen_y2,
+            outline="#ffffff", width=2, dash=(4, 4),
+            tags="brush_preview"
+        )
+    
+    def _draw_eraser_preview(self, canvas_x: int, canvas_y: int):
+        """Draw live preview of eraser tool on tkinter canvas"""
+        # Clear any existing preview
+        self.drawing_canvas.delete("eraser_preview")
+        
+        # Get canvas dimensions and offsets
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
+        
+        # Calculate offset for centering (like _erase_at)
+        offset = self.eraser_size // 2
+        
+        # Draw preview for each pixel in the eraser (show as red X pattern)
+        for dy in range(self.eraser_size):
+            for dx in range(self.eraser_size):
+                px = canvas_x - offset + dx
+                py = canvas_y - offset + dy
+                
+                # Check bounds
+                if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
+                    screen_x = x_offset + (px * self.canvas.zoom)
+                    screen_y = y_offset + (py * self.canvas.zoom)
+                    
+                    # Draw semi-transparent red square to indicate erasing
+                    self.drawing_canvas.create_rectangle(
+                        screen_x, screen_y,
+                        screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
+                        fill="#ff0000", outline="#ff0000", stipple="gray50",
+                        tags="eraser_preview"
+                    )
+        
+        # Draw outline around eraser area
+        screen_x1 = x_offset + ((canvas_x - offset) * self.canvas.zoom)
+        screen_y1 = y_offset + ((canvas_y - offset) * self.canvas.zoom)
+        screen_x2 = x_offset + ((canvas_x - offset + self.eraser_size) * self.canvas.zoom)
+        screen_y2 = y_offset + ((canvas_y - offset + self.eraser_size) * self.canvas.zoom)
+        
+        self.drawing_canvas.create_rectangle(
+            screen_x1, screen_y1, screen_x2, screen_y2,
+            outline="#ff0000", width=2, dash=(4, 4),
+            tags="eraser_preview"
+        )
     
     def _draw_texture_preview(self, tool, canvas_x: int, canvas_y: int):
         """Draw live preview of texture tool on tkinter canvas"""

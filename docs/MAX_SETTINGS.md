@@ -20,9 +20,9 @@ This document catalogs **EVERY POSSIBLE SETTING** that could be implemented in P
 ## 📊 Settings Summary Dashboard
 
 **Total Settings Identified**: 127  
-**Implemented**: 0 🟢  
+**Implemented**: 1 🟢 (Tool Cursor Preview - Brush & Eraser)  
 **In Progress**: 0 🟡  
-**Not Started**: 127 🔴  
+**Not Started**: 126 🔴  
 
 **By Category**:
 - Canvas Preferences: 15 settings
@@ -521,14 +521,19 @@ This document catalogs **EVERY POSSIBLE SETTING** that could be implemented in P
 ### 3.16 Tool Cursor Preview
 - **Impact**: ⭐⭐⭐⭐ (High - UX)
 - **Complexity**: Medium
-- **Purpose**: Show tool shape/size under cursor (partially implemented)
-- **Status**: 🟡 In Progress (basic cursors exist)
+- **Purpose**: Show tool shape/size under cursor with live preview
+- **Status**: 🟢 Complete (v1.41 - Brush & Eraser implemented)
 - **Implementation Checklist**:
-  - [ ] Add `show_tool_cursor` boolean
-  - [ ] Add `cursor_style` (Circle, Square, Custom per tool)
-  - [ ] Add `cursor_opacity` setting
-  - [ ] Implement for all tools
-  - [ ] Show size for brush/eraser
+  - [x] Brush live preview - Semi-transparent color preview with current color (v1.41)
+  - [x] Eraser live preview - Red semi-transparent preview showing erase area (v1.41)
+  - [x] Size preview - Shows NxN squares for multi-size tools (v1.41)
+  - [x] Dashed outline - White outline for brush, red for eraser (v1.41)
+  - [ ] Add `show_tool_preview` boolean setting to enable/disable
+  - [ ] Add `preview_opacity` setting (25%, 50%, 75%, 100%)
+  - [ ] Add `preview_style` (Semi-transparent, Outline Only, Crosshair)
+  - [ ] Preview color customization for eraser (currently red)
+  - [ ] Implement for other tools (line, shape, fill preview)
+  - [ ] Performance optimization for large brush sizes
 
 ### 3.17 Tool Switch Memory
 - **Impact**: ⭐⭐⭐ (Medium)
