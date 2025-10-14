@@ -98,7 +98,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ## ✅ Complete Feature Set
 
 ### 🎨 **Drawing Tools** (10 Complete Tools)
-- **Pixel Brush**: Precise single-pixel placement with mouse drag
+- **Pixel Brush**: Multi-size brush (1x1, 2x2, 3x3) with right-click menu - perfect for both detail work and broad strokes
 - **Eraser**: Clean pixel removal
 - **Fill Bucket**: Flood fill with customizable tolerance
 - **Eyedropper**: Color sampling from canvas (left-click primary, right-click secondary)

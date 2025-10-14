@@ -130,6 +130,10 @@ class MainWindow:
         }
         self.current_tool = "brush"
         
+        # Brush size (1x1, 2x2, 3x3)
+        self.brush_size = 1
+        self.brush_drawing = False
+        
         # Connect selection and move tools
         self.tools["move"].set_selection_tool(self.tools["selection"])
         
@@ -429,7 +433,7 @@ class MainWindow:
         # Tool buttons in 3x3 grid for compact layout
         self.tool_buttons = {}
         tools = [
-            ("brush", "Brush", "Draw single pixels (B)"),
+            ("brush", "Brush", "Draw pixels (B) | Right-click for size"),
             ("eraser", "Eraser", "Erase pixels (E)"),
             ("fill", "Fill", "Fill areas with color (F)"),
             ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
@@ -456,8 +460,15 @@ class MainWindow:
             btn.grid(row=row, column=col, padx=2, pady=2)
             self.tool_buttons[tool_id] = btn
             
+            # Add right-click menu for brush size
+            if tool_id == "brush":
+                btn.bind("<Button-3>", self._show_brush_size_menu)
+            
             # Add tooltip
             create_tooltip(btn, tooltip_text, delay=1000)
+        
+        # Update brush button text to show size
+        self._update_brush_button_text()
         
         # Texture button (special - opens panel, not a drawing tool)
         texture_btn = ctk.CTkButton(
@@ -1393,6 +1404,65 @@ class MainWindow:
             self._previous_frame()
         elif key == 'period':  # > key
             self._next_frame()
+    
+    def _show_brush_size_menu(self, event):
+        """Show brush size selection popup menu"""
+        # Create popup menu
+        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white", 
+                      activebackground="#1a73e8", activeforeground="white",
+                      relief=tk.FLAT, borderwidth=0)
+        
+        # Add size options with visual indicators
+        sizes = [
+            (1, "1x1 • Single Pixel"),
+            (2, "2x2 • Small Brush"),
+            (3, "3x3 • Medium Brush")
+        ]
+        
+        for size, label in sizes:
+            # Add checkmark for current size
+            display_label = f"✓ {label}" if size == self.brush_size else f"   {label}"
+            menu.add_command(
+                label=display_label,
+                command=lambda s=size: self._set_brush_size(s),
+                font=("Segoe UI", 10)
+            )
+        
+        # Show menu at mouse position
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+    
+    def _set_brush_size(self, size: int):
+        """Set brush size"""
+        self.brush_size = size
+        self._update_brush_button_text()
+        
+        # Auto-select brush tool
+        if self.current_tool != "brush":
+            self._select_tool("brush")
+    
+    def _update_brush_button_text(self):
+        """Update brush button to show current size"""
+        if "brush" in self.tool_buttons:
+            size_text = f"{self.brush_size}x{self.brush_size}"
+            self.tool_buttons["brush"].configure(text=f"Brush [{size_text}]")
+    
+    def _draw_brush_at(self, layer, x: int, y: int, color: tuple):
+        """Draw brush at position with current size"""
+        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
+        offset = self.brush_size // 2
+        
+        # Draw NxN square
+        for dy in range(self.brush_size):
+            for dx in range(self.brush_size):
+                px = x - offset + dx
+                py = y - offset + dy
+                
+                # Check bounds
+                if 0 <= px < layer.width and 0 <= py < layer.height:
+                    layer.set_pixel(px, py, color)
     
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
@@ -3625,7 +3695,11 @@ class MainWindow:
 
             # Apply the tool to the drawing layer
             if draw_layer:
-                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
+                # Special handling for brush tool with size
+                if self.current_tool == "brush":
+                    self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
+                else:
+                    tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -3635,8 +3709,11 @@ class MainWindow:
                 # Update canvas to show all visible layers
                 self._update_canvas_from_layers()
                 
-                # Update only the pixel that was drawn
-                self._update_single_pixel(canvas_x, canvas_y, old_color)
+                # Update only the pixel that was drawn (or brush area)
+                if self.current_tool == "brush":
+                    self._update_pixel_display()
+                else:
+                    self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
@@ -3820,7 +3897,11 @@ class MainWindow:
             # Apply tool to drawing layer
             draw_layer = self._get_drawing_layer()
             if draw_layer:
-                tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
+                # Special handling for brush tool with size
+                if self.current_tool == "brush":
+                    self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
+                else:
+                    tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -3831,7 +3912,10 @@ class MainWindow:
                 self._update_canvas_from_layers()
 
                 # Only update the specific pixel that changed for better performance
-                self._update_single_pixel(canvas_x, canvas_y, old_color)
+                if self.current_tool == "brush":
+                    self._update_pixel_display()
+                else:
+                    self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas"""
