@@ -2705,7 +2705,10 @@ class MainWindow:
         """Handle color wheel color change - now just for UI updates"""
         # Update color display in UI
         self._update_pixel_display()
-        # Removed print statement to prevent lag during dragging
+        
+        # Auto-switch to brush tool for immediate painting
+        if self.current_tool != "brush":
+            self._select_tool("brush")
     
     def _save_custom_color(self, rgb_color):
         """Save current color wheel color to custom colors"""
