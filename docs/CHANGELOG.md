@@ -4,6 +4,26 @@
 
 ### 🐛 Critical Bug Fixes
 
+**Fixed: Empty Selection Spaces Erasing Pixels** 🔥
+- **Problem**: Moving a selection with empty spaces over existing pixels would delete those pixels
+- **Root Cause**: `on_mouse_up()` in MoveTool was clearing the ENTIRE selection rectangle before placing pixels
+- **Visual**: Selection box with scattered pixels acts like an eraser for everything underneath empty spaces
+- **Solution**: Removed the clearing step - now ONLY places non-transparent pixels from selection
+- **Impact**: Empty spaces in selection are truly transparent - underlying pixels preserved!
+- **Technical**: 
+  ```python
+  # OLD (BUGGY): Cleared entire box, then drew pixels
+  for py in range(height):
+      canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))  # ❌ Clears EVERYTHING!
+  for py in range(height):
+      canvas.set_pixel(canvas_x, canvas_y, pixel_color)  # Only non-transparent
+  
+  # NEW (FIXED): Only draw non-transparent pixels
+  for py in range(height):
+      if pixel_color[3] > 0:  # ✅ Skip transparent - preserves underneath!
+          canvas.set_pixel(canvas_x, canvas_y, pixel_color)
+  ```
+
 **Fixed: Selection Tool Pixel Loss on Move**
 - **Problem**: Moving a selection and picking it up again would capture transparent/wrong pixels
 - **Root Cause**: `_finalize_selection()` was re-capturing pixels from canvas after every move

@@ -159,24 +159,19 @@ class MoveTool(Tool):
                 if bounds:
                     left, top, width, height = bounds
                     
-                    # First clear the target area (in case it overlaps with original)
-                    for py in range(height):
-                        for px in range(width):
-                            canvas_x = left + px
-                            canvas_y = top + py
-                            if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-                    
-                    # Then draw selected pixels at new position
+                    # ONLY draw non-transparent selected pixels at new position
+                    # This preserves any existing pixels underneath empty spaces in the selection
                     for py in range(height):
                         for px in range(width):
                             if py < self.selection_tool.selected_pixels.shape[0] and px < self.selection_tool.selected_pixels.shape[1]:
                                 pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                canvas_x = left + px
-                                canvas_y = top + py
-                                if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                    # Draw all pixels (including transparent to properly clear background)
-                                    canvas.set_pixel(canvas_x, canvas_y, pixel_color)
+                                # CRITICAL: Only draw pixels that are NOT transparent
+                                # Empty spaces in selection should not affect canvas
+                                if pixel_color[3] > 0:  # Check alpha channel
+                                    canvas_x = left + px
+                                    canvas_y = top + py
+                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                        canvas.set_pixel(canvas_x, canvas_y, pixel_color)
             
             print(f"[MOVE] Pixels placed at new position")
     
