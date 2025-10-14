@@ -1,15 +1,15 @@
 # Software Bill of Materials (SBOM)
 
-**Last Updated**: October 13, 2025  
-**Project Version**: 1.34 - Pixel Perfect
+**Last Updated**: October 14, 2025  
+**Project Version**: 1.38 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 1.31 (Color Wheel Performance Optimized - 100× Faster! 🚀)
+- **Version**: 1.38 (Texture Tool with Live Preview 🌿)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: October 13, 2025 (Color Wheel UX & Performance - Crosshair Cursor + Selective Redrawing)
+- **Last Updated**: October 14, 2025 (Texture Tool + Smart Non-Destructive Move System)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
-- **Status**: Production Ready - Optimized Distribution (29MB exe, silky smooth color selection)
+- **Status**: Production Ready - Optimized Distribution (29MB exe, texture system integrated)
 
 ## Python Environment
 - **Python Version**: 3.13.6 (Tested and Verified)
@@ -21,13 +21,10 @@
 ## Core Dependencies
 
 ### Graphics and Rendering
-- **pygame**: 2.6.1 (SDL 2.28.4)
-  - **Purpose**: Canvas rendering, pixel manipulation, and real-time graphics
-  - **License**: LGPL
-  - **Security**: No known vulnerabilities (latest stable version)
-  - **Installation Date**: Project Start
-  - **Usage**: Primary graphics engine for canvas rendering and pixel operations
-  - **Status**: ✅ Fully integrated and tested
+- **pygame**: ❌ REMOVED (v1.30 - Build Optimization)
+  - **Reason**: Optimized out to reduce exe size (saved ~60MB)
+  - **Replacement**: Pure Tkinter + PIL for all rendering
+  - **Impact**: Zero functionality lost, 91% smaller build
 
 ### Image Processing
 - **Pillow (PIL)**: >=10.0.0

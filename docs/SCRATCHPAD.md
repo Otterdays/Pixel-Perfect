@@ -1,5 +1,83 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.38 - Texture Tool with Live Preview
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Feature: Texture Application System
+
+**Problem Statement:**
+Need a system to apply repeating texture patterns (like grass) to canvas quickly.
+
+**Solution: Texture Tool + Library + Live Preview**
+
+**Implementation:**
+
+**1. Texture Tool (`src/tools/texture.py`):**
+```python
+class TextureTool(Tool):
+    - set_texture(texture_data) - Load 8x8 pattern
+    - on_mouse_down/drag/up() - Apply texture on click
+    - get_preview_rect/texture() - For live rendering
+    
+class TextureLibrary:
+    - get_grass_8x8() - Hardcoded 8x8 grass pattern
+    - 4 colors: dark_green, med_green, light_green, yellow_green
+    - Returns NumPy array (8, 8, 4) RGBA
+```
+
+**2. Texture Library Panel (`main_window.py`):**
+- Modal CTkToplevel (400x300px)
+- 64x64 preview (8x scaled) rendered on tk.Canvas
+- Clickable frames with texture info
+- "Select" button + entire frame clickable
+- Auto-closes and activates texture tool
+
+**3. Live Preview System:**
+- `_draw_texture_preview()` - Renders on Tkinter canvas
+- Semi-transparent with stipple="gray50"
+- Dashed white outline around texture area
+- Updates on mouse move (hover) and drag
+- Clears with "texture_preview" tag
+
+**4. Button Integration:**
+- Added `texture` to `self.tool_buttons` dictionary
+- Changed fg_color from "#4a4a4a" to "gray"
+- Now highlights blue when selected via `_update_tool_selection()`
+
+**Grass 8x8 Pattern:**
+```
+Dark:   (34, 139, 34, 255)   - Forest green base
+Med:    (50, 205, 50, 255)   - Lime green highlights
+Light:  (124, 252, 0, 255)   - Lawn green accents
+Yellow: (154, 205, 50, 255)  - Yellow-green variation
+```
+
+**User Workflow:**
+1. Click "Texture" → Library opens
+2. Select "Grass 8x8" → Panel closes, tool active
+3. Texture button → BLUE
+4. Hover canvas → Live 8x8 preview
+5. Click/drag → Apply texture
+
+**Technical Details:**
+- Preview renders during hover: `_on_tkinter_canvas_mouse_move()`
+- Preview renders during drag: `_on_tkinter_canvas_mouse_drag()`
+- Texture applies: `on_mouse_down()` and `on_mouse_drag()`
+- Supports undo/redo automatically
+
+**Benefits:**
+- Fast grass painting for game levels
+- Visual feedback before placement
+- Expandable to add more textures
+- Professional live preview workflow
+
+**Bug Fixes:**
+- Fixed 8 indentation errors throughout main_window.py
+- All under `else:` statements that were missing proper indent
+
+---
+
 ## Version 1.37 - Smart Non-Destructive Move System
 **Date**: October 14, 2025
 **Status**: Complete ✅

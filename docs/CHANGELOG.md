@@ -1,5 +1,56 @@
 # Pixel Perfect - Changelog
 
+## Version 1.38 - Texture Tool with Live Preview (October 14, 2025) ✅
+
+### 🎨 Major Feature: Texture Application System
+
+**Hardcoded Grass 8x8 Texture** 🌿
+- **TextureTool class** with complete drawing logic
+- **TextureLibrary class** with hardcoded grass pattern
+- **4 shades of green**: Dark, medium, light, yellow-green for authentic grass texture
+- **Click or drag**: Apply 8x8 texture patterns to canvas instantly
+
+**Beautiful Texture Library Panel** 📚
+- Modal dialog (400x300px) with clean interface
+- 64x64 preview of grass texture (8x scaled for visibility)
+- Clickable texture frames with name, dimensions, and "Select" button
+- Auto-closes when texture selected, activates texture tool
+
+**Live Preview System** 👁️✨
+- **Real-time hover preview**: See texture before placing
+- **Semi-transparent rendering**: Uses stipple effect for preview
+- **Dashed white outline**: Clear visual boundary around 8x8 area
+- **Follows mouse**: Updates instantly as you move across canvas
+
+**Full Integration:**
+- Texture button highlights blue when tool active
+- Preview renders during hover AND drag
+- Applies on click with perfect pixel alignment
+- Undo/redo support built-in
+
+**User Workflow:**
+```
+1. Click "Texture" button → Opens Texture Library
+2. Select "Grass 8x8" texture → Panel closes, tool activates
+3. Texture button turns BLUE → Visual confirmation
+4. Hover over canvas → See live 8x8 preview
+5. Click or drag → Apply grass texture!
+```
+
+**Technical Details:**
+- `src/tools/texture.py` - Complete texture tool implementation
+- `TextureTool` with `set_texture()`, `on_mouse_down/drag/up()`, preview methods
+- `TextureLibrary.get_grass_8x8()` - Hardcoded 8x8 NumPy array
+- `_draw_texture_preview()` in main_window.py - Live rendering on Tkinter canvas
+
+**Benefits:**
+- ✅ **Fast texture application** - Paint grass instantly
+- ✅ **Visual feedback** - See exactly what you're placing
+- ✅ **Expandable system** - Easy to add more textures
+- ✅ **Professional workflow** - Industry-standard live preview
+
+---
+
 ## Version 1.37 - Smart Non-Destructive Move System (October 14, 2025) ✅
 
 ### 🎨 Major Feature: Two-Phase Move with Background Preservation

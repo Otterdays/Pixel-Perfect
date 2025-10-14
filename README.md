@@ -121,7 +121,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## ✅ Complete Feature Set
 
-### 🎨 **Drawing Tools** (10 Complete Tools)
+### 🎨 **Drawing Tools** (11 Complete Tools)
 - **Pixel Brush**: Multi-size brush (1x1, 2x2, 3x3) with right-click menu - perfect for both detail work and broad strokes
 - **Eraser**: Clean pixel removal
 - **Fill Bucket**: Flood fill with customizable tolerance
@@ -132,6 +132,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **Circle Tool**: Circle drawing with midpoint algorithm
 - **Move Tool**: Move selected pixels around canvas
 - **Pan Tool**: Drag canvas view for navigation on large canvases
+- **Texture Tool** 🌿NEW: Apply 8x8 grass texture with live preview - paint repeating patterns instantly!
 
 ### 🖼️ **Canvas System**
 - **Preset Sizes**: 16x16, 32x32, 16x32, 32x64, 64x64 pixels
@@ -787,6 +788,15 @@ This is proprietary software. All source code, documentation, assets, and relate
 **Version History & Release Notes**
 
 </div>
+
+### Version 1.38 (October 14, 2025)
+🌿✨ **Texture Tool with Live Preview**
+- **Grass 8x8 Texture** - Hardcoded grass pattern with 4 shades of green for game level creation
+- **Texture Library Panel** - Beautiful modal dialog with 64px texture previews
+- **Live Preview System** - Real-time semi-transparent preview as you hover over canvas
+- **Button Highlighting** - Texture button turns blue when texture tool is active
+- **Click or Drag** - Apply 8x8 textures instantly to canvas with perfect alignment
+- **Expandable Architecture** - Easy to add more textures (stone, dirt, water, etc.)
 
 ### Version 1.37 (October 14, 2025)
 🎨✨ **Smart Non-Destructive Move System**
