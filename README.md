@@ -7,14 +7,27 @@
 
 **by Diamond Clad Studios**
 
+**🔧 Core Stack**
+
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![CustomTkinter](https://img.shields.io/badge/CustomTkinter-5.2.0-1f538d?style=for-the-badge)](https://github.com/TomSchimansky/CustomTkinter)
-[![Pillow](https://img.shields.io/badge/Pillow-Latest-4B8BBE?style=for-the-badge)](https://python-pillow.org/)
+[![Tkinter](https://img.shields.io/badge/Tkinter-Built--in-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/library/tkinter.html)
+[![CustomTkinter](https://img.shields.io/badge/CustomTkinter-5.2.0-1f538d?style=for-the-badge&logo=python&logoColor=white)](https://github.com/TomSchimansky/CustomTkinter)
+[![Pillow](https://img.shields.io/badge/Pillow-Latest-4B8BBE?style=for-the-badge&logo=python&logoColor=white)](https://python-pillow.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-Latest-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
 
+**💻 Platform & Tools**
+
 [![Windows](https://img.shields.io/badge/Windows-11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/License-All_Rights_Reserved-red?style=for-the-badge)](LICENSE)
-[![Build](https://img.shields.io/badge/Build-29MB-success?style=for-the-badge)](BUILDER/)
+[![PyInstaller](https://img.shields.io/badge/PyInstaller-6.0+-00BFFF?style=for-the-badge&logo=python&logoColor=white)](https://pyinstaller.org/)
+[![Git](https://img.shields.io/badge/Git-Version_Control-F05032?style=for-the-badge&logo=git&logoColor=white)](https://git-scm.com/)
+[![VS Code](https://img.shields.io/badge/VS_Code-Editor-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
+
+**📦 Build & Deployment**
+
+[![License](https://img.shields.io/badge/License-All_Rights_Reserved-red?style=for-the-badge&logo=shield&logoColor=white)](LICENSE)
+[![Build Size](https://img.shields.io/badge/Build-29MB-success?style=for-the-badge&logo=files&logoColor=white)](BUILDER/)
+[![Executable](https://img.shields.io/badge/Standalone-.EXE-blueviolet?style=for-the-badge&logo=windows&logoColor=white)](BUILDER/release/)
+[![Status](https://img.shields.io/badge/Status-Production_Ready-brightgreen?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
 
 ---
 
@@ -36,11 +49,22 @@
 
 ## 🖼️ Screenshots
 
-![Pixel Perfect Header - Dark Theme](header.png)
-<p align="center"><em>Dark "Basic Grey" Theme - Professional workspace with dark color palette</em></p>
+<div align="center">
 
-![Pixel Perfect Header - Light Theme](header_light.png)
-<p align="center"><em>Light "Angelic" Theme - Elegant light interface for comfortable daytime use</em></p>
+<table>
+<tr>
+<td width="50%">
+<img src="header.png" alt="Pixel Perfect - Dark Theme" style="width:100%"/>
+<p align="center"><em><b>Dark "Basic Grey" Theme</b><br/>Professional workspace with dark color palette</em></p>
+</td>
+<td width="50%">
+<img src="header_light.png" alt="Pixel Perfect - Light Theme" style="width:100%"/>
+<p align="center"><em><b>Light "Angelic" Theme</b><br/>Elegant light interface for comfortable daytime use</em></p>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
