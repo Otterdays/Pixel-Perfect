@@ -3,7 +3,7 @@
 # 🎨 Pixel Perfect
 ### Professional Retro Pixel Art Editor
 
-<img src="dcs.png" alt="Diamond Clad Studios" width="160"/>
+<img src="dcs.png" alt="Diamond Clad Studios" width="320"/>
 
 **by Diamond Clad Studios**
 
@@ -143,7 +143,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ### 🎨 **Color Management** (7 Complete Palettes + 5 View Modes + Custom & Saved Colors)
 - **7 Game-Inspired Palettes**:
 - **SNES Classic**: 16 colors matching original SNES palette
-  - **Old School RuneScape**: Classic OSRS color palette for authentic retro MMORPG sprites
+- **Old School RuneScape**: Classic OSRS color palette for authentic retro MMORPG sprites
 - **Curse of Aros**: Muted, earthy tones matching the game aesthetic
 - **Heartwood Online**: Forest-themed palette
 - **Definya**: Bright, vibrant colors
