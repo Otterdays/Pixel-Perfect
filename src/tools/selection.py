@@ -143,53 +143,25 @@ class MoveTool(Tool):
                     if not self.original_selection:
                         self.original_selection = (left, top)
                     
-                    # Clear ONLY our selected pixels at current position
-                    # Must match exactly to avoid clearing pixels underneath
-                    for py in range(height):
-                        for px in range(width):
-                            if (py < self.selection_tool.selected_pixels.shape[0] and 
-                                px < self.selection_tool.selected_pixels.shape[1]):
-                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                if pixel_color[3] > 0:  # Non-transparent
-                                    canvas_x = left + px
-                                    canvas_y = top + py
-                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                        # CRITICAL: Only clear if pixel matches our selection
-                                        current_pixel = canvas.get_pixel(canvas_x, canvas_y)
-                                        if current_pixel == pixel_color:
-                                            canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-                    
-                    print("[MOVE] Picked up selection (non-destructive mode - preserving underlying pixels)")
+                    # DON'T modify canvas at all during non-destructive moves
+                    # Rely on visual preview only
+                    print("[MOVE] Picked up selection (non-destructive - canvas unchanged)")
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
         if button == 1 and self.is_moving:
             self.is_moving = False
             
-            # Place pixels at current position (temporary, non-destructive)
-            if self.selection_tool and self.selection_tool.selected_pixels is not None:
+            # Track if we've moved from original position (but don't modify canvas yet)
+            if self.selection_tool and self.original_selection:
                 bounds = self.selection_tool.get_selection_bounds()
                 if bounds:
                     left, top, width, height = bounds
+                    orig_left, orig_top = self.original_selection
                     
-                    # Draw pixels at new position
-                    for py in range(height):
-                        for px in range(width):
-                            if (py < self.selection_tool.selected_pixels.shape[0] and 
-                                px < self.selection_tool.selected_pixels.shape[1]):
-                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                if pixel_color[3] > 0:  # Non-transparent
-                                    canvas_x = left + px
-                                    canvas_y = top + py
-                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                        canvas.set_pixel(canvas_x, canvas_y, pixel_color)
-                    
-                    # Track if we've moved from original position
-                    if self.original_selection:
-                        orig_left, orig_top = self.original_selection
-                        if left != orig_left or top != orig_top:
-                            self.has_been_moved = True
-                            print(f"[MOVE] Pixels placed at new position (non-destructive - can still adjust)")
+                    if left != orig_left or top != orig_top:
+                        self.has_been_moved = True
+                        print(f"[MOVE] Selection at new position (non-destructive - will finalize on tool switch)")
     
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Update selection position while moving"""
