@@ -1,5 +1,100 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.37 - Smart Non-Destructive Move System
+**Date**: October 14, 2025
+**Status**: Complete ✅
+
+### Major Feature: Two-Phase Move with Background Preservation
+
+**Problem Statement:**
+Multiple critical issues with selection/move operations:
+1. Moving pixels over others permanently deleted underlying pixels
+2. Original pixels not cleared on first pickup (appeared to copy instead of move)
+3. Selection box disappeared on minimize/focus loss
+4. Empty spaces in selection acted like an eraser
+
+**Solution: Smart Two-Phase System**
+
+**Phase 1 - First Pickup (Move, Not Copy):**
+- Detects first pickup: `if not self.original_selection`
+- Clears original pixels from canvas → No cloning!
+- Stores `original_selection = (left, top)` for reference
+- Result: Pixels now "floating", not duplicated
+
+**Phase 2 - Adjustment Pickups (Non-Destructive):**
+- Detects subsequent pickups: `elif self.saved_background and self.last_drawn_position`
+- Restores `saved_background` from last drop location → Red pixels come back!
+- Lifts pixels without destroying underlying content
+- Result: Infinite repositioning without pixel loss
+
+**Every Drop Operation:**
+1. Save background pixels at new position (2D array)
+2. Draw selection pixels at new position (non-transparent only)
+3. Track `last_drawn_position` for next pickup
+4. Result: Background preserved for restoration on next pickup
+
+**Code Implementation (`src/tools/selection.py`):**
+```python
+# Instance variables:
+self.original_selection = None      # Initial (left, top)
+self.saved_background = None        # 2D list of RGBA tuples
+self.last_drawn_position = None     # Current placement (left, top)
+
+# on_mouse_down (pickup):
+if not self.original_selection:
+    # FIRST PICKUP: Clear original
+    self.original_selection = (left, top)
+    for py, px in selection:
+        if pixel[3] > 0:  # Non-transparent
+            canvas.set_pixel(x, y, (0,0,0,0))
+elif self.saved_background and self.last_drawn_position:
+    # SUBSEQUENT PICKUPS: Restore background
+    restore_left, restore_top = self.last_drawn_position
+    for py in range(len(saved_background)):
+        for px in range(len(saved_background[0])):
+            canvas.set_pixel(restore_left + px, restore_top + py, saved_background[py][px])
+
+# on_mouse_up (drop):
+# Save background
+self.saved_background = []
+for py in range(height):
+    row = []
+    for px in range(width):
+        row.append(canvas.get_pixel(left + px, top + py))
+    saved_background.append(row)
+
+# Draw at new position
+for py, px in selection:
+    if pixel[3] > 0:  # Non-transparent only
+        canvas.set_pixel(left + px, top + py, pixel)
+self.last_drawn_position = (left, top)
+```
+
+**User Workflow:**
+1. Select 5 black pixels → Selection box
+2. Pick up (first) → Black CLEARED from canvas
+3. Drop on red → Black at A, red SAVED
+4. Pick up again → Red RESTORED (non-destructive!)
+5. Drop at B → Black at B, new background SAVED
+6. Pick up again → B background RESTORED
+7. Infinite adjustments without pixel loss!
+
+**Benefits:**
+- ✅ Move (not copy) - original cleared
+- ✅ Non-destructive - unlimited adjustments
+- ✅ Background safe - red pixels preserved
+- ✅ Professional workflow
+
+**Version History:**
+- v1.37.1: Selection box focus loss fix (multi-event binding)
+- v1.37.2: Move preview rendering
+- v1.37.3: Attempted full non-destructive (reverted)
+- v1.37.4: Draw at new position, track location
+- v1.37.5: Save/restore background
+- v1.37.6: Clear original on first pickup (FINAL!)
+
+---
+
 ## Version 1.36 - Selection & Move Tool Bug Fixes
 **Date**: October 14, 2025
 **Status**: Complete ✅ (Updated with additional fix)

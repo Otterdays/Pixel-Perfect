@@ -1,18 +1,25 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.36  
-**Last Updated**: October 14, 2025 - Selection & Move Tool Fixes
+**Version**: 1.37  
+**Last Updated**: October 14, 2025 - Smart Non-Destructive Move System
 
-## Latest Updates (v1.36)
+## Latest Updates (v1.37)
 
-### 🐛 Selection & Move Tool Bug Fixes
-**Critical issues resolved for professional workflow**
-- **Fixed: Pixel loss on move** - Selections preserve original pixels through multiple moves
-- **Fixed: No visual preview** - See pixels while dragging with move tool
-- **Fixed: Focus loss bug** - Selection box stays visible when tabbing out/in
-- **Enhanced: Move placement** - Clears target area to prevent overlap artifacts
-- **Enhanced: Selection reset** - New selections properly clear old state
+### 🎨 Smart Non-Destructive Move System
+**Revolutionary two-phase move with background preservation**
+- **First pickup**: Clears original pixels (move, not copy - no duplicates!)
+- **Adjustments**: Unlimited repositioning with automatic background restoration
+- **Background preservation**: Move pixels over others without destroying underlying content
+- **Professional workflow**: Adjust position infinitely, red pixels safe when moving black over them
+- **Technical**: Saves background on every drop, restores on pickup for truly non-destructive editing
+
+### 🐛 Additional Bug Fixes (v1.36-1.37)
+- **Fixed: Selection box visibility** - Multi-event binding + multiple redraw attempts (50ms, 150ms)
+- **Fixed: Pixel cloning** - Original pixels now clear on first pickup (was copying instead of moving)
+- **Fixed: Background destruction** - Underlying pixels preserved during all repositioning operations
+- **Fixed: Empty space deletion** - Selection gaps no longer erase pixels underneath
+- **Fixed: Move preview** - Pixels visible during drag operation
 
 ---
 

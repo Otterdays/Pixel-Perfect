@@ -764,6 +764,22 @@ This is proprietary software. All source code, documentation, assets, and relate
 
 </div>
 
+### Version 1.37 (October 14, 2025)
+🎨✨ **Smart Non-Destructive Move System**
+- **Two-Phase Move Logic** - First pickup clears original (move, not copy), subsequent pickups restore background
+- **Background Preservation** - Unlimited position adjustments without destroying underlying pixels
+- **Professional Workflow** - Move pixels over others, adjust infinitely, underlying content stays intact!
+- **Technical Marvel** - Saves background on every drop, restores on pickup for truly non-destructive editing
+- **Bug Fixes** - Selection box visibility (focus loss), pixel cloning, empty space deletion all resolved
+
+### Version 1.35 (October 2025)
+🖌️⚡ **Multi-Size Brush & Enhanced UX**
+- **Multi-Size Brush** - 1x1, 2x2, 3x3 brush sizes with right-click menu selection
+- **Visual Indicator** - Button shows current size: "🖌️ 1x1", "🖌️ 2x2", "🖌️ 3x3"
+- **Auto-Switch to Brush** - Selecting colors in wheel or grid auto-activates brush tool
+- **Auto-Clear Selection** - Selection box disappears when switching tools or clicking outside
+- **Seamless Workflow** - Less clicking, more creating!
+
 ### Version 1.34 (October 2025)
 📐🎨 **Custom Canvas Size & Eyedropper Refinements**
 - **Custom Canvas Size** - Beautiful dialog for any canvas dimensions (1x1 to 512x512)
