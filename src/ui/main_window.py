@@ -2288,7 +2288,7 @@ class MainWindow:
         
         # Update grid view with new palette
         self.color_display_frame = self.grid_view_frame
-            self._create_color_grid()
+        self._create_color_grid()
         
         # Show grid view
         self._show_view("grid")
@@ -2297,15 +2297,15 @@ class MainWindow:
         """Initialize all palette views once at startup (OPTIMIZED)"""
         # Create grid view
         self.color_display_frame = self.grid_view_frame
-            self._create_color_grid()
+        self._create_color_grid()
         
         # Create primary view
         self.color_display_frame = self.primary_view_frame
-            self._create_primary_colors()
+        self._create_primary_colors()
         
         # Create wheel view
         self.color_display_frame = self.wheel_view_frame
-            self._create_color_wheel()
+        self._create_color_wheel()
         
         # Create saved view
         self.color_display_frame = self.saved_view_frame
@@ -3855,7 +3855,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
                 else:
-                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
+                    tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -3869,7 +3869,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._update_pixel_display()
                 else:
-                self._update_single_pixel(canvas_x, canvas_y, old_color)
+                    self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
@@ -4066,7 +4066,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._draw_brush_at(draw_layer, canvas_x, canvas_y, color)
                 else:
-                tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
+                    tool.on_mouse_move(draw_layer, canvas_x, canvas_y, color)
                 
                 # Also update the current frame with the layer changes
                 current_frame = self.timeline.get_current_frame()
@@ -4080,7 +4080,7 @@ class MainWindow:
                 if self.current_tool == "brush":
                     self._update_pixel_display()
                 else:
-                self._update_single_pixel(canvas_x, canvas_y, old_color)
+                    self._update_single_pixel(canvas_x, canvas_y, old_color)
 
     def _on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas"""
