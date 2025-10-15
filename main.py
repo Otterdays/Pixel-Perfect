@@ -25,7 +25,9 @@ def main():
         app = MainWindow()
         app.run()
     except Exception as e:
+        import traceback
         print(f"Error starting Pixel Perfect: {e}")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":

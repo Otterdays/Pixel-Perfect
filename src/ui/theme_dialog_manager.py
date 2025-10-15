@@ -256,17 +256,17 @@ class ThemeDialogManager:
             self.main_window.saved_view_frame.configure(fg_color=theme.bg_secondary)
         
         # Update color_frame if it exists
-        if hasattr(self.main_window, 'color_frame'):
+        if hasattr(self.main_window, 'color_frame') and self.main_window.color_frame:
             self.main_window.color_frame.configure(fg_color="transparent")
         
         # Update primary and variations frames
-        if hasattr(self.main_window, 'primary_frame'):
+        if hasattr(self.main_window, 'primary_frame') and self.main_window.primary_frame:
             self.main_window.primary_frame.configure(fg_color=theme.bg_secondary)
-        if hasattr(self.main_window, 'variations_frame'):
+        if hasattr(self.main_window, 'variations_frame') and self.main_window.variations_frame:
             self.main_window.variations_frame.configure(fg_color=theme.bg_secondary)
         
         # Update palette panel and its children recursively
-        if hasattr(self.main_window, 'palette_frame'):
+        if hasattr(self.main_window, 'palette_frame') and self.main_window.palette_frame:
             self.main_window.palette_frame.configure(fg_color=theme.bg_primary)
             self._apply_theme_to_children(self.main_window.palette_frame, theme)
         

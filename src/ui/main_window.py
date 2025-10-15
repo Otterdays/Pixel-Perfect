@@ -195,18 +195,8 @@ class MainWindow:
         from src.core.canvas_renderer import CanvasRenderer
         self.canvas_renderer = CanvasRenderer(self)
         
-        # Initialize event dispatcher
+        # Initialize event dispatcher (bind events after UI creation)
         self.event_dispatcher = EventDispatcher(self)
-        self.event_dispatcher.bind_all_events()
-        
-        # Initialize palette views
-        self.grid_view = GridView(self.left_panel, self.palette, self._get_ui_callbacks())
-        self.primary_view = PrimaryView(self.left_panel, self.palette, self._get_ui_callbacks())
-        self.saved_view = SavedView(self.left_panel, self.saved_colors, self._get_ui_callbacks())
-        self.constants_view = ConstantsView(self.left_panel, self.palette, self._get_ui_callbacks())
-        
-        # Initialize UI Builder
-        self.ui_builder = UIBuilder(self.main_frame, self._get_ui_callbacks(), self.theme_manager)
         
         # Initialize tool buttons dictionary
         self.tool_buttons = {}
@@ -234,9 +224,6 @@ class MainWindow:
         # Apply initial theme (Basic Grey) to all UI elements
         self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
         
-        # Bind events
-        self._bind_events()
-        
         # Initialize canvas integration
         self._sync_canvas_with_layers()
     
@@ -248,7 +235,25 @@ class MainWindow:
         
         # Initialize UI Builder and create toolbar first (so it appears at top)
         self.ui_builder = UIBuilder(self.main_frame, self._get_ui_callbacks(), self.theme_manager)
-        self._create_toolbar()
+        self.ui_builder.create_toolbar()
+        
+        # Assign toolbar widget references
+        self.toolbar = self.ui_builder.widgets['toolbar']
+        self.file_button = self.ui_builder.widgets['file_button']
+        self.size_label = self.ui_builder.widgets['size_label']
+        self.size_var = self.ui_builder.widgets['size_var']
+        self.size_menu = self.ui_builder.widgets['size_menu']
+        self.zoom_label = self.ui_builder.widgets['zoom_label']
+        self.zoom_var = self.ui_builder.widgets['zoom_var']
+        self.zoom_menu = self.ui_builder.widgets['zoom_menu']
+        self.undo_button = self.ui_builder.widgets['undo_button']
+        self.redo_button = self.ui_builder.widgets['redo_button']
+        self.theme_label = self.ui_builder.widgets['theme_label']
+        self.theme_var = self.ui_builder.widgets['theme_var']
+        self.theme_menu = self.ui_builder.widgets['theme_menu']
+        self.settings_button = self.ui_builder.widgets['settings_button']
+        self.grid_button = self.ui_builder.widgets['grid_button']
+        self.grid_overlay_button = self.ui_builder.widgets['grid_overlay_button']
         
         # Main content area with resizable panes (optimized for smooth resizing)
         self.paned_window = tk.PanedWindow(
@@ -329,11 +334,30 @@ class MainWindow:
         )
         self.right_panel.pack(side="right", fill="both", expand=True)
         
-        # Create panels
-        self._create_tool_panel()
-        self._create_palette_panel()
-        self._create_canvas_panel()
-        self._create_layer_panel()
+        # Create panels using UIBuilder
+        selection_buttons = self.ui_builder.create_tool_panel(self.left_panel, self.tool_buttons, self._get_ui_callbacks())
+        self.tool_frame = selection_buttons['tool_frame']
+        
+        palette_widgets = self.ui_builder.create_palette_panel(self.left_panel, self.palette, self._get_ui_callbacks())
+        # Assign palette widget references
+        self.color_display_frame = palette_widgets['color_display_container']
+        self.grid_view_frame = palette_widgets['grid_view_frame']
+        self.primary_view_frame = palette_widgets['primary_view_frame']
+        self.wheel_view_frame = palette_widgets['wheel_view_frame']
+        self.constants_view_frame = palette_widgets['constants_view_frame']
+        self.saved_view_frame = palette_widgets['saved_view_frame']
+        self.view_mode_var = palette_widgets['view_mode_var']
+        self.palette_var = palette_widgets['palette_var']
+        self.palette_menu = palette_widgets['palette_menu']
+        self.palette_label = palette_widgets['palette_label']
+        self.palette_frame = palette_widgets.get('palette_frame')
+        self.color_frame = palette_widgets.get('color_display_frame')
+        self.primary_frame = palette_widgets.get('primary_frame')
+        self.variations_frame = palette_widgets.get('variations_frame')
+        
+        canvas_widgets = self.ui_builder.create_canvas_panel(self.canvas_frame, self.canvas_renderer, self.current_tool, self.tools, self._get_ui_callbacks())
+        self.tkinter_canvas = canvas_widgets['drawing_canvas']
+        self.drawing_canvas = canvas_widgets['drawing_canvas']  # Alias for compatibility
         
         # Pre-create layer and timeline panels for instant loading (OPTIMIZATION)
         self._create_layer_and_timeline_panels()
@@ -361,8 +385,8 @@ class MainWindow:
             left_container=self.left_container,
             right_container=self.right_container,
             paned_window=self.paned_window,
-            left_collapse_btn=left_collapse_btn,
-            right_collapse_btn=right_collapse_btn,
+            left_collapse_btn=self.left_collapse_btn,
+            right_collapse_btn=self.right_collapse_btn,
             redraw_callback=self._redraw_canvas_after_resize
         )
         # Transfer panel width values to manager
@@ -371,6 +395,57 @@ class MainWindow:
         
         # Try to restore saved window state (overrides calculated sizes if successful)
         self._restore_window_state()
+        
+        # Initialize palette views (after UI creation so left_panel exists)
+        self.grid_view = GridView(
+            self.left_panel, 
+            self.palette, 
+            self.theme_manager,
+            on_color_select=self._select_color,
+            on_tool_switch=self._select_tool
+        )
+        self.primary_view = PrimaryView(
+            self.left_panel, 
+            self.palette, 
+            self.canvas,
+            on_color_select=self._select_color,
+            on_tool_switch=self._select_tool
+        )
+        self.saved_view = SavedView(
+            self.left_panel, 
+            self.saved_colors, 
+            self.palette, 
+            self.canvas,
+            self.color_wheel,
+            self.view_mode_var,
+            on_update_display=self._update_pixel_display
+        )
+        self.constants_view = ConstantsView(
+            self.left_panel, 
+            self.canvas, 
+            self.palette, 
+            self.color_wheel,
+            self.view_mode_var,
+            on_show_view=self._show_view
+        )
+        
+        # Bind all events (after UI creation so widgets exist)
+        self.event_dispatcher.bind_all_events()
+    
+    def _toggle_left_panel(self):
+        """Toggle left panel visibility"""
+        if hasattr(self, 'window_state_manager'):
+            self.window_state_manager.toggle_left_panel()
+    
+    def _toggle_right_panel(self):
+        """Toggle right panel visibility"""
+        if hasattr(self, 'window_state_manager'):
+            self.window_state_manager.toggle_right_panel()
+    
+    def _redraw_canvas_after_resize(self):
+        """Redraw canvas after window/panel resize"""
+        if hasattr(self, 'canvas_renderer'):
+            self.canvas_renderer.update_pixel_display()
     
     def _get_ui_callbacks(self):
         """Returns a dictionary of callbacks for the UI builder."""
@@ -384,6 +459,19 @@ class MainWindow:
             'show_settings_dialog': self.theme_dialog_manager.show_settings_dialog,
             'toggle_grid': self._toggle_grid,
             'toggle_grid_overlay': self._toggle_grid_overlay,
+            'select_tool': self._select_tool,
+            'update_tool_selection': self._update_tool_selection,
+            'show_brush_size_menu': self._show_brush_size_menu,
+            'show_eraser_size_menu': self._show_eraser_size_menu,
+            'open_texture_panel': self._open_texture_panel,
+            'mirror_selection': self._mirror_selection,
+            'rotate_selection': self._rotate_selection,
+            'copy_selection': self._copy_selection,
+            'scale_selection': self._scale_selection,
+            'on_palette_change': self._on_palette_change,
+            'on_view_mode_change': self._on_view_mode_change,
+            'initialize_all_views': self._initialize_all_views,
+            'show_view': self._show_view,
         }
 
     def _update_undo_redo_buttons(self):

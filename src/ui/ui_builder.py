@@ -377,6 +377,7 @@ class UIBuilder:
         
         # Return references for main window
         return {
+            'palette_label': palette_label,
             'palette_frame': palette_frame,
             'palette_var': palette_var,
             'palette_menu': palette_menu,
