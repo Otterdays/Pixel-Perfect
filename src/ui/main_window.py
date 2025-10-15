@@ -1105,27 +1105,27 @@ class MainWindow:
             width = self.drawing_canvas.winfo_width()
             height = self.drawing_canvas.winfo_height()
 
-            print(f"Initial draw - Canvas size: {width}x{height}")  # Debug
+            # Debug: Initial draw - Canvas size (removed for clean console)
             
             if width > 1 and height > 1:
                 # Set canvas size to match our pixel grid
                 canvas_pixel_width = self.canvas.width * self.canvas.zoom
                 canvas_pixel_height = self.canvas.height * self.canvas.zoom
 
-                print(f"Pixel canvas size: {canvas_pixel_width}x{canvas_pixel_height}")  # Debug
+                # Debug: Pixel canvas size (removed for clean console)
 
                 # Center the canvas in the available space
                 x_offset = (width - canvas_pixel_width) // 2
                 y_offset = (height - canvas_pixel_height) // 2
 
-                print(f"Offsets: {x_offset}, {y_offset}")  # Debug
+                # Debug: Offsets (removed for clean console)
 
                 # Clear canvas
                 self.drawing_canvas.delete("all")
 
                 # Draw grid if enabled
                 if self.canvas.show_grid:
-                    print("Drawing grid...")  # Debug
+                    # Debug: Drawing grid (removed for clean console)
                     self._draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
                 # Draw a border around the canvas area with theme color
@@ -1139,9 +1139,9 @@ class MainWindow:
                 # Draw any existing pixels
                 self._draw_all_pixels_on_tkinter(x_offset, y_offset)
                 
-                print("Initial draw complete!")  # Debug
+                # Debug: Initial draw complete (removed for clean console)
             else:
-                print(f"Canvas not ready yet: {width}x{height}, retrying...")
+                # Debug: Canvas not ready yet (removed for clean console)
                 # Try again in a moment
                 self.root.after(200, self._initial_draw)
         except Exception as e:
@@ -1374,7 +1374,7 @@ class MainWindow:
             # Schedule another update after delay for visibility events
             self.root.after(50, self._update_pixel_display)
             self.root.after(150, self._update_pixel_display)
-            print(f"[FOCUS] Window event: {event.type} - redrawing selection")
+            # Debug: Window event redrawing selection (removed for clean console)
     
     def _on_key_press(self, event):
         """Handle keyboard shortcuts"""
@@ -1385,7 +1385,7 @@ class MainWindow:
             self.is_placing_copy = False
             self.copy_preview_pos = None
             self._update_pixel_display()
-            print("[INFO] Copy placement cancelled")
+            # Debug: Copy placement cancelled (removed for clean console)
             return
         
         # Cancel scaling mode
@@ -1403,7 +1403,7 @@ class MainWindow:
             self._update_tool_selection()
             
             self._update_pixel_display()
-            print("[INFO] Scaling cancelled")
+            # Debug: Scaling cancelled (removed for clean console)
             return
         
         # Tool shortcuts
@@ -1587,7 +1587,7 @@ class MainWindow:
             self.scale_true_original_rect = None
             self.scale_is_dragging = False
             self.scale_btn.configure(fg_color="gray")
-            print("[INFO] Exited scaling mode")
+            # Debug: Exited scaling mode (removed for clean console)
         
         # Finalize move and clear selection when switching away from selection/move tools
         if (self.current_tool in ["selection", "move"] and 
@@ -1598,13 +1598,13 @@ class MainWindow:
                 draw_layer = self._get_drawing_layer()
                 if draw_layer:
                     move_tool.finalize_move(draw_layer)
-                    print("[INFO] Finalized move operation before tool switch")
+                    # Debug: Finalized move operation before tool switch (removed for clean console)
             
             selection_tool = self.tools.get("selection")
             if selection_tool and selection_tool.has_selection:
                 selection_tool.clear_selection()
                 self._update_pixel_display()
-                print("[INFO] Selection cleared - switched to different tool")
+                # Debug: Selection cleared - switched to different tool (removed for clean console)
         
         self.current_tool = tool_id
         self._update_tool_selection()
@@ -1618,7 +1618,7 @@ class MainWindow:
         """Called when selection is complete - auto-switch to move tool"""
         # Automatically switch to move tool after selection
         self._select_tool("move")
-        print("Selection complete - switched to Move tool")
+        # Debug: Selection complete - switched to Move tool (removed for clean console)
     
     def _mirror_selection(self):
         """Mirror (flip horizontally) the selected pixels"""
@@ -1631,11 +1631,11 @@ class MainWindow:
             self.scale_is_dragging = False
             self.scale_btn.configure(fg_color="gray")
             self._update_tool_selection()
-            print("[INFO] Exited scaling mode")
+            # Debug: Exited scaling mode (removed for clean console)
         
         selection_tool = self.tools.get("selection")
         if not selection_tool or not selection_tool.has_active_selection():
-            print("[INFO] No selection to mirror")
+            # Debug: No selection to mirror (removed for clean console)
             return
         
         # Get selection data
@@ -1670,7 +1670,7 @@ class MainWindow:
             self._update_canvas_from_layers()
             self._update_pixel_display()
             
-        print("[OK] Selection mirrored")
+        # Debug: Selection mirrored (removed for clean console)
     
     def _rotate_selection(self):
         """Rotate the selected pixels 90 degrees clockwise"""
@@ -1683,11 +1683,11 @@ class MainWindow:
             self.scale_is_dragging = False
             self.scale_btn.configure(fg_color="gray")
             self._update_tool_selection()
-            print("[INFO] Exited scaling mode")
+            # Debug: Exited scaling mode (removed for clean console)
         
         selection_tool = self.tools.get("selection")
         if not selection_tool or not selection_tool.has_active_selection():
-            print("[INFO] No selection to rotate")
+            # Debug: No selection to rotate (removed for clean console)
             return
         
         # Get selection data
@@ -1739,7 +1739,7 @@ class MainWindow:
             self._update_canvas_from_layers()
             self._update_pixel_display()
             
-        print("[OK] Selection rotated 90° clockwise")
+        # Debug: Selection rotated 90° clockwise (removed for clean console)
     
     def _copy_selection(self):
         """Enter copy mode - allows placing a copy of the selection"""
@@ -1752,11 +1752,11 @@ class MainWindow:
             self.scale_is_dragging = False
             self.scale_btn.configure(fg_color="gray")
             self._update_tool_selection()
-            print("[INFO] Exited scaling mode")
+            # Debug: Exited scaling mode (removed for clean console)
         
         selection_tool = self.tools.get("selection")
         if not selection_tool or not selection_tool.has_active_selection():
-            print("[INFO] No selection to copy")
+            # Debug: No selection to copy (removed for clean console)
             return
         
         # Get selection data
@@ -1773,14 +1773,13 @@ class MainWindow:
             # Switch to a placement mode
             self.is_placing_copy = True
             
-            print("[OK] Selection copied - click on canvas to place")
-            print("     Press Escape to cancel placement")
+            # Debug: Selection copied - click on canvas to place (removed for clean console)
     
     def _scale_selection(self):
         """Enter scaling mode for the selection"""
         selection_tool = self.tools.get("selection")
         if not selection_tool or not selection_tool.has_active_selection():
-            print("[INFO] No selection to scale")
+            # Debug: No selection to scale (removed for clean console)
             return
         
         bounds = selection_tool.get_selection_bounds()
@@ -1803,9 +1802,8 @@ class MainWindow:
         # Update display to show handles
         self._update_pixel_display()
         
-        print("[OK] Scaling mode - drag corners/edges to resize")
-        print("     Each drag applies scaling incrementally")
-        print("     Click away from selection to exit")
+        # Debug: Scaling mode messages (removed for clean console)
+        # Debug: Click away from selection to exit (removed for clean console)
     
     def _apply_scale(self, new_rect):
         """Apply scaling to the selection"""
@@ -1960,7 +1958,7 @@ class MainWindow:
             
         # Exit placement mode
         self.is_placing_copy = False
-        print(f"[OK] Copy placed at ({canvas_x}, {canvas_y})")
+        # Debug: Copy placed (removed for clean console)
     
     def _update_tool_selection(self):
         """Update tool button appearance"""
@@ -4082,7 +4080,7 @@ class MainWindow:
                         if not (left <= canvas_x < left + width and top <= canvas_y < top + height):
                             selection_tool.clear_selection()
                             self._update_pixel_display()
-                            print("[INFO] Selection cleared - clicked outside selection area")
+                            # Debug: Selection cleared - clicked outside selection area (removed for clean console)
             
             # Special handling for eyedropper tool
             if self.current_tool == "eyedropper":
@@ -4197,7 +4195,7 @@ class MainWindow:
                         
                         self._update_canvas_from_layers()
                     
-                    print(f"[OK] Scaled from {old_width}x{old_height} to {new_width}x{new_height}")
+                    # Debug: Scaled from old to new dimensions (removed for clean console)
                 
                 # Update both reference rects for next drag
                 self.scale_original_rect = new_rect
@@ -4206,7 +4204,7 @@ class MainWindow:
             # End this drag operation but keep in scaling mode
             self.scale_is_dragging = False
             self._update_pixel_display()
-            print("[INFO] Released - drag again to resize more, or click away to exit")
+            # Debug: Released - drag again to resize more, or click away to exit (removed for clean console)
             return
 
         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
