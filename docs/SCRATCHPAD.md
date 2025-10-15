@@ -1,8 +1,105 @@
 # Pixel Perfect - Development Scratchpad
 
 ## Version 1.63 - Complete Application Restoration & Tool Consistency Fixes
+
+### Problem
+After the accidental file reversion and subsequent refactoring attempts, the application had several critical issues:
+- Brush wasn't auto-selected on startup
+- Colors in palette area were broken
+- Canvas drawing wasn't working
+- Color wheel was broken when switching views
+- Brush and eraser size indicators were missing
+- 2x2 and 3x3 eraser/brush tools had consistency issues
+- 1x1 brush strokes disappeared when switching to 2x2 brush
+- Color wheel selection wasn't applying to brush
+- Eyedropper caused TclError when accessing destroyed color wheel widgets
+
+### Solution
+**Complete Application Restoration:**
+- Fixed initialization order issues by moving `event_dispatcher.bind_all_events()` after `_create_ui()`
+- Moved palette view initializations after UI creation
+- Corrected UIBuilder initialization and widget assignments
+- Fixed missing callbacks and method references
+- Restored proper tool panel and palette panel creation
+
+**Tool Consistency Fixes:**
+- Unified all brush sizes to use layer-based `_draw_brush_at()` method
+- Unified all eraser sizes to use layer-based `_draw_eraser_at()` method
+- Ensured all drawing/erasing operations call `_update_canvas_from_layers()`
+- Fixed brush size indicators by calling `_update_brush_button_text()` after tool panel creation
+- Fixed eraser size indicators by calling `_update_eraser_button_text()` after tool panel creation
+
+**Color Wheel & Eyedropper Fixes:**
+- Fixed `_on_color_wheel_changed()` to properly set primary color using `palette.set_primary_color_by_rgba()`
+- Fixed eyedropper TclError by moving color wheel update after view switch and adding exception handling
+- Ensured color wheel is properly recreated when switching to wheel view
+
+### Implementation
+**File Changes:**
+- `src/ui/main_window.py`: Fixed initialization order, restored missing methods, fixed color wheel callbacks
+- `src/core/event_dispatcher.py`: Unified brush/eraser handling to use layer-based approach consistently
+- `src/ui/ui_builder.py`: Fixed widget creation order and return values
+
+**Key Fixes:**
+1. **Initialization Order**: Moved critical initializations after UI creation
+2. **Widget Lifecycle**: Fixed color wheel recreation and exception handling
+3. **Tool Consistency**: All drawing tools now use consistent layer-based approach
+4. **Callback System**: Restored proper callback assignments and method references
+
+### Results
+- ✅ Application starts successfully without errors
+- ✅ Brush auto-selected on startup
+- ✅ All palette views working (Grid, Wheel, Primary, Saved, Constants)
+- ✅ Canvas drawing works for all tools
+- ✅ All brush sizes (1x1, 2x2, 3x3) work consistently
+- ✅ All eraser sizes (1x1, 2x2, 3x3) work consistently
+- ✅ Brush/eraser size indicators display correctly
+- ✅ Color wheel selection applies to brush
+- ✅ Eyedropper works without TclError crashes
+- ✅ No more brush stroke disappearance when switching sizes
+- ✅ Proper layer-based drawing system throughout
+
+**Final Status**: Complete application restoration successful. All major functionality restored and working consistently.
+
+## Version 1.64 - Color Wheel & Eyedropper Integration Fix
 **Date**: January 2025
-**Status**: Complete ✅ (Fixed all major application issues and tool consistency)
+**Status**: Complete ✅ (Fixed color wheel integration and eyedropper crashes)
+
+### Problem
+Two critical issues with color wheel functionality:
+1. **Color Wheel Selection Not Applying**: When selecting a color on the rainbow wheel, it wasn't being applied to the brush for painting
+2. **Eyedropper TclError Crash**: When using the eyedropper tool, the application crashed with `TclError: invalid command name` due to trying to access destroyed color wheel widgets
+
+### Solution
+**Color Wheel Integration Fix:**
+- Modified `_on_color_wheel_changed()` method to properly set the selected color as the primary color
+- Added RGB to RGBA conversion and used `palette.set_primary_color_by_rgba()` to ensure the color is available for the brush
+- Maintained auto-switch to brush tool for immediate painting
+
+**Eyedropper Widget Lifecycle Fix:**
+- Identified that the color wheel was being destroyed and recreated during view switches
+- Moved color wheel update to AFTER the view switch to ensure the widget exists
+- Added exception handling for `AttributeError` and `tk.TclError` to gracefully handle timing issues
+- Ensured color wheel is properly recreated when switching to wheel view
+
+### Implementation
+**File Changes:**
+- `src/ui/main_window.py`: Fixed `_on_color_wheel_changed()` and `_set_color_from_eyedropper()` methods
+
+**Key Changes:**
+1. **Color Wheel Callback**: Now properly converts RGB to RGBA and sets primary color
+2. **Widget Lifecycle Management**: Moved color wheel update after view switch
+3. **Exception Handling**: Added try-catch for widget access errors
+4. **Proper Initialization**: Ensured color wheel exists before attempting to set color
+
+### Results
+- ✅ Color wheel selection now properly applies to brush
+- ✅ Eyedropper tool works without crashes
+- ✅ Smooth workflow: Wheel → Select Color → Paint immediately
+- ✅ Robust error handling for widget lifecycle issues
+- ✅ No more TclError exceptions during eyedropper usage
+
+**Final Status**: Color wheel and eyedropper integration working perfectly.
 
 ### Major Application Restoration
 **Problem**: Application was completely broken after file reversion, missing UI elements, and tool inconsistencies.

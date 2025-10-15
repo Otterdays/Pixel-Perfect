@@ -232,8 +232,8 @@ class EventDispatcher:
             self.main_window._handle_eyedropper_click(canvas_x, canvas_y, 1)  # Left click
             return
         
-        # Get current drawing color
-        current_color = self.main_window.palette.get_primary_color()
+        # Get current drawing color (from palette or color wheel based on view mode)
+        current_color = self.main_window.get_current_color()
         
         # Handle all brush sizes consistently
         if self.main_window.current_tool == "brush":
@@ -299,8 +299,8 @@ class EventDispatcher:
             self.is_dragging = False
             return
         
-        # Get current drawing color
-        current_color = self.main_window.palette.get_primary_color()
+        # Get current drawing color (from palette or color wheel based on view mode)
+        current_color = self.main_window.get_current_color()
         
         # Call tool's on_mouse_up method (standard interface)
         tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
@@ -352,8 +352,8 @@ class EventDispatcher:
         if not tool:
             return
         
-        # Get current drawing color
-        current_color = self.main_window.palette.get_primary_color()
+        # Get current drawing color (from palette or color wheel based on view mode)
+        current_color = self.main_window.get_current_color()
         
         # Handle all brush sizes consistently during drag
         if self.main_window.current_tool == "brush":

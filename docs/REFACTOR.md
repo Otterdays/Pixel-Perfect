@@ -8,18 +8,19 @@
 
 ## 🎯 Current Status
 
-**main_window.py**: **3,029 lines** (down from 3,387)  
-**Progress**: 10.6% reduction (358 lines removed)  
+**main_window.py**: **2,724 lines** (down from 3,387)  
+**Progress**: 19.6% reduction (663 lines removed)  
 **Target**: ~850-900 lines (core orchestration only)  
-**Remaining**: ~2,100 lines to extract (5 phases)
+**Remaining**: ~1,870 lines to extract (4 phases)
 
 ### Completed Extractions ✅
 - ✅ **UIBuilder** (436 lines) - Toolbar, tool panel, palette panel, canvas panel
 - ✅ **EventDispatcher** (472 lines) - All mouse/keyboard event handling
 - ✅ **FileOperationsManager** (395 lines) - All file I/O operations
+- ✅ **DialogManager** (417 lines) - All custom dialogs (size, warning, texture)
 
 ### Next Up 📋
-**Phase 4: Dialog Manager** (~300 lines) - Easy win, self-contained!
+**Phase 1: Selection Manager** (~500 lines) - Selection operations (mirror, rotate, scale, copy)
 
 ---
 
@@ -29,8 +30,8 @@
 |-------|-----------|--------|------------|--------|
 | **Starting Point** | - | - | **3,387** | Baseline |
 | Phase 3: File Ops | 400 | **358** | **3,029** | ✅ **COMPLETE** |
-| Phase 4: Dialogs | 300 | TBD | ~2,700 | 📋 **Next** |
-| Phase 1: Selection | 500 | TBD | ~2,200 | ⏳ Pending |
+| Phase 4: Dialogs | 300 | **323** | **2,724** | ✅ **COMPLETE** |
+| Phase 1: Selection | 500 | TBD | ~2,200 | 📋 **Next** |
 | Phase 5: Renderer | 400 | TBD | ~1,800 | ⏳ Pending |
 | Phase 2: Colors | 600 | TBD | ~1,200 | ⏳ Pending |
 | Phase 6: UI Builder | 300 | TBD | ~900 | ⏳ Pending |

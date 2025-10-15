@@ -1,20 +1,32 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.62  
-**Last Updated**: October 15, 2025 - File Operations Manager Extraction
+**Version**: 1.64  
+**Last Updated**: October 15, 2025 - Dialog Manager Extraction
 
-## Latest Updates (v1.62)
+## Latest Updates (v1.64)
+
+### 💬 Dialog Manager Extraction
+**Phase 4 complete - Custom dialogs extracted to dedicated manager**
+- **New Module**: `src/ui/dialog_manager.py` (417 lines)
+- **5 Methods Extracted**: Custom size, downsize warning, texture panel + helpers
+- **Line Reduction**: main_window.py reduced from 3,047 → 2,724 lines (-323 lines, -10.6%)
+- **Cumulative**: Down from 3,387 → 2,724 lines (663 lines, 19.6% total reduction)
+- **Low Risk**: Self-contained dialogs with no tool/canvas coupling
+- **Easy Testing**: Each dialog independently testable
+- **Benefits**: Cleaner separation, reduced complexity, modular dialog system
+
+---
+
+## Previous Updates (v1.62)
 
 ### 📁 File Operations Manager Extraction
-**Major refactoring to reduce main_window.py token consumption**
-- **New Module**: `src/ui/file_operations_manager.py` (469 lines)
+**Phase 3 complete - File I/O operations extracted**
+- **New Module**: `src/ui/file_operations_manager.py` (395 lines)
 - **10 Methods Extracted**: New, Open, Save, Import PNG, Export PNG/GIF/Spritesheet, Templates
 - **Line Reduction**: main_window.py reduced from 3,387 → 3,029 lines (-358 lines, -10.6%)
 - **Clear Separation**: All file I/O operations now in dedicated manager class
 - **Callback Integration**: Seamless integration with canvas and layer systems
-- **Benefits**: Improved modularity, reduced token usage, easier testing and maintenance
-- **Part of ongoing effort** to split main_window.py into manageable components
 
 ---
 

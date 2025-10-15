@@ -280,6 +280,20 @@ class ColorPalette:
         """Swap primary and secondary colors"""
         self.primary_color, self.secondary_color = self.secondary_color, self.primary_color
     
+    def find_color_in_presets(self, rgb_color: Tuple[int, int, int, int]) -> Optional[Tuple[str, int]]:
+        """Search for a color across all preset palettes
+        
+        Returns:
+            Tuple of (palette_name, color_index) if found, None otherwise
+        """
+        presets = self.get_preset_palettes()
+        for palette_name, colors in presets.items():
+            for i, color in enumerate(colors):
+                # Compare RGB values (ignore alpha)
+                if color[:3] == rgb_color[:3]:
+                    return (palette_name, i)
+        return None
+    
     def save_palette(self, filename: str):
         """Save palette to JSON file"""
         palette_data = {
