@@ -7,6 +7,31 @@
 
 ---
 
+## 📋 Quick Refactoring Checklist (Least → Most Important)
+
+### **SECONDARY TARGETS** (After main_window.py cleanup)
+- [ ] **8. Split layer_panel.py** (327 lines → 2 modules)
+- [ ] **7. Split timeline.py** (450 lines → 3 modules)  
+- [ ] **6. Split canvas.py** (520 lines → 3 modules)
+- [ ] **5. Split color_wheel.py** (630 lines → 4 modules)
+
+### **PRIMARY TARGETS** (main_window.py - 4,940 lines)
+- [ ] **4. Theme/Dialog Manager** (~350 lines) - Theme switching, dialog management
+- [ ] **3. Tool Manager** (~350 lines) - Tool UI and state management
+- [ ] **2. File Handler** (~350 lines) - File I/O operations
+- [x] **1. UI Builder** (~1,200 lines) - 🟡 **12% Complete** (Toolbar done)
+
+### **CRITICAL PRIORITIES** (Biggest Impact)
+- [ ] **Canvas Renderer** (~600 lines) - Rendering and display logic
+- [ ] **Selection Operations** (~550 lines) - Transform operations
+- [ ] **Event Dispatcher** (~900 lines) - Mouse/keyboard event routing
+- [ ] **Palette Manager** (~950 lines) - Color/palette view management
+
+**Current Progress**: 1/12 modules started (8% overall)  
+**Target**: Reduce main_window.py from 4,940 → 390 lines (92% reduction)
+
+---
+
 ## Executive Summary
 
 **CRITICAL EMERGENCY**: `main_window.py` has exploded to **4,940 lines** with **146 methods** - a 14% INCREASE since last analysis! This monolithic file is now BEYOND maintainable and severely violates the project's #1 rule: **"Split up components to as many parts as possible, in order to reduce token consumption."**
