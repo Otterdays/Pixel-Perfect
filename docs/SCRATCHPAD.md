@@ -1,5 +1,55 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.67 - Build System Updates for Refactored Modules
+**Date**: October 15, 2025
+**Status**: Complete ✅ (Build system now includes all refactored modules)
+
+### Build System Compatibility
+**Updated PyInstaller hidden imports to include all new modular components**
+
+**Problem**: Recent refactoring extracted components into new modules:
+- Selection Manager (v1.65)
+- Dialog Manager (v1.64)
+- File Operations Manager (v1.62)
+- UI Builder, Event Dispatcher, Canvas Renderer
+- Palette Views (Grid, Primary, Constants, Saved)
+- Window State Manager
+
+**Solution**: Updated `BUILDER/build.bat` with comprehensive hidden imports
+
+**New Modules Added to Build (13 total)**:
+
+**Core Modules (3)**:
+- `src.core.canvas_renderer` - Canvas rendering logic
+- `src.core.event_dispatcher` - Event handling system
+- `src.core.window_state_manager` - Window state persistence
+
+**UI Modules (6)**:
+- `src.ui.dialog_manager` - Custom dialogs
+- `src.ui.file_operations_manager` - File I/O operations
+- `src.ui.selection_manager` - Selection transformations
+- `src.ui.theme_dialog_manager` - Theme dialog handling
+- `src.ui.ui_builder` - UI component builder
+- `src.ui.palette_views` - Palette view package
+
+**Palette View Modules (4)**:
+- `src.ui.palette_views.grid_view` - Grid color layout
+- `src.ui.palette_views.primary_view` - Primary colors view
+- `src.ui.palette_views.constants_view` - Constants view
+- `src.ui.palette_views.saved_view` - Saved colors view
+
+**Import Fix**:
+- Fixed `ui_builder.py` import: `from ui.tooltip` → `from src.ui.tooltip`
+
+**Testing**:
+- ✅ All modules import successfully
+- ✅ MainWindow imports without errors
+- ✅ All new refactored modules verified
+
+**Build Ready**: PyInstaller will now bundle all refactored modules correctly
+
+---
+
 ## Version 1.65 - Selection Manager Extraction
 **Date**: October 15, 2025
 **Status**: Complete ✅ (Extracted all selection operations to dedicated manager)

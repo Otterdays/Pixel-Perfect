@@ -1,12 +1,19 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.66  
-**Last Updated**: October 15, 2025 - Critical Bug Fixes & UI Improvements
+**Version**: 1.67  
+**Last Updated**: October 15, 2025 - Build System Updated for Refactored Architecture
 
-## Latest Updates (v1.66)
+## Latest Updates (v1.67)
 
-### 🐛 Critical Bug Fixes
+### 🔨 Build System Compatibility (v1.67)
+**Build system updated for refactored modular architecture**
+- **13 New Hidden Imports**: Added all newly extracted modules to PyInstaller build
+- **Import Fix**: Corrected `ui_builder.py` import path
+- **Modules Verified**: All refactored components import successfully
+- **Build Ready**: Can now compile standalone executable with all recent refactors
+
+### 🐛 Critical Bug Fixes (v1.66)
 **Selection & UI issues resolved**
 - **Copy-Behind Bug Fixed**: Move + mirror/rotate operations no longer leave duplicate pixels at original location
 - **Selection Handles Restored**: Drag handles now visible on all selections (not just scaling mode)

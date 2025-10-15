@@ -266,6 +266,14 @@ class SelectionManager:
         if not selection_tool or selection_tool.selected_pixels is None:
             return
         
+        # CRITICAL FIX: Finalize move operation to prevent background restoration
+        move_tool = self.tools.get("move")
+        if move_tool:
+            draw_layer = self._get_drawing_layer()
+            if draw_layer:
+                move_tool.finalize_move(draw_layer)
+            print("[SCALE] Finalized move operation to prevent copy-behind bug")
+        
         # Use the TRUE original rect (from when we entered scale mode)
         old_left, old_top, old_width, old_height = self.scale_true_original_rect
         new_left, new_top, new_width, new_height = new_rect
@@ -437,4 +445,58 @@ class SelectionManager:
                 if layer.visible:
                     return layer
         return active_layer
+    
+    def update_scaling(self, mouse_x: int, mouse_y: int):
+        """Update scaling during mouse drag"""
+        if not self.is_scaling or not self.scale_handle:
+            return
+        
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or not selection_tool.selection_rect:
+            return
+        
+        left, top, width, height = self.scale_original_rect
+        
+        # Calculate new rectangle based on handle being dragged
+        new_left, new_top, new_width, new_height = left, top, width, height
+        
+        if self.scale_handle == "tl":  # Top-left corner - move top-left
+            new_width = width + (left - mouse_x)
+            new_height = height + (top - mouse_y)
+            new_left = mouse_x
+            new_top = mouse_y
+        elif self.scale_handle == "tr":  # Top-right corner - move top-right
+            new_width = mouse_x - left
+            new_height = height + (top - mouse_y)
+            new_top = mouse_y
+        elif self.scale_handle == "bl":  # Bottom-left corner - move bottom-left
+            new_width = width + (left - mouse_x)
+            new_height = mouse_y - top
+            new_left = mouse_x
+        elif self.scale_handle == "br":  # Bottom-right corner - move bottom-right
+            new_width = mouse_x - left
+            new_height = mouse_y - top
+        elif self.scale_handle == "t":  # Top edge - resize from bottom
+            new_height = height + (top - mouse_y)
+            new_top = mouse_y
+        elif self.scale_handle == "b":  # Bottom edge - resize from top
+            new_height = mouse_y - top
+        elif self.scale_handle == "l":  # Left edge - resize from right
+            new_width = width + (left - mouse_x)
+            new_left = mouse_x
+        elif self.scale_handle == "r":  # Right edge - resize from left
+            new_width = mouse_x - left
+        
+        # Ensure minimum size
+        if new_width < 1:
+            new_width = 1
+        if new_height < 1:
+            new_height = 1
+        
+        # Update the selection rectangle for preview
+        selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
+        
+        # Update display
+        if self.update_display_callback:
+            self.update_display_callback()
 

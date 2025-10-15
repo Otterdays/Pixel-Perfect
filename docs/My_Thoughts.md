@@ -4,6 +4,46 @@
 
 ---
 
+## October 15, 2025 - Build System Maintenance During Refactoring
+
+**Critical Lesson**: When extracting modules to new files (refactoring), ALWAYS update `BUILDER/build.bat`!
+
+**What Happened:**
+- Multiple refactors extracted code into new modules (Selection Manager, Dialog Manager, File Ops, UI Builder, etc.)
+- Build script still only referenced old module list
+- Would have caused PyInstaller to miss 13+ modules, breaking the executable
+
+**Solution Checklist for Future Refactors:**
+1. ✅ Complete the refactor (extract code to new module)
+2. ✅ List all new modules in `src/`
+3. ✅ Update `BUILDER/build.bat` with `--hidden-import=src.path.to.module`
+4. ✅ Test imports: `python -c "from src.path.to.module import ClassName"`
+5. ✅ Check for relative import errors (use `src.` prefix, not just package name)
+6. ✅ Update SCRATCHPAD.md, CHANGELOG.md, SUMMARY.md
+
+**Common Import Mistake:**
+```python
+# BAD (will fail in PyInstaller)
+from ui.tooltip import create_tooltip
+
+# GOOD (works in dev and build)
+from src.ui.tooltip import create_tooltip
+```
+
+**Grep Pattern to Find All Hidden Imports:**
+```bash
+grep "hidden-import" BUILDER/build.bat
+```
+
+**Testing Command:**
+```bash
+python -c "from src.ui.main_window import MainWindow; print('OK')"
+```
+
+Remember: Build system is part of the refactoring checklist, not an afterthought!
+
+---
+
 ## October 15, 2025 - Selection Manager Extraction
 
 **Context**: Third successful extraction! User confirmed Dialog Manager works, proceeded with Selection Manager extraction (Phase 1).

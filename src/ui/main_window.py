@@ -406,7 +406,7 @@ class MainWindow:
             self.timeline, self.project, self.export_manager, self.presets,
             self.layer_panel, self.timeline_panel
         )
-        self.file_ops.force_canvas_update_callback = self._force_tkinter_canvas_update
+        self.file_ops.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         self.file_ops.update_canvas_from_layers_callback = self._update_canvas_from_layers
         self.file_ops.clear_selection_and_reset_tools_callback = self._clear_selection_and_reset_tools
         
@@ -415,7 +415,7 @@ class MainWindow:
         
         # Set selection manager callbacks and widget references
         self.selection_mgr.update_canvas_callback = self._update_canvas_from_layers
-        self.selection_mgr.update_display_callback = self._update_pixel_display
+        self.selection_mgr.update_display_callback = self.canvas_renderer.update_pixel_display
         self.selection_mgr.select_tool_callback = self._select_tool
         self.selection_mgr.update_tool_selection_callback = self._update_tool_selection
         self.selection_mgr.get_drawing_layer_callback = self._get_drawing_layer
@@ -476,7 +476,7 @@ class MainWindow:
             self.canvas,
             self.color_wheel,
             self.view_mode_var,
-            on_update_display=self._update_pixel_display
+            on_update_display=self.canvas_renderer.update_pixel_display
         )
         self.constants_view = ConstantsView(
             self.palette_content_frame, 
@@ -545,109 +545,6 @@ class MainWindow:
                 self.redo_button.configure(fg_color=("blue", "blue"))
             else:
                 self.redo_button.configure(fg_color=("gray75", "gray25"))
-    
-    def _init_drawing_surface(self):
-        """Initialize the tkinter drawing surface"""
-        # Schedule initial draw after window is fully loaded
-        self.root.after(100, self._initial_draw)
-
-    def _initial_draw(self):
-        """Do the initial drawing of the canvas"""
-        try:
-            # Get canvas size
-            self.drawing_canvas.update_idletasks()
-            width = self.drawing_canvas.winfo_width()
-            height = self.drawing_canvas.winfo_height()
-
-            # Debug: Initial draw - Canvas size (removed for clean console)
-            
-            if width > 1 and height > 1:
-                # Set canvas size to match our pixel grid
-                canvas_pixel_width = self.canvas.width * self.canvas.zoom
-                canvas_pixel_height = self.canvas.height * self.canvas.zoom
-
-                # Debug: Pixel canvas size (removed for clean console)
-
-                # Center the canvas in the available space
-                x_offset = (width - canvas_pixel_width) // 2
-                y_offset = (height - canvas_pixel_height) // 2
-
-                # Debug: Offsets (removed for clean console)
-
-                # Clear canvas
-                self.drawing_canvas.delete("all")
-
-                # Draw grid if enabled
-                if self.canvas.show_grid:
-                    # Debug: Drawing grid (removed for clean console)
-                    self._draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
-
-                # Draw a border around the canvas area with theme color
-                theme = self.theme_manager.get_current_theme()
-                self.drawing_canvas.create_rectangle(
-                    x_offset, y_offset,
-                    x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
-                    outline=theme.canvas_border, width=2, tags="border"
-                )
-
-                # Draw any existing pixels
-                self._draw_all_pixels_on_tkinter(x_offset, y_offset)
-                
-                # Debug: Initial draw complete (removed for clean console)
-            else:
-                # Debug: Canvas not ready yet (removed for clean console)
-                # Try again in a moment
-                self.root.after(200, self._initial_draw)
-        except Exception as e:
-            print(f"Error in initial draw: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def _draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
-        """Draw grid lines on tkinter canvas"""
-        # Use theme color for grid
-        theme = self.theme_manager.get_current_theme()
-        grid_color = theme.grid_color
-
-        # Draw vertical lines with 'grid' tag for easy theme updates
-        for x in range(0, self.canvas.width + 1):
-            screen_x = x_offset + (x * self.canvas.zoom)
-            self.drawing_canvas.create_line(
-                screen_x, y_offset,
-                screen_x, y_offset + canvas_height,
-                fill=grid_color, width=1, tags="grid"
-            )
-
-        # Draw horizontal lines with 'grid' tag
-        for y in range(0, self.canvas.height + 1):
-            screen_y = y_offset + (y * self.canvas.zoom)
-            self.drawing_canvas.create_line(
-                x_offset, screen_y,
-                x_offset + canvas_width, screen_y,
-                fill=grid_color, width=1, tags="grid"
-            )
-
-
-    def _draw_all_pixels_on_tkinter(self, x_offset, y_offset):
-        """Draw all pixels from canvas onto tkinter canvas"""
-        # Draw each pixel as a rectangle on the tkinter canvas
-        for y in range(self.canvas.height):
-            for x in range(self.canvas.width):
-                pixel_color = self.canvas.get_pixel(x, y)
-                if pixel_color[3] > 0:  # Only draw non-transparent pixels
-                    screen_x = x_offset + (x * self.canvas.zoom)
-                    screen_y = y_offset + (y * self.canvas.zoom)
-
-                    # Convert RGBA to hex color for tkinter
-                    r, g, b, a = pixel_color
-                    hex_color = f"#{r:02x}{g:02x}{b:02x}"
-
-                    # Draw pixel as rectangle with "pixels" tag
-                    self.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
-                        fill=hex_color, outline="", tags="pixels"
-                    )
     
     def _show_brush_size_menu(self, event):
         """Show brush size selection popup menu"""
@@ -799,13 +696,17 @@ class MainWindow:
             selection_tool = self.tools.get("selection")
             if selection_tool and selection_tool.has_selection:
                 selection_tool.clear_selection()
-                self._update_pixel_display()
+                self.canvas_renderer.update_pixel_display()
                 # Debug: Selection cleared - switched to different tool (removed for clean console)
         
         self.current_tool = tool_id
         
         # Update tool button appearance
         self._update_tool_selection()
+        
+        # Clear scale button if not in scaling mode
+        if hasattr(self, 'selection_mgr') and self.selection_mgr.scale_btn and not self.selection_mgr.is_scaling:
+            self.selection_mgr.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
         
         # Update canvas cursor based on selected tool
         if hasattr(self, 'drawing_canvas') and tool_id in self.tools:
@@ -933,7 +834,7 @@ class MainWindow:
             self._update_canvas_from_layers()
             
             # Update display immediately
-            self._force_tkinter_canvas_update()
+            self.canvas_renderer.force_canvas_update()
             
             # Log resize info
             preserved_w = min(old_width, new_width)
@@ -1000,7 +901,7 @@ class MainWindow:
         self._update_canvas_from_layers()
         
         # Update display
-        self._force_tkinter_canvas_update()
+        self.canvas_renderer.force_canvas_update()
         
         print(f"[Custom Canvas Resize] Resized to {width}x{height}, preserved {preserve_width}x{preserve_height} pixels")
     
@@ -1013,8 +914,8 @@ class MainWindow:
         if zoom_str in zoom_map:
             self.canvas.set_zoom(zoom_map[zoom_str])
             # Update display immediately
-            self._force_tkinter_canvas_update()
-    
+        self.canvas_renderer.force_canvas_update()
+
     def _on_palette_change(self, palette_name: str):
         """Handle palette change - automatically switch to Grid view"""
         self.palette.load_preset(palette_name)
@@ -1297,7 +1198,7 @@ class MainWindow:
         if saved_color:
             # Set as primary color
             self.palette.set_primary_color_by_rgba(saved_color)
-            self._update_pixel_display()
+            self.canvas_renderer.update_pixel_display()
             print(f"[SAVED] Loaded color {saved_color} from slot {slot_index}")
     
     def _export_saved_colors(self):
@@ -1493,7 +1394,7 @@ class MainWindow:
         # This prevents colors from being added to the preset palette grid
         
         # Update color display in UI
-        self._update_pixel_display()
+        self.canvas_renderer.update_pixel_display()
         
         # Auto-switch to brush tool for immediate painting
         if self.current_tool != "brush":
@@ -1536,8 +1437,8 @@ class MainWindow:
         """Toggle grid visibility"""
         self.canvas.toggle_grid()
         self._update_grid_button_text()
-        self._force_tkinter_canvas_update()
-
+        self.canvas_renderer.force_canvas_update()
+    
     def _update_grid_button_text(self):
         """Update grid button text to show current state"""
         if self.canvas.show_grid:
@@ -1551,7 +1452,7 @@ class MainWindow:
         """Toggle grid overlay mode (grid on top of pixels)"""
         self.grid_overlay = not self.grid_overlay
         self._update_grid_overlay_button_text()
-        self._force_tkinter_canvas_update()
+        self.canvas_renderer.force_canvas_update()
     
     def _update_grid_overlay_button_text(self):
         """Update grid overlay button text to show current state"""
@@ -1621,16 +1522,6 @@ class MainWindow:
         close_btn = ctk.CTkButton(file_menu, text="Close", command=file_menu.destroy)
         close_btn.pack(pady=10, padx=10, fill="x")
     
-
-    def _force_tkinter_canvas_update(self):
-        """Force immediate tkinter canvas display update"""
-        # Redraw the canvas surface (pixels + grid)
-        self.canvas._redraw_surface()
-        # Update the tkinter canvas to show current grid state
-        self._update_pixel_display()
-        # Force tkinter to process all pending events and update display
-        self.root.update_idletasks()
-        self.root.update()
 
     def _on_layer_changed(self):
         """Handle layer changes"""
@@ -1777,7 +1668,7 @@ class MainWindow:
                 layer.pixels = state.pixels
                 self._on_layer_changed()
                 # Force immediate tkinter canvas update for instant visual feedback
-                self._force_tkinter_canvas_update()
+                self.canvas_renderer.force_canvas_update()
                 # Force immediate GUI refresh for instant response
                 self.root.update_idletasks()
     
@@ -1796,7 +1687,7 @@ class MainWindow:
                 layer.pixels = state.pixels
                 self._on_layer_changed()
                 # Force immediate tkinter canvas update for instant visual feedback
-                self._force_tkinter_canvas_update()
+                self.canvas_renderer.force_canvas_update()
                 # Force immediate GUI refresh for instant response
                 self.root.update_idletasks()
     
@@ -1816,101 +1707,7 @@ class MainWindow:
         if active_layer:
             self.canvas.pixels = active_layer.pixels.copy()
             self.canvas._redraw_surface()
-    
-    def _draw_shape_preview(self, tool, canvas_x: int, canvas_y: int, color: Tuple[int, int, int, int]):
-        """Draw live preview of shape tools (Line, Square, Circle) on tkinter canvas"""
-        import math
-        
-        # Clear any existing preview
-        self.drawing_canvas.delete("shape_preview")
-        
-        # Get canvas dimensions and offsets
-        canvas_width = self.drawing_canvas.winfo_width()
-        canvas_height = self.drawing_canvas.winfo_height()
-        canvas_pixel_width = self.canvas.width * self.canvas.zoom
-        canvas_pixel_height = self.canvas.height * self.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
-        
-        # Convert color to hex for tkinter
-        color_hex = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
-        
-        # LINE PREVIEW
-        if self.current_tool == "line" and tool.is_drawing:
-            start_x, start_y = tool.start_point
-            
-            # Convert canvas coords to screen coords
-            screen_x1 = x_offset + (start_x * self.canvas.zoom) + (self.canvas.zoom // 2)
-            screen_y1 = y_offset + (start_y * self.canvas.zoom) + (self.canvas.zoom // 2)
-            screen_x2 = x_offset + (canvas_x * self.canvas.zoom) + (self.canvas.zoom // 2)
-            screen_y2 = y_offset + (canvas_y * self.canvas.zoom) + (self.canvas.zoom // 2)
-            
-            # Draw preview line
-            self.drawing_canvas.create_line(
-                screen_x1, screen_y1, screen_x2, screen_y2,
-                fill=color_hex, width=3, tags="shape_preview"
-            )
-        
-        # SQUARE/RECTANGLE PREVIEW
-        elif self.current_tool == "rectangle" and tool.is_drawing:
-            start_x, start_y = tool.start_point
-            
-            # Calculate rectangle bounds
-            left = min(start_x, canvas_x)
-            right = max(start_x, canvas_x)
-            top = min(start_y, canvas_y)
-            bottom = max(start_y, canvas_y)
-            
-            # Convert to screen coords
-            screen_x1 = x_offset + (left * self.canvas.zoom)
-            screen_y1 = y_offset + (top * self.canvas.zoom)
-            screen_x2 = x_offset + ((right + 1) * self.canvas.zoom)
-            screen_y2 = y_offset + ((bottom + 1) * self.canvas.zoom)
-            
-            # Draw preview rectangle
-            if tool.filled:
-                self.drawing_canvas.create_rectangle(
-                    screen_x1, screen_y1, screen_x2, screen_y2,
-                    fill=color_hex, outline="", tags="shape_preview"
-                )
-            else:
-                self.drawing_canvas.create_rectangle(
-                    screen_x1, screen_y1, screen_x2, screen_y2,
-                    outline=color_hex, width=3, tags="shape_preview"
-                )
-        
-        # CIRCLE PREVIEW
-        elif self.current_tool == "circle" and tool.is_drawing:
-            center_x, center_y = tool.center
-            
-            # Calculate radius in screen coordinates
-            dx = canvas_x - center_x
-            dy = canvas_y - center_y
-            radius_pixels = int(math.sqrt(dx * dx + dy * dy))
-            radius_screen = radius_pixels * self.canvas.zoom
-            
-            # Convert center to screen coords
-            screen_cx = x_offset + (center_x * self.canvas.zoom) + (self.canvas.zoom // 2)
-            screen_cy = y_offset + (center_y * self.canvas.zoom) + (self.canvas.zoom // 2)
-            
-            # Calculate bounding box for oval
-            screen_x1 = screen_cx - radius_screen
-            screen_y1 = screen_cy - radius_screen
-            screen_x2 = screen_cx + radius_screen
-            screen_y2 = screen_cy + radius_screen
-            
-            # Draw preview circle (oval in tkinter)
-            if tool.filled:
-                self.drawing_canvas.create_oval(
-                    screen_x1, screen_y1, screen_x2, screen_y2,
-                    fill=color_hex, outline="", tags="shape_preview"
-                )
-            else:
-                self.drawing_canvas.create_oval(
-                    screen_x1, screen_y1, screen_x2, screen_y2,
-                    outline=color_hex, width=3, tags="shape_preview"
-                )
-    
+
     def _tkinter_screen_to_canvas_coords(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
         """Convert tkinter screen coordinates to canvas coordinates"""
         # Get drawing canvas dimensions
@@ -1937,347 +1734,7 @@ class MainWindow:
         canvas_coord_y -= self.pan_offset_y
 
         return canvas_coord_x, canvas_coord_y
-    
-    def _draw_brush_preview(self, canvas_x: int, canvas_y: int):
-        """Draw live preview of brush tool on tkinter canvas"""
-        # Clear any existing preview
-        self.drawing_canvas.delete("brush_preview")
-        
-        # Get canvas dimensions and offsets
-        canvas_width = self.drawing_canvas.winfo_width()
-        canvas_height = self.drawing_canvas.winfo_height()
-        canvas_pixel_width = self.canvas.width * self.canvas.zoom
-        canvas_pixel_height = self.canvas.height * self.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
-        
-        # Calculate offset for centering (like _draw_brush_at)
-        offset = self.brush_size // 2
-        
-        # Draw preview for each pixel in the brush
-        for dy in range(self.brush_size):
-            for dx in range(self.brush_size):
-                px = canvas_x - offset + dx
-                py = canvas_y - offset + dy
-                
-                # Check bounds
-                if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
-                    screen_x = x_offset + (px * self.canvas.zoom)
-                    screen_y = y_offset + (py * self.canvas.zoom)
-                    
-                    # Draw semi-transparent preview with current color
-                    r, g, b, a = self.palette.get_primary_color()
-                    color_hex = f"#{r:02x}{g:02x}{b:02x}"
-                    
-                    self.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
-                        fill=color_hex, outline=color_hex, stipple="gray50",
-                        tags="brush_preview"
-                    )
-        
-        # Draw outline around brush area
-        screen_x1 = x_offset + ((canvas_x - offset) * self.canvas.zoom)
-        screen_y1 = y_offset + ((canvas_y - offset) * self.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.brush_size) * self.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.brush_size) * self.canvas.zoom)
-        
-        self.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ffffff", width=2, dash=(4, 4),
-            tags="brush_preview"
-        )
-    
-    def _draw_eraser_preview(self, canvas_x: int, canvas_y: int):
-        """Draw live preview of eraser tool on tkinter canvas"""
-        # Clear any existing preview
-        self.drawing_canvas.delete("eraser_preview")
-        
-        # Get canvas dimensions and offsets
-        canvas_width = self.drawing_canvas.winfo_width()
-        canvas_height = self.drawing_canvas.winfo_height()
-        canvas_pixel_width = self.canvas.width * self.canvas.zoom
-        canvas_pixel_height = self.canvas.height * self.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
-        
-        # Calculate offset for centering (like _erase_at)
-        offset = self.eraser_size // 2
-        
-        # Draw preview for each pixel in the eraser (show as red X pattern)
-        for dy in range(self.eraser_size):
-            for dx in range(self.eraser_size):
-                px = canvas_x - offset + dx
-                py = canvas_y - offset + dy
-                
-                # Check bounds
-                if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
-                    screen_x = x_offset + (px * self.canvas.zoom)
-                    screen_y = y_offset + (py * self.canvas.zoom)
-                    
-                    # Draw semi-transparent red square to indicate erasing
-                    self.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
-                        fill="#ff0000", outline="#ff0000", stipple="gray50",
-                        tags="eraser_preview"
-                    )
-        
-        # Draw outline around eraser area
-        screen_x1 = x_offset + ((canvas_x - offset) * self.canvas.zoom)
-        screen_y1 = y_offset + ((canvas_y - offset) * self.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.eraser_size) * self.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.eraser_size) * self.canvas.zoom)
-        
-        self.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ff0000", width=2, dash=(4, 4),
-            tags="eraser_preview"
-        )
-    
-    def _draw_texture_preview(self, tool, canvas_x: int, canvas_y: int):
-        """Draw live preview of texture tool on tkinter canvas"""
-        # Clear any existing preview
-        self.drawing_canvas.delete("texture_preview")
-        
-        # Get texture data
-        texture_data = tool.get_preview_texture()
-        if texture_data is None:
-            return
-        
-        # Get canvas dimensions and offsets
-        canvas_width = self.drawing_canvas.winfo_width()
-        canvas_height = self.drawing_canvas.winfo_height()
-        canvas_pixel_width = self.canvas.width * self.canvas.zoom
-        canvas_pixel_height = self.canvas.height * self.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.pan_offset_y
-        
-        # Get texture dimensions
-        tex_height, tex_width = texture_data.shape[0], texture_data.shape[1]
-        
-        # Draw each pixel of the texture
-        for ty in range(tex_height):
-            for tx in range(tex_width):
-                pixel_color = texture_data[ty, tx]
-                if pixel_color[3] > 0:  # Only draw non-transparent pixels
-                    # Calculate screen position
-                    px = canvas_x + tx
-                    py = canvas_y + ty
-                    
-                    # Check bounds
-                    if 0 <= px < self.canvas.width and 0 <= py < self.canvas.height:
-                        screen_x = x_offset + (px * self.canvas.zoom)
-                        screen_y = y_offset + (py * self.canvas.zoom)
-                        
-                        # Convert color to hex
-                        color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
-                        
-                        # Draw pixel rectangle with semi-transparency effect
-                        self.drawing_canvas.create_rectangle(
-                            screen_x, screen_y,
-                            screen_x + self.canvas.zoom, screen_y + self.canvas.zoom,
-                            fill=color_hex, outline=color_hex, stipple="gray50",
-                            tags="texture_preview"
-                        )
-        
-        # Draw outline around texture area
-        screen_x1 = x_offset + (canvas_x * self.canvas.zoom)
-        screen_y1 = y_offset + (canvas_y * self.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x + tex_width) * self.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y + tex_height) * self.canvas.zoom)
-        
-        self.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ffffff", width=2, dash=(4, 4),
-            tags="texture_preview"
-        )
 
-    def _update_pixel_display(self):
-        """Update tkinter display to show all pixel changes (full redraw)"""
-        # Prevent recursion
-        if self._updating_display:
-            return
-        self._updating_display = True
-        
-        try:
-            width = self.drawing_canvas.winfo_width()
-            height = self.drawing_canvas.winfo_height()
-
-            if width > 1 and height > 1:
-                # Calculate canvas display size
-                canvas_pixel_width = self.canvas.width * self.canvas.zoom
-                canvas_pixel_height = self.canvas.height * self.canvas.zoom
-
-                # Calculate offsets to center the canvas
-                x_offset = (width - canvas_pixel_width) // 2
-                y_offset = (height - canvas_pixel_height) // 2
-                
-                # Apply pan offset
-                x_offset += self.pan_offset_x * self.canvas.zoom
-                y_offset += self.pan_offset_y * self.canvas.zoom
-
-                # Clear canvas
-                self.drawing_canvas.delete("all")
-
-                # Draw grid if enabled
-                if self.canvas.show_grid:
-                    self._draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
-
-                # Draw a border around the canvas area with theme color
-                theme = self.theme_manager.get_current_theme()
-                self.drawing_canvas.create_rectangle(
-                    x_offset, y_offset,
-                    x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
-                    outline=theme.canvas_border, width=2, tags="border"
-                )
-
-                # Draw all pixels from the canvas
-                self._draw_all_pixels_on_tkinter(x_offset, y_offset)
-                
-                # Draw selection rectangle if active
-                self._draw_selection_on_tkinter(x_offset, y_offset)
-                
-                # Raise grid above pixels if overlay mode is enabled
-                if self.grid_overlay and self.canvas.show_grid:
-                    self.drawing_canvas.tag_raise("grid")
-        finally:
-            self._updating_display = False
-
-    def _draw_selection_on_tkinter(self, x_offset: int, y_offset: int):
-        """Draw selection rectangle on tkinter canvas"""
-        # Check if selection tool is active or if there's an active selection
-        selection_tool = self.tools.get("selection")
-        if not selection_tool:
-            return
-        
-        # Draw selection rectangle if it exists
-        if selection_tool.selection_rect and (selection_tool.is_selecting or selection_tool.has_selection):
-            left, top, width, height = selection_tool.selection_rect
-            zoom = self.canvas.zoom
-            
-            # Convert canvas coordinates to screen coordinates
-            screen_x1 = x_offset + (left * zoom)
-            screen_y1 = y_offset + (top * zoom)
-            screen_x2 = x_offset + ((left + width) * zoom)
-            screen_y2 = y_offset + ((top + height) * zoom)
-            
-            # Draw white selection rectangle
-            self.drawing_canvas.create_rectangle(
-                screen_x1, screen_y1, screen_x2, screen_y2,
-                outline="white", width=2, tags="selection"
-            )
-            
-            # Draw corner markers for better visibility
-            corner_size = 6
-            # Top-left
-            self.drawing_canvas.create_line(screen_x1, screen_y1, screen_x1 + corner_size, screen_y1, fill="white", width=3, tags="selection")
-            self.drawing_canvas.create_line(screen_x1, screen_y1, screen_x1, screen_y1 + corner_size, fill="white", width=3, tags="selection")
-            # Top-right
-            self.drawing_canvas.create_line(screen_x2, screen_y1, screen_x2 - corner_size, screen_y1, fill="white", width=3, tags="selection")
-            self.drawing_canvas.create_line(screen_x2, screen_y1, screen_x2, screen_y1 + corner_size, fill="white", width=3, tags="selection")
-            # Bottom-left
-            self.drawing_canvas.create_line(screen_x1, screen_y2, screen_x1 + corner_size, screen_y2, fill="white", width=3, tags="selection")
-            self.drawing_canvas.create_line(screen_x1, screen_y2, screen_x1, screen_y2 - corner_size, fill="white", width=3, tags="selection")
-            # Bottom-right
-            self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2 - corner_size, screen_y2, fill="white", width=3, tags="selection")
-            self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2, screen_y2 - corner_size, fill="white", width=3, tags="selection")
-            
-            # Draw selection handles (always visible when there's a selection)
-            handle_size = 8
-            # Draw corner handles
-            self.canvas_renderer.draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")  # Top-left
-            self.canvas_renderer.draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")  # Top-right
-            self.canvas_renderer.draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")  # Bottom-left
-            self.canvas_renderer.draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")  # Bottom-right
-            
-            # Draw edge handles
-            mid_x = (screen_x1 + screen_x2) / 2
-            mid_y = (screen_y1 + screen_y2) / 2
-            self.canvas_renderer.draw_scale_handle(mid_x, screen_y1, handle_size, "orange")  # Top
-            self.canvas_renderer.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")  # Bottom
-            self.canvas_renderer.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")  # Left
-            self.canvas_renderer.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")  # Right
-        
-        # Draw move preview if actively moving selection
-        move_tool = self.tools.get("move")
-        if (move_tool and move_tool.is_moving and selection_tool and 
-            selection_tool.selected_pixels is not None and selection_tool.selection_rect):
-            left, top, width, height = selection_tool.selection_rect
-            zoom = self.canvas.zoom
-            
-            # Draw the selected pixels at the current position
-            for py in range(height):
-                for px in range(width):
-                    if (py < selection_tool.selected_pixels.shape[0] and 
-                        px < selection_tool.selected_pixels.shape[1]):
-                        pixel_color = tuple(selection_tool.selected_pixels[py, px])
-                        # Only draw non-transparent pixels for preview
-                        if pixel_color[3] > 0:
-                            screen_x = x_offset + ((left + px) * zoom)
-                            screen_y = y_offset + ((top + py) * zoom)
-                            
-                            # Convert RGBA to hex for tkinter
-                            hex_color = f"#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}"
-                            
-                            # Draw pixel
-                            self.drawing_canvas.create_rectangle(
-                                screen_x, screen_y,
-                                screen_x + zoom, screen_y + zoom,
-                                fill=hex_color, outline="", tags="move_preview"
-                            )
-        
-        # Draw copy preview if in placement mode
-        if (hasattr(self, 'selection_mgr') and self.selection_mgr.is_placing_copy and 
-            self.selection_mgr.copy_preview_pos and self.selection_mgr.copy_buffer is not None and 
-            self.selection_mgr.copy_dimensions):
-            preview_x, preview_y = self.selection_mgr.copy_preview_pos
-            width, height = self.selection_mgr.copy_dimensions
-            zoom = self.canvas.zoom
-            
-            # Draw preview pixels with semi-transparency effect (stipple pattern)
-            for py in range(height):
-                for px in range(width):
-                    if py < self.selection_mgr.copy_buffer.shape[0] and px < self.selection_mgr.copy_buffer.shape[1]:
-                        pixel_color = tuple(self.selection_mgr.copy_buffer[py, px])
-                        if pixel_color[3] > 0:  # Only draw non-transparent pixels
-                            canvas_x = preview_x + px
-                            canvas_y = preview_y + py
-                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                                screen_x = x_offset + (canvas_x * zoom)
-                                screen_y = y_offset + (canvas_y * zoom)
-                                
-                                # Draw semi-transparent preview rectangle
-                                color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
-                                self.drawing_canvas.create_rectangle(
-                                    screen_x, screen_y,
-                                    screen_x + zoom, screen_y + zoom,
-                                    fill=color_hex,
-                                    outline="",
-                                    stipple="gray50",  # Semi-transparent effect
-                                    tags="copy_preview"
-                                )
-            
-            # Draw preview boundary
-            preview_screen_x1 = x_offset + (preview_x * zoom)
-            preview_screen_y1 = y_offset + (preview_y * zoom)
-            preview_screen_x2 = x_offset + ((preview_x + width) * zoom)
-            preview_screen_y2 = y_offset + ((preview_y + height) * zoom)
-            
-            self.drawing_canvas.create_rectangle(
-                preview_screen_x1, preview_screen_y1,
-                preview_screen_x2, preview_screen_y2,
-                outline="cyan",
-                width=2,
-                dash=(4, 4),  # Dashed line
-                tags="copy_preview"
-            )
-    
-    def _update_single_pixel(self, canvas_x: int, canvas_y: int, old_color):
-        """Update only a single pixel for better performance"""
-        # For now, just trigger a full update to ensure consistency
-        # This prevents the disappearing pixel bug
-        self._update_pixel_display()
 
     def _on_frame_changed(self):
         """Handle frame change in timeline"""
@@ -2287,7 +1744,7 @@ class MainWindow:
             self.canvas.pixels = current_frame.pixels.copy()
             self.canvas._redraw_surface()
             # Update the tkinter display
-            self._update_pixel_display()
+            self.canvas_renderer.update_pixel_display()
     
     def _toggle_animation(self):
         """Toggle animation playback"""

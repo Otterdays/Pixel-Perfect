@@ -442,3 +442,13 @@ class CanvasRenderer:
         # For now, just trigger a full update to ensure consistency
         # This prevents the disappearing pixel bug
         self.update_pixel_display()
+
+    def force_canvas_update(self):
+        """Force immediate tkinter canvas display update"""
+        # Redraw the canvas surface (pixels + grid)
+        self.app.canvas._redraw_surface()
+        # Update the tkinter canvas to show current grid state
+        self.update_pixel_display()
+        # Force tkinter to process all pending events and update display
+        self.app.root.update_idletasks()
+        self.app.root.update()

@@ -1,5 +1,29 @@
 # Pixel Perfect - Changelog
 
+## Version 1.67 - Build System Compatibility Update
+**Date**: October 15, 2025  
+**Type**: Build System / Module Integration
+
+### 🔨 Build System Updates for Refactored Architecture
+**Updated build.bat to support all newly extracted modules from recent refactors**
+
+**Changes:**
+- ✅ Added 13 new hidden imports to PyInstaller build script
+- ✅ Fixed import error in `ui_builder.py` (`ui.tooltip` → `src.ui.tooltip`)
+- ✅ Verified all modules import correctly
+- ✅ Build system now compatible with v1.65 Selection Manager extraction
+- ✅ Build system now compatible with v1.64 Dialog Manager extraction
+- ✅ Build system now compatible with v1.62 File Operations Manager extraction
+
+**New Modules in Build:**
+- Core: `canvas_renderer`, `event_dispatcher`, `window_state_manager`
+- UI: `dialog_manager`, `file_operations_manager`, `selection_manager`, `theme_dialog_manager`, `ui_builder`
+- Palette Views: `grid_view`, `primary_view`, `constants_view`, `saved_view`
+
+**Impact:** Application can now be built into standalone executable with all refactored components included.
+
+---
+
 ## Version 1.59 - Complete Application Restoration & Tool Consistency
 **Date**: January 2025  
 **Type**: Critical Bug Fixes / Complete Functionality Restoration

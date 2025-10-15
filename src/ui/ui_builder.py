@@ -8,7 +8,7 @@ import customtkinter as ctk
 import os
 from PIL import Image
 from typing import Dict, Callable
-from ui.tooltip import create_tooltip
+from src.ui.tooltip import create_tooltip
 
 class UIBuilder:
     """Builds all UI components for the main window."""

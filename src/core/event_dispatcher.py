@@ -72,8 +72,8 @@ class EventDispatcher:
             # Update grid centering if canvas exists
             if hasattr(self.main_window, 'canvas') and self.main_window.canvas:
                 # Trigger a redraw to recenter the grid
-                if hasattr(self.main_window, '_update_pixel_display'):
-                    self.main_window._update_pixel_display()
+                if hasattr(self.main_window, 'canvas_renderer'):
+                    self.main_window.canvas_renderer.update_pixel_display()
     
     def on_restore_btn_enter(self, button):
         """Handle mouse enter on restore button"""
@@ -207,7 +207,7 @@ class EventDispatcher:
                     # Click outside handles - cancel scaling mode
                     self.main_window.selection_mgr.is_scaling = False
                     self.main_window.selection_mgr.scale_handle = None
-                    self.main_window._update_pixel_display()
+                    self.main_window.canvas_renderer.update_pixel_display()
                     return
         
         # Check if we're in bounds
@@ -261,13 +261,16 @@ class EventDispatcher:
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
                 tool.is_erasing = True  # Set erasing state
-        elif self.main_window.current_tool == "fill":
-            # Handle fill tool with layer-based approach for consistency
+        elif self.main_window.current_tool in ["fill", "line", "rectangle", "circle"]:
+            # Handle fill and shape tools with layer-based approach for consistency
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
                 tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, current_color)
-                self.main_window._update_canvas_from_layers()
-                self.main_window.canvas_renderer.update_pixel_display()
+                if self.main_window.current_tool == "fill":
+                    # Fill tool updates immediately
+                    self.main_window._update_canvas_from_layers()
+                    self.main_window.canvas_renderer.update_pixel_display()
+                # Shape tools don't update on mouse down, only on mouse up
         else:
             # Call tool's on_mouse_down method (standard interface) for other tools
             tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
@@ -284,8 +287,11 @@ class EventDispatcher:
         
         # Handle scaling mode
         if self.main_window.selection_mgr.is_scaling and self.main_window.selection_mgr.scale_handle:
-            # Finish scaling
-            self.main_window.scaling_handle = None
+            # Finish scaling - apply the scale
+            selection_tool = self.main_window.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect:
+                self.main_window.selection_mgr.apply_scale(selection_tool.selection_rect)
+            self.main_window.selection_mgr.scale_handle = None
             self.main_window.canvas_renderer.update_pixel_display()
             return
         
@@ -306,8 +312,16 @@ class EventDispatcher:
         # Get current drawing color (from palette or color wheel based on view mode)
         current_color = self.main_window.get_current_color()
         
-        # Call tool's on_mouse_up method (standard interface)
-        tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
+        # For shape tools, we need to pass the layer instead of canvas
+        if self.main_window.current_tool in ["line", "rectangle", "circle"]:
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer:
+                tool.on_mouse_up(draw_layer, canvas_x, canvas_y, 1, current_color)
+                self.main_window._update_canvas_from_layers()
+        else:
+            # Call tool's on_mouse_up method (standard interface)
+            tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
+        
         self.main_window.canvas_renderer.update_pixel_display()
         
         # Clear dragging state
@@ -337,7 +351,7 @@ class EventDispatcher:
         # Handle scaling mode
         if self.main_window.selection_mgr.is_scaling and self.main_window.selection_mgr.scale_handle:
             canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
-            self.main_window._update_scaling(canvas_x, canvas_y)
+            self.main_window.selection_mgr.update_scaling(canvas_x, canvas_y)
             return
         
         # Convert tkinter screen coordinates to canvas coordinates
