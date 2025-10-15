@@ -366,11 +366,11 @@ class UIBuilder:
         
         # Create a container frame for palette views (after radio buttons)
         palette_content_frame = ctk.CTkFrame(palette_frame, fg_color="transparent")
-        palette_content_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0)
         
-        # Color display container - centered
+        # Color display container - centered (no top padding to eliminate gap)
         color_display_container = ctk.CTkFrame(palette_frame, fg_color="transparent")
-        color_display_container.pack(fill="both", expand=True, pady=5, padx=10)
+        color_display_container.pack(fill="both", expand=True, pady=0, padx=10)
         
         # Create container frames for each view (create once, toggle visibility)
         grid_view_frame = ctk.CTkFrame(color_display_container)

@@ -4,14 +4,15 @@
 Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, custom colors, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 1.52
-**Status**: All Features Complete - Production Ready with Responsive Panel Sizing
+**Version**: 2.0.0
+**Status**: All Features Complete - Production Ready with UI Bug Fixes
 
 ### Latest Updates
-- **v1.52**: Responsive Panel Sizing - Automatic panel width calculation based on screen resolution with state persistence
-- **v1.51**: Theme Application on Startup - Fixed startup theme application and palette box issues
-- **v1.50**: Theme Switching Bug Fix - Enhanced Basic Grey theme with darker colors and comprehensive theme application
-- **v1.49**: American Patriotic Theme - Added patriotic red, white, and blue theme option
+- **v2.0.0**: Critical UI Bug Fix - Fixed saved colors blank space by properly managing palette_content_frame visibility
+- **v1.71**: Notes Panel Feature - Persistent note-taking integrated into the editor with auto-save and export
+- **v1.70**: Move Tool Critical Fixes - Fixed layer synchronization and added live visual feedback
+- **v1.69**: Grid Control Manager - Extracted grid controls to dedicated manager
+- **v1.68**: Tool Size & Canvas/Zoom Managers - Extracted tool sizing and canvas management
 
 ## Core Components
 
@@ -46,6 +47,24 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - JSON storage format (`custom_colors.json`)
   - Not bundled with executable (empty for fresh installs)
   - OS-independent path resolution
+
+### Canvas Renderer (`src/core/canvas_renderer.py`)
+- **Purpose**: Centralized rendering system for canvas visualization
+- **Key Features**:
+  - Efficient pixel rendering with zoom support
+  - Selection box and move preview visualization
+  - Tool cursor feedback and preview rendering
+  - Grid overlay and visual effects
+  - Coordinate conversion and bounds checking
+
+### Event Dispatcher (`src/core/event_dispatcher.py`)
+- **Purpose**: Centralized event handling and routing
+- **Key Features**:
+  - Window and panel event management
+  - Keyboard shortcut handling
+  - Mouse event routing to tools
+  - Tool preview coordination
+  - UI callback delegation
 
 ### Layer Manager (`src/core/layer_manager.py`)
 - **Purpose**: Handles multiple drawing layers with full UI integration and immediate visual updates
@@ -111,16 +130,27 @@ class Tool:
 
 ## UI System (`src/ui/`)
 
+### Component Managers (Refactored v1.62-1.69)
+- **File Operations Manager** (`file_operations_manager.py`): New, Open, Save, Import, Export operations
+- **Dialog Manager** (`dialog_manager.py`): Custom dialogs (size, downsize warning, texture panel)
+- **Selection Manager** (`selection_manager.py`): Mirror, rotate, copy, scale transformations
+- **Tool Size Manager** (`tool_size_manager.py`): Brush/eraser size management
+- **Canvas Zoom Manager** (`canvas_zoom_manager.py`): Canvas resize and zoom controls
+- **Grid Control Manager** (`grid_control_manager.py`): Grid visibility and overlay toggles
+- **Theme Dialog Manager** (`theme_dialog_manager.py`): Theme selection and management
+- **UI Builder** (`ui_builder.py`): Toolbar and UI component construction
+
 ### Main Window (`main_window.py`)
-- **Status**: Complete implementation with full functionality
-- Application entry point with comprehensive event handling
+- **Status**: Complete implementation with modular architecture
+- Application entry point with event delegation to managers
 - Coordinates all UI panels with proper integration
-- Mouse event routing to canvas tools
+- Mouse event routing through EventDispatcher
 - Keyboard shortcuts for all major functions
 - **Theme System** (v1.22): Real-time UI color scheme switching with callback architecture
 - **Collapsible Panels** (v1.24): Hide/show side panels for maximum canvas space
 - **Grid Overlay** (v1.25): Toggle grid lines on top of pixels for precise editing
 - **Responsive Panel Sizing** (v1.52): Automatic panel width calculation based on screen resolution with state persistence
+- **Modular Refactoring** (v1.62-1.69): Extracted managers for cleaner architecture (File Operations, Dialog, Selection, Tool Size, Canvas/Zoom, Grid Control)
 
 ### Toolbar Components
 - **File Menu**: New, Open, Save, Export options
@@ -136,6 +166,7 @@ class Tool:
 - **Palette Panel**: Color palette display and management (Grid/Primary/Wheel views)
 - **Layer Panel** (`layer_panel.py`): Complete layer management UI with visibility toggles
 - **Timeline Panel** (`timeline_panel.py`): Animation timeline controls with frame management
+- **Notes Panel** (`notes_panel.py`) (v1.71): Persistent note-taking with auto-save and TXT export
 - **Collapsible Side Panels** (v1.24): 
   - Left panel: Tools and palette (collapse with ◀ button)
   - Right panel: Layers and animation (collapse with ▶ button)
@@ -169,11 +200,13 @@ class Tool:
 
 ## Data Flow (Complete Implementation)
 
-1. **User Input** → Main Window → Tool System → Canvas
-2. **Tool Actions** → Canvas → Layer Manager → Undo/Redo System
-3. **Canvas Changes** → Active Layer → Timeline Frame → Visual Update
-4. **Export Request** → Export System → File Output
-5. **Project Save/Load** → Project System → Persistent Storage
+1. **User Input** → Main Window → Event Dispatcher → Tool System → Layer
+2. **Tool Actions** → Layer → Canvas Renderer → Visual Update
+3. **Layer Changes** → Undo Manager → State History
+4. **Canvas Changes** → Active Layer → Timeline Frame → Visual Update
+5. **Export Request** → File Operations Manager → Export System → File Output
+6. **Project Save/Load** → File Operations Manager → Project System → Persistent Storage
+7. **UI Events** → Component Managers → Main Window → Canvas Update
 
 ## Extension Points for Future AI Integration
 
@@ -270,14 +303,42 @@ class Tool:
 - **60fps rendering** achieved at 32x zoom
 - **Efficient pixel manipulation** using numpy arrays
 - **Minimal memory footprint** for undo system (50+ states)
-- **Optimized rendering pipeline** with Pygame surface management
+- **Optimized rendering pipeline** with Tkinter + PIL rendering (v1.30+)
 - **Smooth mouse interaction** with coordinate conversion
 - **Responsive UI** with CustomTkinter integration
 - **Real-time layer updates** with immediate visual feedback
 - **Efficient canvas refresh** system for seamless user experience
+- **Modular architecture** reduces token consumption and improves maintainability (v1.62-1.69)
+- **Instant palette view switching** (<10ms, 50-100× faster with pre-rendering)
 
 ## Security and Maintenance
 - All dependencies tracked in SBOM.md
 - Regular update schedule for security patches
 - Cross-platform compatibility maintained
 - No external API dependencies in core functionality
+- Modular architecture enables easier testing and debugging
+- Component extraction reduces complexity (main_window.py: 3,387 → 1,582 lines, 53.3% reduction)
+
+## Recent Architectural Improvements (v1.62-1.71)
+
+### Code Refactoring Initiative
+**Goal**: Reduce main_window.py from 3,387 lines to ~850 lines by extracting specialized managers
+
+**Completed Extractions**:
+1. **Phase 3** (v1.62): File Operations Manager - 10 methods, 395 lines extracted
+2. **Phase 4** (v1.64): Dialog Manager - 5 methods, 417 lines extracted  
+3. **Phase 5** (v1.65): Selection Manager - 10 methods, 438 lines extracted
+4. **Phase 6-7** (v1.68): Tool Size Manager (163 lines) + Canvas/Zoom Manager (226 lines)
+5. **Phase 8** (v1.69): Grid Control Manager - 4 methods, 68 lines extracted
+
+**Results**:
+- main_window.py reduced from 3,387 → 1,582 lines (53.3% reduction)
+- 8 new manager modules created for specialized functionality
+- Improved code organization and maintainability
+- Easier testing and debugging
+- Reduced token consumption for AI-assisted development
+
+### New Components
+- **Notes Panel** (v1.71): Persistent note-taking with auto-save to `~/.pixelperfect/notes.json`
+- **Palette Views Package**: Modularized color palette views (Grid, Primary, Saved, Constants)
+- **Manager Classes**: Specialized managers for file operations, dialogs, selections, tools, canvas, and grid

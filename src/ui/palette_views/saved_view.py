@@ -54,7 +54,7 @@ class SavedView:
             text="Saved Colors",
             font=ctk.CTkFont(size=14, weight="bold")
         )
-        title_label.pack(pady=(5, 2))
+        title_label.pack(pady=(0, 2))
         
         # Instructions
         info_label = ctk.CTkLabel(
@@ -67,7 +67,7 @@ class SavedView:
         
         # Grid for saved colors
         grid_frame = ctk.CTkFrame(self.parent_frame)
-        grid_frame.pack(padx=10, pady=5)
+        grid_frame.pack(padx=10, pady=(0, 5))
         
         # Configure grid - 4 columns x 6 rows = 24 slots
         for col in range(4):

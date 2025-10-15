@@ -10,6 +10,8 @@ Before doing **anything else**, read these files in this order:
 
 1. **`docs/AI_PYTHON_KNOWLEDGE.md`** ⭐ **START HERE!**
    - Comprehensive Python guide for AI agents
+   - Modern Python features, testing frameworks, performance optimization
+   - Dependency management, maintainability standards
    - Best practices, common pitfalls, debugging techniques
    - How to use Cursor tools effectively
    - Project-specific patterns
@@ -49,30 +51,41 @@ When the user asks you to do something:
 - What exactly does the user want?
 - Is it a bug fix, new feature, refactoring, or documentation?
 - Are there any unclear aspects? Ask before proceeding!
+- Consider the scope and complexity
 
 ### Step 2: Research the Context
 - Search for relevant code: `grep "pattern" path/`
 - Understand existing patterns: `codebase_search "How does X work?"`
 - Read relevant files: Focus on the specific area you'll modify
+- Check for existing tests: `grep "test_" tests/`
 
 ### Step 3: Plan Your Changes
 - Keep changes small and focused
 - Follow existing project patterns
 - Consider impact on other components
 - Think about edge cases
+- Plan testing strategy
 
 ### Step 4: Implement
 - Make one change at a time
 - Test mentally by tracing execution
 - Preserve existing code style
 - Use descriptive variable/function names
+- Add type hints where appropriate
 
-### Step 5: Document
+### Step 5: Test & Validate
+- Run existing tests: `pytest tests/`
+- Test your changes manually
+- Check for linting issues: `flake8 src/`
+- Verify functionality works as expected
+
+### Step 6: Document
 Always update these files after changes:
 1. **`docs/SCRATCHPAD.md`** - Add version entry with details
 2. **`docs/CHANGELOG.md`** - User-facing changelog entry
 3. **`docs/SUMMARY.md`** - Update version and latest updates section
 4. **Code comments** - Explain WHY, not WHAT
+5. **Tests** - Add tests for new functionality
 
 ---
 
@@ -154,11 +167,25 @@ Pixel-Perfect/
 
 ## 🎨 Project Tech Stack
 
-- **Python 3.13+** - Core language
+### Core Technologies
+- **Python 3.13+** - Core language with modern features
 - **CustomTkinter 5.2.0+** - Modern UI framework
 - **Pillow** - Image processing (PNG/GIF export)
-- **NumPy** - Efficient pixel arrays
+- **NumPy** - Efficient pixel arrays and numerical operations
 - **PyInstaller** - Standalone executable builder
+
+### Development Tools
+- **pytest** - Testing framework
+- **black** - Code formatting
+- **flake8** - Linting
+- **mypy** - Type checking
+- **pre-commit** - Git hooks for quality assurance
+
+### Dependency Management
+- **pip** - Package installer
+- **virtualenv** - Virtual environment management
+- **requirements.txt** - Dependency specification
+- **poetry** - Modern dependency management (optional)
 
 ---
 
@@ -225,6 +252,9 @@ grep -B 2 -A 10 "def render_grid" src/
 
 # Count occurrences
 grep -c "TODO" src/
+
+# Find test files
+grep -r "test_" tests/
 ```
 
 ### Reading Large Files
@@ -237,11 +267,34 @@ grep -n "def method_name" file.py  # Note the line number
 read_file("file.py", offset=200, limit=50)
 ```
 
+### Testing & Validation
+```bash
+# Run all tests
+pytest tests/
+
+# Run specific test file
+pytest tests/test_canvas.py
+
+# Run tests with coverage
+pytest --cov=src --cov-report=html
+
+# Check code style
+flake8 src/
+
+# Format code
+black src/
+
+# Type checking
+mypy src/
+```
+
 ### Common Issues
 1. **Indentation Error**: Check if mixing spaces/tabs
 2. **NameError**: Variable not defined - check imports
 3. **AttributeError**: Check if object is None
 4. **TypeError**: Check argument types match expected
+5. **ImportError**: Check virtual environment and dependencies
+6. **Test Failures**: Run tests individually to isolate issues
 
 ---
 
@@ -254,6 +307,10 @@ read_file("file.py", offset=200, limit=50)
 - ✅ Test changes mentally (trace execution)
 - ✅ Update documentation after changes
 - ✅ Ask when uncertain
+- ✅ Add type hints for new functions
+- ✅ Write tests for new functionality
+- ✅ Use modern Python features appropriately
+- ✅ Follow PEP 8 style guidelines
 
 ### DON'T:
 - ❌ Make large sweeping changes to 20 files
@@ -262,6 +319,10 @@ read_file("file.py", offset=200, limit=50)
 - ❌ Guess when you can ask
 - ❌ Break existing functionality
 - ❌ Ignore linter errors
+- ❌ Skip testing new features
+- ❌ Use deprecated Python features
+- ❌ Ignore type hints
+- ❌ Commit code that doesn't pass tests
 
 ---
 
@@ -307,28 +368,44 @@ read_file("file.py", offset=200, limit=50)
    ```
    "How does the undo system save state?"
    "Where are palettes loaded from JSON?"
+   "How does the canvas rendering work?"
    ```
 
 2. **Use grep for "what" questions**:
    ```
    grep "class Canvas" src/core/
    grep -r "TODO" src/
+   grep -r "test_" tests/
    ```
 
 3. **Read with context**:
    - Use `-B` and `-A` flags in grep for surrounding lines
    - Read files in chunks with offset/limit
+   - Look for related test files
 
 4. **Test changes mentally**:
    - Trace through execution in your head
    - Consider edge cases (empty lists, None values, etc.)
    - Think about error conditions
+   - Consider performance implications
 
 5. **When refactoring**:
    - Create new module first
    - Test integration
    - Then remove old code
    - Systematic approach prevents breakage
+
+6. **Modern Python practices**:
+   - Use type hints for better code clarity
+   - Leverage dataclasses for structured data
+   - Use context managers for resource management
+   - Consider async/await for I/O operations
+
+7. **Testing strategy**:
+   - Write tests before implementing features (TDD)
+   - Use pytest fixtures for test data
+   - Mock external dependencies
+   - Test edge cases and error conditions
 
 ---
 
@@ -349,6 +426,12 @@ Remember:
 2. **Project SCRATCHPAD.md** - Learn from past refactoring experiences
 3. **Code itself** - Read existing code to understand patterns
 4. **PEP 8** - Python style guide (referenced in AI_PYTHON_KNOWLEDGE.md)
+5. **pytest documentation** - Testing framework best practices
+6. **Python typing module** - Type hints and annotations
+7. **Modern Python features** - Python 3.9+ capabilities
+8. **Testing patterns** - TDD, mocking, fixtures
+9. **Performance optimization** - Profiling, caching, algorithms
+10. **Dependency management** - Virtual environments, packaging
 
 ---
 
@@ -361,20 +444,24 @@ You now have everything you need to work effectively on this project. Remember:
 3. **Make small, focused changes**
 4. **Document everything**
 5. **Ask when uncertain**
+6. **Write tests for new features**
+7. **Use modern Python features**
+8. **Follow type hints and linting rules**
 
 **Good luck, and happy coding!** 🎨✨
 
 ---
 
-*This document is part of a comprehensive knowledge base for AI agents. It was created by an AI agent (Claude Sonnet 4.5) on October 15, 2025, to help future AI agents work more effectively on this project.*
+*This document is part of a comprehensive knowledge base for AI agents. It was created by an AI agent (Claude Sonnet 4.5) on October 15, 2025, and enhanced in December 2024 to help future AI agents work more effectively on this project.*
 
 **Related Documents:**
-- `AI_PYTHON_KNOWLEDGE.md` - Comprehensive Python guide
+- `AI_PYTHON_KNOWLEDGE.md` - Comprehensive Python guide with modern features
 - `My_Thoughts.md` - AI agent insights and observations
 - `ARCHITECTURE.md` - System design details
 - `SCRATCHPAD.md` - Development history
 
-**Version**: 1.0  
+**Version**: 2.0  
 **Created**: October 15, 2025  
+**Enhanced**: December 2024  
 **For**: Future AI agents working on Pixel Perfect
 

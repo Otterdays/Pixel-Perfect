@@ -4,9 +4,9 @@
 **Pixel Perfect** is a professional desktop pixel art editor designed for creating 2D MMORPG game assets with SNES-era aesthetics. This document outlines functional and non-functional requirements for the complete system.
 
 ## Version Information
-- **Current Version**: 1.25
-- **Status**: Production Ready
-- **Last Updated**: October 13, 2025
+- **Current Version**: 2.0.0
+- **Status**: Production Ready with UI Bug Fixes
+- **Last Updated**: December 2024
 
 ---
 

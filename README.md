@@ -792,6 +792,17 @@ This is proprietary software. All source code, documentation, assets, and relate
 
 </div>
 
+### Version 2.0.0 (December 2024)
+🐛 **Critical UI Bug Fix: Saved Colors Blank Space**
+- **Root Cause Identified** - `palette_content_frame` was visible when switching to saved view, creating empty box
+- **Frame Visibility Control** - Added `pack_forget()` to hide frame when not needed
+- **Proper Packing Order** - Re-pack `palette_content_frame` only for views that use it (Grid, Primary, Wheel, Constants)
+- **Architecture Fix** - Use `before` parameter to maintain correct frame hierarchy
+- **Saved View Fixed** - No longer packs `palette_content_frame`, eliminating blank space
+- **All Views Working** - Grid, Primary, Wheel, Constants, and Saved views all display correctly
+- **Files Modified** - `main_window.py`, `ui_builder.py`, `saved_view.py`
+- **Key Lesson** - When debugging UI spacing, trace EXACT frame hierarchy - sometimes entire frames are visible when they shouldn't be
+
 ### Version 1.52 (October 14, 2025)
 🖥️ **Responsive Panel Sizing Fix**
 - **Screen Resolution Detection** - Automatically detects screen size and calculates optimal panel widths

@@ -1,3 +1,48 @@
+# CRITICAL UI BUG FIX: The Empty Frame Mystery 🔍
+
+## The Problem
+User kept saying "THERE IS LITERALLY A FUCKING BOX THERE" and they were absolutely right. Large blank space between palette radio buttons and saved colors section. Looked like an empty frame just sitting there taking up space.
+
+## The Hunt
+Multiple failed attempts:
+1. Tried fixing padding on saved_view_frame - WRONG
+2. Tried fixing palette_content_frame expansion - WRONG  
+3. Tried reducing pady on containers - WRONG
+4. Tried fixing SavedView padding - WRONG
+
+## The Revelation
+`palette_content_frame` was THE BOX! It was packed and visible even when showing the saved view, creating an empty space. This frame is only needed for Grid/Primary/Wheel/Constants views (hosts color wheel, grid, etc.), but NOT for Saved view.
+
+## The Architecture
+- `palette_content_frame`: Hosts color wheel and other palette view widgets (Grid, Primary, Wheel, Constants)
+- `color_display_container`: Contains individual view frames for ALL views
+- `saved_view_frame`: Child of `color_display_container`, does NOT use `palette_content_frame`
+
+## The Fix
+In `_show_view()` method:
+1. Added `self.palette_content_frame.pack_forget()` after clearing widgets (line 720)
+2. Re-pack `palette_content_frame` ONLY for views that need it (Grid, Primary, Wheel, Constants)
+3. Saved view does NOT pack `palette_content_frame` - empty box eliminated!
+
+## Lesson for Future AI Agents
+When user says "THERE IS A BOX", they mean it literally. Trace the EXACT frame hierarchy and packing order. Sometimes it's not padding - it's an entire frame that shouldn't be visible. Use `pack_forget()` aggressively to hide containers that aren't needed.
+
+## Key Code Pattern
+```python
+# Hide unused frames
+self.palette_content_frame.pack_forget()
+
+# Only show for views that need it
+if mode == "grid":
+    self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0)
+    # ... rest of grid view code
+elif mode == "saved":
+    # DON'T pack palette_content_frame - saved view doesn't use it!
+    self.saved_view_frame.pack(fill="both", expand=True)
+```
+
+---
+
 # Phases 6 & 7 Complete: Tool Size & Canvas/Zoom Managers ✅
 
 ## What We Did

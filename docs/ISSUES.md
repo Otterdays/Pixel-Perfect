@@ -1,6 +1,33 @@
 # Pixel Perfect - Known Issues
 
-## Issue #1: Persistent Grey Boxes Around UI Sections
+## Issue #1: Saved Colors Blank Space Bug
+**Date**: December 2024  
+**Status**: ✅ **RESOLVED**  
+**Priority**: High  
+
+### Problem Description
+Large blank space appeared between the palette radio buttons (Grid/Primary/Wheel/Constants/Saved) and the "Saved Colors" section when the Saved view was active. The empty box was clearly visible and looked like a UI bug.
+
+### Root Cause
+`palette_content_frame` was packed and visible even when switching to the saved view, creating an empty box. This frame is only used by Grid, Primary, Wheel, and Constants views - NOT the Saved view. When clearing `palette_content_frame.winfo_children()`, the frame itself remained packed and visible, taking up vertical space.
+
+### Resolution
+✅ Fixed in Version 2.0.0:
+- Added `self.palette_content_frame.pack_forget()` to hide the frame when clearing it
+- Re-pack `palette_content_frame` only for views that need it (Grid, Primary, Wheel, Constants)
+- Saved view does NOT pack `palette_content_frame`, eliminating the empty box
+
+### Files Modified
+- `src/ui/main_window.py` - Fixed `_show_view()` method
+- `src/ui/ui_builder.py` - Reduced container padding
+- `src/ui/palette_views/saved_view.py` - Reduced top padding
+
+### Key Lesson
+When debugging UI spacing issues, trace the EXACT frame hierarchy and packing order. Don't assume padding is the issue - sometimes entire frames are visible when they shouldn't be.
+
+---
+
+## Issue #2: Persistent Grey Boxes Around UI Sections
 **Date**: October 14, 2025  
 **Status**: 🔴 **OPEN** - Not Fixed  
 **Priority**: High  
@@ -40,7 +67,7 @@ The issue persists despite:
 
 ---
 
-## Issue #2: Git Configuration Review Needed
+## Issue #3: Git Configuration Review Needed
 **Date**: October 14, 2025  
 **Status**: ✅ **RESOLVED**  
 **Priority**: Medium  

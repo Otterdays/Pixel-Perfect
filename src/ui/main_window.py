@@ -700,8 +700,7 @@ class MainWindow:
         if hasattr(self, 'constants_view') and self.constants_view:
             self.constants_view.create()
         
-        # Set color display frame to the left panel for palette views
-        self.color_display_frame = self.left_panel
+        # Note: color_display_frame should remain as the palette container, not left_panel
     
     def _show_view(self, mode: str):
         """Show specific view by toggling visibility (INSTANT)"""
@@ -717,16 +716,24 @@ class MainWindow:
         if hasattr(self, 'palette_content_frame') and self.palette_content_frame:
             for widget in self.palette_content_frame.winfo_children():
                 widget.destroy()
+            # Hide the palette_content_frame itself (it's the empty box!)
+            self.palette_content_frame.pack_forget()
         
         # Show requested view
         if mode == "grid" and hasattr(self, 'grid_view') and self.grid_view:
-            self.grid_view_frame.pack(fill="both", expand=True)
+            # Pack palette_content_frame before color_display_container (maintains order)
+            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0, 
+                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             self.grid_view.create()
         elif mode == "primary" and hasattr(self, 'primary_view') and self.primary_view:
-            self.primary_view_frame.pack(fill="both", expand=True)
+            # Pack palette_content_frame before color_display_container (maintains order)
+            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
+                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             self.primary_view.create()
         elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
-            self.wheel_view_frame.pack(fill="both", expand=True)
+            # Pack palette_content_frame before color_display_container (maintains order)
+            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
+                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             # Recreate color wheel since it was destroyed when clearing the frame
             from src.ui.color_wheel import ColorWheel
             self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
@@ -734,10 +741,12 @@ class MainWindow:
             self.color_wheel.on_save_custom_color = self._save_custom_color
             self.color_wheel.on_remove_custom_color = self._remove_custom_color
         elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
-            self.constants_view_frame.pack(fill="both", expand=True)
+            # Pack palette_content_frame before color_display_container (maintains order)
+            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
+                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             self.constants_view.create()
         elif mode == "saved" and hasattr(self, 'saved_view') and self.saved_view:
-            # Pack saved view frame at the very top of the container
+            # Pack saved view frame to fill the container (removes blank space)
             self.saved_view_frame.pack(fill="both", expand=True, pady=(0, 0), before=None)
             self.saved_view.create()
             # Update button states in case colors changed
