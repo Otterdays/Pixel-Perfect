@@ -737,11 +737,16 @@ class MainWindow:
             self.constants_view_frame.pack(fill="both", expand=True)
             self.constants_view.create()
         elif mode == "saved" and hasattr(self, 'saved_view') and self.saved_view:
-            self.saved_view_frame.pack(fill="both", expand=True)
+            # Pack saved view frame at the very top of the container
+            self.saved_view_frame.pack(fill="both", expand=True, pady=(0, 0), before=None)
             self.saved_view.create()
             # Update button states in case colors changed
             if hasattr(self, '_saved_view_created') and self._saved_view_created:
                 self._update_saved_color_buttons()
+            
+            # Force scroll to absolute top
+            self.left_panel._parent_canvas.yview_moveto(0)
+            self.root.after(10, lambda: self.left_panel._parent_canvas.yview_moveto(0))
     
     def _on_view_mode_change(self):
         """Handle view mode change - now instant!"""

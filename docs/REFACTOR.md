@@ -1,17 +1,17 @@
 # Pixel Perfect - Refactoring Guide
 
-**Last Updated**: October 15, 2025  
-**Version**: 1.69  
-**Status**: 🟢 **IN PROGRESS** - Phases 1, 3, 4, 5, 6, 7 + Grid Control Complete!
+**Last Updated**: December 2024  
+**Version**: 1.71  
+**Status**: 🟢 **IN PROGRESS** - Phases 1, 3, 4, 5, 6, 7 + Grid Control + Notes Panel Complete!
 
 ---
 
 ## 🎯 Current Status
 
-**main_window.py**: **1,582 lines** (down from 3,387)  
-**Progress**: 53.3% reduction (1,805 lines removed)  
+**main_window.py**: **1,634 lines** (down from 3,387)  
+**Progress**: 51.7% reduction (1,753 lines removed)  
 **Target**: ~850-900 lines (core orchestration only)  
-**Remaining**: ~682 lines to extract (1 major phase)
+**Remaining**: ~734 lines to extract (2 major phases)
 
 ### Completed Extractions ✅
 - ✅ **UIBuilder** (436 lines) - Toolbar, tool panel, palette panel, canvas panel
@@ -19,13 +19,16 @@
 - ✅ **FileOperationsManager** (395 lines) - All file I/O operations
 - ✅ **DialogManager** (402 lines) - All custom dialogs (size, warning, texture)
 - ✅ **SelectionManager** (438 lines) - All selection operations (mirror, rotate, scale, copy)
-- ✅ **CanvasRenderer** (expanded to 454 lines) - All rendering operations (grid, pixels, previews)
+- ✅ **CanvasRenderer** (expanded to 494 lines) - All rendering operations (grid, pixels, previews)
 - ✅ **ToolSizeManager** (163 lines) - Brush/eraser size selection and drawing
 - ✅ **CanvasZoomManager** (226 lines) - Canvas resizing and zoom controls
 - ✅ **GridControlManager** (68 lines) - Grid visibility and overlay controls
+- ✅ **NotesPanel** (200+ lines) - Persistent notes with auto-save and export
 
 ### Next Up 📋
-**Phase 2: Color View Manager** (~550 lines) - All color view management (grid, wheel, saved, constants)
+**Phase 2: Color View Manager** (~400 lines) - All color view management (grid, wheel, saved, constants)  
+**Phase 8: Layer & Animation Manager** (~200 lines) - Layer operations and animation controls  
+**Phase 9: Canvas Operations Manager** (~134 lines) - Canvas coordinate conversion and layer sync
 
 ---
 
@@ -41,9 +44,12 @@
 | Phase 6: Tool Sizes | 140 | **115** | **1,773** | ✅ **COMPLETE** |
 | Phase 7: Canvas/Zoom | 180 | **159** | **1,614** | ✅ **COMPLETE** |
 | Grid Control | 30 | **32** | **1,582** | ✅ **COMPLETE** |
-| Phase 2: Colors | 550 | TBD | ~1,032 | ⏳ Pending |
+| Notes Panel | 50 | **52** | **1,634** | ✅ **COMPLETE** |
+| Phase 2: Colors | 400 | TBD | ~1,234 | ⏳ Pending |
+| Phase 8: Layer/Anim | 200 | TBD | ~1,034 | ⏳ Pending |
+| Phase 9: Canvas Ops | 134 | TBD | ~900 | ⏳ Pending |
 
-**Note**: Phases 6-7 achieved 82-88% of estimates - less code than expected, but still excellent progress!
+**Note**: Notes Panel added 52 lines back due to new feature implementation. Still on track for target!
 
 ---
 
@@ -58,76 +64,32 @@
 
 ### Easiest → Hardest Extractions
 1. ✅ **File Operations** (DONE) - Self-contained, clean boundaries
-2. **Dialog Manager** (NEXT) - Self-contained, no tool dependencies  ← **DO THIS NEXT**
-3. **Selection Manager** - Moderate complexity, clear boundaries
-4. **Canvas Renderer** - Technical but isolated
-5. **Color View Manager** - Complex UI references, do LAST
+2. ✅ **Dialog Manager** (DONE) - Self-contained, no tool dependencies
+3. ✅ **Selection Manager** (DONE) - Moderate complexity, clear boundaries
+4. ✅ **Canvas Renderer** (DONE) - Technical but isolated
+5. ✅ **Tool Size Manager** (DONE) - Clean tool coordination
+6. ✅ **Canvas/Zoom Manager** (DONE) - Canvas management
+7. ✅ **Grid Control** (DONE) - Simple grid operations
+8. ✅ **Notes Panel** (DONE) - Self-contained feature
+9. **Canvas Operations Manager** (NEXT) - Utility functions, low complexity ← **DO THIS NEXT**
+10. **Layer & Animation Manager** - Medium complexity, clear boundaries
+11. **Color View Manager** - Complex UI references, do LAST
 
 ### Realistic Timeline
 - **Per phase**: 1-2 hours (extraction + testing + documentation)
-- **Total remaining**: 5 phases × 1.5 hours = ~7-8 hours
+- **Total remaining**: 3 phases × 1.5 hours = ~4-5 hours
 - **Do in sessions**: 1-2 phases per work session
 
 ---
 
 ## 📋 Remaining Phases (Detailed)
 
-### Phase 4: Dialog Manager (~300 lines) ← **NEXT**
-**File**: `src/ui/dialog_manager.py`
-
-**Methods to extract**:
-- `_open_custom_size_dialog()` - Custom canvas size (131 lines)
-- `_show_downsize_warning()` - Downsize warning (108 lines)
-- `_open_texture_panel()` - Texture library (46 lines)
-- `_create_texture_button()` - Texture button creation (68 lines)
-- `_select_texture()` - Texture selection (13 lines)
-
-**Note**: Keep `_show_file_menu()` in main_window (needs file_ops reference)
-
----
-
-### Phase 1: Selection Manager (~500 lines)
-**File**: `src/ui/selection_manager.py`
-
-**Methods to extract**:
-- `_on_selection_complete()` - Auto-switch to move tool
-- `_mirror_selection()` - Horizontal flip (52 lines)
-- `_rotate_selection()` - 90° clockwise (69 lines)
-- `_copy_selection()` - Enter copy mode (34 lines)
-- `_scale_selection()` - Enter scaling mode (30 lines)
-- `_apply_scale()` - Apply scaling (17 lines)
-- `_simple_scale()` - Scaling algorithm (30 lines)
-- `_preview_scaled_pixels()` - Live preview (38 lines)
-- `_get_scale_handle()` - Detect handle (29 lines)
-- `_place_copy_at()` - Place copied pixels (29 lines)
-
----
-
-### Phase 5: Canvas Renderer Expansion (~400 lines)
-**File**: `src/core/canvas_renderer.py` (expand existing)
-
-**Methods to extract**:
-- `_init_drawing_surface()` - Surface initialization (5 lines)
-- `_initial_draw()` - Initial render (52 lines)
-- `_draw_tkinter_grid()` - Grid lines (25 lines)
-- `_draw_all_pixels_on_tkinter()` - Pixel rendering (21 lines)
-- `_force_tkinter_canvas_update()` - Force update (10 lines)
-- `_update_pixel_display()` - Display update (51 lines)
-- `_draw_selection_on_tkinter()` - Selection overlay (128 lines)
-- `_update_single_pixel()` - Single pixel update (6 lines)
-- `_draw_shape_preview()` - Shape preview (94 lines)
-- `_draw_brush_preview()` - Brush preview (50 lines)
-- `_draw_eraser_preview()` - Eraser preview (47 lines)
-- `_draw_texture_preview()` - Texture preview (58 lines)
-
----
-
-### Phase 2: Color View Manager (~600 lines) **MOST COMPLEX - DO LAST**
+### Phase 2: Color View Manager (~400 lines) ← **NEXT**
 **File**: `src/ui/color_view_manager.py`
 
 **Methods to extract**:
 - `_initialize_all_views()` - Pre-render all views (24 lines)
-- `_show_view()` - Toggle view visibility (27 lines)
+- `_show_view()` - Toggle view visibility (40 lines) - **COMPLEX UI LOGIC**
 - `_on_view_mode_change()` - Radio button handler (5 lines)
 - `_create_constants_grid()` - Constants view UI (64 lines)
 - `_get_canvas_colors()` - Extract used colors (17 lines)
@@ -146,14 +108,43 @@
 - `_update_custom_colors_display()` - Update UI (6 lines)
 - `_set_color_from_eyedropper()` - Eyedropper result (27 lines)
 
+**Complexity**: HIGH - Heavy UI widget management and view switching logic
+
 ---
 
-### Phase 6: UI Builder Completion (~300 lines)
-**File**: `src/ui/ui_builder.py` (expand existing)
+### Phase 8: Layer & Animation Manager (~200 lines)
+**File**: `src/ui/layer_animation_manager.py`
 
 **Methods to extract**:
 - `_create_layer_and_timeline_panels()` - Layer/timeline UI (77 lines)
-- Any remaining UI creation methods
+- `_on_layer_changed()` - Layer change callback (5 lines)
+- `_add_layer()` - Add new layer (7 lines)
+- `_sync_canvas_with_layers()` - Layer sync (11 lines)
+- `_on_frame_changed()` - Frame change callback (10 lines)
+- `_toggle_animation()` - Animation toggle (8 lines)
+- `_previous_frame()` - Previous frame (6 lines)
+- `_next_frame()` - Next frame (6 lines)
+- `_update_canvas_from_layers()` - Canvas update (8 lines)
+- `_clear_selection_and_reset_tools()` - Tool reset (10 lines)
+- `_get_drawing_layer()` - Get active layer (11 lines)
+- `_handle_eyedropper_click()` - Eyedropper handler (22 lines)
+- `_set_color_from_eyedropper()` - Color setting (28 lines)
+
+**Complexity**: MEDIUM - Layer and animation coordination
+
+---
+
+### Phase 9: Canvas Operations Manager (~134 lines)
+**File**: `src/ui/canvas_operations_manager.py`
+
+**Methods to extract**:
+- `_tkinter_screen_to_canvas_coords()` - Coordinate conversion (28 lines)
+- `_calculate_optimal_panel_widths()` - Panel sizing (41 lines)
+- `_save_window_state()` - Window state save (28 lines)
+- `_restore_window_state()` - Window state restore (42 lines)
+- `_redraw_canvas_after_resize()` - Canvas redraw (5 lines)
+
+**Complexity**: LOW - Utility functions and window management
 
 ---
 
@@ -321,12 +312,18 @@ After EACH phase, test systematically:
 
 ```
 src/ui/
-├── main_window.py (~850 lines) - Core orchestration only
+├── main_window.py (~900 lines) - Core orchestration only
 ├── ui_builder.py ✅ - UI creation (toolbar, tools, palette, canvas)
 ├── file_operations_manager.py ✅ - File I/O
-├── selection_manager.py (TODO) - Selection operations
+├── selection_manager.py ✅ - Selection operations
 ├── color_view_manager.py (TODO) - Color view management
-├── dialog_manager.py (TODO) - Custom dialogs
+├── dialog_manager.py ✅ - Custom dialogs
+├── layer_animation_manager.py (TODO) - Layer & animation coordination
+├── canvas_operations_manager.py (TODO) - Canvas utilities & window state
+├── tool_size_manager.py ✅ - Tool sizing
+├── canvas_zoom_manager.py ✅ - Canvas management
+├── grid_control_manager.py ✅ - Grid controls
+├── notes_panel.py ✅ - Notes feature
 ├── theme_manager.py - Theme system
 ├── theme_dialog_manager.py - Theme dialogs
 ├── layer_panel.py - Layer UI
@@ -336,7 +333,7 @@ src/ui/
 
 src/core/
 ├── event_dispatcher.py ✅ - Event routing
-├── canvas_renderer.py (TODO: expand) - All rendering
+├── canvas_renderer.py ✅ - All rendering
 ├── canvas.py - Canvas data
 ├── layer_manager.py - Layer system
 └── ...
@@ -346,27 +343,27 @@ src/core/
 
 ## 🚀 Quick Start: Next Phase
 
-### To Extract Phase 4 (Dialog Manager):
+### To Extract Phase 9 (Canvas Operations Manager):
 
-1. **Create new file**: `src/ui/dialog_manager.py`
+1. **Create new file**: `src/ui/canvas_operations_manager.py`
 
-2. **Extract dialog methods** from main_window.py:
-   - `_open_custom_size_dialog()`
-   - `_show_downsize_warning()`
-   - `_open_texture_panel()`
-   - `_create_texture_button()`
-   - `_select_texture()`
+2. **Extract utility methods** from main_window.py:
+   - `_tkinter_screen_to_canvas_coords()`
+   - `_calculate_optimal_panel_widths()`
+   - `_save_window_state()`
+   - `_restore_window_state()`
+   - `_redraw_canvas_after_resize()`
 
 3. **Use callback pattern**:
    ```python
-   self.dialog_mgr = DialogManager(self.root, self.canvas, ...)
-   self.dialog_mgr.apply_size_callback = self._apply_custom_canvas_size
+   self.canvas_ops = CanvasOperationsManager(self.root, self.canvas, ...)
+   self.canvas_ops.window_state_callback = self.window_state_mgr.save_state
    ```
 
 4. **Update main_window** to use manager:
    ```python
-   # Old: self._open_custom_size_dialog()
-   # New: self.dialog_mgr.open_custom_size_dialog()
+   # Old: self._tkinter_screen_to_canvas_coords(x, y)
+   # New: self.canvas_ops.tkinter_screen_to_canvas_coords(x, y)
    ```
 
 5. **Delete old methods** (PowerShell):

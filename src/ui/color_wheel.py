@@ -385,45 +385,90 @@ class ColorWheel:
             redraw_wheel: If True, redraw entire hue wheel (expensive)
             redraw_square: If True, redraw entire saturation square (expensive)
         """
+        # Helper to check if widget still exists
+        def widget_exists(widget):
+            try:
+                return widget and widget.winfo_exists()
+            except:
+                return False
+        
         # Only redraw wheel if needed (hue changed or initial draw)
-        if redraw_wheel:
+        if redraw_wheel and widget_exists(self.wheel_canvas):
             self._draw_hue_wheel()
-        else:
+        elif widget_exists(self.wheel_canvas):
             # Just update the indicator position (cheap)
-            self.wheel_canvas.delete("indicator")
-            self._draw_hue_indicator()
+            try:
+                self.wheel_canvas.delete("indicator")
+                self._draw_hue_indicator()
+            except:
+                pass
         
         # Only redraw square if needed (hue or brightness changed)
-        if redraw_square:
+        if redraw_square and widget_exists(self.saturation_canvas):
             self._draw_saturation_square()
-        else:
+        elif widget_exists(self.saturation_canvas):
             # Just update the indicator position (cheap)
-            self.saturation_canvas.delete("indicator")
-            self._draw_saturation_indicator()
+            try:
+                self.saturation_canvas.delete("indicator")
+                self._draw_saturation_indicator()
+            except:
+                pass
         
         # Update color preview
-        rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
-        hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
-        self.color_preview.configure(fg_color=hex_color)
+        if widget_exists(self.color_preview):
+            try:
+                rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+                hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+                self.color_preview.configure(fg_color=hex_color)
+            except:
+                pass
         
         # Update HEX label
-        self.hex_label.configure(text=hex_color.upper())
+        if widget_exists(self.hex_label):
+            try:
+                rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+                hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+                self.hex_label.configure(text=hex_color.upper())
+            except:
+                pass
         
         # Update HSV labels
-        self.h_value_label.configure(text=f"H: {int(self.hue)}°")
-        self.s_value_label.configure(text=f"S: {int(self.saturation * 100)}%")
-        self.v_value_label.configure(text=f"V: {int(self.value * 100)}%")
+        if widget_exists(self.h_value_label):
+            try:
+                self.h_value_label.configure(text=f"H: {int(self.hue)}°")
+            except:
+                pass
+        if widget_exists(self.s_value_label):
+            try:
+                self.s_value_label.configure(text=f"S: {int(self.saturation * 100)}%")
+            except:
+                pass
+        if widget_exists(self.v_value_label):
+            try:
+                self.v_value_label.configure(text=f"V: {int(self.value * 100)}%")
+            except:
+                pass
         
         # Update RGB entry fields (not labels anymore)
-        if hasattr(self, 'r_entry'):
-            self.r_entry.delete(0, 'end')
-            self.r_entry.insert(0, str(rgb[0]))
-        if hasattr(self, 'g_entry'):
-            self.g_entry.delete(0, 'end')
-            self.g_entry.insert(0, str(rgb[1]))
-        if hasattr(self, 'b_entry'):
-            self.b_entry.delete(0, 'end')
-            self.b_entry.insert(0, str(rgb[2]))
+        rgb = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+        if hasattr(self, 'r_entry') and widget_exists(self.r_entry):
+            try:
+                self.r_entry.delete(0, 'end')
+                self.r_entry.insert(0, str(rgb[0]))
+            except:
+                pass
+        if hasattr(self, 'g_entry') and widget_exists(self.g_entry):
+            try:
+                self.g_entry.delete(0, 'end')
+                self.g_entry.insert(0, str(rgb[1]))
+            except:
+                pass
+        if hasattr(self, 'b_entry') and widget_exists(self.b_entry):
+            try:
+                self.b_entry.delete(0, 'end')
+                self.b_entry.insert(0, str(rgb[2]))
+            except:
+                pass
         
         # Call callback if set
         if self.on_color_changed:
@@ -622,7 +667,15 @@ class ColorWheel:
     def set_color(self, r: int, g: int, b: int):
         """Set color from RGB values"""
         self.hue, self.saturation, self.value = self._rgb_to_hsv(r, g, b)
-        self.brightness_slider.set(self.value * 100)
+        
+        # Check if brightness slider still exists before setting value
+        if hasattr(self, 'brightness_slider') and self.brightness_slider and self.brightness_slider.winfo_exists():
+            try:
+                self.brightness_slider.set(self.value * 100)
+            except:
+                # Widget was destroyed, skip slider update
+                pass
+        
         self._update_displays()
     
     def update_theme(self, theme):
