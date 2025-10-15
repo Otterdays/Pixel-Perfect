@@ -1,9 +1,9 @@
 # Pixel Perfect - Refactoring Plan (COMPREHENSIVE UPDATE)
 
 **Date**: October 15, 2025  
-**Version**: 2.0 - CRITICAL UPDATE  
-**Status**: URGENT - Situation Worsening
-**Current main_window.py size**: **4,940 lines** 🚨🚨 EMERGENCY STATUS
+**Version**: 2.1 - CRITICAL UPDATE  
+**Status**: 🔴 **EMERGENCY** - File Growing Rapidly!
+**Current main_window.py size**: **5,060 lines** (152 methods) 🚨🚨🚨 CRITICAL!
 
 ---
 
@@ -12,53 +12,76 @@
 ### **SECONDARY TARGETS** (After main_window.py cleanup)
 **These are lower priority - tackle AFTER main_window.py is under control**
 
-- [ ] **8. Split layer_panel.py** (327 lines → 2 modules)
+- [ ] **12. Split presets.py** (324 lines → 4 modules)
+  - Extract: `CharacterPresets` + `ItemPresets` + `TilePresets` + `UIPresets`
+  - Impact: Minor - but improves organization
+  - Time: 2-3 hours
+
+- [ ] **11. Split color_palette.py** (321 lines → 2 modules)
+  - Extract: `PaletteLoader` (JSON loading) + `PaletteData` (color management)
+  - Impact: Minor - cleaner palette system
+  - Time: 2-3 hours
+
+- [ ] **10. Split project.py** (300 lines → 2 modules)
+  - Extract: `ProjectSerializer` (save/load) + `ProjectState` (data management)
+  - Impact: Minor - cleaner project management
+  - Time: 2-3 hours
+
+- [ ] **9. Split timeline_panel.py** (289 lines → 2 modules)
+  - Extract: `TimelineUI` (UI creation) + `TimelineController` (event handling)
+  - Impact: Minor - improves animation UI
+  - Time: 2-3 hours
+
+- [ ] **8. Split layer_manager.py** (281 lines → 2 modules)
+  - Extract: `LayerOperations` (add/remove/merge) + `LayerState` (data management)
+  - Impact: Minor - cleaner layer system
+  - Time: 2-3 hours
+
+- [ ] **7. Split selection.py** (274 lines → 2 modules)
+  - Extract: `SelectionRenderer` (drawing) + `SelectionLogic` (bounds/transforms)
+  - Impact: Minor - already reasonably sized
+  - Time: 2-3 hours
+
+- [ ] **6. Split layer_panel.py** (235 lines → 2 modules)
   - Extract: `LayerRenderer` (drawing logic) + `LayerEventHandler` (click/drag events)
   - Impact: Minor - already reasonably sized
   - Time: 2-3 hours
 
-- [ ] **7. Split timeline.py** (450 lines → 3 modules)  
-  - Extract: `TimelineRenderer` + `FrameManager` + `AnimationController`
+- [ ] **5. Split theme_manager.py** (233 lines → 2 modules)  
+  - Extract: `ThemeLoader` (JSON loading) + `ThemeApplicator` (apply to widgets)
+  - Impact: Moderate - cleaner theme system
+  - Time: 2-3 hours
+
+- [ ] **4. Split timeline.py** (225 lines → 2 modules)
+  - Extract: `AnimationEngine` (playback) + `FrameStorage` (frame data)
   - Impact: Moderate - improves animation code clarity
   - Time: 3-4 hours
 
-- [ ] **6. Split canvas.py** (520 lines → 3 modules)
-  - Extract: `PixelRenderer` + `GridRenderer` + `CanvasEventHandler`
-  - Impact: Moderate - separates rendering from events
-  - Time: 4-5 hours
-
-- [ ] **5. Split color_wheel.py** (630 lines → 4 modules)
+- [ ] **3. Split color_wheel.py** (638 lines → 4 modules)
   - Extract: `HueWheel` + `SaturationSquare` + `CustomColorManager` + `ColorConverter`
   - Impact: Good - color system becomes more modular
   - Time: 5-6 hours
 
 ---
 
-### **PRIMARY TARGETS** (main_window.py - 4,940 lines)
+### **PRIMARY TARGETS** (main_window.py - 5,060 lines, 152 methods!)
 **Start here - smaller extractions that provide quick wins**
 
-- [ ] **4. Theme/Dialog Manager** (~350 lines → `src/ui/theme_dialog_manager.py`)
+- [ ] **2. Window State Manager** (~200 lines → `src/core/window_state_manager.py`)
+  - **Methods**: `_save_window_state()`, `_restore_window_state()`, `_on_window_resize()`, `_on_sash_drag_start()`, `_on_sash_drag_end()`, panel collapse/restore logic
+  - **Why**: Isolates window geometry and panel state management
+  - **Dependencies**: Minimal - just window/panel references
+  - **Impact**: Medium - 4% reduction, cleaner state management
+  - **Time**: 2-3 hours
+
+- [ ] **1. Theme/Dialog Manager** (~350 lines → `src/ui/theme_dialog_manager.py`)
   - **Methods**: `_apply_theme()`, `_apply_theme_to_children()`, `_create_settings_dialog()`, `show_settings_dialog()`, theme switching logic
   - **Why**: Isolates theming system, makes theme development easier
   - **Dependencies**: Minimal - mostly self-contained
   - **Impact**: Medium - 7% reduction, cleaner theme code
   - **Time**: 3-4 hours
 
-- [ ] **3. Tool Manager** (~350 lines → `src/ui/tool_manager.py`)
-  - **Methods**: `_create_tool_panel()`, `_select_tool()`, `_update_tool_cursor()`, tool button creation, tool state management
-  - **Why**: Centralizes all tool UI logic
-  - **Dependencies**: Low - mainly UI creation
-  - **Impact**: Medium - 7% reduction, easier tool additions
-  - **Time**: 3-4 hours
-
-- [ ] **2. File Handler** (~350 lines → `src/core/file_handler.py`)
-  - **Methods**: `_new_file()`, `_open_file()`, `_save_file()`, `_save_as()`, `_export_png()`, `_show_file_menu()`, file dialog logic
-  - **Why**: Separates file I/O from UI logic
-  - **Dependencies**: Low - uses project/canvas objects
-  - **Impact**: Medium - 7% reduction, cleaner file operations
-  - **Time**: 3-4 hours
-
-- [x] **1. UI Builder** (~1,200 lines → `src/ui/ui_builder.py`) - 🟡 **12% Complete**
+- [x] **UI Builder** (~1,200 lines → `src/ui/ui_builder.py`) - 🟡 **12% Complete**
   - **Status**: Toolbar creation done (139 lines)
   - **Remaining Methods**: `create_tool_panel()`, `create_palette_panel()`, `create_canvas_area()`, `create_collapsible_panels()`, ~28 more
   - **Why**: BIGGEST single extraction - removes 24% of file size
@@ -107,33 +130,37 @@
 ---
 
 ### **📊 Progress Tracking**
-- **Modules Started**: 1/12 (8%)
-- **Lines Extracted**: 139/4,550 (3%)
-- **Current main_window.py**: 4,940 lines
-- **Target main_window.py**: 390 lines
-- **Total Reduction Needed**: 4,550 lines (92%)
+- **Total Refactoring Tasks**: 20 modules (8 critical + 12 secondary)
+- **Modules Started**: 1/20 (5%)
+- **Lines Extracted**: 139/4,670 (3%)
+- **Current main_window.py**: **5,060 lines** (152 methods) 🚨
+- **Target main_window.py**: 390 lines (25 methods)
+- **Total Reduction Needed**: 4,670 lines (92%)
 
-### **🎯 Recommended Order**
-1. ✅ **UI Builder** (finish remaining 88%) - 1-2 hours
-2. **Palette Manager** - 7-9 hours  
-3. **Event Dispatcher** - 8-10 hours
-4. **Selection Operations** - 5-6 hours
-5. **Canvas Renderer** - 6-7 hours
-6. **File Handler** - 3-4 hours
-7. **Tool Manager** - 3-4 hours
-8. **Theme/Dialog Manager** - 3-4 hours
+### **🎯 Recommended Order for main_window.py**
+1. ✅ **UI Builder** (finish remaining 88%) - 1-2 hours → 3,860 lines
+2. **Palette Manager** - 7-9 hours → 2,910 lines
+3. **Event Dispatcher** - 8-10 hours → 2,010 lines
+4. **Selection Operations** - 5-6 hours → 1,460 lines
+5. **Canvas Renderer** - 6-7 hours → 860 lines
+6. **Window State Manager** - 2-3 hours → 660 lines
+7. **Theme/Dialog Manager** - 3-4 hours → 390 lines ✅ **TARGET**
 
-**Total Time Estimate**: 35-45 hours of focused work
-**Result**: Professional, maintainable codebase with 95% faster search/navigation
+### **📈 Impact Summary**
+- **Critical Refactorings** (main_window.py): 35-45 hours → 92% reduction
+- **Secondary Refactorings** (other files): 25-35 hours → Better organization
+- **Total Estimated Time**: 60-80 hours of focused work
+- **Result**: Professional, maintainable codebase with 95% faster search/navigation
 
 ---
 
 ## Executive Summary
 
-**CRITICAL EMERGENCY**: `main_window.py` has exploded to **4,940 lines** with **146 methods** - a 14% INCREASE since last analysis! This monolithic file is now BEYOND maintainable and severely violates the project's #1 rule: **"Split up components to as many parts as possible, in order to reduce token consumption."**
+**🔴 CRITICAL EMERGENCY**: `main_window.py` has exploded to **5,060 lines** with **152 methods** - a 17% INCREASE since last analysis! This monolithic file is now BEYOND maintainable and severely violates the project's #1 rule: **"Split up components to as many parts as possible, in order to reduce token consumption."**
 
 **Severity Escalation**:
-- 🔥 **WORSE than documented** - File grew from 4,331 → 4,940 lines (+609 lines, +14%)
+- 🔥 **RAPIDLY WORSENING** - File grew from 4,331 → 5,060 lines (+729 lines, +17%)
+- 🚨 **152 methods** - up from 146 (+6 methods)
 - 🐌 AI semantic search practically unusable on this file
 - 💰 Token costs are astronomical (5,000+ tokens per analysis)
 - 🔍 Finding specific functionality requires minutes of scrolling
@@ -141,9 +168,14 @@
 - 👥 Onboarding impossible without extensive guided tours
 - 📉 Development velocity dramatically reduced
 
-**Primary Goal**: Extract **8-10 focused modules** (~300-800 lines each) from main_window.py, reducing it to **~350 lines** of pure orchestration code.
+**Primary Goal**: Extract **7 focused modules** (~200-1,200 lines each) from main_window.py, reducing it to **390 lines** of pure orchestration code.
 
-**Secondary Goal**: Split 5 additional large files (630-327 lines) into focused components.
+**Secondary Goal**: Split 12 additional large files (638-225 lines) into focused components.
+
+**New Findings**:
+- 10 additional files identified for refactoring (presets.py, color_palette.py, project.py, etc.)
+- Window state management can be extracted (~200 lines)
+- Total of **20 refactoring tasks** identified
 
 **Expected Benefits**:
 - ⚡ **95% faster** search and navigation (5,000 lines → 250 lines typical search scope)
