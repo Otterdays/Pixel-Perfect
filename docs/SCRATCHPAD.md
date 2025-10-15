@@ -1,5 +1,83 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.63 - Complete Application Restoration & Tool Consistency Fixes
+**Date**: January 2025
+**Status**: Complete ✅ (Fixed all major application issues and tool consistency)
+
+### Major Application Restoration
+**Problem**: Application was completely broken after file reversion, missing UI elements, and tool inconsistencies.
+
+**Solutions Implemented**:
+1. **UI Elements Restored**: Fixed missing tools, palette panels, and radio buttons
+2. **Canvas Events Fixed**: Restored canvas mouse event bindings for drawing functionality
+3. **Palette Views Working**: Fixed Wheel, Primary, Grid, and other palette views
+4. **Tool Size Indicators**: Restored brush/eraser size display (3x3, 2x2, etc.)
+5. **Tool Consistency**: Fixed brush and eraser size switching issues
+
+### Tool Consistency Issues Fixed
+**Problem**: Switching between different brush/eraser sizes would cause previous work to disappear.
+
+**Root Cause**: Mixed canvas-based (1x1) and layer-based (2x2/3x3) approaches caused inconsistency.
+
+**Solution**: Unified all tool sizes to use layer-based approach:
+- **All brush sizes** now use `_draw_brush_at()` with layer updates
+- **All eraser sizes** now use `_draw_eraser_at()` with layer updates
+- **Consistent Updates**: All operations call `_update_canvas_from_layers()`
+
+### Technical Details
+- **Files Modified**: `src/ui/main_window.py`, `src/core/event_dispatcher.py`, `src/ui/ui_builder.py`
+- **Methods Added**: `_draw_eraser_at()` for multi-pixel eraser operations
+- **Event Handling**: Updated mouse down and drag events for consistency
+- **UI Layout**: Fixed palette radio button positioning and tool button text updates
+
+### Results
+- ✅ **Application Startup**: No errors, all UI elements visible
+- ✅ **Tool Functionality**: All brush/eraser sizes work consistently
+- ✅ **Palette Views**: Grid, Wheel, Primary, Constants all functional
+- ✅ **Canvas Drawing**: Proper mouse event handling and layer management
+- ✅ **UI Consistency**: Proper button text and radio button positioning
+
+## Version 1.62 - File Operations Manager Extraction
+**Date**: October 15, 2025
+**Status**: Complete ✅ (Extracted file operations to dedicated manager)
+
+### File Operations Manager Created
+**New File**: `src/ui/file_operations_manager.py` (469 lines)
+
+**Purpose**: Extract all file I/O operations from main_window.py to improve modularity and reduce token consumption.
+
+**Methods Extracted** (10 total):
+1. `new_project()` - Create new project
+2. `open_project()` - Open .pixpf project files
+3. `save_project()` - Save current project
+4. `save_project_as()` - Save with new filename
+5. `import_png()` - Import PNG into canvas
+6. `export_png()` - Export canvas as PNG
+7. `export_gif()` - Export animation as GIF
+8. `export_spritesheet()` - Export sprite sheet
+9. `show_templates()` - Show template selection dialog
+10. `load_template()` - Load template preset
+
+**Integration**:
+- Initialized in `main_window.py` after layer_panel and timeline_panel creation
+- Callbacks set for `force_canvas_update` and `update_canvas_from_layers`
+- File menu updated to use `self.file_ops.method()` instead of `self._method()`
+- All old file operation methods removed from main_window.py
+
+**Line Reduction**:
+- main_window.py: 3,387 → 3,029 lines (-358 lines, -10.6%)
+- New file_operations_manager.py: +469 lines (includes documentation)
+- Net reduction: ~350 lines removed from main_window.py
+
+**Benefits**:
+- ✅ Clear separation of file I/O concerns
+- ✅ Reduced token usage when loading main_window.py
+- ✅ Easier testing of file operations in isolation
+- ✅ Improved code maintainability
+- ✅ Foundation for future refactoring phases
+
+---
+
 ## Version 1.57 - Event Dispatcher Bug Fixes
 **Date**: October 15, 2025
 **Status**: Complete ✅ (Fixed critical bugs from Event Dispatcher refactor)

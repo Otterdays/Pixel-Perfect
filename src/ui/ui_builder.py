@@ -299,7 +299,7 @@ class UIBuilder:
         )
         palette_menu.pack(pady=3, padx=10)
         
-        # View mode selector - centered container
+        # View mode selector - centered container (moved before content frame)
         view_mode_container = ctk.CTkFrame(palette_frame, fg_color="transparent")
         view_mode_container.pack(pady=3, padx=10)
         
@@ -354,6 +354,10 @@ class UIBuilder:
         )
         saved_view_btn.grid(row=2, column=0, padx=5, pady=2)
         
+        # Create a container frame for palette views (after radio buttons)
+        palette_content_frame = ctk.CTkFrame(palette_frame, fg_color="transparent")
+        palette_content_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
         # Color display container - centered
         color_display_container = ctk.CTkFrame(palette_frame, fg_color="transparent")
         color_display_container.pack(fill="both", expand=True, pady=5, padx=10)
@@ -379,6 +383,7 @@ class UIBuilder:
         return {
             'palette_label': palette_label,
             'palette_frame': palette_frame,
+            'palette_content_frame': palette_content_frame,
             'palette_var': palette_var,
             'palette_menu': palette_menu,
             'view_mode_var': view_mode_var,

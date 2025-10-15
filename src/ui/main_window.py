@@ -40,6 +40,7 @@ from ui.tooltip import create_tooltip
 from ui.theme_manager import ThemeManager
 from ui.ui_builder import UIBuilder
 from ui.theme_dialog_manager import ThemeDialogManager
+from ui.file_operations_manager import FileOperationsManager
 
 class MainWindow:
     """Main application window"""
@@ -224,6 +225,13 @@ class MainWindow:
         # Apply initial theme (Basic Grey) to all UI elements
         self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
         
+        # Update tool selection to highlight brush
+        self._update_tool_selection()
+        
+        # Initialize palette views and show grid
+        self._initialize_all_views()
+        self._show_view("grid")
+        
         # Initialize canvas integration
         self._sync_canvas_with_layers()
     
@@ -338,9 +346,14 @@ class MainWindow:
         selection_buttons = self.ui_builder.create_tool_panel(self.left_panel, self.tool_buttons, self._get_ui_callbacks())
         self.tool_frame = selection_buttons['tool_frame']
         
+        # Update tool button text to show sizes
+        self._update_brush_button_text()
+        self._update_eraser_button_text()
+        
         palette_widgets = self.ui_builder.create_palette_panel(self.left_panel, self.palette, self._get_ui_callbacks())
         # Assign palette widget references
         self.color_display_frame = palette_widgets['color_display_container']
+        self.palette_content_frame = palette_widgets['palette_content_frame']
         self.grid_view_frame = palette_widgets['grid_view_frame']
         self.primary_view_frame = palette_widgets['primary_view_frame']
         self.wheel_view_frame = palette_widgets['wheel_view_frame']
@@ -372,6 +385,15 @@ class MainWindow:
         self.timeline_panel = TimelinePanel(self.right_panel, self.timeline)
         self.timeline_panel.on_frame_changed = self._on_frame_changed
         
+        # Initialize file operations manager
+        self.file_ops = FileOperationsManager(
+            self.root, self.canvas, self.palette, self.layer_manager,
+            self.timeline, self.project, self.export_manager, self.presets,
+            self.layer_panel, self.timeline_panel
+        )
+        self.file_ops.force_canvas_update_callback = self._force_tkinter_canvas_update
+        self.file_ops.update_canvas_from_layers_callback = self._update_canvas_from_layers
+        
         # Force immediate render of all panel widgets (pre-render optimization)
         # This "warms up" CustomTkinter widgets so they appear instantly later
         self.root.update_idletasks()
@@ -396,23 +418,30 @@ class MainWindow:
         # Try to restore saved window state (overrides calculated sizes if successful)
         self._restore_window_state()
         
-        # Initialize palette views (after UI creation so left_panel exists)
+        # Initialize palette views (after UI creation so palette_content_frame exists)
         self.grid_view = GridView(
-            self.left_panel, 
+            self.palette_content_frame, 
             self.palette, 
             self.theme_manager,
             on_color_select=self._select_color,
             on_tool_switch=self._select_tool
         )
         self.primary_view = PrimaryView(
-            self.left_panel, 
+            self.palette_content_frame, 
             self.palette, 
             self.canvas,
             on_color_select=self._select_color,
             on_tool_switch=self._select_tool
         )
+        # Initialize color wheel first (needed by other views)
+        from src.ui.color_wheel import ColorWheel
+        self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
+        self.color_wheel.on_color_changed = self._on_color_wheel_changed
+        self.color_wheel.on_save_custom_color = self._save_custom_color
+        self.color_wheel.on_remove_custom_color = self._remove_custom_color
+        
         self.saved_view = SavedView(
-            self.left_panel, 
+            self.palette_content_frame, 
             self.saved_colors, 
             self.palette, 
             self.canvas,
@@ -421,7 +450,7 @@ class MainWindow:
             on_update_display=self._update_pixel_display
         )
         self.constants_view = ConstantsView(
-            self.left_panel, 
+            self.palette_content_frame, 
             self.canvas, 
             self.palette, 
             self.color_wheel,
@@ -649,6 +678,21 @@ class MainWindow:
                 # Check bounds
                 if 0 <= px < layer.width and 0 <= py < layer.height:
                     layer.set_pixel(px, py, color)
+    
+    def _draw_eraser_at(self, layer, x: int, y: int):
+        """Draw eraser at position with current size"""
+        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
+        offset = self.eraser_size // 2
+        
+        # Erase NxN square (set to transparent)
+        for dy in range(self.eraser_size):
+            for dx in range(self.eraser_size):
+                px = x - offset + dx
+                py = y - offset + dy
+                
+                # Check bounds
+                if 0 <= px < layer.width and 0 <= py < layer.height:
+                    layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
     
     def _show_eraser_size_menu(self, event):
         """Show eraser size selection popup menu"""
@@ -1439,61 +1483,59 @@ class MainWindow:
         self.view_mode_var.set("grid")
         
         # Update grid view with new palette
-        self.color_display_frame = self.grid_view_frame
-        self._create_color_grid()
+        if hasattr(self, 'grid_view') and self.grid_view:
+            self.grid_view.create()
         
         # Show grid view
         self._show_view("grid")
     
     def _initialize_all_views(self):
         """Initialize all palette views once at startup (OPTIMIZED)"""
-        # Create grid view
-        self.color_display_frame = self.grid_view_frame
-        self._create_color_grid()
+        # Initialize grid view
+        if hasattr(self, 'grid_view') and self.grid_view:
+            self.grid_view.create()
         
-        # Create primary view
-        self.color_display_frame = self.primary_view_frame
-        self._create_primary_colors()
+        # Initialize primary view
+        if hasattr(self, 'primary_view') and self.primary_view:
+            self.primary_view.create()
         
-        # Create wheel view
-        self.color_display_frame = self.wheel_view_frame
-        self._create_color_wheel()
+        # Initialize wheel view (ColorWheel creates UI in __init__, no create() method needed)
+        # Color wheel is already created during initialization
         
-        # Create saved view
-        self.color_display_frame = self.saved_view_frame
-        self._create_saved_colors_view()
+        # Initialize saved view
+        if hasattr(self, 'saved_view') and self.saved_view:
+            self.saved_view.create()
         
-        # Constants view is dynamic, create on demand
-        # Reset to grid view frame
-        self.color_display_frame = self.grid_view_frame
+        # Initialize constants view
+        if hasattr(self, 'constants_view') and self.constants_view:
+            self.constants_view.create()
+        
+        # Set color display frame to the left panel for palette views
+        self.color_display_frame = self.left_panel
     
     def _show_view(self, mode: str):
         """Show specific view by toggling visibility (INSTANT)"""
-        # Hide all views
-        self.grid_view_frame.pack_forget()
-        self.primary_view_frame.pack_forget()
-        self.wheel_view_frame.pack_forget()
-        self.constants_view_frame.pack_forget()
-        self.saved_view_frame.pack_forget()
+        # Clear existing palette content
+        if hasattr(self, 'palette_content_frame') and self.palette_content_frame:
+            for widget in self.palette_content_frame.winfo_children():
+                widget.destroy()
         
         # Show requested view
-        if mode == "grid":
-            self.grid_view_frame.pack(expand=True)
-            self.color_display_frame = self.grid_view_frame
-        elif mode == "primary":
-            self.primary_view_frame.pack(expand=True)
-            self.color_display_frame = self.primary_view_frame
-        elif mode == "wheel":
-            self.wheel_view_frame.pack(expand=True)
-            self.color_display_frame = self.wheel_view_frame
-        elif mode == "constants":
-            # Constants view is dynamic - recreate each time
-            self.constants_view_frame.pack(expand=True)
-            self.color_display_frame = self.constants_view_frame
-            self._create_constants_grid()
-        elif mode == "saved":
-            self.saved_view_frame.pack(expand=True)
-            self.color_display_frame = self.saved_view_frame
+        if mode == "grid" and hasattr(self, 'grid_view') and self.grid_view:
+            self.grid_view.create()
+        elif mode == "primary" and hasattr(self, 'primary_view') and self.primary_view:
+            self.primary_view.create()
+        elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
+            # Recreate color wheel since it was destroyed when clearing the frame
+            from src.ui.color_wheel import ColorWheel
+            self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
+            self.color_wheel.on_color_changed = self._on_color_wheel_changed
+            self.color_wheel.on_save_custom_color = self._save_custom_color
+            self.color_wheel.on_remove_custom_color = self._remove_custom_color
+        elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
+            self.constants_view.create()
+        elif mode == "saved" and hasattr(self, 'saved_view') and self.saved_view:
+            self.saved_view.create()
             # Update button states in case colors changed
             if hasattr(self, '_saved_view_created') and self._saved_view_created:
                 self._update_saved_color_buttons()
@@ -2013,7 +2055,16 @@ class MainWindow:
         self._update_custom_colors_display()
     
     def _on_color_wheel_changed(self, rgb_color):
-        """Handle color wheel color change - now just for UI updates"""
+        """Handle color wheel color change"""
+        # Convert RGB to RGBA and set as primary color
+        if len(rgb_color) == 3:
+            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        else:
+            rgba_color = rgb_color
+        
+        # Set the color as the primary color for the brush
+        self.palette.set_primary_color_by_rgba(rgba_color)
+        
         # Update color display in UI
         self._update_pixel_display()
         
@@ -2228,19 +2279,19 @@ class MainWindow:
         file_menu.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
         
         # Menu options
-        new_btn = ctk.CTkButton(file_menu, text="New Project", command=lambda: [self._new_project(), file_menu.destroy()])
+        new_btn = ctk.CTkButton(file_menu, text="New Project", command=lambda: [self.file_ops.new_project(), file_menu.destroy()])
         new_btn.pack(pady=5, padx=10, fill="x")
         
-        open_btn = ctk.CTkButton(file_menu, text="Open Project", command=lambda: [self._open_project(), file_menu.destroy()])
+        open_btn = ctk.CTkButton(file_menu, text="Open Project", command=lambda: [self.file_ops.open_project(), file_menu.destroy()])
         open_btn.pack(pady=5, padx=10, fill="x")
         
-        import_png_btn = ctk.CTkButton(file_menu, text="Import PNG", command=lambda: [self._import_png(), file_menu.destroy()])
+        import_png_btn = ctk.CTkButton(file_menu, text="Import PNG", command=lambda: [self.file_ops.import_png(), file_menu.destroy()])
         import_png_btn.pack(pady=5, padx=10, fill="x")
         
-        save_btn = ctk.CTkButton(file_menu, text="Save Project", command=lambda: [self._save_project(), file_menu.destroy()])
+        save_btn = ctk.CTkButton(file_menu, text="Save Project", command=lambda: [self.file_ops.save_project(), file_menu.destroy()])
         save_btn.pack(pady=5, padx=10, fill="x")
         
-        save_as_btn = ctk.CTkButton(file_menu, text="Save As...", command=lambda: [self._save_project_as(), file_menu.destroy()])
+        save_as_btn = ctk.CTkButton(file_menu, text="Save As...", command=lambda: [self.file_ops.save_project_as(), file_menu.destroy()])
         save_as_btn.pack(pady=5, padx=10, fill="x")
         
         # Separator
@@ -2248,13 +2299,13 @@ class MainWindow:
         sep.pack(fill="x", padx=10, pady=10)
         
         # Export options
-        export_png_btn = ctk.CTkButton(file_menu, text="Export as PNG", command=lambda: [self._export_png(), file_menu.destroy()])
+        export_png_btn = ctk.CTkButton(file_menu, text="Export as PNG", command=lambda: [self.file_ops.export_png(), file_menu.destroy()])
         export_png_btn.pack(pady=5, padx=10, fill="x")
         
-        export_gif_btn = ctk.CTkButton(file_menu, text="Export as GIF", command=lambda: [self._export_gif(), file_menu.destroy()])
+        export_gif_btn = ctk.CTkButton(file_menu, text="Export as GIF", command=lambda: [self.file_ops.export_gif(), file_menu.destroy()])
         export_gif_btn.pack(pady=5, padx=10, fill="x")
         
-        export_spritesheet_btn = ctk.CTkButton(file_menu, text="Export Sprite Sheet", command=lambda: [self._export_spritesheet(), file_menu.destroy()])
+        export_spritesheet_btn = ctk.CTkButton(file_menu, text="Export Sprite Sheet", command=lambda: [self.file_ops.export_spritesheet(), file_menu.destroy()])
         export_spritesheet_btn.pack(pady=5, padx=10, fill="x")
         
         # Separator
@@ -2262,361 +2313,13 @@ class MainWindow:
         sep2.pack(fill="x", padx=10, pady=10)
         
         # Templates
-        template_btn = ctk.CTkButton(file_menu, text="Load Template", command=lambda: [self._show_templates(), file_menu.destroy()])
+        template_btn = ctk.CTkButton(file_menu, text="Load Template", command=lambda: [self.file_ops.show_templates(), file_menu.destroy()])
         template_btn.pack(pady=5, padx=10, fill="x")
         
         # Close button
         close_btn = ctk.CTkButton(file_menu, text="Close", command=file_menu.destroy)
         close_btn.pack(pady=10, padx=10, fill="x")
     
-    def _new_project(self):
-        """Create a new project"""
-        # Clear canvas
-        self.canvas.clear()
-        
-        # Reset layers (clear_layers() already adds a "Background" layer)
-        self.layer_manager.clear_layers()
-        
-        # Reset timeline
-        self.timeline.clear_frames()
-        self.timeline.add_frame()
-        
-        # Force canvas redraw with grid and update UI
-        self._force_tkinter_canvas_update()
-        self.layer_panel.refresh()
-        self.timeline_panel.refresh()
-        
-        print("[OK] New project created")
-    
-    def _open_project(self):
-        """Open an existing project"""
-        try:
-            from tkinter import filedialog
-            file_path = filedialog.askopenfilename(
-                title="Open Pixel Perfect Project",
-                filetypes=[("Pixel Perfect Files", "*.pixpf"), ("All Files", "*.*")]
-            )
-            
-            if file_path:
-                # Load project with all required parameters
-                success = self.project.load_project(
-                    file_path,
-                    self.canvas,
-                    self.palette,
-                    self.layer_manager,
-                    self.timeline
-                )
-                
-                if success:
-                    # Update canvas from loaded layers (this composites all layers)
-                    self._update_canvas_from_layers()
-                    
-                    # Update UI components to reflect loaded project
-                    self.layer_panel.refresh()
-                    self.timeline_panel.refresh()
-                    
-                    # Force immediate display update
-                    self.root.update_idletasks()
-                    self.root.update()
-                    
-                    print(f"[OK] Project opened: {file_path}")
-                else:
-                    print(f"[ERROR] Failed to open project: {file_path}")
-        except Exception as e:
-            print(f"[ERROR] Error opening project: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    def _save_project(self):
-        """Save current project"""
-        try:
-            if self.project.current_project_path:
-                self.project.save_project(
-                    self.project.current_project_path,
-                    self.canvas,
-                    self.palette,
-                    self.layer_manager,
-                    self.timeline
-                )
-                print(f"Project saved: {self.project.current_project_path}")
-            else:
-                self._save_project_as()
-        except Exception as e:
-            print(f"Error saving project: {e}")
-    
-    def _save_project_as(self):
-        """Save project with new name"""
-        try:
-            from tkinter import filedialog
-            file_path = filedialog.asksaveasfilename(
-                title="Save Pixel Perfect Project",
-                defaultextension=".pixpf",
-                filetypes=[("Pixel Perfect Files", "*.pixpf"), ("All Files", "*.*")]
-            )
-            
-            if file_path:
-                self.project.save_project(
-                    file_path,
-                    self.canvas,
-                    self.palette,
-                    self.layer_manager,
-                    self.timeline
-                )
-                self.project.current_project_path = file_path
-                print(f"Project saved as: {file_path}")
-        except Exception as e:
-            print(f"Error saving project: {e}")
-    
-    def _import_png(self):
-        """Import PNG directly into current canvas"""
-        try:
-            from tkinter import filedialog, messagebox
-            from PIL import Image
-            import numpy as np
-            
-            # Open file dialog for PNG selection
-            png_path = filedialog.askopenfilename(
-                title="Import PNG Image",
-                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
-            )
-            
-            if not png_path:
-                return  # User cancelled
-            
-            # Load and validate PNG
-            from src.utils.import_png import PNGImporter
-            importer = PNGImporter()
-            is_valid, message, width, height = importer.validate_png_dimensions(png_path)
-            
-            if not is_valid:
-                messagebox.showerror(
-                    "Invalid PNG Dimensions",
-                    f"{message}\n\n"
-                    f"Valid sizes: 16x16, 32x32, or 64x64\n"
-                    f"(or scaled versions: 128x128, 256x256, 512x512)"
-                )
-                return
-            
-            # Load the PNG
-            image = Image.open(png_path)
-            original_width, original_height = image.size
-            
-            # Check if we need to downscale
-            needs_downscale = False
-            scale_factor = 1
-            
-            if original_width != width or original_height != height:
-                # Calculate scale factor
-                scale_factor = original_width // width
-                needs_downscale = True
-                
-                # Downscale using nearest neighbor
-                rgba_image = image.convert('RGBA')
-                rgba_image = rgba_image.resize((width, height), Image.NEAREST)
-                print(f"Auto-downscaled from {original_width}x{original_height} to {width}x{height} ({scale_factor}x)")
-            else:
-                rgba_image = image.convert('RGBA')
-            
-            # Convert to numpy array
-            pixels = np.array(rgba_image, dtype=np.uint8)
-            
-            # Update dimensions FIRST (before clearing layers)
-            self.canvas.width = width
-            self.canvas.height = height
-            self.layer_manager.width = width
-            self.layer_manager.height = height
-            
-            # Initialize canvas pixels array with correct dimensions
-            self.canvas.pixels = np.zeros((height, width, 4), dtype=np.uint8)
-            
-            # Now clear layers (this will create layers with the NEW dimensions)
-            self.layer_manager.clear_layers()
-            
-            # Set the imported pixels and layer name
-            self.layer_manager.layers[0].name = "Imported"
-            self.layer_manager.layers[0].pixels = pixels
-            
-            # Update canvas from layers (copies layer data to canvas.pixels)
-            self._update_canvas_from_layers()
-            
-            # NOW create the pygame surface with the correct pixel data
-            self.canvas._create_surface()
-            
-            # Clear animation frames
-            self.timeline.frames.clear()
-            self.timeline.current_frame = 0
-            
-            # Update UI
-            self.layer_panel.refresh()
-            self.timeline_panel.refresh()
-            self.root.update_idletasks()
-            self.root.update()
-            
-            # Clear project path (this is now a new unsaved project)
-            self.project.current_project_path = None
-            
-            # Show success message
-            if needs_downscale:
-                messagebox.showinfo(
-                    "Import Successful",
-                    f"Imported {original_width}x{original_height} PNG\n"
-                    f"(Auto-downscaled {scale_factor}x to {width}x{height})\n\n"
-                    f"Ready to edit! Use File → Save Project when ready."
-                )
-            else:
-                messagebox.showinfo(
-                    "Import Successful",
-                    f"Imported {width}x{height} PNG\n\n"
-                    f"Ready to edit! Use File → Save Project when ready."
-                )
-            
-            print(f"[OK] Imported PNG to canvas: {os.path.basename(png_path)}")
-                
-        except Exception as e:
-            from tkinter import messagebox
-            messagebox.showerror("Import Error", f"An error occurred:\n{e}")
-            print(f"Error importing PNG: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    def _export_png(self):
-        """Export canvas as PNG"""
-        try:
-            from tkinter import filedialog
-            file_path = filedialog.asksaveasfilename(
-                title="Export as PNG",
-                defaultextension=".png",
-                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
-            )
-            
-            if file_path:
-                # Export with high quality (8x scaling) and transparency
-                success = self.export_manager.export_png(
-                    self.canvas.pixels, 
-                    file_path, 
-                    scale=8, 
-                    transparent=True
-                )
-                if success:
-                    print(f"Exported high-quality PNG (8x scale): {file_path}")
-                else:
-                    print(f"Failed to export PNG: {file_path}")
-        except Exception as e:
-            print(f"Error exporting PNG: {e}")
-    
-    def _export_gif(self):
-        """Export animation as GIF"""
-        try:
-            from tkinter import filedialog
-            file_path = filedialog.asksaveasfilename(
-                title="Export as GIF",
-                defaultextension=".gif",
-                filetypes=[("GIF Files", "*.gif"), ("All Files", "*.*")]
-            )
-            
-            if file_path:
-                # Get frames from timeline
-                frames = [frame.pixels for frame in self.timeline.frames]
-                success = self.export_manager.export_gif(
-                    frames, 
-                    file_path, 
-                    scale=8,
-                    duration=100  # 100ms per frame for smooth animation
-                )
-                if success:
-                    print(f"Exported high-quality animated GIF (8x scale): {file_path}")
-                else:
-                    print(f"Failed to export GIF: {file_path}")
-        except Exception as e:
-            print(f"Error exporting GIF: {e}")
-    
-    def _export_spritesheet(self):
-        """Export as sprite sheet"""
-        try:
-            from tkinter import filedialog
-            file_path = filedialog.asksaveasfilename(
-                title="Export Sprite Sheet",
-                defaultextension=".png",
-                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
-            )
-            
-            if file_path:
-                # Get frames from timeline for sprite sheet
-                frames = [frame.pixels for frame in self.timeline.frames]
-                success = self.export_manager.export_sprite_sheet(
-                    frames, 
-                    file_path, 
-                    scale=8,
-                    layout="horizontal"  # Default to horizontal layout
-                )
-                if success:
-                    print(f"Exported high-quality sprite sheet (8x scale): {file_path}")
-                else:
-                    print(f"Failed to export sprite sheet: {file_path}")
-        except Exception as e:
-            print(f"Error exporting sprite sheet: {e}")
-    
-    def _show_templates(self):
-        """Show template selection dialog"""
-        template_menu = ctk.CTkToplevel(self.root)
-        template_menu.title("Load Template")
-        template_menu.geometry("300x400")
-        template_menu.transient(self.root)
-        template_menu.grab_set()
-        
-        # Center the menu
-        template_menu.geometry("+%d+%d" % (self.root.winfo_rootx() + 100, self.root.winfo_rooty() + 100))
-        
-        # Template categories
-        categories = ["Characters", "Items", "Tiles", "UI Elements"]
-        
-        for category in categories:
-            cat_frame = ctk.CTkFrame(template_menu)
-            cat_frame.pack(fill="x", padx=10, pady=5)
-            
-            cat_label = ctk.CTkLabel(cat_frame, text=category, font=ctk.CTkFont(weight="bold"))
-            cat_label.pack(pady=5)
-            
-            # Add template buttons for each category
-            if category == "Characters":
-                templates = ["32x32 Character (top-down)", "16x32 Character (side-view)"]
-            elif category == "Items":
-                templates = ["16x16 Item icon", "32x32 Item icon (detailed)"]
-            elif category == "Tiles":
-                templates = ["16x16 Grass tile", "16x16 Stone tile"]
-            elif category == "UI Elements":
-                templates = ["32x16 Button (UI)", "16x16 Icon (UI)"]
-            
-            for template in templates:
-                btn = ctk.CTkButton(
-                    cat_frame, 
-                    text=template,
-                    command=lambda t=template: [self._load_template(t), template_menu.destroy()]
-                )
-                btn.pack(pady=2, padx=5, fill="x")
-        
-        close_btn = ctk.CTkButton(template_menu, text="Close", command=template_menu.destroy)
-        close_btn.pack(pady=10, padx=10, fill="x")
-    
-    def _load_template(self, template_name):
-        """Load a template"""
-        try:
-            template_data = self.presets.get_template(template_name)
-            if template_data:
-                # Set canvas size based on template
-                width, height = template_data.get('size', (32, 32))
-                self.canvas.resize(width, height)
-                
-                # Load template pixels if available
-                if 'pixels' in template_data:
-                    self.canvas.pixels = template_data['pixels']
-                    self._force_tkinter_canvas_update()
-                
-                print(f"Loaded template: {template_name}")
-            else:
-                print(f"Template not found: {template_name}")
-        except Exception as e:
-            print(f"Error loading template: {e}")
 
     def _force_tkinter_canvas_update(self):
         """Force immediate tkinter canvas display update"""

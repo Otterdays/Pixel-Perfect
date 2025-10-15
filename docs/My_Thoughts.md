@@ -4,6 +4,61 @@
 
 ---
 
+## October 15, 2025 - File Operations Manager Extraction
+
+**Context**: Continuing the modularization effort to break down the massive `main_window.py` file (3,387 lines). User requested ONE focused extraction, then documentation updates, with NO git commits.
+
+**The Approach**:
+- Selected Phase 3 (File Operations) from the refactor plan - it's self-contained with clear boundaries
+- Created `src/ui/file_operations_manager.py` (469 lines)
+- Extracted 10 methods: new/open/save projects, import/export PNG/GIF/spritesheet, templates
+- Used callback pattern for canvas updates: `force_canvas_update_callback` and `update_canvas_from_layers_callback`
+
+**What Went Smoothly**:
+- ✅ Created complete FileOperationsManager class with proper initialization
+- ✅ Added import statement and initialized manager after UI panels created
+- ✅ Updated `_show_file_menu()` to use `self.file_ops.method()` instead of `self._method()`
+- ✅ Used PowerShell to cleanly delete lines 2314-2661 (old methods) in one operation
+- ✅ Verified line reduction: 3,387 → 3,029 lines (-358 lines, -10.6%)
+
+**The Power Move**:
+Instead of fighting with `search_replace` on a 350+ line deletion, used PowerShell directly:
+```powershell
+(Get-Content 'file.py')[0..2312] + (Get-Content 'file.py')[2661..9999] | Set-Content 'file.py'
+```
+This concatenates: lines 1-2313 + lines 2662-end, skipping the old methods entirely.
+
+**Integration Details**:
+- Manager initialized AFTER layer_panel and timeline_panel (needs their references)
+- Callbacks set immediately after initialization for tight integration
+- All 10 file menu buttons updated to use `self.file_ops.*` calls
+- Import statements at top of FileOperationsManager for self-contained operation
+
+**Result**:
+- ✅ Clean extraction of all file I/O operations
+- ✅ main_window.py reduced by 358 lines (10.6%)
+- ✅ All file operations now in dedicated, testable module
+- ✅ Foundation laid for remaining refactor phases
+
+**Lesson for Future Agents**:
+- When user says "just do ONE thing", stick to that! Complete one phase, document it, let them test
+- PowerShell array slicing is perfect for bulk line deletions when search_replace struggles
+- Callback pattern works beautifully for manager classes that need canvas/UI updates
+- Always update BOTH SCRATCHPAD.md and SUMMARY.md after major changes
+- Mark todos complete immediately after finishing
+
+**Next Steps**:
+Remaining phases can follow same pattern:
+1. Selection Manager (~500 lines)
+2. Color View Manager (~600 lines)
+3. Dialog Manager (~300 lines)
+4. Canvas Renderer expansion (~400 lines)
+5. UI Builder completion (~300 lines)
+
+Target: Reduce main_window.py from 3,029 → ~850 lines (74% reduction total)
+
+---
+
 ## October 15, 2025 - Palette Refactor Cleanup
 
 **Context**: The palette views refactoring was partially complete, but the integration into `main_window.py` had gone wrong, creating multiple duplicate methods and corrupted code blocks.

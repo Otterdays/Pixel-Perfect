@@ -1,5 +1,55 @@
 # Pixel Perfect - Changelog
 
+## Version 1.59 - Complete Application Restoration & Tool Consistency
+**Date**: January 2025  
+**Type**: Critical Bug Fixes / Complete Functionality Restoration
+
+### 🚀 Major Application Restoration
+**Completely restored application functionality after file reversion disaster**
+
+**Critical Issues Resolved:**
+1. **Application Startup Failures** - Multiple AttributeError exceptions preventing launch
+2. **Missing UI Elements** - Tools, palette panels, and controls completely absent
+3. **Canvas Non-Responsive** - No mouse event handling for drawing operations
+4. **Palette Views Broken** - Wheel, Primary, Grid views not displaying
+5. **Tool Size Indicators Missing** - Brush/Eraser buttons showing no size info
+
+### 🔧 Tool Consistency Issues Fixed
+**Major breakthrough in tool behavior consistency**
+
+**Problem**: Switching between brush/eraser sizes caused previous work to disappear
+- 1x1 brush work would vanish when switching to 2x2 brush
+- 1x1 eraser work would be "undone" by 2x2/3x3 eraser
+
+**Root Cause**: Mixed canvas-based and layer-based approaches
+- 1x1 tools worked directly on canvas
+- Multi-pixel tools worked on layers then flattened
+- Layer flattening overwrote canvas-based work
+
+**Solution**: Unified Layer-Based Architecture
+- **All brush sizes** now use `_draw_brush_at()` with consistent layer updates
+- **All eraser sizes** now use `_draw_eraser_at()` with consistent layer updates
+- **Consistent Updates**: All operations call `_update_canvas_from_layers()`
+
+### 🛠️ Technical Implementation
+**Files Modified**: `src/ui/main_window.py`, `src/core/event_dispatcher.py`, `src/ui/ui_builder.py`
+
+**Key Changes**:
+- Added missing `_draw_eraser_at()` method for multi-pixel eraser operations
+- Updated event dispatcher to handle all tool sizes consistently
+- Fixed palette view initialization and radio button positioning
+- Restored canvas mouse event bindings
+- Added tool button text updates for size indicators
+
+### 📊 Results
+- ✅ **Application Stability**: No startup errors, all UI elements functional
+- ✅ **Tool Consistency**: All brush/eraser sizes work harmoniously
+- ✅ **Palette Functionality**: Grid, Wheel, Primary, Constants views operational
+- ✅ **Canvas Responsiveness**: Proper mouse event handling and drawing
+- ✅ **UI Completeness**: All buttons, indicators, and controls visible
+
+**Impact**: Application is now fully functional with consistent tool behavior across all sizes.
+
 ## Version 1.58 - Event Dispatcher Bug Fixes
 **Date**: October 15, 2025  
 **Type**: Bug Fixes / Critical Functionality Restoration

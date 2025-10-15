@@ -42,6 +42,13 @@ class EventDispatcher:
         
         # Focus events
         root.bind("<FocusIn>", self.on_focus_in)
+        
+        # Canvas mouse events
+        if hasattr(self.main_window, 'drawing_canvas') and self.main_window.drawing_canvas:
+            self.main_window.drawing_canvas.bind("<Button-1>", self.on_tkinter_canvas_mouse_down)
+            self.main_window.drawing_canvas.bind("<ButtonRelease-1>", self.on_tkinter_canvas_mouse_up)
+            self.main_window.drawing_canvas.bind("<B1-Motion>", self.on_tkinter_canvas_mouse_drag)
+            self.main_window.drawing_canvas.bind("<Motion>", self.on_tkinter_canvas_mouse_move)
     
     # ==================== Window & Panel Events ====================
     
@@ -228,14 +235,15 @@ class EventDispatcher:
         # Get current drawing color
         current_color = self.main_window.palette.get_primary_color()
         
-        # Handle multi-pixel brush/eraser specially
-        if self.main_window.current_tool == "brush" and self.main_window.brush_size > 1:
+        # Handle all brush sizes consistently
+        if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
                 self.main_window._draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
-            tool.is_drawing = True  # Set drawing state
+            if hasattr(tool, 'is_drawing'):
+                tool.is_drawing = True  # Set drawing state
             return
         elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size > 1:
             draw_layer = self.main_window._get_drawing_layer()
@@ -243,12 +251,23 @@ class EventDispatcher:
                 self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
-            tool.is_drawing = True  # Set drawing state
+            if hasattr(tool, 'is_erasing'):
+                tool.is_erasing = True  # Set erasing state
             return
         
-        # Call tool's on_mouse_down method (standard interface)
-        tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
-        self.main_window.canvas_renderer.update_pixel_display()
+        # For 1x1 eraser, use layer-based approach for consistency
+        if self.main_window.current_tool == "eraser" and self.main_window.eraser_size == 1:
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer:
+                self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
+                self.main_window._update_canvas_from_layers()
+                self.main_window.canvas_renderer.update_pixel_display()
+            if hasattr(tool, 'is_erasing'):
+                tool.is_erasing = True  # Set erasing state
+        else:
+            # Call tool's on_mouse_down method (standard interface) for other tools
+            tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
     
     def on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
@@ -336,19 +355,20 @@ class EventDispatcher:
         # Get current drawing color
         current_color = self.main_window.palette.get_primary_color()
         
-        # Handle multi-pixel brush/eraser during drag
-        if self.main_window.current_tool == "brush" and self.main_window.brush_size > 1:
+        # Handle all brush sizes consistently during drag
+        if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
-            if draw_layer and tool.is_drawing:
+            if draw_layer and hasattr(tool, 'is_drawing') and tool.is_drawing:
                 self.main_window._draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
             self.last_canvas_y = canvas_y
             return
-        elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size > 1:
+        elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size >= 1:
+            # Handle both 1x1 and multi-pixel eraser during drag
             draw_layer = self.main_window._get_drawing_layer()
-            if draw_layer and tool.is_drawing:
+            if draw_layer and hasattr(tool, 'is_erasing') and tool.is_erasing:
                 self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
@@ -362,7 +382,7 @@ class EventDispatcher:
         
         # Draw shape preview for shape tools during drag
         if self.main_window.current_tool in ["line", "rectangle", "circle"]:
-            if tool.is_drawing:
+            if hasattr(tool, 'is_drawing') and tool.is_drawing:
                 self.main_window.canvas_renderer.draw_shape_preview(tool, canvas_x, canvas_y, current_color)
         
         # Update last position for interpolation
