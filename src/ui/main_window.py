@@ -34,6 +34,7 @@ from animation.timeline import AnimationTimeline
 from ui.timeline_panel import TimelinePanel
 from ui.tooltip import create_tooltip
 from ui.theme_manager import ThemeManager
+from ui.ui_builder import UIBuilder
 
 class MainWindow:
     """Main application window"""
@@ -97,6 +98,11 @@ class MainWindow:
         self.layer_manager = LayerManager(32, 32)
         self.undo_manager = UndoManager()
         self.timeline = AnimationTimeline(32, 32)
+        
+        # Initialize responsive panel sizing
+        # Try to restore saved window state first, fallback to calculated optimal sizes
+        if not self._restore_window_state():
+            self.left_panel_width, self.right_panel_width = self._calculate_optimal_panel_widths()
         
         # Initialize custom colors manager
         from src.core.custom_colors import CustomColorManager
@@ -172,6 +178,9 @@ class MainWindow:
         self.pan_offset_x = 0
         self.pan_offset_y = 0
         
+        # Grid overlay state
+        self.grid_overlay = False
+        
         # Initialize theme manager
         self.theme_manager = ThemeManager()
         self.theme_manager.on_theme_changed = self._apply_theme
@@ -194,7 +203,8 @@ class MainWindow:
         self.main_frame = ctk.CTkFrame(self.root)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Top toolbar
+        # Initialize UI Builder and create toolbar first (so it appears at top)
+        self.ui_builder = UIBuilder(self.main_frame, self._get_ui_callbacks(), self.theme_manager)
         self._create_toolbar()
         
         # Main content area with resizable panes (optimized for smooth resizing)
@@ -218,7 +228,7 @@ class MainWindow:
         
         # Left panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.left_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
-        self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
+        self.paned_window.add(self.left_container, minsize=200, width=self.left_panel_width, stretch="never")
         
         # Left collapse button (visible when expanded)
         left_collapse_btn = ctk.CTkButton(
@@ -237,7 +247,7 @@ class MainWindow:
         # Left panel (tools and palette) - with scrollbar (optimized for smooth resize)
         self.left_panel = ctk.CTkScrollableFrame(
             self.left_container, 
-            width=520,
+            width=self.left_panel_width,
             fg_color=self.theme_manager.get_current_theme().bg_secondary
         )
         self.left_panel.pack(side="left", fill="both", expand=True)
@@ -251,8 +261,8 @@ class MainWindow:
         self.canvas_frame.pack(fill="both", expand=True)
         
         # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
-        self.right_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
-        self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
+        self.right_container = tk.Frame(self.paned_window, bg="#1a1a1a")
+        self.paned_window.add(self.right_container, minsize=200, width=self.right_panel_width, stretch="never")
         
         # Right collapse button (visible when expanded)
         right_collapse_btn = ctk.CTkButton(
@@ -271,8 +281,8 @@ class MainWindow:
         # Right panel (layers, etc.) - with scrollbar (optimized for smooth resize)
         self.right_panel = ctk.CTkScrollableFrame(
             self.right_container, 
-            width=500,
-            fg_color=self.theme_manager.get_current_theme().bg_secondary
+            width=self.right_panel_width,
+            fg_color="transparent"
         )
         self.right_panel.pack(side="right", fill="both", expand=True)
         
@@ -302,146 +312,41 @@ class MainWindow:
         # Mark panels as pre-created for optimization
         self._panels_pre_created = True
     
+    def _get_ui_callbacks(self):
+        """Returns a dictionary of callbacks for the UI builder."""
+        return {
+            'show_file_menu': self._show_file_menu,
+            'on_size_change': self._on_size_change,
+            'on_zoom_change': self._on_zoom_change,
+            'undo': self._undo,
+            'redo': self._redo,
+            'on_theme_selected': self._on_theme_selected,
+            'show_settings_dialog': self._show_settings_dialog,
+            'toggle_grid': self._toggle_grid,
+            'toggle_grid_overlay': self._toggle_grid_overlay,
+        }
+
     def _create_toolbar(self):
-        """Create top toolbar"""
-        self.toolbar = ctk.CTkFrame(self.main_frame)
-        self.toolbar.pack(fill="x", pady=(0, 10))
-        
-        # File menu
-        self.file_button = ctk.CTkButton(self.toolbar, text="File", width=60, command=self._show_file_menu)
-        self.file_button.pack(side="left", padx=5)
-        
-        # Canvas size selector
-        self.size_label = ctk.CTkLabel(self.toolbar, text="Size:")
-        self.size_label.pack(side="left", padx=(20, 5))
-        
-        self.size_var = ctk.StringVar(value="32x32")
-        self.size_menu = ctk.CTkOptionMenu(
-            self.toolbar, 
-            variable=self.size_var,
-            values=["16x16", "32x32", "16x32", "32x64", "64x64", "Custom..."],
-            command=self._on_size_change
-        )
-        self.size_menu.pack(side="left", padx=5)
-        
-        # Track custom size
-        self.custom_canvas_size = None
-        
-        # Zoom controls
-        self.zoom_label = ctk.CTkLabel(self.toolbar, text="Zoom:")
-        self.zoom_label.pack(side="left", padx=(20, 5))
-        
-        self.zoom_var = ctk.StringVar(value="16x")
-        self.zoom_menu = ctk.CTkOptionMenu(
-            self.toolbar,
-            variable=self.zoom_var,
-            values=["0.25x", "0.5x", "1x", "2x", "4x", "8x", "16x", "32x"],
-            command=self._on_zoom_change
-        )
-        self.zoom_menu.pack(side="left", padx=5)
-        
-        # Undo/Redo buttons
-        self._create_undo_redo_buttons()
-        
-        # Theme selector with brand logo
-        try:
-            # Load DCS brand logo
-            # Handle both development and PyInstaller environments
-            if getattr(sys, 'frozen', False):
-                # Running as compiled executable
-                base_path = sys._MEIPASS
-                logo_path = os.path.join(base_path, "dcs.png")
-            else:
-                # Running in development
-                logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "dcs.png")
-                logo_path = os.path.abspath(logo_path)
-            
-            if os.path.exists(logo_path):
-                logo_image = Image.open(logo_path)
-                # Resize to fit toolbar (24x24)
-                logo_image = logo_image.resize((24, 24), Image.Resampling.LANCZOS)
-                logo_ctk = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(24, 24))
-                self.theme_label = ctk.CTkLabel(self.toolbar, image=logo_ctk, text="")
-            else:
-                # Fallback to emoji if image not found
-                self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
-        except Exception as e:
-            print(f"[WARN] Could not load DCS logo: {e}")
-            # Fallback to emoji if image loading fails
-            self.theme_label = ctk.CTkLabel(self.toolbar, text="🎨", font=ctk.CTkFont(size=16))
-        
-        self.theme_label.pack(side="right", padx=(20, 2))
-        create_tooltip(self.theme_label, "Color Theme - Diamond Clad Studios", delay=1000)
-        
-        self.theme_var = ctk.StringVar(value="Basic Grey")
-        self.theme_menu = ctk.CTkOptionMenu(
-            self.toolbar,
-            variable=self.theme_var,
-            values=self.theme_manager.get_theme_names(),
-            command=self._on_theme_selected,
-            width=120
-        )
-        self.theme_menu.pack(side="right", padx=5)
-        
-        # Settings button with gear icon
-        self.settings_button = ctk.CTkButton(
-            self.toolbar, 
-            text="⚙️", 
-            width=40,
-            command=self._show_settings_dialog,
-            font=ctk.CTkFont(size=18)
-        )
-        self.settings_button.pack(side="right", padx=5)
-        create_tooltip(self.settings_button, "Settings (Coming Soon)", delay=500)
-        
-        # Pre-create settings dialog for instant display (create once, show/hide)
-        self.settings_dialog = None
-        self._create_settings_dialog()
-        
-        # Grid toggle
-        self.grid_button = ctk.CTkButton(self.toolbar, text="Grid", width=60)
-        self.grid_button.pack(side="right", padx=5)
-        self.grid_button.configure(command=self._toggle_grid)
-        self._update_grid_button_text()
-        
-        # Grid overlay toggle (grid on top of pixels)
-        self.grid_overlay = False
-        self.grid_overlay_button = ctk.CTkButton(self.toolbar, text="Grid Overlay", width=90)
-        self.grid_overlay_button.pack(side="right", padx=5)
-        self.grid_overlay_button.configure(command=self._toggle_grid_overlay)
-        self._update_grid_overlay_button_text()
-    
-    def _create_undo_redo_buttons(self):
-        """Create stylized undo/redo buttons with arrows"""
-        # Undo/Redo button frame
-        undo_redo_frame = ctk.CTkFrame(self.toolbar)
-        undo_redo_frame.pack(side="left", padx=(20, 0))
-        
-        # Undo button with left arrow
-        self.undo_button = ctk.CTkButton(
-            undo_redo_frame,
-            text="↶",  # Left curved arrow
-            width=40,
-            height=30,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            command=self._undo,
-            fg_color=("gray75", "gray25")
-        )
-        self.undo_button.pack(side="left", padx=2)
-        
-        # Redo button with right arrow
-        self.redo_button = ctk.CTkButton(
-            undo_redo_frame,
-            text="↷",  # Right curved arrow
-            width=40,
-            height=30,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            command=self._redo,
-            fg_color=("gray75", "gray25")
-        )
-        self.redo_button.pack(side="left", padx=2)
-        
-        # Connect undo manager callback
+        """Create top toolbar using the UIBuilder."""
+        self.ui_builder.create_toolbar()
+        # Assign widgets from builder back to main window for existing references
+        self.toolbar = self.ui_builder.widgets['toolbar']
+        self.file_button = self.ui_builder.widgets['file_button']
+        self.size_label = self.ui_builder.widgets['size_label']
+        self.size_var = self.ui_builder.widgets['size_var']
+        self.size_menu = self.ui_builder.widgets['size_menu']
+        self.zoom_label = self.ui_builder.widgets['zoom_label']
+        self.zoom_var = self.ui_builder.widgets['zoom_var']
+        self.zoom_menu = self.ui_builder.widgets['zoom_menu']
+        self.undo_button = self.ui_builder.widgets['undo_button']
+        self.redo_button = self.ui_builder.widgets['redo_button']
+        self.theme_label = self.ui_builder.widgets['theme_label']
+        self.theme_var = self.ui_builder.widgets['theme_var']
+        self.theme_menu = self.ui_builder.widgets['theme_menu']
+        self.settings_button = self.ui_builder.widgets['settings_button']
+        self.grid_button = self.ui_builder.widgets['grid_button']
+        self.grid_overlay_button = self.ui_builder.widgets['grid_overlay_button']
+        # Connect undo manager callback after buttons are created
         self.undo_manager.on_state_changed = self._update_undo_redo_buttons
     
     def _update_undo_redo_buttons(self):
@@ -460,11 +365,10 @@ class MainWindow:
     
     def _create_tool_panel(self):
         """Create tool selection panel"""
-        self.tool_frame = ctk.CTkFrame(self.left_panel, fg_color="transparent")
-        self.tool_frame.pack(fill="none", padx=10, pady=(5, 5))
+        self.tool_frame = self.left_panel  # Use the panel directly, no container frame
         
         tool_label = ctk.CTkLabel(self.tool_frame, text="Tools", font=ctk.CTkFont(size=16, weight="bold"))
-        tool_label.pack(pady=(5, 3))
+        tool_label.pack(pady=(15, 3), padx=10)
         
         # Tool buttons container for grid layout
         tool_grid = ctk.CTkFrame(self.tool_frame, fg_color="transparent")
@@ -598,11 +502,10 @@ class MainWindow:
     
     def _create_palette_panel(self):
         """Create color palette panel"""
-        self.palette_frame = ctk.CTkFrame(self.left_panel, fg_color="transparent")
-        self.palette_frame.pack(fill="x", padx=10, pady=(3, 5))
+        self.palette_frame = self.left_panel  # Use the panel directly, no container frame
         
         palette_label = ctk.CTkLabel(self.palette_frame, text="Palette", font=ctk.CTkFont(size=16, weight="bold"))
-        palette_label.pack(pady=(5, 3))
+        palette_label.pack(pady=(15, 3), padx=10)
         
         # Palette selector
         self.palette_var = ctk.StringVar(value="SNES Classic")
@@ -612,11 +515,11 @@ class MainWindow:
             values=list(self.palette.get_preset_palettes().keys()),
             command=self._on_palette_change
         )
-        self.palette_menu.pack(pady=3)
+        self.palette_menu.pack(pady=3, padx=10)
         
         # View mode selector - centered container
         view_mode_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
-        view_mode_container.pack(pady=3)
+        view_mode_container.pack(pady=3, padx=10)
         
         view_mode_frame = ctk.CTkFrame(view_mode_container, fg_color="transparent")
         view_mode_frame.pack()
@@ -671,7 +574,7 @@ class MainWindow:
         
         # Color display container - centered
         color_display_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
-        color_display_container.pack(fill="both", expand=True, pady=5)
+        color_display_container.pack(fill="both", expand=True, pady=5, padx=10)
         
         # Create container frames for each view (create once, toggle visibility)
         self.grid_view_frame = ctk.CTkFrame(color_display_container)
@@ -1212,6 +1115,9 @@ class MainWindow:
         
         # Bind window resize event to fix grid centering
         self.root.bind("<Configure>", self._on_window_resize)
+        
+        # Bind window close event to save state
+        self.root.protocol("WM_DELETE_WINDOW", self._on_window_close)
         
         # Bind paned window for smooth resize detection
         self.paned_window.bind("<ButtonPress-1>", self._on_sash_drag_start)
@@ -3302,7 +3208,7 @@ class MainWindow:
         
         # Update scrollable panel backgrounds to match theme
         self.left_panel.configure(fg_color=theme.bg_secondary)
-        self.right_panel.configure(fg_color=theme.bg_secondary)
+        self.right_panel.configure(fg_color="transparent")
         
         # Update all tool buttons
         for tool_id, btn in self.tool_buttons.items():
@@ -3370,7 +3276,7 @@ class MainWindow:
             scrollbar_button_hover_color=theme.button_hover
         )
         self.right_panel.configure(
-            fg_color=theme.bg_secondary,
+            fg_color="transparent",
             scrollbar_button_color=theme.button_normal,
             scrollbar_button_hover_color=theme.button_hover
         )
@@ -3430,22 +3336,18 @@ class MainWindow:
         # Update layer panel if it exists (comprehensive)
         if hasattr(self, 'layer_panel'):
             try:
-                # Update layer panel background - use layer_frame not frame
-                if hasattr(self.layer_panel, 'layer_frame'):
-                    self.layer_panel.layer_frame.configure(fg_color=theme.bg_secondary)
-                    # Recursively update all children
-                    self._apply_theme_to_children(self.layer_panel.layer_frame, theme)
+                # Layer panel now uses parent frame directly, no background needed
+                # Recursively update all children of the layer panel
+                self._apply_theme_to_children(self.layer_panel.layer_frame, theme)
             except Exception as e:
                 print(f"[DEBUG] Layer panel theme error: {e}")
         
         # Update timeline panel if it exists (comprehensive)
         if hasattr(self, 'timeline_panel'):
             try:
-                # Update timeline panel background - use timeline_frame not frame
-                if hasattr(self.timeline_panel, 'timeline_frame'):
-                    self.timeline_panel.timeline_frame.configure(fg_color=theme.bg_secondary)
-                    # Recursively update all children
-                    self._apply_theme_to_children(self.timeline_panel.timeline_frame, theme)
+                # Timeline panel now uses parent frame directly, no background needed
+                # Recursively update all children of the timeline panel
+                self._apply_theme_to_children(self.timeline_panel.timeline_frame, theme)
                 
                 # Update frame list area specifically (regular frame, no scrollbar colors)
                 if hasattr(self.timeline_panel, 'frame_list_frame'):
@@ -5069,6 +4971,123 @@ class MainWindow:
         self.timeline.next_frame()
         self.timeline_panel.refresh()
         self._on_frame_changed()
+    
+    def _calculate_optimal_panel_widths(self):
+        """Calculate optimal panel widths based on screen resolution"""
+        try:
+            # Get screen dimensions
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            
+            print(f"[Panel Sizing] Screen resolution: {screen_width}x{screen_height}")
+            
+            # Calculate optimal panel widths based on screen size
+            if screen_width <= 1366:  # Small laptop screens (1366x768)
+                left_width, right_width = 280, 260
+                print(f"[Panel Sizing] Small screen detected - using compact panels: {left_width}x{right_width}")
+            elif screen_width <= 1920:  # Standard desktop (1920x1080)
+                left_width, right_width = 350, 320
+                print(f"[Panel Sizing] Standard desktop detected - using balanced panels: {left_width}x{right_width}")
+            elif screen_width <= 2560:  # Large desktop (2560x1440)
+                left_width, right_width = 400, 380
+                print(f"[Panel Sizing] Large desktop detected - using spacious panels: {left_width}x{right_width}")
+            else:  # Ultra-wide or 4K (2560+)
+                left_width, right_width = 450, 420
+                print(f"[Panel Sizing] Ultra-wide/4K detected - using wide panels: {left_width}x{right_width}")
+            
+            # Ensure minimum widths
+            left_width = max(left_width, 200)
+            right_width = max(right_width, 200)
+            
+            # Calculate total panel usage percentage
+            total_panel_width = left_width + right_width
+            panel_percentage = (total_panel_width / screen_width) * 100
+            
+            print(f"[Panel Sizing] Panel usage: {total_panel_width}px ({panel_percentage:.1f}% of screen)")
+            print(f"[Panel Sizing] Canvas space: {screen_width - total_panel_width}px")
+            
+            return left_width, right_width
+            
+        except Exception as e:
+            print(f"[Panel Sizing] Error calculating panel widths: {e}")
+            # Fallback to reasonable defaults
+            return 350, 320
+    
+    def _save_window_state(self):
+        """Save current window and panel state to config file"""
+        try:
+            import json
+            import os
+            
+            # Get current state
+            state = {
+                'window_geometry': self.root.geometry(),
+                'left_panel_width': self.left_container.winfo_width(),
+                'right_panel_width': self.right_container.winfo_width(),
+                'screen_width': self.root.winfo_screenwidth(),
+                'screen_height': self.root.winfo_screenheight()
+            }
+            
+            # Save to user config directory
+            config_dir = os.path.join(os.path.expanduser("~"), ".pixelperfect")
+            os.makedirs(config_dir, exist_ok=True)
+            config_file = os.path.join(config_dir, "window_state.json")
+            
+            with open(config_file, 'w') as f:
+                json.dump(state, f, indent=2)
+                
+            print(f"[Window State] Saved to: {config_file}")
+            
+        except Exception as e:
+            print(f"[Window State] Error saving state: {e}")
+    
+    def _restore_window_state(self):
+        """Restore saved window state on startup"""
+        try:
+            import json
+            import os
+            
+            config_dir = os.path.join(os.path.expanduser("~"), ".pixelperfect")
+            config_file = os.path.join(config_dir, "window_state.json")
+            
+            if not os.path.exists(config_file):
+                print("[Window State] No saved state found, using defaults")
+                return False
+            
+            with open(config_file, 'r') as f:
+                state = json.load(f)
+            
+            # Check if screen resolution matches (don't restore if resolution changed)
+            current_screen_width = self.root.winfo_screenwidth()
+            current_screen_height = self.root.winfo_screenheight()
+            
+            if (state.get('screen_width') != current_screen_width or 
+                state.get('screen_height') != current_screen_height):
+                print(f"[Window State] Screen resolution changed, recalculating panel sizes")
+                return False
+            
+            # Restore window geometry
+            if 'window_geometry' in state:
+                self.root.geometry(state['window_geometry'])
+                print(f"[Window State] Restored window geometry: {state['window_geometry']}")
+            
+            # Restore panel widths
+            if 'left_panel_width' in state and 'right_panel_width' in state:
+                self.left_panel_width = state['left_panel_width']
+                self.right_panel_width = state['right_panel_width']
+                print(f"[Window State] Restored panel widths: {self.left_panel_width}x{self.right_panel_width}")
+                return True
+            
+        except Exception as e:
+            print(f"[Window State] Error restoring state: {e}")
+        
+        return False
+    
+    def _on_window_close(self):
+        """Handle window close event - save state before closing"""
+        print("[Window State] Application closing, saving window state...")
+        self._save_window_state()
+        self.root.destroy()
     
     def run(self):
         """Start the application"""

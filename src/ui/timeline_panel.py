@@ -25,13 +25,12 @@ class TimelinePanel:
     
     def _create_ui(self):
         """Create the timeline panel UI"""
-        # Main timeline frame
-        self.timeline_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
-        self.timeline_frame.pack(fill="x", padx=10, pady=10)
+        # Use the parent frame directly, no container frame
+        self.timeline_frame = self.parent_frame
         
         # Header
         header_frame = ctk.CTkFrame(self.timeline_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=10, pady=(10, 5))
+        header_frame.pack(fill="x", padx=10, pady=(15, 5))
         
         # Title
         title_label = ctk.CTkLabel(header_frame, text="Animation", font=ctk.CTkFont(size=16, weight="bold"))
@@ -52,7 +51,7 @@ class TimelinePanel:
         
         # Playback controls
         self.playback_controls = ctk.CTkFrame(self.timeline_frame, fg_color="transparent")
-        self.playback_controls.pack(fill="x", padx=10, pady=(5, 10))
+        self.playback_controls.pack(fill="x", padx=10, pady=(5, 15))
         
         # Control buttons
         button_frame = ctk.CTkFrame(self.playback_controls, fg_color="transparent")
@@ -64,6 +63,8 @@ class TimelinePanel:
             width=28,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._previous_frame
         )
         self.prev_btn.pack(side="left", padx=(0, 3))
@@ -74,6 +75,8 @@ class TimelinePanel:
             width=28,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._toggle_playback
         )
         self.play_btn.pack(side="left", padx=(0, 3))
@@ -84,6 +87,8 @@ class TimelinePanel:
             width=28,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._next_frame
         )
         self.next_btn.pack(side="left", padx=(0, 3))
@@ -94,6 +99,8 @@ class TimelinePanel:
             width=28,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._stop_animation
         )
         self.stop_btn.pack(side="left")
@@ -108,6 +115,8 @@ class TimelinePanel:
             width=75,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._add_frame
         )
         self.add_frame_btn.pack(side="left", padx=(0, 3))
@@ -118,6 +127,8 @@ class TimelinePanel:
             width=75,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._duplicate_frame
         )
         self.duplicate_frame_btn.pack(side="left", padx=(0, 3))
@@ -128,6 +139,8 @@ class TimelinePanel:
             width=65,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._delete_frame
         )
         self.delete_frame_btn.pack(side="left")
@@ -137,7 +150,7 @@ class TimelinePanel:
             self.timeline_frame,
             text=f"Frame 1 of {self.timeline.get_frame_count()}"
         )
-        self.frame_info_label.pack(pady=5)
+        self.frame_info_label.pack(pady=5, padx=10)
     
     def _update_display(self):
         """Update the timeline display"""

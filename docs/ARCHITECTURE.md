@@ -4,14 +4,14 @@
 Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, custom colors, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 1.25
-**Status**: All Features Complete - Production Ready with Advanced UI Controls
+**Version**: 1.52
+**Status**: All Features Complete - Production Ready with Responsive Panel Sizing
 
 ### Latest Updates
-- **v1.25**: Grid Overlay - Toggle grid lines on top of pixels for precise editing
-- **v1.24**: Collapsible Panels - Hide/show side panels for maximum canvas space
-- **v1.23**: Panel Resize Optimization - Smooth, lag-free panel divider dragging
-- **v1.22**: Theme System - Real-time UI color scheme switching (Basic Grey/Angelic)
+- **v1.52**: Responsive Panel Sizing - Automatic panel width calculation based on screen resolution with state persistence
+- **v1.51**: Theme Application on Startup - Fixed startup theme application and palette box issues
+- **v1.50**: Theme Switching Bug Fix - Enhanced Basic Grey theme with darker colors and comprehensive theme application
+- **v1.49**: American Patriotic Theme - Added patriotic red, white, and blue theme option
 
 ## Core Components
 
@@ -120,6 +120,7 @@ class Tool:
 - **Theme System** (v1.22): Real-time UI color scheme switching with callback architecture
 - **Collapsible Panels** (v1.24): Hide/show side panels for maximum canvas space
 - **Grid Overlay** (v1.25): Toggle grid lines on top of pixels for precise editing
+- **Responsive Panel Sizing** (v1.52): Automatic panel width calculation based on screen resolution with state persistence
 
 ### Toolbar Components
 - **File Menu**: New, Open, Save, Export options
@@ -140,6 +141,12 @@ class Tool:
   - Right panel: Layers and animation (collapse with ▶ button)
   - Restore buttons appear when collapsed (blue arrow buttons)
   - Resizable with draggable sash dividers (10px wide)
+- **Responsive Panel Sizing** (v1.52):
+  - Automatic panel width calculation based on screen resolution
+  - Resolution-based sizing: Small (280+260px), Standard (350+320px), Large (400+380px), Ultra-wide (450+420px)
+  - Window state persistence saves/restores panel sizes between sessions
+  - State saved to `~/.pixelperfect/window_state.json`
+  - Automatic recalculation if screen resolution changes
 
 ## Utility Systems (`src/utils/`)
 

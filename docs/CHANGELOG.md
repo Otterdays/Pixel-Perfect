@@ -1,5 +1,80 @@
 # Pixel Perfect - Changelog
 
+## Version 1.53 - UI Styling Consistency Fix
+**Date**: December 19, 2024  
+**Type**: UI/UX Enhancement
+
+### 🎨 Seamless Dark Theme Consistency
+**Eliminated unwanted light grey containers across UI panels**
+
+**Problem Solved:**
+- Layers panel had persistent light grey container background that broke visual consistency
+- Right sidebar styling didn't match the seamless dark integration of left sidebar
+- UI elements appeared "floating" with visible container boundaries instead of integrated styling
+
+**Solution Implemented:**
+- **Transparent Panel Backgrounds** - Made right panel (CTkScrollableFrame) transparent to eliminate light grey container
+- **Direct Widget Packing** - Removed unnecessary CTkFrame wrappers around layer entries
+- **Consistent Button Styling** - All buttons now use light grey backgrounds (#3a3a3a) with hover effects
+- **Seamless Integration** - Both left and right sidebars now have uniform dark theme with no visible container boundaries
+- **UIBuilder Integration** - Fixed toolbar positioning and grid_overlay attribute initialization after refactoring
+
+**Technical Changes:**
+- Modified `src/ui/main_window.py`: Set right_panel fg_color to "transparent"
+- Updated `src/ui/layer_panel.py`: Removed frame wrappers, packed layer buttons directly to parent
+- Fixed initialization order for UIBuilder to prevent AttributeError
+- Ensured theme application doesn't override transparent backgrounds
+
+**Result:**
+- Clean, professional dark theme with seamless panel integration
+- Consistent visual hierarchy across all UI sections
+- Improved user experience with unified styling approach
+
+---
+
+## Version 1.52 - Responsive Panel Sizing Fix
+**Date**: October 14, 2025  
+**Type**: Major Bug Fix & Enhancement
+
+### 🖥️ Responsive Panel Sizing System
+**Fixed resolution-dependent panel layout issues**
+
+**Problem Solved:**
+- Fixed panel widths (520px + 500px) worked on smaller laptop screens but appeared disproportionately large on larger desktop displays
+- No responsive design - panels didn't adapt to different screen resolutions
+- No window state persistence - application didn't remember user's preferred panel sizes
+
+**Solution Implemented:**
+- **Screen Resolution Detection** - Automatically detects screen size and calculates optimal panel widths
+- **Responsive Panel Sizing** - Panels now adapt to different screen resolutions instead of using fixed pixel widths
+- **Window State Persistence** - Saves and restores preferred panel sizes between sessions
+- **Better Proportions** - Panels use appropriate percentage of screen space (35-40% depending on resolution)
+- **More Canvas Space** - Larger screens get more canvas area, smaller screens get compact panels
+
+**Resolution-Based Panel Sizes:**
+- **Small screens (≤1366px)**: Compact panels (280px + 260px)
+- **Standard desktop (≤1920px)**: Balanced panels (350px + 320px)  
+- **Large desktop (≤2560px)**: Spacious panels (400px + 380px)
+- **Ultra-wide/4K (>2560px)**: Wide panels (450px + 420px)
+
+**Technical Changes:**
+- Added `_calculate_optimal_panel_widths()` method for resolution-based sizing
+- Added `_save_window_state()` and `_restore_window_state()` methods
+- Added window close handler to save state before exiting
+- Replaced hardcoded panel widths with calculated responsive widths
+- Window state saved to `~/.pixelperfect/window_state.json`
+
+**Benefits:**
+- ✅ Resolution adaptive panels
+- ✅ State persistence between sessions
+- ✅ Better proportions on all screen sizes
+- ✅ More canvas space on larger displays
+- ✅ User preference memory
+
+**Status:** ✅ Complete - Responsive panel sizing implemented, resolution-dependent layout issues resolved
+
+---
+
 ## Version 1.49 - American Patriotic Theme
 **Date**: October 14, 2025
 **Type**: New Feature

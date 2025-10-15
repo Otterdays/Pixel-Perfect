@@ -139,12 +139,52 @@ class AmericanTheme(Theme):
         self.selection_handle = "#1d4ed8"   # Blue handle (American flag blue)
         self.selection_edge = "#f59e0b"     # Gold accent
 
+class GeminiTheme(Theme):
+    """A polished, modern dark theme with blue and purple accents."""
+    def __init__(self):
+        super().__init__("Gemini")
+        # A deep, dark blue-grey for the main background
+        self.bg_primary = "#1d2025" 
+        # A slightly lighter grey for secondary panels
+        self.bg_secondary = "#282c34"
+        # A subtle grey for tertiary elements
+        self.bg_tertiary = "#3a4049"
+        
+        # Text colors with good contrast
+        self.text_primary = "#e6e6e6"
+        self.text_secondary = "#b0b0b0"
+        self.text_disabled = "#6a6a6a"
+        
+        # Buttons that are dark but pop with a Gemini blue on hover/selection
+        self.button_normal = "#282c34"
+        self.button_hover = "#3a4049"
+        self.button_active = "#4285F4"  # Google Blue
+        
+        # Borders
+        self.border_normal = "#3a4049"
+        self.border_focus = "#8ab4f8" # Lighter Google Blue for focus
+        
+        # A neutral, dark canvas that doesn't distract
+        self.canvas_bg = "#212121"
+        self.canvas_border = "#4a4a4a"
+        self.grid_color = "#303030"
+        
+        # Tools
+        self.tool_selected = "#4285F4"
+        self.tool_unselected = "#282c34"
+        
+        # Selection highlights
+        self.selection_outline = "#8ab4f8"
+        self.selection_handle = "#fdd835" # A bright yellow for contrast
+        self.selection_edge = "#4285F4"
+
 class ThemeManager:
     """Manages application themes"""
     
     def __init__(self):
         self.themes: Dict[str, Theme] = {
             "Basic Grey": BasicGreyTheme(),
+            "Gemini": GeminiTheme(),
             "Angelic": AngelicTheme(),
             "American": AmericanTheme()
         }

@@ -223,10 +223,11 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### 🎨 **UI & UX Features**
 - **⚡ Lightning Fast**: Instant view switching (50-100× faster with pre-rendered views!)
-- **Theme System**: Real-time theme switching (Basic Grey, Angelic themes)
+- **Theme System**: Real-time theme switching (Basic Grey, Angelic, American themes)
 - **⚙️ Settings Button** ⭐NEW: Gear icon in top toolbar with placeholder dialog (127 settings planned!)
 - **Collapsible Panels**: Hide/show left and right panels for maximum canvas space
-- **Resizable Panels**: Drag dividers to adjust panel widths (left: 520px, right: 500px)
+- **Resizable Panels**: Drag dividers to adjust panel widths (responsive sizing based on screen resolution)
+- **🖥️ Responsive Panel Sizing** ⭐NEW: Automatic panel width calculation based on screen resolution with state persistence
 - **Smooth Panel Transitions**: Optimized divider dragging with outline-only resize
 - **Tooltips**: Comprehensive hover hints for every button and control
 - **Grid Overlay**: Toggle grid lines on top of pixels for dense artwork
@@ -790,6 +791,21 @@ This is proprietary software. All source code, documentation, assets, and relate
 **Version History & Release Notes**
 
 </div>
+
+### Version 1.52 (October 14, 2025)
+🖥️ **Responsive Panel Sizing Fix**
+- **Screen Resolution Detection** - Automatically detects screen size and calculates optimal panel widths
+- **Responsive Panel Sizing** - Panels now adapt to different screen resolutions instead of using fixed pixel widths
+- **Window State Persistence** - Saves and restores your preferred panel sizes between sessions
+- **Better Proportions** - Panels use appropriate percentage of screen space (35-40% depending on resolution)
+- **More Canvas Space** - Larger screens get more canvas area, smaller screens get compact panels
+- **User Preference** - Manually resized panels are remembered for future sessions
+
+**Resolution-Based Panel Sizes:**
+- **Small screens (≤1366px)**: Compact panels (280px + 260px)
+- **Standard desktop (≤1920px)**: Balanced panels (350px + 320px)  
+- **Large desktop (≤2560px)**: Spacious panels (400px + 380px)
+- **Ultra-wide/4K (>2560px)**: Wide panels (450px + 420px)
 
 ### Version 1.42 (October 14, 2025)
 ⚙️ **Settings Button & Placeholder Dialog**

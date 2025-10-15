@@ -178,6 +178,64 @@ When switching between themes (especially Angelic and Basic Grey), UI elements s
 
 ---
 
+## Version 1.52 - Responsive Panel Sizing Fix
+**Date**: October 14, 2025
+**Status**: Complete ✅ (Fixed resolution-dependent panel sizing)
+
+### Feature: Responsive Panel Sizing System
+
+**Problem:**
+Panel sizing was hardcoded to fixed pixel widths (520px left, 500px right), causing layout issues when moving the application between computers with different screen resolutions. On smaller laptop screens, the panels looked proportional, but on larger desktop screens, they appeared disproportionately large, leaving insufficient canvas space.
+
+**Root Cause:**
+- Fixed panel widths (520px + 500px = 1020px) worked well on smaller screens but became problematic on larger displays
+- No responsive design - panels didn't adapt to different screen resolutions
+- No window state persistence - application didn't remember user's preferred panel sizes
+
+**Solution:**
+Implemented comprehensive responsive panel sizing system with screen resolution detection and window state persistence.
+
+**Implementation:**
+
+**1. Screen Resolution Detection:**
+- **Small screens (≤1366px)**: Compact panels (280px + 260px)
+- **Standard desktop (≤1920px)**: Balanced panels (350px + 320px)  
+- **Large desktop (≤2560px)**: Spacious panels (400px + 380px)
+- **Ultra-wide/4K (>2560px)**: Wide panels (450px + 420px)
+
+**2. Window State Persistence:**
+- Saves window geometry and panel widths to `~/.pixelperfect/window_state.json`
+- Restores saved state on startup if screen resolution matches
+- Automatically recalculates panel sizes if resolution changed
+
+**3. Dynamic Panel Sizing:**
+- Replaced hardcoded `width=520` and `width=500` with calculated responsive widths
+- Added `_calculate_optimal_panel_widths()` method for resolution-based sizing
+- Added `_save_window_state()` and `_restore_window_state()` methods
+
+**Code Changes:**
+- `src/ui/main_window.py`: Added responsive panel sizing system
+- Replaced fixed panel widths with calculated responsive widths
+- Added window state persistence with JSON config file
+- Added screen resolution detection and optimal sizing calculation
+
+**Benefits:**
+- ✅ **Resolution adaptive** - Panels automatically size based on screen resolution
+- ✅ **State persistence** - Remembers your preferred panel sizes between sessions
+- ✅ **Better proportions** - Panels now use appropriate percentage of screen space
+- ✅ **More canvas space** - Larger screens get more canvas area, smaller screens get compact panels
+- ✅ **User preference** - Can manually resize panels and they'll be remembered
+
+**Technical Details:**
+- Panel usage now ranges from ~40% (small screens) to ~35% (large screens) of total width
+- Canvas space scales appropriately with screen size
+- Window state saved on close, restored on startup
+- Automatic fallback to calculated sizes if no saved state exists
+
+**Status:** ✅ Complete - Responsive panel sizing implemented, resolution-dependent layout issues resolved
+
+---
+
 ## Version 1.51 - Theme Application on Startup & Box Fix
 **Date**: October 14, 2025
 **Status**: Complete ✅ (Fixed startup theme and palette boxes)

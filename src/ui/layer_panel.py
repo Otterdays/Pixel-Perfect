@@ -17,20 +17,19 @@ class LayerPanel:
         
         # UI components
         self.layer_frame = None
-        self.layer_buttons = []
+        self.layer_buttons = {}
         
         self._create_ui()
         self._update_display()
     
     def _create_ui(self):
         """Create the layer panel UI"""
-        # Main layer frame
-        self.layer_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
-        self.layer_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Use the parent frame directly, no container frame
+        self.layer_frame = self.parent_frame
         
         # Header with controls
         header_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=10, pady=(10, 5))
+        header_frame.pack(fill="x", padx=10, pady=(15, 5))
         
         # Title
         title_label = ctk.CTkLabel(header_frame, text="Layers", font=ctk.CTkFont(size=16, weight="bold"))
@@ -46,13 +45,13 @@ class LayerPanel:
         )
         self.add_layer_btn.pack(side="right", padx=(5, 0))
         
-        # Layer list frame (regular frame since parent is already scrollable)
-        self.list_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
-        self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        # Layer list - pack directly to parent, no frame
+        # self.list_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
+        # self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Layer controls frame
         controls_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
-        controls_frame.pack(fill="x", padx=10, pady=(5, 10))
+        controls_frame.pack(fill="x", padx=10, pady=(5, 15))
         
         # Layer control buttons
         button_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
@@ -64,6 +63,8 @@ class LayerPanel:
             width=80,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._duplicate_layer
         )
         self.duplicate_btn.pack(side="left", padx=(0, 3))
@@ -74,6 +75,8 @@ class LayerPanel:
             width=70,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._delete_layer
         )
         self.delete_btn.pack(side="left", padx=(0, 3))
@@ -84,6 +87,8 @@ class LayerPanel:
             width=85,
             height=28,
             font=ctk.CTkFont(size=12),
+            fg_color="#3a3a3a",
+            hover_color="#4a4a4a",
             command=self._merge_layer
         )
         self.merge_btn.pack(side="left")
@@ -91,9 +96,10 @@ class LayerPanel:
     
     def _update_display(self):
         """Update the layer display"""
-        # Clear existing layer buttons (optimized - only destroy if needed)
-        for widget in self.list_frame.winfo_children():
-            widget.destroy()
+        # Clear existing layer buttons
+        for layer_row in self.layer_buttons.values():
+            if layer_row and layer_row.winfo_exists():
+                layer_row.destroy()
         
         self.layer_buttons.clear()
         
@@ -108,9 +114,7 @@ class LayerPanel:
     
     def _create_layer_button(self, index: int, layer: Layer):
         """Create a button for a specific layer"""
-        layer_btn_frame = ctk.CTkFrame(self.list_frame)
-        layer_btn_frame.pack(fill="x", pady=1)
-        
+        # Pack directly to parent - no frame wrapper
         # Visibility toggle
         visibility_var = ctk.BooleanVar(value=layer.visible)
         def on_visibility_change():
@@ -118,25 +122,27 @@ class LayerPanel:
             self._toggle_visibility(index, visibility_var.get())
         
         visibility_cb = ctk.CTkCheckBox(
-            layer_btn_frame,
+            self.layer_frame,
             text="",
             width=18,
             height=18,
             variable=visibility_var,
             command=on_visibility_change
         )
-        visibility_cb.pack(side="left", padx=(5, 0))
+        visibility_cb.pack(side="left", padx=(15, 5), pady=1)
         
-        # Layer name (clickable)
+        # Layer name (clickable) - make it transparent
         layer_btn = ctk.CTkButton(
-            layer_btn_frame,
+            self.layer_frame,
             text=layer.name,
             height=28,
             anchor="w",
             font=ctk.CTkFont(size=12),
+            fg_color="transparent",
+            hover_color="#3a3a3a",
             command=lambda: self._select_layer(index)
         )
-        layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5))
+        layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5), pady=1)
         
         # Active indicator
         if index == self.layer_manager.active_layer_index:
@@ -145,20 +151,15 @@ class LayerPanel:
             # No layer selected (show all) - make all layers slightly highlighted
             layer_btn.configure(fg_color="darkblue")
         else:
-            layer_btn.configure(fg_color="gray")
+            layer_btn.configure(fg_color="transparent")
         
         # Lock indicator
         if layer.locked:
-            lock_label = ctk.CTkLabel(layer_btn_frame, text="🔒", width=20)
-            lock_label.pack(side="right", padx=(0, 5))
+            lock_label = ctk.CTkLabel(self.layer_frame, text="🔒", width=20)
+            lock_label.pack(side="right", padx=(0, 15), pady=1)
         
-        # Store button reference
-        self.layer_buttons.append({
-            'frame': layer_btn_frame,
-            'button': layer_btn,
-            'visibility': visibility_cb,
-            'index': index
-        })
+        # Store button reference (store the button itself, not a frame)
+        self.layer_buttons[index] = layer_btn
     
     def _update_button_states(self):
         """Update the state of control buttons"""
