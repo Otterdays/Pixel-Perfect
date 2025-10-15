@@ -1,10 +1,23 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.70  
-**Last Updated**: December 2024 - Move Tool Bug Fixes & Visual Improvements
+**Version**: 1.71  
+**Last Updated**: December 2024 - Notes Panel Feature
 
-## Latest Updates (v1.70)
+## Latest Updates (v1.71)
+
+### ✨ Notes Panel Feature
+**Persistent note-taking integrated into the editor**
+- **Notes Button**: Added to top toolbar
+- **Auto-Save**: Notes automatically saved as you type
+- **Export to TXT**: Export functionality with custom filename
+- **Persistent Storage**: Notes saved to ~/.pixelperfect/notes.json
+- **Toggle Panel**: Appears on right side of canvas area
+- **New Component**: `src/ui/notes_panel.py` (200+ lines)
+
+---
+
+## Previous Updates (v1.70)
 
 ### 🔧 Critical Move Tool Fixes
 **Major bug fixes and visual improvements**

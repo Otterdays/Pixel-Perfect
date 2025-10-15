@@ -1,5 +1,30 @@
 # Pixel Perfect - Changelog
 
+## Version 1.71 - Notes Panel Feature
+**Date**: December 2024  
+**Type**: Feature Addition
+
+### ✨ Notes Panel Added
+**Persistent note-taking functionality integrated into the editor**
+
+**Features Added:**
+- **Notes Button**: Added to top toolbar for easy access
+- **Toggle Panel**: Notes panel appears on right side of canvas area
+- **Auto-Save**: Notes automatically saved as you type to `~/.pixelperfect/notes.json`
+- **Export to TXT**: Export your notes to a text file with custom filename
+- **Clear Function**: Quick clear button for resetting notes
+- **Status Feedback**: Visual feedback for save/export operations
+- **Persistent Storage**: Notes survive app restarts
+
+**Files Created:**
+- `src/ui/notes_panel.py` - Complete notes panel component (200+ lines)
+
+**Files Modified:**
+- `src/ui/ui_builder.py` - Added Notes button to toolbar
+- `src/ui/main_window.py` - Integrated notes panel and toggle functionality
+
+---
+
 ## Version 1.70 - Move Tool Critical Fixes & Visual Improvements
 **Date**: December 2024  
 **Type**: Critical Bug Fix + Feature Enhancement

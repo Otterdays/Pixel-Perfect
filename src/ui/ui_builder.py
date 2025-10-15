@@ -92,6 +92,16 @@ class UIBuilder:
         )
         self.widgets['theme_menu'].pack(side="right", padx=5)
         
+        # Notes button
+        self.widgets['notes_button'] = ctk.CTkButton(
+            self.widgets['toolbar'],
+            text="Notes",
+            width=60,
+            command=self.callbacks['toggle_notes']
+        )
+        self.widgets['notes_button'].pack(side="right", padx=5)
+        create_tooltip(self.widgets['notes_button'], "Toggle Notes Panel", delay=500)
+        
         # Settings button
         self.widgets['settings_button'] = ctk.CTkButton(
             self.widgets['toolbar'], 

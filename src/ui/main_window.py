@@ -46,6 +46,7 @@ from ui.selection_manager import SelectionManager
 from ui.tool_size_manager import ToolSizeManager
 from ui.canvas_zoom_manager import CanvasZoomManager
 from ui.grid_control_manager import GridControlManager
+from ui.notes_panel import NotesPanel
 
 class MainWindow:
     """Main application window"""
@@ -195,6 +196,10 @@ class MainWindow:
         # Initialize grid control manager (after theme manager)
         self.grid_control_mgr = GridControlManager(self.canvas, self.theme_manager)
         
+        # Notes panel will be initialized after UI creation
+        self.notes_panel = None
+        self.notes_visible = False
+        
         # Initialize selection manager (needed before tool connections)
         self.selection_mgr = SelectionManager(
             self.canvas, self.layer_manager, self.tools, self.theme_manager
@@ -330,7 +335,11 @@ class MainWindow:
         
         # Canvas area
         self.canvas_frame = ctk.CTkFrame(canvas_container)
-        self.canvas_frame.pack(fill="both", expand=True)
+        self.canvas_frame.pack(fill="both", expand=True, side="left")
+        
+        # Notes panel (hidden by default)
+        self.notes_panel = NotesPanel(canvas_container, self)
+        self.notes_panel.hide()
         
         # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.right_container = tk.Frame(self.paned_window, bg="#1a1a1a")
@@ -546,6 +555,7 @@ class MainWindow:
             'show_settings_dialog': self.theme_dialog_manager.show_settings_dialog,
             'toggle_grid': self.grid_control_mgr.toggle_grid,
             'toggle_grid_overlay': self.grid_control_mgr.toggle_grid_overlay,
+            'toggle_notes': self._toggle_notes,
             'select_tool': self._select_tool,
             'update_tool_selection': self._update_tool_selection,
             'show_brush_size_menu': self.tool_size_mgr.show_brush_size_menu,
@@ -1598,6 +1608,20 @@ class MainWindow:
             print(f"[Window State] Error restoring state: {e}")
         
         return False
+    
+    def _toggle_notes(self):
+        """Toggle notes panel visibility"""
+        if self.notes_visible:
+            # Hide notes panel
+            self.notes_panel.hide()
+            self.canvas_frame.pack(fill="both", expand=True, side="left")
+            self.notes_visible = False
+        else:
+            # Show notes panel
+            self.canvas_frame.pack(fill="both", expand=True, side="left")
+            self.notes_panel.frame.pack(fill="both", expand=False, side="right", padx=(5, 0))
+            self.notes_panel.frame.configure(width=300)
+            self.notes_visible = True
     
     def _on_window_close(self):
         """Handle window close event - save state before closing"""

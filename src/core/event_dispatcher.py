@@ -169,7 +169,7 @@ class EventDispatcher:
             }
             
             if key in tool_map:
-                self.main_window.switch_tool(tool_map[key])
+                self.main_window._select_tool(tool_map[key])
                 return
             
             # X for swap colors
