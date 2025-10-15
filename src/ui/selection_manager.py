@@ -34,6 +34,13 @@ class SelectionManager:
         self.scale_true_original_rect = None
         self.scale_is_dragging = False
         
+        # State variables for rotation/mirror preview
+        self.is_rotating = False
+        self.is_mirroring = False
+        self.original_pixels_backup = None
+        self.original_rect_backup = None
+        self.rotated_pixels_preview = None
+        
         # State variables for copy/paste
         self.copy_buffer = None
         self.copy_dimensions = None
@@ -83,13 +90,12 @@ class SelectionManager:
         
         left, top, width, height = bounds
         
-        # CRITICAL FIX: Finalize move operation to prevent background restoration
+        # Clear move tool's background restoration state to prevent copy-behind bug
         move_tool = self.tools.get("move")
         if move_tool:
-            draw_layer = self._get_drawing_layer()
-            if draw_layer:
-                move_tool.finalize_move(draw_layer)
-            print("[MIRROR] Finalized move operation to prevent copy-behind bug")
+            move_tool.saved_background = None
+            move_tool.last_drawn_position = None
+            print("[MIRROR] Cleared move tool state to prevent copy-behind bug")
         
         # Mirror the pixels horizontally (flip left-right)
         mirrored_pixels = np.flip(selection_tool.selected_pixels, axis=1).copy()
@@ -97,7 +103,7 @@ class SelectionManager:
         # Update the selection with mirrored pixels
         selection_tool.selected_pixels = mirrored_pixels
         
-        # Redraw on canvas
+        # Update the layer data with mirrored pixels
         draw_layer = self._get_drawing_layer()
         if draw_layer:
             for py in range(height):
@@ -109,14 +115,14 @@ class SelectionManager:
                         if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
                             draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
             
-            # Update canvas display
+            # Update canvas from layers (this will show the mirrored pixels)
             if self.update_canvas_callback:
                 self.update_canvas_callback()
             if self.update_display_callback:
                 self.update_display_callback()
     
     def rotate_selection(self):
-        """Rotate the selected pixels 90 degrees clockwise"""
+        """Rotate the selected pixels 90 degrees clockwise (preview mode)"""
         # Exit scaling mode if active
         if self.is_scaling:
             self.is_scaling = False
@@ -142,54 +148,126 @@ class SelectionManager:
         
         left, top, width, height = bounds
         
-        # CRITICAL FIX: Finalize move operation to prevent background restoration
+        # Clear move tool's background restoration state to prevent copy-behind bug
         move_tool = self.tools.get("move")
         if move_tool:
-            draw_layer = self._get_drawing_layer()
-            if draw_layer:
-                move_tool.finalize_move(draw_layer)
-            print("[ROTATE] Finalized move operation to prevent copy-behind bug")
+            move_tool.saved_background = None
+            move_tool.last_drawn_position = None
+            print("[ROTATE] Cleared move tool state to prevent copy-behind bug")
+        
+        # Enter rotation preview mode
+        self.is_rotating = True
+        self.is_mirroring = False  # Exit mirror mode if active
+        
+        # Backup original pixels and rect
+        self.original_pixels_backup = selection_tool.selected_pixels.copy()
+        self.original_rect_backup = selection_tool.selection_rect  # Tuple doesn't need .copy()
         
         # Rotate 90 degrees clockwise: transpose then flip horizontally
         rotated_pixels = np.rot90(selection_tool.selected_pixels, k=-1).copy()
         
-        # Update the selection with rotated pixels
-        selection_tool.selected_pixels = rotated_pixels
+        # Store rotated pixels separately for preview (don't modify selected_pixels yet)
+        self.rotated_pixels_preview = rotated_pixels
         
         # Note: rotation changes dimensions (width becomes height, height becomes width)
         new_width = rotated_pixels.shape[1]
         new_height = rotated_pixels.shape[0]
         
-        # Update selection rectangle with new dimensions
+        # Update selection rectangle with new dimensions for preview
         selection_tool.selection_rect = (left, top, new_width, new_height)
         
-        # Clear old area
+        # Update display to show preview
+        if self.update_display_callback:
+            self.update_display_callback()
+    
+    def apply_rotation(self):
+        """Apply the current rotation preview to the layer"""
+        if not self.is_rotating:
+            return
+        
+        selection_tool = self.tools.get("selection")
+        if not selection_tool or selection_tool.selected_pixels is None:
+            return
+        
+        bounds = selection_tool.get_selection_bounds()
+        if not bounds:
+            return
+        
+        left, top, width, height = bounds
+        
+        # Apply rotation to the layer
         draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            # Clear original area
-            for py in range(height):
-                for px in range(width):
-                    canvas_x = left + px
-                    canvas_y = top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+        if draw_layer and self.rotated_pixels_preview is not None:
+            # Clear original area first
+            orig_left, orig_top, orig_width, orig_height = self.original_rect_backup
+            for py in range(orig_height):
+                for px in range(orig_width):
+                    if py < self.original_pixels_backup.shape[0] and px < self.original_pixels_backup.shape[1]:
+                        original_pixel = tuple(self.original_pixels_backup[py, px])
+                        if original_pixel[3] > 0:  # Was non-transparent
+                            canvas_x = orig_left + px
+                            canvas_y = orig_top + py
+                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
             
-            # Draw rotated pixels
+            # Draw rotated pixels from preview
+            rotated_pixels = self.rotated_pixels_preview
+            new_width = rotated_pixels.shape[1]
+            new_height = rotated_pixels.shape[0]
+            
             for py in range(new_height):
                 for px in range(new_width):
                     if py < rotated_pixels.shape[0] and px < rotated_pixels.shape[1]:
                         pixel_color = tuple(rotated_pixels[py, px])
-                        canvas_x = left + px
-                        canvas_y = top + py
-                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                            if pixel_color[3] > 0:  # Only draw non-transparent pixels
+                        if pixel_color[3] > 0:  # Non-transparent
+                            canvas_x = left + px
+                            canvas_y = top + py
+                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
                                 draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            
+            # Now update the selection with the rotated pixels
+            selection_tool.selected_pixels = rotated_pixels
             
             # Update canvas display
             if self.update_canvas_callback:
                 self.update_canvas_callback()
             if self.update_display_callback:
                 self.update_display_callback()
+        
+        # Exit rotation mode
+        self.is_rotating = False
+        self.original_pixels_backup = None
+        self.original_rect_backup = None
+        self.rotated_pixels_preview = None
+        
+        # Clear rotation preview from canvas
+        if hasattr(self, 'drawing_canvas') and self.drawing_canvas:
+            self.drawing_canvas.delete("rotate_preview")
+    
+    def cancel_rotation(self):
+        """Cancel rotation and restore original pixels"""
+        if not self.is_rotating:
+            return
+        
+        selection_tool = self.tools.get("selection")
+        if selection_tool and self.original_pixels_backup is not None and self.original_rect_backup is not None:
+            # Restore original pixels and rect
+            selection_tool.selected_pixels = self.original_pixels_backup.copy()
+            selection_tool.selection_rect = self.original_rect_backup  # Tuple doesn't need .copy()
+        
+        # Exit rotation mode
+        self.is_rotating = False
+        self.original_pixels_backup = None
+        self.original_rect_backup = None
+        self.rotated_pixels_preview = None
+        
+        # Clear rotation preview from canvas
+        if hasattr(self, 'drawing_canvas') and self.drawing_canvas:
+            self.drawing_canvas.delete("rotate_preview")
+        
+        # Update display
+        if self.update_display_callback:
+            self.update_display_callback()
     
     def copy_selection(self):
         """Enter copy mode - allows placing a copy of the selection"""
@@ -212,13 +290,12 @@ class SelectionManager:
         if selection_tool.selected_pixels is None:
             return
         
-        # CRITICAL FIX: Finalize move operation to prevent background restoration
+        # Clear move tool's background restoration state to prevent copy-behind bug
         move_tool = self.tools.get("move")
         if move_tool:
-            draw_layer = self._get_drawing_layer()
-            if draw_layer:
-                move_tool.finalize_move(draw_layer)
-            print("[COPY] Finalized move operation to prevent copy-behind bug")
+            move_tool.saved_background = None
+            move_tool.last_drawn_position = None
+            print("[COPY] Cleared move tool state to prevent copy-behind bug")
         
         # Store copy data
         self.copy_buffer = selection_tool.selected_pixels.copy()

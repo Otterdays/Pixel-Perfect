@@ -1,203 +1,162 @@
-# AI Analysis: Next Refactor Opportunities
+# Phases 6 & 7 Complete: Tool Size & Canvas/Zoom Managers ✅
 
-## Current State: main_window.py = 1,888 lines
-**Progress**: 44.3% reduction from baseline (3,387 → 1,888)
-**Target**: 850-900 lines
-**Remaining**: ~990 lines to extract
+## What We Did
+Extracted two managers in one session:
+1. **Tool Size Manager** (163 lines) - Brush/eraser sizing and multi-pixel drawing
+2. **Canvas/Zoom Manager** (226 lines) - Canvas resizing and zoom controls
 
----
+## Results
+- **main_window.py**: 1,888 → 1,614 lines (-274 lines, -14.5%)
+- **tool_size_manager.py**: +163 lines (new)
+- **canvas_zoom_manager.py**: +226 lines (new)
+- **Total reduction**: 52.4% from baseline (3,387 → 1,614)
 
-## 📊 Remaining Method Categories (66 methods total)
-
-### 🎨 **Category 1: Color View Management** (~550 lines) ⭐ **BIGGEST**
-**21 methods related to palette views, color wheel, saved colors, constants**
-
-**Color View Switching (5 methods, ~68 lines):**
-- `_on_palette_change()` - Handle palette dropdown changes (13 lines)
-- `_initialize_all_views()` - Initialize all views at startup (23 lines)
-- `_show_view()` - Switch between grid/wheel/saved/constants (28 lines)
-- `_on_view_mode_change()` - Radio button handler (4 lines)
-
-**Constants View (3 methods, ~108 lines):**
-- `_create_constants_grid()` - Build constants UI (63 lines)
-- `_get_canvas_colors()` - Extract used colors from canvas (17 lines)
-- `_on_constant_color_click()` - Handle color selection (28 lines)
-
-**Saved Colors View (7 methods, ~282 lines):**
-- `_create_saved_colors_view()` - Build saved colors UI (96 lines)
-- `_update_saved_color_buttons()` - Update button states (27 lines)
-- `_on_saved_slot_click()` - Empty slot handler (19 lines)
-- `_on_saved_color_click()` - Filled slot handler (9 lines)
-- `_export_saved_colors()` - Export to file (14 lines)
-- `_import_saved_colors()` - Import from file (15 lines)
-- `_clear_all_saved_colors()` - Clear all with dialog (94 lines)
-
-**Color Wheel (6 methods, ~87 lines):**
-- `_create_color_wheel()` - Build wheel UI (18 lines)
-- `_on_color_wheel_changed()` - Wheel callback (9 lines)
-- `_save_custom_color()` - Add custom color (19 lines)
-- `_remove_custom_color()` - Delete custom (7 lines)
-- `_update_custom_colors_display()` - Update grid (6 lines, if exists)
-- `_set_color_from_eyedropper()` - Complex eyedropper logic (64 lines)
-
-**Grid View (2 methods, ~25 lines):**
-- `_select_color()` - Select palette color (12 lines)
-- `_update_color_grid_selection()` - Update selection borders (12 lines)
-
-**Total**: ~550 lines
-
----
-
-### 🔧 **Category 2: Tool Size Management** (~140 lines)
-**8 methods for brush/eraser size selection**
-
-**Brush Size (4 methods, ~70 lines):**
-- `_show_brush_size_menu()` - Right-click menu (29 lines)
-- `_set_brush_size()` - Size setter (9 lines)
-- `_update_brush_button_text()` - Update button label (6 lines)
-- `_draw_brush_at()` - Draw NxN brush (16 lines)
-
-**Eraser Size (4 methods, ~70 lines):**
-- `_show_eraser_size_menu()` - Right-click menu (29 lines)
-- `_set_eraser_size()` - Size setter (9 lines)
-- `_update_eraser_button_text()` - Update button label (6 lines)
-- `_erase_at()` - Erase NxN area (15 lines)
-
-**Total**: ~140 lines
-
----
-
-### 🖼️ **Category 3: Canvas/Zoom Management** (~180 lines)
-**3 methods for canvas sizing and zoom**
-
-- `_on_size_change()` - Canvas size dropdown (97 lines)
-- `_apply_custom_canvas_size()` - Custom size handler (63 lines)
-- `_on_zoom_change()` - Zoom dropdown (11 lines)
-
-**Total**: ~180 lines
-
----
-
-### 🎛️ **Category 4: UI State Management** (~120 lines)
-**10 methods for UI toggles and layout**
-
-- `_toggle_left_panel()` - Panel collapse (5 lines)
-- `_toggle_right_panel()` - Panel collapse (5 lines)
-- `_redraw_canvas_after_resize()` - Window resize (4 lines)
-- `_toggle_grid()` - Grid toggle (6 lines)
-- `_update_grid_button_text()` - Update button (9 lines)
-- `_toggle_grid_overlay()` - Overlay toggle (6 lines)
-- `_update_grid_overlay_button_text()` - Update button (9 lines)
-- `_calculate_optimal_panel_widths()` - Responsive sizing (41 lines)
-- `_save_window_state()` - Persist window state (28 lines)
-- `_restore_window_state()` - Load window state (42 lines)
-
-**Total**: ~120 lines
-
----
-
-### 🛠️ **Category 5: Core Orchestration** (~90 lines) ⚠️ **KEEP IN MAIN**
-**Essential methods that coordinate the app**
-
-- `__init__()` - Constructor (194 lines - some extractable)
-- `_create_ui()` - UI creation orchestration (147 lines - some extractable)
-- `_create_layer_and_timeline_panels()` - Panel setup (100 lines - some extractable)
-- `_get_ui_callbacks()` - Callback dictionary (27 lines)
-- `_select_tool()` - Tool switching (48 lines)
-- `_update_tool_selection()` - Update button states (9 lines)
-- `_on_layer_changed()` - Layer change handler (5 lines)
-- `_update_canvas_from_layers()` - Sync canvas (8 lines)
-- `_clear_selection_and_reset_tools()` - Reset state (10 lines)
-- `_get_drawing_layer()` - Get active layer (21 lines)
-- `_handle_eyedropper_click()` - Eyedropper handler (22 lines)
-- `_on_theme_selected()` - Theme change (5 lines)
-- `_show_file_menu()` - File menu (55 lines)
-- `_tkinter_screen_to_canvas_coords()` - Coordinate conversion (28 lines)
-- `_on_window_close()` - Window close handler (9 lines)
-- `get_current_color()` - Get active color (public method)
-
----
-
-### 🔄 **Category 6: Undo/Redo** (~60 lines)
-- `_update_undo_redo_buttons()` - Update button states (12 lines)
-- `_undo()` - Undo action (19 lines)
-- `_redo()` - Redo action (19 lines)
-- `_add_layer()` - Add layer (8 lines)
-- `_sync_canvas_with_layers()` - Sync (11 lines)
-
----
-
-### 🎬 **Category 7: Animation** (~40 lines)
-- `_on_frame_changed()` - Frame change handler (10 lines)
-- `_toggle_animation()` - Play/pause (8 lines)
-- `_previous_frame()` - Previous frame (6 lines)
-- `_next_frame()` - Next frame (6 lines)
-
----
-
-## 🎯 **NEXT REFACTOR RECOMMENDATION**
-
-### **Phase 2: Color View Manager** (~550 lines)
-
-**Why This Next:**
-1. ✅ **Largest impact** - Removes 550 lines (29% reduction)
-2. ✅ **Clear boundaries** - All color view related methods
-3. ✅ **Already modular** - Uses palette_views classes (GridView, SavedView, etc.)
-4. ⚠️ **Most complex** - Heavy UI dependencies, should be done carefully
-
-**Create**: `src/ui/color_view_manager.py`
-
-**Methods to Extract (21 total):**
-- All color view switching logic
-- All saved colors UI and management
-- All constants view logic
-- Color wheel creation and callbacks
-- Eyedropper color setting
-- Custom colors management
-- Grid view selection updates
-
-**Estimated Reduction:**
-- main_window.py: 1,888 → ~1,338 lines (-550 lines, -29%)
-- Total progress: 60.5% reduction from baseline
-
----
-
-## 💡 **Alternative: Tool Size Manager** (~140 lines)
-
-**Why Consider This:**
-1. ✅ **Much easier** - Simple menu/state management
-2. ✅ **Lower risk** - Less UI coupling
-3. ✅ **Quick win** - Can complete in 30-45 minutes
-4. ⚠️ **Smaller impact** - Only 140 lines (~7% reduction)
-
-**Create**: `src/ui/tool_size_manager.py`
-
-**Methods to Extract (8 total):**
+## Methods Extracted (11)
+**Tool Size Manager (8)**:
 - Brush size menu, setter, button update, draw_at
 - Eraser size menu, setter, button update, erase_at
 
-**Estimated Reduction:**
-- main_window.py: 1,888 → ~1,748 lines (-140 lines, -7%)
+**Canvas/Zoom Manager (3)**:
+- on_size_change (preset sizes + custom dialog)
+- apply_custom_canvas_size (with downsize warnings)
+- on_zoom_change (zoom level control)
+
+## Updates Required
+- ✅ EventDispatcher: Updated brush/eraser calls to use tool_size_mgr
+- ✅ CanvasRenderer: Updated preview methods to reference tool_size_mgr.brush_size/eraser_size
+- ✅ Main Window: Added manager initialization and callbacks
+
+## AI Note
+This was a systematic double extraction. Both managers were relatively straightforward with clear boundaries. The application should work identically, but now tool sizing and canvas management are properly isolated.
+
+**Next Phase**: Color View Manager (~550 lines) - The final major refactor!
+
+**Current State**:
+- main_window.py: 1,614 lines
+- Target: 850-900 lines
+- Remaining: ~714 lines (mostly color view management)
+- Progress: 52.4% complete
+
+After Color View Manager, we'll be at ~1,064 lines (68.6% reduction from baseline)!
 
 ---
 
-## 🎲 **Recommendation**
+# Saved Palette View Fix ✅
 
-### **Option A: Go Big** 
-Extract Color View Manager (550 lines) for maximum impact
-- **Pro**: Gets us to 60% total reduction, major cleanup
-- **Con**: Most complex refactor, higher risk, 2-3 hours
+## Issue Fixed
+- **Problem**: Saved palette view showing empty/blank area when selected
+- **Root Cause**: SavedView was created with wrong parent frame (`palette_content_frame` instead of `saved_view_frame`)
+- **Result**: Widgets were being destroyed when switching views, causing missing content
 
-### **Option B: Quick Win**
-Extract Tool Size Manager (140 lines) first, then Color View Manager
-- **Pro**: Low risk, quick success, builds confidence
-- **Con**: Two separate refactors instead of one
+## Solution Implemented
+- **Fixed Parent Frame**: Changed SavedView to use `saved_view_frame` instead of `palette_content_frame`
+- **Updated View Switching**: Modified `_show_view()` to use proper frame visibility system
+- **Frame Management**: Now properly shows/hides dedicated frames instead of destroying widgets
 
-### **My Vote: Option A (Color View Manager)**
-We've already completed 4 successful refactors. The team is experienced now. Going for the big win makes sense to get main_window.py closer to the target of 850-900 lines.
+## Files Modified
+- `src/ui/main_window.py` - Fixed saved view parent frame and view switching logic
 
-**Current**: 1,888 lines  
-**After Color View Manager**: ~1,338 lines  
-**Remaining to target**: ~438 lines (mostly core orchestration)
+## Result
+- Saved palette view now displays properly with all 24 color slots
+- Export/Import buttons visible and functional
+- No more missing content when switching to saved view
+- Proper frame-based view management system in place
 
-This would put us at **60% completion** of the refactoring goal!
+---
+
+# Mirror Operation Bug Fix ✅
+
+## Issue Fixed
+- **Problem**: Mirror operation was recreating original selection pixels after a move operation
+- **Root Cause**: Mirror was updating canvas directly but not layer data, then `update_canvas_callback()` was restoring original pixels from layer data
+- **Sequence**: Move → Mirror → Canvas update from layers → Original pixels restored
+
+## Solution Implemented
+- **Fixed Layer Sync**: Mirror operation now updates layer data, not just canvas
+- **Proper Update Flow**: Canvas is updated from layers after mirror, preserving mirrored pixels
+- **Move Tool State**: Fixed `saved_background` not being cleared after move finalization
+
+## Files Modified
+- `src/ui/selection_manager.py` - Fixed mirror to update layer data
+- `src/tools/selection.py` - Clear saved_background after move finalization
+
+## Result
+- Mirror operation now works correctly with moved selections
+- No more original pixels reappearing after mirror
+- Proper layer synchronization maintained
+- Move and mirror operations work seamlessly together
+
+---
+
+# Move Tool Double-Finalization Bug Fix ✅
+
+## Issue Fixed
+- **Problem**: Original pixels reappearing when switching from move tool to brush tool after moving a selection
+- **Root Cause**: Move tool was being finalized twice - once during move completion and again when switching tools
+- **Sequence**: Select → Move → Auto-finalize → Switch to brush → Finalize again → Original pixels restored
+
+## Solution Implemented
+- **Prevent Double Finalization**: Only finalize move when switching tools if `has_been_moved` is true
+- **Proper State Check**: Added condition to check if move needs finalization before tool switch
+- **Clean State Management**: Move tool state properly managed to prevent duplicate operations
+
+## Files Modified
+- `src/ui/main_window.py` - Fixed tool switching logic to prevent double finalization
+
+## Result
+- Move tool no longer double-finalizes when switching tools
+- Original pixels no longer reappear when switching from move to brush
+- Proper move tool state management
+- Clean tool switching without pixel restoration bugs
+
+---
+
+# Move Tool Layer Data Bug Fix ✅
+
+## Issue Fixed  
+- **Problem**: Original pixels reappearing when moving selection and then painting with brush
+- **Root Cause**: Move tool was updating canvas directly but NOT layer data, so canvas updates from layers restored original pixels
+- **Sequence**: Select → Move → Switch to brush → Paint → Canvas updates from layer data → Original pixels restored
+
+## Solution Implemented
+- **Layer Data Updates**: Move tool now updates layer data instead of canvas in `finalize_move()`
+- **Event Dispatcher Fix**: Updated event dispatcher to pass layer (not canvas) to move/selection tool mouse events
+- **Consistent Layer Usage**: All move operations now work with layer data for proper persistence
+
+## Files Modified
+- `src/tools/selection.py` - Changed `finalize_move()` to work with layer data
+- `src/core/event_dispatcher.py` - Pass layer to move/selection tools in all mouse events
+
+## Result
+- Move tool properly updates layer data when moving selections
+- No more original pixels reappearing when switching to brush and painting
+- Proper layer synchronization maintained across all operations
+- Move, mirror, and all selection operations now work correctly with layer system
+
+---
+
+# Move Tool Visual Feedback Improvement ✅
+
+## Enhancement Implemented
+- **Feature**: Live visual preview during move operations
+- **Improvement**: Pixels now appear to move with your cursor in real-time
+- **User Experience**: Clean, intuitive visual feedback during drag operations
+
+## Solution Implemented
+- **Hide Original Pixels**: During move, original selection area pixels are not rendered
+- **Show Preview Only**: Only the move preview pixels are visible during drag
+- **Clean Visual Move**: Pixels appear to smoothly follow your cursor
+
+## Files Modified
+- `src/core/canvas_renderer.py` - Skip rendering original selection area during move
+
+## Result
+- ✅ **CRITICAL BUG FIXED**: Original pixels no longer reappear when switching tools after move
+- ✅ **Layer Synchronization**: Move operations now properly update layer data
+- ✅ **Professional Visual Feedback**: Pixels visually move with cursor during drag operation
+- ✅ **Clean User Experience**: No duplicate pixels shown (original + preview)
+- ✅ **Seamless Tool Switching**: Move → Brush transitions work perfectly
+- ✅ **Complete Solution**: All move tool issues resolved with layer data synchronization
+
+## Final Status
+**MOVE TOOL IS NOW FULLY FUNCTIONAL** - All bugs resolved, professional visual feedback implemented

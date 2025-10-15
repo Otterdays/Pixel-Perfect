@@ -630,23 +630,45 @@ class ColorWheel:
         self.theme = theme
         bg_color = theme.bg_primary if theme else "#2b2b2b"
         
+        # Helper to check if widget still exists
+        def widget_exists(widget):
+            try:
+                return widget and widget.winfo_exists()
+            except:
+                return False
+        
         # Update frame and canvas backgrounds
-        if hasattr(self, 'wheel_frame') and self.wheel_frame:
-            self.wheel_frame.configure(fg_color="transparent")
-        if hasattr(self, 'wheel_canvas') and self.wheel_canvas:
-            self.wheel_canvas.configure(bg=bg_color)
-        if hasattr(self, 'saturation_canvas') and self.saturation_canvas:
-            self.saturation_canvas.configure(bg=bg_color)
+        if hasattr(self, 'wheel_frame') and widget_exists(self.wheel_frame):
+            try:
+                self.wheel_frame.configure(fg_color="transparent")
+            except:
+                pass
+        if hasattr(self, 'wheel_canvas') and widget_exists(self.wheel_canvas):
+            try:
+                self.wheel_canvas.configure(bg=bg_color)
+            except:
+                pass
+        if hasattr(self, 'saturation_canvas') and widget_exists(self.saturation_canvas):
+            try:
+                self.saturation_canvas.configure(bg=bg_color)
+            except:
+                pass
         
         # Update scrollable frame scrollbar colors
-        if hasattr(self, 'custom_colors_container') and self.custom_colors_container:
-            self.custom_colors_container.configure(
-                scrollbar_button_color=theme.scrollbar_button_color if theme else "#3b3b3b",
-                scrollbar_button_hover_color=theme.scrollbar_button_hover_color if theme else "#505050"
-            )
+        if hasattr(self, 'custom_colors_container') and widget_exists(self.custom_colors_container):
+            try:
+                self.custom_colors_container.configure(
+                    scrollbar_button_color=theme.scrollbar_button_color if theme else "#3b3b3b",
+                    scrollbar_button_hover_color=theme.scrollbar_button_hover_color if theme else "#505050"
+                )
+            except:
+                pass
         
         # Redraw the wheel with new theme
-        self._draw_hue_wheel()
+        try:
+            self._draw_hue_wheel()
+        except:
+            pass
     
     def get_color(self) -> Tuple[int, int, int]:
         """Get current color as RGB"""

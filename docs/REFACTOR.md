@@ -1,17 +1,17 @@
 # Pixel Perfect - Refactoring Guide
 
 **Last Updated**: October 15, 2025  
-**Version**: 1.66  
-**Status**: 🟢 **IN PROGRESS** - Phases 1, 3, 4, 5 Complete!
+**Version**: 1.69  
+**Status**: 🟢 **IN PROGRESS** - Phases 1, 3, 4, 5, 6, 7 + Grid Control Complete!
 
 ---
 
 ## 🎯 Current Status
 
-**main_window.py**: **1,888 lines** (down from 3,387)  
-**Progress**: 44.3% reduction (1,499 lines removed)  
+**main_window.py**: **1,582 lines** (down from 3,387)  
+**Progress**: 53.3% reduction (1,805 lines removed)  
 **Target**: ~850-900 lines (core orchestration only)  
-**Remaining**: ~990 lines to extract (1 major phase)
+**Remaining**: ~682 lines to extract (1 major phase)
 
 ### Completed Extractions ✅
 - ✅ **UIBuilder** (436 lines) - Toolbar, tool panel, palette panel, canvas panel
@@ -20,9 +20,12 @@
 - ✅ **DialogManager** (402 lines) - All custom dialogs (size, warning, texture)
 - ✅ **SelectionManager** (438 lines) - All selection operations (mirror, rotate, scale, copy)
 - ✅ **CanvasRenderer** (expanded to 454 lines) - All rendering operations (grid, pixels, previews)
+- ✅ **ToolSizeManager** (163 lines) - Brush/eraser size selection and drawing
+- ✅ **CanvasZoomManager** (226 lines) - Canvas resizing and zoom controls
+- ✅ **GridControlManager** (68 lines) - Grid visibility and overlay controls
 
 ### Next Up 📋
-**Phase 2: Color View Manager** (~600 lines) - All color view management (grid, wheel, saved, constants)
+**Phase 2: Color View Manager** (~550 lines) - All color view management (grid, wheel, saved, constants)
 
 ---
 
@@ -35,10 +38,12 @@
 | Phase 4: Dialogs | 300 | **323** | **2,724** | ✅ **COMPLETE** |
 | Phase 1: Selection | 500 | **350** | **2,374** | ✅ **COMPLETE** |
 | Phase 5: Renderer | 400 | **486** | **1,888** | ✅ **COMPLETE** |
-| Phase 2: Colors | 600 | TBD | ~1,300 | ⏳ Pending |
-| Phase 6: UI Builder | 300 | TBD | ~1,000 | ⏳ Pending |
+| Phase 6: Tool Sizes | 140 | **115** | **1,773** | ✅ **COMPLETE** |
+| Phase 7: Canvas/Zoom | 180 | **159** | **1,614** | ✅ **COMPLETE** |
+| Grid Control | 30 | **32** | **1,582** | ✅ **COMPLETE** |
+| Phase 2: Colors | 550 | TBD | ~1,032 | ⏳ Pending |
 
-**Note**: Phase 5 achieved 121% of estimate (486 vs 400) - more duplicate code than expected!
+**Note**: Phases 6-7 achieved 82-88% of estimates - less code than expected, but still excellent progress!
 
 ---
 

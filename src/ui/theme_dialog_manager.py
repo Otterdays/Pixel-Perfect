@@ -323,7 +323,7 @@ class ThemeDialogManager:
         
         # Update grid overlay button if it exists
         if hasattr(self.main_window, 'grid_overlay_button'):
-            if self.main_window.grid_overlay:
+            if self.main_window.grid_control_mgr.grid_overlay:
                 self.main_window.grid_overlay_button.configure(fg_color="green", text_color=theme.text_primary)
             else:
                 self.main_window.grid_overlay_button.configure(fg_color=theme.button_normal, text_color=theme.text_primary)
@@ -454,5 +454,5 @@ class ThemeDialogManager:
             self.main_window.drawing_canvas.tag_raise("selection")
             
             # Raise grid above pixels if overlay mode is enabled
-            if self.main_window.grid_overlay and self.main_window.canvas.show_grid:
+            if self.main_window.grid_control_mgr.grid_overlay and self.main_window.canvas.show_grid:
                 self.main_window.drawing_canvas.tag_raise("grid")

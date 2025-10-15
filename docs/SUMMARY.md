@@ -1,10 +1,57 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.67  
-**Last Updated**: October 15, 2025 - Build System Updated for Refactored Architecture
+**Version**: 1.70  
+**Last Updated**: December 2024 - Move Tool Bug Fixes & Visual Improvements
 
-## Latest Updates (v1.67)
+## Latest Updates (v1.70)
+
+### 🔧 Critical Move Tool Fixes
+**Major bug fixes and visual improvements**
+- **Move Tool Layer Sync**: Fixed move tool to update layer data instead of canvas
+- **Visual Feedback**: Added live preview during move operations - pixels now follow cursor
+- **Bug Resolution**: Original pixels no longer reappear when switching tools after move
+- **Event Dispatcher**: Updated to pass layer objects to move/selection tools
+- **Canvas Renderer**: Skip rendering original selection area during move for clean visual
+- **Files Modified**: `src/tools/selection.py`, `src/core/event_dispatcher.py`, `src/core/canvas_renderer.py`
+
+### 🎨 User Experience Improvements
+- **Professional Move Tool**: Pixels visually move with cursor during drag
+- **No Duplicate Pixels**: Clean visual feedback without showing original + preview
+- **Seamless Tool Switching**: Move → Brush transitions work perfectly
+- **Layer Consistency**: All move operations properly sync with layer system
+
+---
+
+## Previous Updates (v1.69)
+
+### 🎯 Grid Control Manager
+**Small refactor complete - Grid controls extracted**
+- **New Module**: `src/ui/grid_control_manager.py` (68 lines)
+- **4 Methods Extracted**: Grid visibility toggle, overlay toggle, button updates
+- **Line Reduction**: main_window.py reduced from 1,614 → 1,582 lines (-32 lines, -2.0%)
+- **Cumulative**: Down from 3,387 → 1,582 lines (1,805 lines, 53.3% total reduction)
+- **Canvas Renderer Updated**: References grid_control_mgr.grid_overlay
+- **Benefits**: Clean separation of grid logic, easier to extend with new grid features
+
+---
+
+## Previous Updates (v1.68)
+
+### 🎨 Tool Size & Canvas/Zoom Managers
+**Phases 6 & 7 complete - Tool sizing and canvas management extracted**
+- **New Module**: `src/ui/tool_size_manager.py` (163 lines)
+- **New Module**: `src/ui/canvas_zoom_manager.py` (226 lines)
+- **11 Methods Extracted**: Brush/eraser sizing (8) + canvas resize/zoom (3)
+- **Line Reduction**: main_window.py reduced from 1,888 → 1,614 lines (-274 lines, -14.5%)
+- **Cumulative**: Down from 3,387 → 1,614 lines (1,773 lines, 52.4% total reduction)
+- **EventDispatcher Updated**: Brush/eraser operations use tool_size_mgr
+- **Canvas Renderer Updated**: Preview methods reference tool_size_mgr for sizes
+- **Benefits**: Isolated tool sizing logic, centralized canvas management, easier to test
+
+---
+
+## Previous Updates (v1.67)
 
 ### 🔨 Build System Compatibility (v1.67)
 **Build system updated for refactored modular architecture**
@@ -25,6 +72,8 @@
 - **Eraser Tool Fixed**: Eraser now properly erases individual pixels instead of clearing entire canvas
 - **Copy-Behind Bug Fixed**: Move + mirror/rotate operations no longer leave duplicate pixels (proper finalize_move implementation)
 - **Undo/Redo System Fixed**: Undo/redo buttons now work properly with visual feedback and state management
+- **Rotate Operation Fixed**: Non-destructive rotation preview prevents duplicate pixels in original location
+- **Move Tool Fixed**: Auto-finalization prevents duplicate pixels when moving selections
 
 ### 🎨 Selection Manager Extraction (v1.65)
 

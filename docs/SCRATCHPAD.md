@@ -1,3 +1,171 @@
+# Version 1.70 - Move Tool Critical Fixes & Visual Improvements
+
+## Complete Move Tool Resolution ✅
+**Date**: December 2024
+**Status**: Complete (All move tool bugs fixed + professional visual feedback)
+
+### Move Tool Layer Data Bug Fix
+**Problem**: Move tool was updating canvas directly instead of layer data, causing original pixels to reappear
+**Root Cause**: Move tool's `finalize_move()` was calling `canvas.set_pixel()` instead of `layer.set_pixel()`
+**Solution**: Complete layer synchronization + visual feedback improvements
+
+### Rotate Operation Fixed
+**Problem**: Rotate operation was duplicating pixels in original location
+**Root Cause**: Rotation was modifying selected_pixels array during preview, causing dimension mismatches in finalize_move
+**Solution**: Implemented true non-destructive preview system
+- Added `rotated_pixels_preview` state variable
+- Rotation preview uses separate pixel array
+- Original pixels only cleared when rotation is committed
+- Proper cleanup of preview state
+
+### Move Tool Auto-Finalization Fixed  
+**Problem**: Move tool was leaving duplicate pixels when moving selections
+**Root Cause**: Move tool wasn't automatically finalizing moves, requiring manual cleanup
+**Solution**: Added auto-finalization in on_mouse_up
+- Automatically calls finalize_move() when selection has moved
+- Clears original pixels immediately when move completes
+- No more manual cleanup required
+
+---
+
+# Version 1.69 - Grid Control Manager
+
+## Small Refactor Complete ✅
+**Date**: October 15, 2025
+**Status**: Complete (Extracted grid control logic)
+
+### Grid Control Manager Created
+**New File**: `src/ui/grid_control_manager.py` (68 lines)
+
+**Purpose**: Extract all grid visibility and overlay control logic from main_window.py
+
+**Methods Extracted** (4 total):
+1. `toggle_grid()` - Toggle grid visibility and update button
+2. `update_grid_button_text()` - Update grid button label and color
+3. `toggle_grid_overlay()` - Toggle overlay mode (grid on top of pixels)
+4. `update_grid_overlay_button_text()` - Update overlay button label and color
+
+**State Variables**:
+- `grid_overlay` - Grid overlay mode state (moved from main_window)
+
+**Integration**:
+- Initialized after theme_manager creation
+- 1 callback set: `force_canvas_update_callback`
+- 2 widget references set after UI creation: `grid_button`, `grid_overlay_button`
+- UI callbacks updated to use `grid_control_mgr.toggle_grid()` and `toggle_grid_overlay()`
+- Canvas renderer updated to reference `grid_control_mgr.grid_overlay`
+
+**Line Reduction**:
+- main_window.py: 1,614 → 1,582 lines (-32 lines, -2.0%)
+- New grid_control_manager.py: +68 lines
+
+**Benefits**:
+- ✅ Clean separation of grid control logic
+- ✅ Easy to extend with new grid features (size, color, patterns)
+- ✅ Reduced main_window.py complexity
+- ✅ Low-risk, self-contained extraction
+
+**Cumulative Progress**:
+- Starting point: 3,387 lines
+- After Phase 7 (Canvas/Zoom): 1,614 lines
+- After Grid Control: 1,582 lines
+- **Total reduction**: 1,805 lines (53.3%)
+- **Remaining to target**: ~682 lines (1 major phase)
+
+---
+
+# Version 1.68 - Tool Size & Canvas/Zoom Managers
+
+## Double Refactor Complete ✅
+**Date**: October 15, 2025
+**Status**: Complete (Extracted tool sizing and canvas management)
+
+### Tool Size Manager Created (Phase 6)
+**New File**: `src/ui/tool_size_manager.py` (163 lines)
+
+**Purpose**: Extract all brush and eraser size selection and drawing logic from main_window.py
+
+**Methods Extracted** (8 total):
+
+**Brush Size (4 methods)**:
+1. `show_brush_size_menu()` - Right-click popup menu for size selection
+2. `set_brush_size()` - Set brush size and auto-select brush tool
+3. `update_brush_button_text()` - Update button label to show current size
+4. `draw_brush_at()` - Draw NxN brush square at position
+
+**Eraser Size (4 methods)**:
+1. `show_eraser_size_menu()` - Right-click popup menu for size selection
+2. `set_eraser_size()` - Set eraser size and auto-select eraser tool
+3. `update_eraser_button_text()` - Update button label to show current size
+4. `erase_at()` - Erase NxN square at position
+
+**State Variables**:
+- `brush_size` (1x1, 2x2, 3x3)
+- `eraser_size` (1x1, 2x2, 3x3)
+
+**Integration**:
+- Initialized after canvas creation
+- 2 callbacks set: `select_tool_callback`
+- Widget reference set after UI creation: `tool_buttons`
+- UI callbacks updated to use `self.tool_size_mgr.*` methods
+- EventDispatcher updated to use `tool_size_mgr.draw_brush_at()` and `erase_at()`
+- CanvasRenderer updated to reference `tool_size_mgr.brush_size` and `eraser_size` for previews
+
+**Line Reduction**: 
+- main_window.py: 1,888 → 1,773 lines (-115 lines, -6.1%)
+- New tool_size_manager.py: +163 lines
+
+---
+
+### Canvas/Zoom Manager Created (Phase 7)
+**New File**: `src/ui/canvas_zoom_manager.py` (226 lines)
+
+**Purpose**: Extract all canvas sizing and zoom control logic from main_window.py
+
+**Methods Extracted** (3 total):
+1. `on_size_change()` - Handle canvas size dropdown (preset or custom) (97 lines)
+2. `apply_custom_canvas_size()` - Apply custom dimensions with safety checks (63 lines)
+3. `on_zoom_change()` - Handle zoom level dropdown (11 lines)
+
+**State Variables**:
+- `custom_canvas_size` - Tracks custom canvas dimensions
+
+**Integration**:
+- Initialized after dialog_mgr creation
+- 2 callbacks set: `update_canvas_callback`, `force_canvas_update_callback`
+- 2 widget references set after UI creation: `size_var`, `zoom_var`
+- UI callbacks updated to use `canvas_zoom_mgr.on_size_change()` and `on_zoom_change()`
+- Custom canvas size references updated throughout main_window
+
+**Line Reduction**:
+- main_window.py: 1,773 → 1,614 lines (-159 lines, -9.0%)
+- New canvas_zoom_manager.py: +226 lines
+
+---
+
+### Cumulative Progress
+- Starting point: 3,387 lines
+- After Phase 3 (File Ops): 3,029 lines
+- After Phase 4 (Dialogs): 2,724 lines
+- After Phase 1 (Selection): 2,374 lines
+- After Phase 5 (Renderer): 1,888 lines
+- After Phase 6 (Tool Sizes): 1,773 lines
+- After Phase 7 (Canvas/Zoom): 1,614 lines
+- **Total reduction**: 1,773 lines (52.4%)
+- **Remaining to target**: ~714 lines (1 major phase)
+
+### Benefits
+- ✅ Clean separation of tool sizing concerns
+- ✅ Centralized canvas resizing and zoom management
+- ✅ Multi-pixel drawing logic isolated and testable
+- ✅ Canvas safety checks (downsize warnings) in dedicated manager
+- ✅ Easier to extend with new tool sizes or canvas presets
+
+**Next Phase**: Color View Manager (~550 lines) - Final major extraction!
+
+
+---
+
 # Pixel Perfect - Development Scratchpad
 
 ## Version 1.67 - Build System Updates for Refactored Modules

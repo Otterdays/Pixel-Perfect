@@ -43,6 +43,9 @@ from ui.theme_dialog_manager import ThemeDialogManager
 from ui.file_operations_manager import FileOperationsManager
 from ui.dialog_manager import DialogManager
 from ui.selection_manager import SelectionManager
+from ui.tool_size_manager import ToolSizeManager
+from ui.canvas_zoom_manager import CanvasZoomManager
+from ui.grid_control_manager import GridControlManager
 
 class MainWindow:
     """Main application window"""
@@ -155,15 +158,20 @@ class MainWindow:
             self.root, self.canvas, self.texture_library, self.tools
         )
         
-        # Brush size (1x1, 2x2, 3x3)
-        self.brush_size = 1
-        self.brush_drawing = False
+        # Initialize tool size manager
+        self.tool_size_mgr = ToolSizeManager(self.root, self.canvas)
         
-        # Eraser size (1x1, 2x2, 3x3)
-        self.eraser_size = 1
+        # Initialize canvas/zoom manager
+        self.canvas_zoom_mgr = CanvasZoomManager(
+            self.root, self.canvas, self.layer_manager, 
+            self.timeline, self.dialog_mgr
+        )
         
+        # Initialize grid control manager (after theme manager initialization)
+        # Note: Theme manager is initialized below, so we'll set callback after
         
         # UI state
+        self.brush_drawing = False
         self.is_drawing = False
         self.last_mouse_pos = (0, 0)
         self._last_drawn_pixel = None  # Track last drawn pixel for efficient updates
@@ -179,13 +187,13 @@ class MainWindow:
         self.pan_offset_x = 0
         self.pan_offset_y = 0
         
-        # Grid overlay state
-        self.grid_overlay = False
-        
         # Initialize theme manager
         self.theme_manager = ThemeManager()
         # Initialize theme dialog manager
         self.theme_dialog_manager = ThemeDialogManager(self)
+        
+        # Initialize grid control manager (after theme manager)
+        self.grid_control_mgr = GridControlManager(self.canvas, self.theme_manager)
         
         # Initialize selection manager (needed before tool connections)
         self.selection_mgr = SelectionManager(
@@ -363,8 +371,28 @@ class MainWindow:
         self.scale_btn = selection_buttons['scale_btn']
         
         # Update tool button text to show sizes
-        self._update_brush_button_text()
-        self._update_eraser_button_text()
+        # Set tool size manager references and callbacks
+        self.tool_size_mgr.tool_buttons = self.tool_buttons
+        self.tool_size_mgr.select_tool_callback = self._select_tool
+        
+        # Update brush and eraser button text to show default sizes
+        self.tool_size_mgr.update_brush_button_text()
+        self.tool_size_mgr.update_eraser_button_text()
+        
+        # Set canvas/zoom manager references and callbacks
+        self.canvas_zoom_mgr.size_var = self.size_var
+        self.canvas_zoom_mgr.zoom_var = self.zoom_var
+        self.canvas_zoom_mgr.update_canvas_callback = self._update_canvas_from_layers
+        self.canvas_zoom_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
+        
+        # Set grid control manager references and callbacks
+        self.grid_control_mgr.grid_button = self.grid_button
+        self.grid_control_mgr.grid_overlay_button = self.grid_overlay_button
+        self.grid_control_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
+        
+        # Initialize grid button states
+        self.grid_control_mgr.update_grid_button_text()
+        self.grid_control_mgr.update_grid_overlay_button_text()
         
         palette_widgets = self.ui_builder.create_palette_panel(self.left_panel, self.palette, self._get_ui_callbacks())
         # Assign palette widget references
@@ -471,7 +499,7 @@ class MainWindow:
         self.color_wheel.on_remove_custom_color = self._remove_custom_color
         
         self.saved_view = SavedView(
-            self.palette_content_frame, 
+            self.saved_view_frame, 
             self.saved_colors, 
             self.palette, 
             self.canvas,
@@ -510,18 +538,18 @@ class MainWindow:
         """Returns a dictionary of callbacks for the UI builder."""
         return {
             'show_file_menu': self._show_file_menu,
-            'on_size_change': self._on_size_change,
-            'on_zoom_change': self._on_zoom_change,
+            'on_size_change': self.canvas_zoom_mgr.on_size_change,
+            'on_zoom_change': self.canvas_zoom_mgr.on_zoom_change,
             'undo': self._undo,
             'redo': self._redo,
             'on_theme_selected': self._on_theme_selected,
             'show_settings_dialog': self.theme_dialog_manager.show_settings_dialog,
-            'toggle_grid': self._toggle_grid,
-            'toggle_grid_overlay': self._toggle_grid_overlay,
+            'toggle_grid': self.grid_control_mgr.toggle_grid,
+            'toggle_grid_overlay': self.grid_control_mgr.toggle_grid_overlay,
             'select_tool': self._select_tool,
             'update_tool_selection': self._update_tool_selection,
-            'show_brush_size_menu': self._show_brush_size_menu,
-            'show_eraser_size_menu': self._show_eraser_size_menu,
+            'show_brush_size_menu': self.tool_size_mgr.show_brush_size_menu,
+            'show_eraser_size_menu': self.tool_size_mgr.show_eraser_size_menu,
             'open_texture_panel': self.dialog_mgr.open_texture_panel,
             'mirror_selection': self.selection_mgr.mirror_selection,
             'rotate_selection': self.selection_mgr.rotate_selection,
@@ -547,125 +575,6 @@ class MainWindow:
             else:
                 self.redo_button.configure(fg_color=("gray75", "gray25"))
     
-    def _show_brush_size_menu(self, event):
-        """Show brush size selection popup menu"""
-        # Create popup menu
-        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white", 
-                      activebackground="#1a73e8", activeforeground="white",
-                      relief=tk.FLAT, borderwidth=0)
-        
-        # Add size options with visual indicators
-        sizes = [
-            (1, "1x1 • Single Pixel"),
-            (2, "2x2 • Small Brush"),
-            (3, "3x3 • Medium Brush")
-        ]
-        
-        for size, label in sizes:
-            # Add checkmark for current size
-            display_label = f"✓ {label}" if size == self.brush_size else f"   {label}"
-            menu.add_command(
-                label=display_label,
-                command=lambda s=size: self._set_brush_size(s),
-                font=("Segoe UI", 10)
-            )
-        
-        # Show menu at mouse position
-        try:
-            menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            menu.grab_release()
-    
-    def _set_brush_size(self, size: int):
-        """Set brush size"""
-        self.brush_size = size
-        self._update_brush_button_text()
-        
-        # Auto-select brush tool
-        if self.current_tool != "brush":
-            self._select_tool("brush")
-    
-    def _update_brush_button_text(self):
-        """Update brush button to show current size"""
-        if "brush" in self.tool_buttons:
-            size_text = f"{self.brush_size}x{self.brush_size}"
-            self.tool_buttons["brush"].configure(text=f"Brush [{size_text}]")
-    
-    def _draw_brush_at(self, layer, x: int, y: int, color: tuple):
-        """Draw brush at position with current size"""
-        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
-        offset = self.brush_size // 2
-        
-        # Draw NxN square
-        for dy in range(self.brush_size):
-            for dx in range(self.brush_size):
-                px = x - offset + dx
-                py = y - offset + dy
-                
-                # Check bounds
-                if 0 <= px < layer.width and 0 <= py < layer.height:
-                    layer.set_pixel(px, py, color)
-    
-    
-    def _show_eraser_size_menu(self, event):
-        """Show eraser size selection popup menu"""
-        # Create popup menu
-        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white", 
-                      activebackground="#1a73e8", activeforeground="white",
-                      relief=tk.FLAT, borderwidth=0)
-        
-        # Eraser sizes
-        sizes = [
-            (1, "1×1 (Single Pixel)"),
-            (2, "2×2 (Small)"),
-            (3, "3×3 (Medium)")
-        ]
-        
-        for size, label in sizes:
-            # Add checkmark for current size
-            display_label = f"✓ {label}" if size == self.eraser_size else f"   {label}"
-            menu.add_command(
-                label=display_label,
-                command=lambda s=size: self._set_eraser_size(s),
-                font=("Segoe UI", 10)
-            )
-        
-        # Show menu at mouse position
-        try:
-            menu.post(event.x_root, event.y_root)
-        finally:
-            menu.grab_release()
-    
-    def _set_eraser_size(self, size: int):
-        """Set eraser size"""
-        self.eraser_size = size
-        self._update_eraser_button_text()
-        
-        # Auto-select eraser tool
-        if self.current_tool != "eraser":
-            self._select_tool("eraser")
-    
-    def _update_eraser_button_text(self):
-        """Update eraser button to show current size"""
-        if "eraser" in self.tool_buttons:
-            size_text = f"{self.eraser_size}x{self.eraser_size}"
-            self.tool_buttons["eraser"].configure(text=f"Eraser [{size_text}]")
-    
-    def _erase_at(self, layer, x: int, y: int):
-        """Erase at position with current size"""
-        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
-        offset = self.eraser_size // 2
-        
-        # Erase NxN square (set to transparent)
-        for dy in range(self.eraser_size):
-            for dx in range(self.eraser_size):
-                px = x - offset + dx
-                py = y - offset + dy
-                
-                # Check bounds
-                if 0 <= px < layer.width and 0 <= py < layer.height:
-                    layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
-    
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
         # Clear any tool previews when changing tools
@@ -686,19 +595,19 @@ class MainWindow:
         # Finalize move and clear selection when switching away from selection/move tools
         if (self.current_tool in ["selection", "move"] and 
             tool_id not in ["selection", "move"]):
-            # Finalize any pending move operation first
+            # Only finalize move if it hasn't been finalized yet
             move_tool = self.tools.get("move")
-            if move_tool and hasattr(move_tool, 'finalize_move'):
+            if move_tool and hasattr(move_tool, 'finalize_move') and move_tool.has_been_moved:
                 draw_layer = self._get_drawing_layer()
                 if draw_layer:
                     move_tool.finalize_move(draw_layer)
-                    # Debug: Finalized move operation before tool switch (removed for clean console)
+                    print("[TOOL SWITCH] Finalized pending move operation")
             
             selection_tool = self.tools.get("selection")
             if selection_tool and selection_tool.has_selection:
                 selection_tool.clear_selection()
                 self.canvas_renderer.update_pixel_display()
-                # Debug: Selection cleared - switched to different tool (removed for clean console)
+                print("[TOOL SWITCH] Selection cleared - switched to different tool")
         
         self.current_tool = tool_id
         
@@ -745,177 +654,6 @@ class MainWindow:
                     btn.configure(border_width=2, border_color="gray")
                 else:
                     btn.configure(border_width=0, border_color="")
-    
-    def _on_size_change(self, size_str: str):
-        """Handle canvas size change - WARNING: Downsizing clips pixels!"""
-        # Handle custom size dialog
-        if size_str == "Custom...":
-            width, height = self.dialog_mgr.open_custom_size_dialog()
-            
-            if width is None or height is None:
-                # User cancelled - restore previous size
-                if self.custom_canvas_size:
-                    self.size_var.set(f"CUSTOM ({self.custom_canvas_size[0]}x{self.custom_canvas_size[1]})")
-                else:
-                    # Restore to current actual size
-                    current_size = f"{self.canvas.width}x{self.canvas.height}"
-                    if current_size in ["16x16", "32x32", "16x32", "32x64", "64x64"]:
-                        self.size_var.set(current_size)
-                    else:
-                        self.size_var.set("32x32")
-                return
-            
-            # Apply custom size
-            self._apply_custom_canvas_size(width, height)
-            return
-        
-        size_map = {
-            "16x16": CanvasSize.SMALL,
-            "32x32": CanvasSize.MEDIUM,
-            "16x32": CanvasSize.WIDE,
-            "32x64": CanvasSize.LARGE,
-            "64x64": CanvasSize.XLARGE
-        }
-        
-        # Clear custom size when switching to preset
-        self.custom_canvas_size = None
-        
-        if size_str in size_map:
-            # Store old dimensions for preservation info
-            old_width = self.canvas.width
-            old_height = self.canvas.height
-            
-            # Get new dimensions
-            new_size = size_map[size_str].value
-            new_width, new_height = new_size
-            
-            # CHECK: Will this resize clip pixels?
-            will_clip_width = new_width < old_width
-            will_clip_height = new_height < old_height
-            
-            if will_clip_width or will_clip_height:
-                # WARN USER: Pixels will be permanently lost!
-                # Show custom styled warning dialog
-                result = self.dialog_mgr.show_downsize_warning(old_width, old_height, new_width, new_height)
-                
-                if not result:
-                    # User cancelled - restore old size in dropdown
-                    old_size_str = f"{old_width}x{old_height}"
-                    self.size_var.set(old_size_str)
-                    print(f"[Canvas Resize] Cancelled by user")
-                    return
-            
-            # Resize canvas (updates dimensions only)
-            self.canvas.set_preset_size(size_map[size_str])
-            
-            # Auto-adjust zoom based on canvas size for optimal viewing
-            # Smaller canvases get higher zoom, larger canvases get lower zoom
-            if size_str == "16x16":
-                # Very small canvas - use high zoom (16x minimum)
-                if self.canvas.zoom < 16:
-                    self.canvas.set_zoom(16)
-                    self.zoom_var.set("16x")
-            elif size_str == "16x32" or size_str == "32x32":
-                # Small canvas - use medium-high zoom (16x minimum)
-                if self.canvas.zoom < 16:
-                    self.canvas.set_zoom(16)
-                    self.zoom_var.set("16x")
-            elif size_str in ["32x64", "64x64"]:
-                # Large canvas - reduce zoom to fit (8x maximum)
-                if self.canvas.zoom > 8:
-                    self.canvas.set_zoom(8)
-                    self.zoom_var.set("8x")
-            
-            # Resize layer manager and timeline (both automatically preserve pixel data)
-            # These methods copy existing pixels to the top-left of new size
-            self.layer_manager.resize_layers(new_width, new_height)
-            self.timeline.resize_frames(new_width, new_height)
-            
-            # Sync canvas display with resized layer data
-            self._update_canvas_from_layers()
-            
-            # Update display immediately
-            self.canvas_renderer.force_canvas_update()
-            
-            # Log resize info
-            preserved_w = min(old_width, new_width)
-            preserved_h = min(old_height, new_height)
-            print(f"[Canvas Resize] {old_width}x{old_height} → {new_width}x{new_height}")
-            print(f"[Pixel Preservation] Top-left {preserved_w}x{preserved_h} region preserved")
-    
-    def _apply_custom_canvas_size(self, width: int, height: int):
-        """Apply custom canvas size with same safety checks as preset sizes"""
-        # Store old dimensions
-        old_width = self.canvas.width
-        old_height = self.canvas.height
-        
-        # CHECK: Will this resize clip pixels?
-        will_clip_width = width < old_width
-        will_clip_height = height < old_height
-        
-        if will_clip_width or will_clip_height:
-            # WARN USER: Pixels will be permanently lost!
-            # Show custom styled warning dialog
-            result = self.dialog_mgr.show_downsize_warning(old_width, old_height, width, height)
-            
-            if not result:
-                # User cancelled - restore previous size in dropdown
-                if self.custom_canvas_size:
-                    self.size_var.set(f"CUSTOM ({self.custom_canvas_size[0]}x{self.custom_canvas_size[1]})")
-                else:
-                    old_size_str = f"{old_width}x{old_height}"
-                    self.size_var.set(old_size_str)
-                print(f"[Custom Canvas Resize] Cancelled by user")
-                return
-        
-        # Apply custom size
-        self.canvas.resize(width, height)
-        
-        # Store custom size
-        self.custom_canvas_size = (width, height)
-        
-        # Update dropdown to show CUSTOM
-        self.size_var.set(f"CUSTOM ({width}x{height})")
-        
-        # Auto-adjust zoom based on size
-        if width <= 16 or height <= 16:
-            if self.canvas.zoom < 16:
-                self.canvas.set_zoom(16)
-                self.zoom_var.set("16x")
-        elif width <= 32 or height <= 32:
-            if self.canvas.zoom < 16:
-                self.canvas.set_zoom(16)
-                self.zoom_var.set("16x")
-        elif width >= 64 or height >= 64:
-            if self.canvas.zoom > 8:
-                    self.canvas.set_zoom(8)
-                    self.zoom_var.set("8x")
-            
-        # Resize layer manager and timeline
-        preserve_width = min(old_width, width)
-        preserve_height = min(old_height, height)
-        
-        self.layer_manager.resize_layers(width, height)
-        self.timeline.resize_frames(width, height)
-        
-        # Sync canvas display with resized layer data
-        self._update_canvas_from_layers()
-        
-        # Update display
-        self.canvas_renderer.force_canvas_update()
-        
-        print(f"[Custom Canvas Resize] Resized to {width}x{height}, preserved {preserve_width}x{preserve_height} pixels")
-    
-    def _on_zoom_change(self, zoom_str: str):
-        """Handle zoom level change"""
-        zoom_map = {
-            "0.25x": 0.25, "0.5x": 0.5, "1x": 1, "2x": 2, "4x": 4, "8x": 8, "16x": 16, "32x": 32
-        }
-        
-        if zoom_str in zoom_map:
-            self.canvas.set_zoom(zoom_map[zoom_str])
-            # Update display immediately
-        self.canvas_renderer.force_canvas_update()
 
     def _on_palette_change(self, palette_name: str):
         """Handle palette change - automatically switch to Grid view"""
@@ -957,17 +695,28 @@ class MainWindow:
     
     def _show_view(self, mode: str):
         """Show specific view by toggling visibility (INSTANT)"""
-        # Clear existing palette content
+        # Hide all view frames first
+        for frame_name in ['grid_view_frame', 'primary_view_frame', 'wheel_view_frame', 
+                          'constants_view_frame', 'saved_view_frame']:
+            if hasattr(self, frame_name):
+                frame = getattr(self, frame_name)
+                if frame:
+                    frame.pack_forget()
+        
+        # Clear palette_content_frame for views that use it
         if hasattr(self, 'palette_content_frame') and self.palette_content_frame:
             for widget in self.palette_content_frame.winfo_children():
                 widget.destroy()
         
         # Show requested view
         if mode == "grid" and hasattr(self, 'grid_view') and self.grid_view:
+            self.grid_view_frame.pack(fill="both", expand=True)
             self.grid_view.create()
         elif mode == "primary" and hasattr(self, 'primary_view') and self.primary_view:
+            self.primary_view_frame.pack(fill="both", expand=True)
             self.primary_view.create()
         elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
+            self.wheel_view_frame.pack(fill="both", expand=True)
             # Recreate color wheel since it was destroyed when clearing the frame
             from src.ui.color_wheel import ColorWheel
             self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
@@ -975,8 +724,10 @@ class MainWindow:
             self.color_wheel.on_save_custom_color = self._save_custom_color
             self.color_wheel.on_remove_custom_color = self._remove_custom_color
         elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
+            self.constants_view_frame.pack(fill="both", expand=True)
             self.constants_view.create()
         elif mode == "saved" and hasattr(self, 'saved_view') and self.saved_view:
+            self.saved_view_frame.pack(fill="both", expand=True)
             self.saved_view.create()
             # Update button states in case colors changed
             if hasattr(self, '_saved_view_created') and self._saved_view_created:
@@ -1433,36 +1184,6 @@ class MainWindow:
         window.destroy()
         
         print(f"[TEXTURE] Selected {texture_data.shape[1]}x{texture_data.shape[0]} texture")
-    
-    def _toggle_grid(self):
-        """Toggle grid visibility"""
-        self.canvas.toggle_grid()
-        self._update_grid_button_text()
-        self.canvas_renderer.force_canvas_update()
-    
-    def _update_grid_button_text(self):
-        """Update grid button text to show current state"""
-        if self.canvas.show_grid:
-            self.grid_button.configure(text="Grid: ON")
-            self.grid_button.configure(fg_color="green")
-        else:
-            self.grid_button.configure(text="Grid: OFF")
-            self.grid_button.configure(fg_color="red")
-    
-    def _toggle_grid_overlay(self):
-        """Toggle grid overlay mode (grid on top of pixels)"""
-        self.grid_overlay = not self.grid_overlay
-        self._update_grid_overlay_button_text()
-        self.canvas_renderer.force_canvas_update()
-    
-    def _update_grid_overlay_button_text(self):
-        """Update grid overlay button text to show current state"""
-        if self.grid_overlay:
-            self.grid_overlay_button.configure(text="Overlay: ON")
-            self.grid_overlay_button.configure(fg_color="#1f538d")
-        else:
-            self.grid_overlay_button.configure(text="Overlay: OFF")
-            self.grid_overlay_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
     
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""

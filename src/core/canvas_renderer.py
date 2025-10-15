@@ -123,7 +123,7 @@ class CanvasRenderer:
                 
                 self.draw_selection_on_tkinter(x_offset, y_offset)
                 
-                if self.app.grid_overlay and self.app.canvas.show_grid:
+                if self.app.grid_control_mgr.grid_overlay and self.app.canvas.show_grid:
                     self.app.drawing_canvas.tag_raise("grid")
         finally:
             self.app._updating_display = False
@@ -195,6 +195,30 @@ class CanvasRenderer:
                                 fill=hex_color, outline="", tags="move_preview"
                             )
         
+        # Draw rotation preview pixels
+        if (hasattr(self.app, 'selection_mgr') and self.app.selection_mgr.is_rotating and selection_tool and 
+            self.app.selection_mgr.rotated_pixels_preview is not None and selection_tool.selection_rect):
+            left, top, width, height = selection_tool.selection_rect
+            zoom = self.app.canvas.zoom
+            rotated_pixels = self.app.selection_mgr.rotated_pixels_preview
+            
+            for py in range(height):
+                for px in range(width):
+                    if (py < rotated_pixels.shape[0] and 
+                        px < rotated_pixels.shape[1]):
+                        pixel_color = tuple(rotated_pixels[py, px])
+                        if pixel_color[3] > 0:
+                            screen_x = x_offset + ((left + px) * zoom)
+                            screen_y = y_offset + ((top + py) * zoom)
+                            
+                            hex_color = f"#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}"
+                            
+                            self.app.drawing_canvas.create_rectangle(
+                                screen_x, screen_y,
+                                screen_x + zoom, screen_y + zoom,
+                                fill=hex_color, outline="", tags="rotate_preview"
+                            )
+        
         if (hasattr(self.app, 'selection_mgr') and self.app.selection_mgr.is_placing_copy and 
             self.app.selection_mgr.copy_preview_pos and self.app.selection_mgr.copy_buffer is not None and 
             self.app.selection_mgr.copy_dimensions):
@@ -245,9 +269,9 @@ class CanvasRenderer:
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
         x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
         y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
-        offset = self.app.brush_size // 2
-        for dy in range(self.app.brush_size):
-            for dx in range(self.app.brush_size):
+        offset = self.app.tool_size_mgr.brush_size // 2
+        for dy in range(self.app.tool_size_mgr.brush_size):
+            for dx in range(self.app.tool_size_mgr.brush_size):
                 px = canvas_x - offset + dx
                 py = canvas_y - offset + dy
                 if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
@@ -263,8 +287,8 @@ class CanvasRenderer:
                     )
         screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
         screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.app.brush_size) * self.app.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.app.brush_size) * self.app.canvas.zoom)
+        screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
+        screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
         self.app.drawing_canvas.create_rectangle(
             screen_x1, screen_y1, screen_x2, screen_y2,
             outline="#ffffff", width=2, dash=(4, 4),
@@ -280,9 +304,9 @@ class CanvasRenderer:
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
         x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
         y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
-        offset = self.app.eraser_size // 2
-        for dy in range(self.app.eraser_size):
-            for dx in range(self.app.eraser_size):
+        offset = self.app.tool_size_mgr.eraser_size // 2
+        for dy in range(self.app.tool_size_mgr.eraser_size):
+            for dx in range(self.app.tool_size_mgr.eraser_size):
                 px = canvas_x - offset + dx
                 py = canvas_y - offset + dy
                 if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
@@ -296,8 +320,8 @@ class CanvasRenderer:
                     )
         screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
         screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.app.eraser_size) * self.app.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.app.eraser_size) * self.app.canvas.zoom)
+        screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
+        screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
         self.app.drawing_canvas.create_rectangle(
             screen_x1, screen_y1, screen_x2, screen_y2,
             outline="#ff0000", width=2, dash=(4, 4),
@@ -421,9 +445,24 @@ class CanvasRenderer:
         """Draw all pixels from the canvas onto the tkinter canvas"""
         zoom = self.app.canvas.zoom
         
+        # Check if we're in a move operation to skip original selection area
+        move_tool = self.app.tools.get("move")
+        skip_original_selection = False
+        orig_left, orig_top, orig_width, orig_height = 0, 0, 0, 0
+        
+        if (move_tool and move_tool.is_moving and move_tool.original_selection):
+            skip_original_selection = True
+            orig_left, orig_top, orig_width, orig_height = move_tool.original_selection
+        
         # Draw all visible layers combined
         for y in range(self.app.canvas.height):
             for x in range(self.app.canvas.width):
+                # Skip pixels in original selection area during move
+                if skip_original_selection:
+                    if (orig_left <= x < orig_left + orig_width and 
+                        orig_top <= y < orig_top + orig_height):
+                        continue  # Don't draw original selection pixels during move
+                
                 color = self.app.canvas.get_pixel(x, y)
                 if color and color[3] > 0:  # Only draw non-transparent pixels
                     screen_x = x_offset + (x * zoom)

@@ -139,26 +139,37 @@ class SavedView:
             return
         
         for idx, btn in enumerate(self.saved_color_buttons):
+            # Check if button still exists
+            try:
+                if not btn.winfo_exists():
+                    continue
+            except:
+                continue
+            
             saved_color = self.saved_colors.get_color(idx)
             
-            if saved_color:
-                # Slot has a color - configure as filled
-                r, g, b, a = saved_color
-                hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                btn.configure(
-                    text="",
-                    fg_color=hex_color,
-                    hover_color=hex_color,
-                    command=lambda i=idx: self._on_saved_color_click(i)
-                )
-            else:
-                # Empty slot - configure as empty
-                btn.configure(
-                    text="+",
-                    fg_color="transparent",
-                    hover_color="#3a3a3a",
-                    command=lambda i=idx: self._on_saved_slot_click(i)
-                )
+            try:
+                if saved_color:
+                    # Slot has a color - configure as filled
+                    r, g, b, a = saved_color
+                    hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                    btn.configure(
+                        text="",
+                        fg_color=hex_color,
+                        hover_color=hex_color,
+                        command=lambda i=idx: self._on_saved_color_click(i)
+                    )
+                else:
+                    # Empty slot - configure as empty
+                    btn.configure(
+                        text="+",
+                        fg_color="transparent",
+                        hover_color="#3a3a3a",
+                        command=lambda i=idx: self._on_saved_slot_click(i)
+                    )
+            except:
+                # Widget was destroyed, skip it
+                pass
     
     def _on_saved_slot_click(self, slot_index: int):
         """Handle click on empty saved color slot - save current color"""

@@ -134,6 +134,17 @@ class EventDispatcher:
             self.main_window.new_project()
             return
         
+        # Handle rotation preview mode
+        if hasattr(self.main_window, 'selection_mgr'):
+            if event.keysym.lower() == 'return':  # Enter key - apply rotation
+                if self.main_window.selection_mgr.is_rotating:
+                    self.main_window.selection_mgr.apply_rotation()
+                    return
+            elif event.keysym.lower() == 'escape':  # Escape key - cancel rotation
+                if self.main_window.selection_mgr.is_rotating:
+                    self.main_window.selection_mgr.cancel_rotation()
+                    return
+        
         # Ctrl+E for export
         if event.state & 0x4 and event.keysym.lower() == 'e':
             self.main_window.export_png()
@@ -190,6 +201,17 @@ class EventDispatcher:
                 self.main_window.selection_mgr.place_copy_at(canvas_x, canvas_y)
             return
         
+        # Handle rotation preview mode - commit if clicking outside selection
+        if self.main_window.selection_mgr.is_rotating:
+            selection_tool = self.main_window.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect:
+                left, top, width, height = selection_tool.selection_rect
+                # Check if click is outside selection bounds
+                if not (left <= canvas_x < left + width and top <= canvas_y < top + height):
+                    # Click outside selection - commit the rotation
+                    self.main_window.selection_mgr.apply_rotation()
+                    return
+        
         # Handle scaling mode
         if self.main_window.selection_mgr.is_scaling:
             selection_tool = self.main_window.tools.get("selection")
@@ -242,33 +264,22 @@ class EventDispatcher:
         if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window._draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
+                self.main_window.tool_size_mgr.draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_drawing'):
                 tool.is_drawing = True  # Set drawing state
             return
-        elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size > 1:
+        elif self.main_window.current_tool == "eraser":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
+                self.main_window.tool_size_mgr.erase_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
                 tool.is_erasing = True  # Set erasing state
-            return
-        
-        # For 1x1 eraser, use layer-based approach for consistency
-        if self.main_window.current_tool == "eraser" and self.main_window.eraser_size == 1:
-            draw_layer = self.main_window._get_drawing_layer()
-            if draw_layer:
-                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
-                self.main_window._update_canvas_from_layers()
-                self.main_window.canvas_renderer.update_pixel_display()
-            if hasattr(tool, 'is_erasing'):
-                tool.is_erasing = True  # Set erasing state
-        elif self.main_window.current_tool in ["fill", "texture", "line", "rectangle", "circle"]:
-            # Handle fill, texture, and shape tools with layer-based approach for consistency
+        elif self.main_window.current_tool in ["fill", "texture", "line", "rectangle", "circle", "move", "selection"]:
+            # Handle fill, texture, shape, move, and selection tools with layer-based approach
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
                 tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, current_color)
@@ -276,7 +287,7 @@ class EventDispatcher:
                     # Fill and texture tools update immediately
                     self.main_window._update_canvas_from_layers()
                     self.main_window.canvas_renderer.update_pixel_display()
-                # Shape tools don't update on mouse down, only on mouse up
+                # Shape tools and move/selection tools don't update on mouse down
         else:
             # Call tool's on_mouse_down method (standard interface) for other tools
             tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
@@ -318,8 +329,8 @@ class EventDispatcher:
         # Get current drawing color (from palette or color wheel based on view mode)
         current_color = self.main_window.get_current_color()
         
-        # For shape tools, we need to pass the layer instead of canvas
-        if self.main_window.current_tool in ["line", "rectangle", "circle"]:
+        # For shape tools and move tool, we need to pass the layer instead of canvas
+        if self.main_window.current_tool in ["line", "rectangle", "circle", "move", "selection"]:
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
                 tool.on_mouse_up(draw_layer, canvas_x, canvas_y, 1, current_color)
@@ -383,25 +394,31 @@ class EventDispatcher:
         if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_drawing') and tool.is_drawing:
-                self.main_window._draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
+                self.main_window.tool_size_mgr.draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
             self.last_canvas_y = canvas_y
             return
-        elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size >= 1:
-            # Handle both 1x1 and multi-pixel eraser during drag
+        elif self.main_window.current_tool == "eraser":
+            # Handle eraser during drag
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_erasing') and tool.is_erasing:
-                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
+                self.main_window.tool_size_mgr.erase_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
             self.last_canvas_y = canvas_y
             return
         
-        # Call tool's on_mouse_move method for drag (standard interface)
-        tool.on_mouse_move(self.main_window.canvas, canvas_x, canvas_y, current_color)
+        # Call tool's on_mouse_move method for drag
+        # For move and selection tools, use layer; for others, use canvas
+        if self.main_window.current_tool in ["move", "selection", "line", "rectangle", "circle"]:
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer:
+                tool.on_mouse_move(draw_layer, canvas_x, canvas_y, current_color)
+        else:
+            tool.on_mouse_move(self.main_window.canvas, canvas_x, canvas_y, current_color)
         self.main_window.canvas_renderer.update_pixel_display()
         
         # Draw shape preview for shape tools during drag

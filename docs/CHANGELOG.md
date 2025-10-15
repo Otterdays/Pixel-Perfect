@@ -1,5 +1,82 @@
 # Pixel Perfect - Changelog
 
+## Version 1.70 - Move Tool Critical Fixes & Visual Improvements
+**Date**: December 2024  
+**Type**: Critical Bug Fix + Feature Enhancement
+
+### ✅ Move Tool Layer Synchronization Fixed
+**Major bug where moved pixels would reappear in original location**
+
+**Issues Fixed:**
+- **Move Tool Canvas vs Layer**: Move tool was updating canvas directly instead of layer data
+- **Event Dispatcher**: Was passing canvas object instead of layer object to move/selection tools
+- **Visual Feedback**: Added live preview - pixels now follow cursor during move operations
+- **Tool Switching**: Original pixels no longer reappear when switching to brush after move
+- **Mirror Operations**: Fixed mirror working correctly with moved selections
+
+**Technical Changes:**
+- Modified `finalize_move()` to update layer pixels instead of canvas
+- Updated `EventDispatcher` to pass `draw_layer` object to move/selection tools
+- Added visual feedback during move operations in `MoveTool`
+- Enhanced `CanvasRenderer` to skip original selection area during move
+- Fixed layer data synchronization across all move operations
+
+### 🎨 User Experience Improvements
+- **Professional Move Tool**: Pixels visually move with cursor during drag
+- **Clean Visual Feedback**: No duplicate pixels shown during move operations
+- **Seamless Tool Transitions**: Move → Brush switching works perfectly
+- **Consistent Layer System**: All operations properly sync with layer data
+
+**Files Modified:**
+- `src/tools/selection.py` - Move tool layer synchronization
+- `src/core/event_dispatcher.py` - Layer object passing
+- `src/core/canvas_renderer.py` - Visual feedback improvements
+
+---
+
+## Version 1.69 - Selection Tool Duplication Fixes
+**Date**: December 19, 2024  
+**Type**: Critical Bug Fix
+
+### ✅ Rotate Operation Fixed
+**Eliminated duplicate pixels in original location during rotation**
+
+**Issues Fixed:**
+- **Non-Destructive Preview**: Rotation now uses separate preview pixels instead of modifying selected_pixels array
+- **Proper Cleanup**: Original pixels are only cleared when rotation is committed, not during preview
+- **Dimension Mismatch**: Fixed issues with original dimensions vs rotated pixel array shapes
+
+**Technical Changes:**
+- Added `rotated_pixels_preview` state variable to store rotation preview separately
+- Modified `rotate_selection()` to not modify `selected_pixels` until `apply_rotation()` is called
+- Updated canvas renderer to draw preview pixels from `rotated_pixels_preview`
+- Proper cleanup of preview state in both `apply_rotation()` and `cancel_rotation()`
+
+**User Experience:**
+- Rotate button now shows true preview without affecting original selection
+- No more duplicate pixels appearing in original location
+- Enter key commits rotation, Escape cancels and restores original
+- Click outside selection commits rotation automatically
+
+### ✅ Move Tool Auto-Finalization
+**Fixed duplicate pixels when moving selections**
+
+**Issues Fixed:**
+- **Missing Auto-Finalization**: Move tool wasn't automatically clearing original pixels when move completed
+- **Manual Finalization Required**: Users had to manually trigger finalization to avoid duplicates
+
+**Technical Changes:**
+- Added auto-finalization in `MoveTool.on_mouse_up()` when selection has moved from original position
+- Move tool now automatically calls `finalize_move()` to clear original pixels
+- Proper tracking of movement state ensures finalization only happens when needed
+
+**User Experience:**
+- Move tool now automatically clears original pixels when move is completed
+- No more duplicate pixels left behind after moving selections
+- Seamless move operations without manual cleanup required
+
+---
+
 ## Version 1.68 - Undo/Redo System Fix
 **Date**: December 19, 2024  
 **Type**: Critical Bug Fix
