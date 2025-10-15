@@ -26,11 +26,11 @@ class TimelinePanel:
     def _create_ui(self):
         """Create the timeline panel UI"""
         # Main timeline frame
-        self.timeline_frame = ctk.CTkFrame(self.parent_frame)
+        self.timeline_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         self.timeline_frame.pack(fill="x", padx=10, pady=10)
         
         # Header
-        header_frame = ctk.CTkFrame(self.timeline_frame)
+        header_frame = ctk.CTkFrame(self.timeline_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         # Title
@@ -46,16 +46,16 @@ class TimelinePanel:
         self.fps_entry.pack(side="right", padx=(0, 5))
         self.fps_entry.bind("<Return>", self._on_fps_change)
         
-        # Frame list
-        self.frame_list_frame = ctk.CTkScrollableFrame(self.timeline_frame, height=100)
+        # Frame list (use regular frame - parent already scrollable)
+        self.frame_list_frame = ctk.CTkFrame(self.timeline_frame, height=100)
         self.frame_list_frame.pack(fill="x", padx=10, pady=5)
         
         # Playback controls
-        self.playback_controls = ctk.CTkFrame(self.timeline_frame)
+        self.playback_controls = ctk.CTkFrame(self.timeline_frame, fg_color="transparent")
         self.playback_controls.pack(fill="x", padx=10, pady=(5, 10))
         
         # Control buttons
-        button_frame = ctk.CTkFrame(self.playback_controls)
+        button_frame = ctk.CTkFrame(self.playback_controls, fg_color="transparent")
         button_frame.pack(fill="x")
         
         self.prev_btn = ctk.CTkButton(
@@ -99,7 +99,7 @@ class TimelinePanel:
         self.stop_btn.pack(side="left")
         
         # Frame controls
-        frame_control_frame = ctk.CTkFrame(self.playback_controls)
+        frame_control_frame = ctk.CTkFrame(self.playback_controls, fg_color="transparent")
         frame_control_frame.pack(fill="x", pady=(5, 0))
         
         self.add_frame_btn = ctk.CTkButton(

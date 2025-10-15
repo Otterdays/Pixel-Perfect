@@ -118,7 +118,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Build artifacts (keep dist and release for distribution)
+# Build artifacts - exclude large build outputs
 BUILDER/build/
 BUILDER/*.spec
 BUILDER/release/

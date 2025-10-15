@@ -1,5 +1,129 @@
 # Pixel Perfect - Changelog
 
+## Version 1.49 - American Patriotic Theme
+**Date**: October 14, 2025
+**Type**: New Feature
+
+### 🇺🇸 American Patriotic Theme Addition
+
+**Feature Added:**
+New "American" theme with patriotic red, white, and blue colors inspired by the American flag.
+
+**Design Concept:**
+Patriotic theme with soft, professional colors that maintain usability while evoking national pride through strategic use of American flag colors.
+
+**Color Scheme:**
+- **Primary Background**: `#f8fafc` - Light grey-white (stars background)
+- **Secondary Background**: `#ffffff` - Pure white (flag white)
+- **Tertiary Background**: `#f1f5f9` - Soft blue-grey (subtle accent)
+- **Text**: `#1e293b` - Navy blue for excellent readability
+- **Button Normal**: `#fef2f2` - Light red background
+- **Button Active**: `#dc2626` - Bold red (American flag red)
+- **Tool Selected**: `#1d4ed8` - Bold blue (American flag blue)
+- **Canvas**: `#ffffff` - Pure white canvas
+- **Selection**: Red outline with blue handles and gold accents
+
+**Implementation:**
+- **Theme Class**: Created `AmericanTheme` class inheriting from base `Theme`
+- **Theme Manager**: Added "American" to available themes dictionary
+- **Light Theme**: Configured as light theme (like Angelic) for CustomTkinter
+- **Color Harmony**: Balanced red, white, and blue with professional contrast ratios
+
+**Code Changes:**
+- `src/ui/theme_manager.py`: Added `AmericanTheme` class with patriotic color scheme
+- Updated `ThemeManager` to include American theme in themes dictionary
+- Updated `get_ctk_theme_mode()` to treat American as light theme
+
+**Benefits:**
+- **Patriotic Design** - Red, white, and blue color scheme
+- **Professional Appearance** - Clean, readable interface
+- **Theme Variety** - Third theme option for users
+- **Light Theme** - Bright, clean appearance
+- **Accessibility** - High contrast text for readability
+
+**Status:** ✅ Complete - American theme added and ready for use
+
+---
+
+## Version 1.47 - Theme-Compatible Panel Loading Indicator
+**Date**: October 14, 2025
+**Type**: Bug Fix & Theme Enhancement
+
+### 🎨 Angelic Theme Compatibility Fix
+
+**Problem Solved:**
+Panel loading indicators were showing as grey boxes in Angelic theme instead of proper colored backgrounds and loading prompts due to hardcoded colors not respecting the current theme.
+
+**Solution:**
+Updated panel loading system to use theme colors instead of hardcoded values, ensuring proper appearance across all themes.
+
+**Implementation Details:**
+- **Loading indicator text color**: Now uses `theme.button_active` instead of hardcoded `#1f538d`
+- **Panel containers**: Now use `theme.bg_primary` instead of hardcoded `#2b2b2b`
+- **Collapse buttons**: Now use `theme.button_active` and `theme.button_hover` instead of hardcoded blues
+- **Theme application**: Updated `_apply_theme()` to refresh panel colors when theme changes
+
+**Code Changes:**
+- `src/ui/main_window.py`: Fixed hardcoded colors in panel loading system
+- Loading indicator now respects current theme colors
+- Panel containers and buttons update when theme changes
+- Angelic theme now shows proper light colors instead of grey boxes
+
+**Theme Compatibility:**
+- **Basic Grey**: Loading indicator shows blue (`#1f6aa5`)
+- **Angelic**: Loading indicator shows purple-blue (`#818cf8`)
+- **Panel backgrounds**: Match theme's primary background color
+- **Buttons**: Use theme's active and hover colors
+
+**Benefits:**
+- **Theme consistency** - Loading indicators match current theme
+- **Proper Angelic theme** - No more grey boxes in light theme
+- **Dynamic theming** - Colors update when theme changes
+- **Professional appearance** - Cohesive visual design across themes
+
+**Status:** ✅ Complete - Theme compatibility fixed, Angelic theme now works properly
+
+---
+
+## Version 1.46 - Panel Loading Indicator
+**Date**: October 14, 2025
+**Type**: UX Enhancement
+
+### 🎯 Professional Loading Feedback
+
+**Problem Solved:**
+Panel rendering still takes time on mid-level systems, causing perceived lag when toggling panels. User needed visual feedback during panel rendering.
+
+**Solution:**
+Implement loading indicator INSIDE the panels themselves to provide immediate visual feedback during rendering.
+
+**Implementation Details:**
+- **Panel-internal loading**: Loading indicator appears INSIDE the target panel (left or right)
+- **Visual design**: Blue (#1f538d) 16pt bold text "Loading [Left/Right] Panel..."
+- **Positioning**: Centered in target panel using `place(relx=0.5, rely=0.5, anchor="center")`
+- **Canvas unobstructed**: Canvas stays completely visible during panel loading
+- **Timing**: 100ms delay before removing loading indicator
+
+**Code Changes:**
+- `src/ui/main_window.py`: Added `_show_panel_loading_indicator()` and `_finish_panel_toggle()` methods
+- Uses `ctk.CTkLabel` positioned inside target panels
+- Integrated into `_toggle_left_panel()` and `_toggle_right_panel()` methods
+- Fixed initial overlay approach that incorrectly covered canvas area
+
+**Key Fix:**
+Initially implemented overlay window covering canvas - WRONG approach. User clarified that loading indicator should appear INSIDE the panels themselves, not covering the canvas area.
+
+**Benefits:**
+- **Immediate feedback** - User sees loading indicator instantly
+- **Professional UX** - No "frozen" UI appearance during panel rendering
+- **Canvas visibility** - Canvas stays completely unobstructed during loading
+- **Perceived performance** - Loading message makes wait feel intentional
+- **Graceful degradation** - Works on all system performance levels
+
+**Status:** ✅ Complete - Panel loading indicator successfully implemented and tested
+
+---
+
 ## Version 1.44 - Panel Toggle Performance Optimization
 **Date**: October 14, 2025
 **Type**: Performance Enhancement

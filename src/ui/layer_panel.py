@@ -25,11 +25,11 @@ class LayerPanel:
     def _create_ui(self):
         """Create the layer panel UI"""
         # Main layer frame
-        self.layer_frame = ctk.CTkFrame(self.parent_frame)
+        self.layer_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         self.layer_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         # Header with controls
-        header_frame = ctk.CTkFrame(self.layer_frame)
+        header_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         # Title
@@ -47,15 +47,15 @@ class LayerPanel:
         self.add_layer_btn.pack(side="right", padx=(5, 0))
         
         # Layer list frame (regular frame since parent is already scrollable)
-        self.list_frame = ctk.CTkFrame(self.layer_frame)
+        self.list_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
         self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Layer controls frame
-        controls_frame = ctk.CTkFrame(self.layer_frame)
+        controls_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
         controls_frame.pack(fill="x", padx=10, pady=(5, 10))
         
         # Layer control buttons
-        button_frame = ctk.CTkFrame(controls_frame)
+        button_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
         button_frame.pack(fill="x")
         
         self.duplicate_btn = ctk.CTkButton(

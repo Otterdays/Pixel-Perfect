@@ -179,6 +179,9 @@ class MainWindow:
         # Create UI
         self._create_ui()
         
+        # Apply initial theme (Basic Grey) to all UI elements
+        self._apply_theme(self.theme_manager.get_current_theme())
+        
         # Bind events
         self._bind_events()
         
@@ -214,7 +217,7 @@ class MainWindow:
         self.right_panel_collapsed = False
         
         # Left panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
-        self.left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.left_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
         self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
         
         # Left collapse button (visible when expanded)
@@ -223,8 +226,8 @@ class MainWindow:
             text="◀",
             width=25,
             font=("Arial", 14, "bold"),
-            fg_color="#1f538d",
-            hover_color="#144870",
+            fg_color=self.theme_manager.get_current_theme().button_active,
+            hover_color=self.theme_manager.get_current_theme().button_hover,
             corner_radius=8,
             command=self._toggle_left_panel
         )
@@ -234,12 +237,13 @@ class MainWindow:
         # Left panel (tools and palette) - with scrollbar (optimized for smooth resize)
         self.left_panel = ctk.CTkScrollableFrame(
             self.left_container, 
-            width=520
+            width=520,
+            fg_color=self.theme_manager.get_current_theme().bg_secondary
         )
         self.left_panel.pack(side="left", fill="both", expand=True)
         
         # Canvas area container
-        canvas_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        canvas_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
         self.paned_window.add(canvas_container, minsize=400, stretch="always")
         
         # Canvas area
@@ -247,7 +251,7 @@ class MainWindow:
         self.canvas_frame.pack(fill="both", expand=True)
         
         # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
-        self.right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
+        self.right_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
         self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
         
         # Right collapse button (visible when expanded)
@@ -256,8 +260,8 @@ class MainWindow:
             text="▶",
             width=25,
             font=("Arial", 14, "bold"),
-            fg_color="#1f538d",
-            hover_color="#144870",
+            fg_color=self.theme_manager.get_current_theme().button_active,
+            hover_color=self.theme_manager.get_current_theme().button_hover,
             corner_radius=8,
             command=self._toggle_right_panel
         )
@@ -267,7 +271,8 @@ class MainWindow:
         # Right panel (layers, etc.) - with scrollbar (optimized for smooth resize)
         self.right_panel = ctk.CTkScrollableFrame(
             self.right_container, 
-            width=500
+            width=500,
+            fg_color=self.theme_manager.get_current_theme().bg_secondary
         )
         self.right_panel.pack(side="right", fill="both", expand=True)
         
@@ -289,6 +294,10 @@ class MainWindow:
         # Initialize timeline panel
         self.timeline_panel = TimelinePanel(self.right_panel, self.timeline)
         self.timeline_panel.on_frame_changed = self._on_frame_changed
+        
+        # Force immediate render of all panel widgets (pre-render optimization)
+        # This "warms up" CustomTkinter widgets so they appear instantly later
+        self.root.update_idletasks()
         
         # Mark panels as pre-created for optimization
         self._panels_pre_created = True
@@ -451,14 +460,14 @@ class MainWindow:
     
     def _create_tool_panel(self):
         """Create tool selection panel"""
-        self.tool_frame = ctk.CTkFrame(self.left_panel)
+        self.tool_frame = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.tool_frame.pack(fill="none", padx=10, pady=(5, 5))
         
         tool_label = ctk.CTkLabel(self.tool_frame, text="Tools", font=ctk.CTkFont(size=16, weight="bold"))
         tool_label.pack(pady=(5, 3))
         
         # Tool buttons container for grid layout
-        tool_grid = ctk.CTkFrame(self.tool_frame)
+        tool_grid = ctk.CTkFrame(self.tool_frame, fg_color="transparent")
         tool_grid.pack(pady=(0, 5), padx=5)
         
         # Tool buttons in 3x3 grid for compact layout
@@ -514,9 +523,7 @@ class MainWindow:
             text="Texture",
             width=175,  # Span 2 columns
             height=28,
-            command=self._open_texture_panel,
-            fg_color="gray",  # Match other tool buttons
-            hover_color="#5a5a5a"
+            command=self._open_texture_panel
         )
         texture_btn.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
         self.tool_buttons["texture"] = texture_btn  # Add to tool buttons for highlighting
@@ -534,7 +541,7 @@ class MainWindow:
         selection_ops_label.pack(pady=(10, 3))
         
         # Selection operations buttons in 3 columns
-        selection_ops_grid = ctk.CTkFrame(self.tool_frame)
+        selection_ops_grid = ctk.CTkFrame(self.tool_frame, fg_color="transparent")
         selection_ops_grid.pack(pady=(0, 5), padx=5)
         
         # Create selection operation buttons
@@ -543,8 +550,7 @@ class MainWindow:
             text="Mirror",
             width=85,
             height=28,
-            command=self._mirror_selection,
-            fg_color="gray"
+            command=self._mirror_selection
         )
         mirror_btn.grid(row=0, column=0, padx=2, pady=2)
         create_tooltip(mirror_btn, "Flip selection horizontally", delay=1000)
@@ -554,8 +560,7 @@ class MainWindow:
             text="Rotate",
             width=85,
             height=28,
-            command=self._rotate_selection,
-            fg_color="gray"
+            command=self._rotate_selection
         )
         rotate_btn.grid(row=0, column=1, padx=2, pady=2)
         create_tooltip(rotate_btn, "Rotate selection 90° clockwise", delay=1000)
@@ -565,8 +570,7 @@ class MainWindow:
             text="Copy",
             width=85,
             height=28,
-            command=self._copy_selection,
-            fg_color="gray"
+            command=self._copy_selection
         )
         copy_btn.grid(row=0, column=2, padx=2, pady=2)
         create_tooltip(copy_btn, "Copy selection for placement", delay=1000)
@@ -577,8 +581,7 @@ class MainWindow:
             text="Scale",
             width=85,
             height=28,
-            command=self._scale_selection,
-            fg_color="gray"
+            command=self._scale_selection
         )
         scale_btn.grid(row=1, column=0, padx=2, pady=2, columnspan=3, sticky="ew")
         create_tooltip(scale_btn, "Scale selection with draggable corners", delay=1000)
@@ -595,7 +598,7 @@ class MainWindow:
     
     def _create_palette_panel(self):
         """Create color palette panel"""
-        self.palette_frame = ctk.CTkFrame(self.left_panel)
+        self.palette_frame = ctk.CTkFrame(self.left_panel, fg_color="transparent")
         self.palette_frame.pack(fill="x", padx=10, pady=(3, 5))
         
         palette_label = ctk.CTkLabel(self.palette_frame, text="Palette", font=ctk.CTkFont(size=16, weight="bold"))
@@ -615,7 +618,7 @@ class MainWindow:
         view_mode_container = ctk.CTkFrame(self.palette_frame, fg_color="transparent")
         view_mode_container.pack(pady=3)
         
-        view_mode_frame = ctk.CTkFrame(view_mode_container)
+        view_mode_frame = ctk.CTkFrame(view_mode_container, fg_color="transparent")
         view_mode_frame.pack()
         
         self.view_mode_var = ctk.StringVar(value="grid")
@@ -813,7 +816,6 @@ class MainWindow:
             text="✕ Back to Primary",
             width=120,
             height=30,
-            fg_color="gray",
             command=self._back_to_primary_colors
         )
         back_btn.pack(pady=5)
@@ -1247,6 +1249,9 @@ class MainWindow:
     def _toggle_left_panel(self):
         """Collapse or expand the left panel"""
         if self.left_panel_collapsed:
+            # Show loading indicator
+            self._show_panel_loading_indicator("left")
+            
             # Expand panel - remove restore button overlay
             if hasattr(self, 'left_restore_btn'):
                 try:
@@ -1255,13 +1260,13 @@ class MainWindow:
                     pass
             
             # Show the container (INSTANT - no widget recreation!)
-            self.paned_window.paneconfigure(self.left_container, hide=False, minsize=220, width=520)
+            self.paned_window.paneconfigure(self.left_container, hide=False)
             
             self.left_collapse_btn.configure(text="◀")
             self.left_panel_collapsed = False
             
-            # Redraw canvas to re-center grid after panel expand (optimized delay)
-            self.root.after(10, self._redraw_canvas_after_resize)
+            # Hide loading indicator and redraw canvas (give more time for rendering)
+            self.root.after(100, lambda: self._finish_panel_toggle("left"))
         else:
             # Hide the container (INSTANT - no widget destruction!)
             self.paned_window.paneconfigure(self.left_container, hide=True)
@@ -1294,12 +1299,15 @@ class MainWindow:
             # Place restore button directly on left edge
             self.left_restore_btn.place(x=5, y=100)
             
-            # Redraw canvas to re-center grid after panel collapse (optimized delay)
-            self.root.after(10, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel collapse (minimal delay)
+            self.root.after(1, self._redraw_canvas_after_resize)
     
     def _toggle_right_panel(self):
         """Collapse or expand the right panel"""
         if self.right_panel_collapsed:
+            # Show loading indicator
+            self._show_panel_loading_indicator("right")
+            
             # Expand panel - remove restore button overlay
             if hasattr(self, 'right_restore_btn'):
                 try:
@@ -1308,13 +1316,13 @@ class MainWindow:
                     pass
             
             # Show the container (INSTANT - no widget recreation!)
-            self.paned_window.paneconfigure(self.right_container, hide=False, minsize=220, width=500)
+            self.paned_window.paneconfigure(self.right_container, hide=False)
             
             self.right_collapse_btn.configure(text="▶")
             self.right_panel_collapsed = False
             
-            # Redraw canvas to re-center grid after panel expand (optimized delay)
-            self.root.after(10, self._redraw_canvas_after_resize)
+            # Hide loading indicator and redraw canvas (give more time for rendering)
+            self.root.after(100, lambda: self._finish_panel_toggle("right"))
         else:
             # Hide the container (INSTANT - no widget destruction!)
             self.paned_window.paneconfigure(self.right_container, hide=True)
@@ -1348,8 +1356,8 @@ class MainWindow:
             # Use anchor='ne' to position from right edge (match left button offset)
             self.right_restore_btn.place(relx=1.0, x=-5, y=100, anchor='ne')
             
-            # Redraw canvas to re-center grid after panel collapse (optimized delay)
-            self.root.after(10, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel collapse (minimal delay)
+            self.root.after(1, self._redraw_canvas_after_resize)
     
     def _on_restore_btn_enter(self, button):
         """Hover effect - color already handled in bind"""
@@ -1367,6 +1375,60 @@ class MainWindow:
                 self._initial_draw()
         except Exception as e:
             print(f"Error redrawing canvas after resize: {e}")
+    
+    def _show_panel_loading_indicator(self, side: str):
+        """Show loading indicator INSIDE the panel that's loading"""
+        print(f"[DEBUG] Showing loading indicator for {side} panel")
+        
+        # Remove old loading indicator if exists
+        if hasattr(self, f'{side}_loading_label'):
+            try:
+                getattr(self, f'{side}_loading_label').destroy()
+            except:
+                pass
+        
+        # Determine which panel to show loading indicator in
+        if side == "left":
+            target_panel = self.left_panel
+        elif side == "right":
+            target_panel = self.right_panel
+        else:
+            print(f"[DEBUG] Unknown side: {side}")
+            return
+        
+        # Create loading label INSIDE the target panel with theme colors
+        loading_text = f"Loading {side.title()} Panel..."
+        loading_label = ctk.CTkLabel(
+            target_panel,
+            text=loading_text,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=self.theme_manager.get_current_theme().button_active
+        )
+        
+        # Center the loading label in the panel
+        loading_label.place(relx=0.5, rely=0.5, anchor="center")
+        
+        # Store reference for cleanup
+        setattr(self, f'{side}_loading_label', loading_label)
+        
+        # Force immediate display
+        target_panel.update_idletasks()
+        print(f"[DEBUG] Loading indicator created inside {side} panel")
+    
+    def _finish_panel_toggle(self, side: str):
+        """Remove loading indicator and complete panel toggle"""
+        print(f"[DEBUG] Finishing panel toggle for {side} panel")
+        
+        # Remove loading label from the panel
+        if hasattr(self, f'{side}_loading_label'):
+            try:
+                getattr(self, f'{side}_loading_label').destroy()
+                delattr(self, f'{side}_loading_label')
+            except:
+                pass
+        
+        # Redraw canvas to re-center grid
+        self._redraw_canvas_after_resize()
     
     def _on_focus_in(self, event):
         """Handle focus in event - redraw canvas to show selection"""
@@ -1402,7 +1464,7 @@ class MainWindow:
             # Restore current tool's cursor and button highlighting
             tool = self.tools[self.current_tool]
             self.drawing_canvas.configure(cursor=tool.cursor)
-            self.scale_btn.configure(fg_color="gray")
+            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             self._update_tool_selection()
             
             self._update_pixel_display()
@@ -1589,7 +1651,7 @@ class MainWindow:
             self.scale_original_rect = None
             self.scale_true_original_rect = None
             self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color="gray")
+            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             # Debug: Exited scaling mode (removed for clean console)
         
         # Finalize move and clear selection when switching away from selection/move tools
@@ -1632,7 +1694,7 @@ class MainWindow:
             self.scale_original_rect = None
             self.scale_true_original_rect = None
             self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color="gray")
+            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             self._update_tool_selection()
             # Debug: Exited scaling mode (removed for clean console)
         
@@ -1684,7 +1746,7 @@ class MainWindow:
             self.scale_original_rect = None
             self.scale_true_original_rect = None
             self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color="gray")
+            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             self._update_tool_selection()
             # Debug: Exited scaling mode (removed for clean console)
         
@@ -1753,7 +1815,7 @@ class MainWindow:
             self.scale_original_rect = None
             self.scale_true_original_rect = None
             self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color="gray")
+            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             self._update_tool_selection()
             # Debug: Exited scaling mode (removed for clean console)
         
@@ -1799,7 +1861,7 @@ class MainWindow:
         
         # Update button states - deselect tool buttons, highlight Scale button
         for tool_id, btn in self.tool_buttons.items():
-            btn.configure(fg_color="gray")
+            btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
         self.scale_btn.configure(fg_color="blue")
         
         # Update display to show handles
@@ -1969,7 +2031,7 @@ class MainWindow:
             if tool_id == self.current_tool:
                 btn.configure(fg_color="blue")
             else:
-                btn.configure(fg_color="gray")
+                btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
     
     def _on_color_hover_enter(self, button):
         """Handle hover enter on color button"""
@@ -3106,7 +3168,7 @@ class MainWindow:
             self.grid_overlay_button.configure(fg_color="#1f538d")
         else:
             self.grid_overlay_button.configure(text="Overlay: OFF")
-            self.grid_overlay_button.configure(fg_color="gray")
+            self.grid_overlay_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
     
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""
@@ -3226,6 +3288,22 @@ class MainWindow:
         self.canvas_frame.configure(fg_color=theme.bg_primary)
         self.drawing_canvas.configure(bg=theme.canvas_bg)
         
+        # Update panel containers and buttons
+        self.left_container.configure(bg=theme.bg_primary)
+        self.right_container.configure(bg=theme.bg_primary)
+        self.left_collapse_btn.configure(
+            fg_color=theme.button_active,
+            hover_color=theme.button_hover
+        )
+        self.right_collapse_btn.configure(
+            fg_color=theme.button_active,
+            hover_color=theme.button_hover
+        )
+        
+        # Update scrollable panel backgrounds to match theme
+        self.left_panel.configure(fg_color=theme.bg_secondary)
+        self.right_panel.configure(fg_color=theme.bg_secondary)
+        
         # Update all tool buttons
         for tool_id, btn in self.tool_buttons.items():
             if tool_id == self.current_tool:
@@ -3263,16 +3341,21 @@ class MainWindow:
             text_color=theme.text_primary
         )
         
-        # Update dropdowns (CTkOptionMenu has different params)
+        # Update dropdowns (CTkOptionMenu has different params) - FORCE update to prevent boxes
         for dropdown in [self.size_menu, self.zoom_menu, self.theme_menu]:
             try:
                 dropdown.configure(
                     fg_color=theme.button_normal,
                     text_color=theme.text_primary,
                     dropdown_fg_color=theme.bg_secondary,
-                    dropdown_hover_color=theme.button_hover
+                    dropdown_hover_color=theme.button_hover,
+                    button_color=theme.button_normal,  # Force button background
+                    button_hover_color=theme.button_hover
                 )
-            except:
+                # Force immediate update
+                dropdown.update_idletasks()
+            except Exception as e:
+                print(f"[DEBUG] Dropdown theme error: {e}")
                 pass  # Skip if params not supported
         
         # Update labels
@@ -3302,6 +3385,28 @@ class MainWindow:
                 widget.configure(text_color=theme.text_primary)
             elif isinstance(widget, ctk.CTkFrame):
                 widget.configure(fg_color=theme.bg_primary)
+        
+        # Update color display frames (palette views) - CRITICAL for preventing boxes
+        if hasattr(self, 'grid_view_frame'):
+            self.grid_view_frame.configure(fg_color=theme.bg_secondary)
+        if hasattr(self, 'primary_view_frame'):
+            self.primary_view_frame.configure(fg_color=theme.bg_secondary)
+        if hasattr(self, 'wheel_view_frame'):
+            self.wheel_view_frame.configure(fg_color=theme.bg_secondary)
+        if hasattr(self, 'constants_view_frame'):
+            self.constants_view_frame.configure(fg_color=theme.bg_secondary)
+        if hasattr(self, 'saved_view_frame'):
+            self.saved_view_frame.configure(fg_color=theme.bg_secondary)
+        
+        # Update color_frame if it exists
+        if hasattr(self, 'color_frame'):
+            self.color_frame.configure(fg_color=theme.bg_secondary)
+        
+        # Update primary and variations frames
+        if hasattr(self, 'primary_frame'):
+            self.primary_frame.configure(fg_color=theme.bg_secondary)
+        if hasattr(self, 'variations_frame'):
+            self.variations_frame.configure(fg_color=theme.bg_secondary)
         
         # Update palette panel and its children recursively
         if hasattr(self, 'palette_frame'):
@@ -3342,12 +3447,10 @@ class MainWindow:
                     # Recursively update all children
                     self._apply_theme_to_children(self.timeline_panel.timeline_frame, theme)
                 
-                # Update frame list scrollable area specifically
+                # Update frame list area specifically (regular frame, no scrollbar colors)
                 if hasattr(self.timeline_panel, 'frame_list_frame'):
                     self.timeline_panel.frame_list_frame.configure(
-                        fg_color=theme.bg_tertiary,
-                        scrollbar_button_color=theme.button_normal,
-                        scrollbar_button_hover_color=theme.button_hover
+                        fg_color=theme.bg_tertiary
                     )
             except Exception as e:
                 print(f"[DEBUG] Timeline panel theme error: {e}")
@@ -3376,6 +3479,43 @@ class MainWindow:
         canvas_width = self.drawing_canvas.winfo_width()
         if canvas_width > 1:
             self._update_theme_canvas_elements(theme)
+        
+        # FORCE complete UI refresh to prevent boxes - comprehensive update
+        try:
+            # Force update all frames and containers
+            self.main_frame.update_idletasks()
+            self.toolbar.update_idletasks()
+            self.tool_frame.update_idletasks()
+            self.canvas_frame.update_idletasks()
+            self.left_panel.update_idletasks()
+            self.right_panel.update_idletasks()
+            
+            # Force update all buttons to prevent background boxes
+            for tool_id, btn in self.tool_buttons.items():
+                btn.update_idletasks()
+            
+            # Force update toolbar buttons
+            self.file_button.update_idletasks()
+            if hasattr(self, 'grid_button'):
+                self.grid_button.update_idletasks()
+            if hasattr(self, 'grid_overlay_button'):
+                self.grid_overlay_button.update_idletasks()
+            if hasattr(self, 'settings_button'):
+                self.settings_button.update_idletasks()
+            
+            # Force update dropdowns
+            for dropdown in [self.size_menu, self.zoom_menu, self.theme_menu]:
+                dropdown.update_idletasks()
+            
+            # Force update operation buttons
+            if hasattr(self, 'mirror_btn'):
+                for btn in [self.mirror_btn, self.rotate_btn, self.copy_btn, self.scale_btn]:
+                    btn.update_idletasks()
+            
+            print(f"[DEBUG] Theme '{theme.name}' applied with forced UI refresh")
+            
+        except Exception as e:
+            print(f"[DEBUG] Theme refresh error: {e}")
         
         print(f"[OK] Theme '{theme.name}' applied (instant mode)")
     
@@ -4062,7 +4202,7 @@ class MainWindow:
                     # Restore current tool's cursor and button highlighting
                     tool = self.tools[self.current_tool]
                     self.drawing_canvas.configure(cursor=tool.cursor)
-                    self.scale_btn.configure(fg_color="gray")
+                    self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
                     self._update_tool_selection()
                     
                     print("[OK] Exited scaling mode")

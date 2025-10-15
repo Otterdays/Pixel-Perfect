@@ -43,12 +43,27 @@ class Theme:
         self.selection_edge = "#ffa500"
 
 class BasicGreyTheme(Theme):
-    """Default dark grey theme"""
+    """Default dark grey theme with darker canvas and buttons"""
     def __init__(self):
         super().__init__("Basic Grey")
-        # Already set to default dark colors in base Theme class
-        # Adjust tertiary for better contrast with custom colors grid
-        self.bg_tertiary = "#3a3a3a"
+        # Main window colors - darker for better contrast
+        self.bg_primary = "#1a1a1a"      # Darker primary background
+        self.bg_secondary = "#2b2b2b"    # Dark secondary background
+        self.bg_tertiary = "#3a3a3a"     # Tertiary background
+        
+        # Canvas colors - much darker like in the "broken" state
+        self.canvas_bg = "#0d1117"       # Very dark canvas (like GitHub dark)
+        self.canvas_border = "#000000"   # Black border
+        self.grid_color = "#21262d"      # Dark grid lines
+        
+        # Button colors - darker theme with transparent-like appearance
+        self.button_normal = "#2b2b2b"   # Match bg_secondary for floating appearance
+        self.button_hover = "#3a3a3a"    # Slightly lighter on hover
+        self.button_active = "#1f6aa5"   # Keep blue active color
+        
+        # Tool colors - match backgrounds for floating appearance
+        self.tool_selected = "#1f6aa5"   # Blue for selected tools
+        self.tool_unselected = "#2b2b2b" # Match bg_secondary for invisible background
 
 class AngelicTheme(Theme):
     """Light, angelic theme with soft colors"""
@@ -87,13 +102,51 @@ class AngelicTheme(Theme):
         self.selection_handle = "#fbbf24"
         self.selection_edge = "#f97316"
 
+class AmericanTheme(Theme):
+    """Patriotic American theme with red, white, and blue colors"""
+    def __init__(self):
+        super().__init__("American")
+        # Main window colors - clean white with red/blue accents
+        self.bg_primary = "#f8fafc"      # Light grey-white (stars background)
+        self.bg_secondary = "#ffffff"    # Pure white (flag white)
+        self.bg_tertiary = "#f1f5f9"     # Soft blue-grey (subtle accent)
+        
+        # Text colors - navy blue for readability
+        self.text_primary = "#1e293b"    # Navy blue text
+        self.text_secondary = "#475569"  # Medium blue-grey
+        self.text_disabled = "#94a3b8"   # Light blue-grey
+        
+        # Button colors - patriotic red, white, and blue
+        self.button_normal = "#fef2f2"   # Light red background
+        self.button_hover = "#fee2e2"    # Medium red hover
+        self.button_active = "#dc2626"   # Bold red active (American flag red)
+        
+        # Border colors
+        self.border_normal = "#e2e8f0"   # Light blue-grey
+        self.border_focus = "#1d4ed8"    # Bold blue focus (American flag blue)
+        
+        # Canvas colors
+        self.canvas_bg = "#ffffff"       # Pure white canvas
+        self.canvas_border = "#e2e8f0"   # Light blue border
+        self.grid_color = "#f1f5f9"      # Very light blue grid
+        
+        # Tool colors - red and blue patriotic scheme
+        self.tool_selected = "#1d4ed8"   # Bold blue for selected tools
+        self.tool_unselected = "#fef2f2" # Light red for unselected tools
+        
+        # Selection colors - patriotic theme
+        self.selection_outline = "#dc2626"  # Red outline (American flag red)
+        self.selection_handle = "#1d4ed8"   # Blue handle (American flag blue)
+        self.selection_edge = "#f59e0b"     # Gold accent
+
 class ThemeManager:
     """Manages application themes"""
     
     def __init__(self):
         self.themes: Dict[str, Theme] = {
             "Basic Grey": BasicGreyTheme(),
-            "Angelic": AngelicTheme()
+            "Angelic": AngelicTheme(),
+            "American": AmericanTheme()
         }
         self.current_theme = self.themes["Basic Grey"]
         self.on_theme_changed = None  # Callback when theme changes
@@ -140,8 +193,8 @@ class ThemeManager:
     
     def get_ctk_theme_mode(self) -> str:
         """Get CustomTkinter appearance mode based on theme"""
-        # Basic Grey is dark, Angelic is light
-        if self.current_theme.name == "Angelic":
+        # Basic Grey is dark, Angelic and American are light
+        if self.current_theme.name in ["Angelic", "American"]:
             return "light"
         return "dark"
 
