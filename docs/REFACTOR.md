@@ -67,12 +67,13 @@
 ### **PRIMARY TARGETS** (main_window.py - 5,060 lines, 152 methods!)
 **Start here - smaller extractions that provide quick wins**
 
-- [ ] **2. Window State Manager** (~200 lines → `src/core/window_state_manager.py`)
-  - **Methods**: `_save_window_state()`, `_restore_window_state()`, `_on_window_resize()`, `_on_sash_drag_start()`, `_on_sash_drag_end()`, panel collapse/restore logic
+- [x] **2. Window State Manager** (~200 lines → `src/core/window_state_manager.py`) ✅ **COMPLETE**
+  - **Status**: Extracted 250 lines - save/restore state, panel collapse/expand, window resize handling
+  - **Methods**: `save_state()`, `restore_state()`, `on_window_resize()`, `toggle_left_panel()`, `toggle_right_panel()`
   - **Why**: Isolates window geometry and panel state management
   - **Dependencies**: Minimal - just window/panel references
-  - **Impact**: Medium - 4% reduction, cleaner state management
-  - **Time**: 2-3 hours
+  - **Impact**: Medium - 5% reduction, cleaner state management
+  - **Time**: ✅ Complete - needs integration into main_window.py
 
 - [ ] **1. Theme/Dialog Manager** (~350 lines → `src/ui/theme_dialog_manager.py`)
   - **Methods**: `_apply_theme()`, `_apply_theme_to_children()`, `_create_settings_dialog()`, `show_settings_dialog()`, theme switching logic
@@ -131,8 +132,9 @@
 
 ### **📊 Progress Tracking**
 - **Total Refactoring Tasks**: 20 modules (8 critical + 12 secondary)
-- **Modules Started**: 1/20 (5%)
-- **Lines Extracted**: 139/4,670 (3%)
+- **Modules Completed**: 1/20 (5%) ✅
+- **Modules In Progress**: 1/20 (UI Builder - 12%)
+- **Lines Extracted**: 250 lines (WindowStateManager complete, needs integration)
 - **Current main_window.py**: **5,060 lines** (152 methods) 🚨
 - **Target main_window.py**: 390 lines (25 methods)
 - **Total Reduction Needed**: 4,670 lines (92%)
