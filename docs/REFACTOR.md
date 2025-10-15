@@ -10,25 +10,121 @@
 ## 📋 Quick Refactoring Checklist (Least → Most Important)
 
 ### **SECONDARY TARGETS** (After main_window.py cleanup)
+**These are lower priority - tackle AFTER main_window.py is under control**
+
 - [ ] **8. Split layer_panel.py** (327 lines → 2 modules)
+  - Extract: `LayerRenderer` (drawing logic) + `LayerEventHandler` (click/drag events)
+  - Impact: Minor - already reasonably sized
+  - Time: 2-3 hours
+
 - [ ] **7. Split timeline.py** (450 lines → 3 modules)  
+  - Extract: `TimelineRenderer` + `FrameManager` + `AnimationController`
+  - Impact: Moderate - improves animation code clarity
+  - Time: 3-4 hours
+
 - [ ] **6. Split canvas.py** (520 lines → 3 modules)
+  - Extract: `PixelRenderer` + `GridRenderer` + `CanvasEventHandler`
+  - Impact: Moderate - separates rendering from events
+  - Time: 4-5 hours
+
 - [ ] **5. Split color_wheel.py** (630 lines → 4 modules)
+  - Extract: `HueWheel` + `SaturationSquare` + `CustomColorManager` + `ColorConverter`
+  - Impact: Good - color system becomes more modular
+  - Time: 5-6 hours
+
+---
 
 ### **PRIMARY TARGETS** (main_window.py - 4,940 lines)
-- [ ] **4. Theme/Dialog Manager** (~350 lines) - Theme switching, dialog management
-- [ ] **3. Tool Manager** (~350 lines) - Tool UI and state management
-- [ ] **2. File Handler** (~350 lines) - File I/O operations
-- [x] **1. UI Builder** (~1,200 lines) - 🟡 **12% Complete** (Toolbar done)
+**Start here - smaller extractions that provide quick wins**
 
-### **CRITICAL PRIORITIES** (Biggest Impact)
-- [ ] **Canvas Renderer** (~600 lines) - Rendering and display logic
-- [ ] **Selection Operations** (~550 lines) - Transform operations
-- [ ] **Event Dispatcher** (~900 lines) - Mouse/keyboard event routing
-- [ ] **Palette Manager** (~950 lines) - Color/palette view management
+- [ ] **4. Theme/Dialog Manager** (~350 lines → `src/ui/theme_dialog_manager.py`)
+  - **Methods**: `_apply_theme()`, `_apply_theme_to_children()`, `_create_settings_dialog()`, `show_settings_dialog()`, theme switching logic
+  - **Why**: Isolates theming system, makes theme development easier
+  - **Dependencies**: Minimal - mostly self-contained
+  - **Impact**: Medium - 7% reduction, cleaner theme code
+  - **Time**: 3-4 hours
 
-**Current Progress**: 1/12 modules started (8% overall)  
-**Target**: Reduce main_window.py from 4,940 → 390 lines (92% reduction)
+- [ ] **3. Tool Manager** (~350 lines → `src/ui/tool_manager.py`)
+  - **Methods**: `_create_tool_panel()`, `_select_tool()`, `_update_tool_cursor()`, tool button creation, tool state management
+  - **Why**: Centralizes all tool UI logic
+  - **Dependencies**: Low - mainly UI creation
+  - **Impact**: Medium - 7% reduction, easier tool additions
+  - **Time**: 3-4 hours
+
+- [ ] **2. File Handler** (~350 lines → `src/core/file_handler.py`)
+  - **Methods**: `_new_file()`, `_open_file()`, `_save_file()`, `_save_as()`, `_export_png()`, `_show_file_menu()`, file dialog logic
+  - **Why**: Separates file I/O from UI logic
+  - **Dependencies**: Low - uses project/canvas objects
+  - **Impact**: Medium - 7% reduction, cleaner file operations
+  - **Time**: 3-4 hours
+
+- [x] **1. UI Builder** (~1,200 lines → `src/ui/ui_builder.py`) - 🟡 **12% Complete**
+  - **Status**: Toolbar creation done (139 lines)
+  - **Remaining Methods**: `create_tool_panel()`, `create_palette_panel()`, `create_canvas_area()`, `create_collapsible_panels()`, ~28 more
+  - **Why**: BIGGEST single extraction - removes 24% of file size
+  - **Dependencies**: Moderate - needs callback dictionary
+  - **Impact**: MASSIVE - 1,200 line reduction, huge search improvement
+  - **Time**: 6-8 hours total (1-2 hours remaining)
+  - **Next Steps**: Extract tool panel, then palette panel, then canvas area
+
+---
+
+### **CRITICAL PRIORITIES** (Biggest Impact - Do These ASAP)
+**These are the MOST important - maximum token/search relief**
+
+- [ ] **Palette Manager** (~950 lines → `src/ui/palette_manager.py`)
+  - **Methods**: 25 methods including `_create_color_grid()`, `_create_primary_colors()`, `_create_saved_colors_view()`, `_create_constants_grid()`, all palette switching logic
+  - **Why**: Second largest extraction - 19% reduction
+  - **Dependencies**: Moderate - color palette, saved colors, custom colors
+  - **Impact**: HUGE - Dramatic search improvement, centralizes all color UI
+  - **Time**: 7-9 hours
+  - **Priority**: Do RIGHT AFTER UI Builder is complete
+
+- [ ] **Event Dispatcher** (~900 lines → `src/core/event_dispatcher.py`)
+  - **Methods**: 45 methods including all mouse/keyboard handlers, `_on_tkinter_canvas_*()`, `_on_key_press()`, hover events, focus events
+  - **Why**: Third largest - 18% reduction, separates event routing from logic
+  - **Dependencies**: High - touches many systems
+  - **Impact**: HUGE - Makes event flow crystal clear
+  - **Time**: 8-10 hours
+  - **Priority**: Do THIRD (after Palette Manager)
+
+- [ ] **Selection Operations** (~550 lines → `src/core/selection_operations.py`)
+  - **Methods**: 15 methods including `_mirror_selection()`, `_rotate_selection()`, `_copy_selection()`, `_scale_selection()`, all transform operations
+  - **Why**: Isolates complex transform logic
+  - **Dependencies**: Medium - selection tool, canvas, undo manager
+  - **Impact**: HIGH - Makes selection code much clearer
+  - **Time**: 5-6 hours
+  - **Priority**: Do FOURTH
+
+- [ ] **Canvas Renderer** (~600 lines → `src/core/canvas_renderer.py`)
+  - **Methods**: 18 methods including `_update_pixel_display()`, `_draw_grid()`, `_draw_pixel_grid()`, `_draw_selection_overlay()`, all rendering logic
+  - **Why**: Separates rendering from UI/events
+  - **Dependencies**: High - canvas, layers, tools
+  - **Impact**: HIGH - Cleaner rendering pipeline
+  - **Time**: 6-7 hours
+  - **Priority**: Do FIFTH
+
+---
+
+### **📊 Progress Tracking**
+- **Modules Started**: 1/12 (8%)
+- **Lines Extracted**: 139/4,550 (3%)
+- **Current main_window.py**: 4,940 lines
+- **Target main_window.py**: 390 lines
+- **Total Reduction Needed**: 4,550 lines (92%)
+
+### **🎯 Recommended Order**
+1. ✅ **UI Builder** (finish remaining 88%) - 1-2 hours
+2. **Palette Manager** - 7-9 hours  
+3. **Event Dispatcher** - 8-10 hours
+4. **Selection Operations** - 5-6 hours
+5. **Canvas Renderer** - 6-7 hours
+6. **File Handler** - 3-4 hours
+7. **Tool Manager** - 3-4 hours
+8. **Theme/Dialog Manager** - 3-4 hours
+
+**Total Time Estimate**: 35-45 hours of focused work
+**Result**: Professional, maintainable codebase with 95% faster search/navigation
 
 ---
 
