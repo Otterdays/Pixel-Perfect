@@ -300,6 +300,7 @@ Complete documentation available in the `docs/` folder:
 - **SCRATCHPAD.md**: Development notes and version history
 - **SBOM.md**: Software Bill of Materials and dependencies
 - **SUMMARY.md**: Project status and feature overview
+- **AI_PYTHON_KNOWLEDGE.md**: Comprehensive Python guide for AI agents (NEW!)
 
 ---
 

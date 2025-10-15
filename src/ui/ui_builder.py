@@ -136,3 +136,295 @@ class UIBuilder:
             fg_color=("gray75", "gray25")
         )
         self.widgets['redo_button'].pack(side="left", padx=2)
+    
+    def create_tool_panel(self, left_panel, tool_buttons_ref, callbacks):
+        """Create tool selection panel"""
+        tool_frame = left_panel  # Use the panel directly, no container frame
+        
+        tool_label = ctk.CTkLabel(tool_frame, text="Tools", font=ctk.CTkFont(size=16, weight="bold"))
+        tool_label.pack(pady=(15, 3), padx=10)
+        
+        # Tool buttons container for grid layout
+        tool_grid = ctk.CTkFrame(tool_frame, fg_color="transparent")
+        tool_grid.pack(pady=(0, 5), padx=5)
+        
+        # Tool buttons in 3x3 grid for compact layout
+        tool_buttons = {}
+        tools = [
+            ("brush", "Brush", "Draw pixels (B) | Right-click for size"),
+            ("eraser", "Eraser", "Erase pixels (E) | Right-click for size"),
+            ("fill", "Fill", "Fill areas with color (F)"),
+            ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
+            ("selection", "Select", "Select rectangular areas (S)"),
+            ("move", "Move", "Move selected pixels (M)"),
+            ("line", "Line", "Draw straight lines (L)"),
+            ("rectangle", "Square", "Draw rectangles and squares (R)"),
+            ("circle", "Circle", "Draw circles (C)"),
+            ("pan", "Pan", "Move camera view (Hold Space)")
+        ]
+        
+        # Arrange in 3 columns
+        for idx, (tool_id, tool_name, tooltip_text) in enumerate(tools):
+            row = idx // 3
+            col = idx % 3
+            
+            btn = ctk.CTkButton(
+                tool_grid,
+                text=tool_name,
+                width=85,
+                height=28,
+                command=lambda t=tool_id: callbacks['select_tool'](t)
+            )
+            btn.grid(row=row, column=col, padx=2, pady=2)
+            tool_buttons[tool_id] = btn
+            
+            # Add right-click menu for brush size
+            if tool_id == "brush":
+                btn.bind("<Button-3>", callbacks['show_brush_size_menu'])
+            
+            # Add right-click menu for eraser size
+            if tool_id == "eraser":
+                btn.bind("<Button-3>", callbacks['show_eraser_size_menu'])
+            
+            # Add tooltip
+            create_tooltip(btn, tooltip_text, delay=1000)
+        
+        # Note: Button text updates will be called after UIBuilder completes
+        
+        # Texture button (special - opens panel, not a drawing tool)
+        texture_btn = ctk.CTkButton(
+            tool_grid,
+            text="Texture",
+            width=175,  # Span 2 columns
+            height=28,
+            command=callbacks['open_texture_panel']
+        )
+        texture_btn.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
+        tool_buttons["texture"] = texture_btn  # Add to tool buttons for highlighting
+        create_tooltip(texture_btn, "Open texture panel (T)", delay=1000)
+        
+        # Configure grid columns - buttons stay fixed size
+        for col in range(3):
+            tool_grid.grid_columnconfigure(col, weight=0)
+        
+        # Highlight current tool
+        callbacks['update_tool_selection']()
+        
+        # Selection operations section
+        selection_ops_label = ctk.CTkLabel(tool_frame, text="Selection", font=ctk.CTkFont(size=14, weight="bold"))
+        selection_ops_label.pack(pady=(10, 3))
+        
+        # Selection operations buttons in 3 columns
+        selection_ops_grid = ctk.CTkFrame(tool_frame, fg_color="transparent")
+        selection_ops_grid.pack(pady=(0, 5), padx=5)
+        
+        # Create selection operation buttons
+        mirror_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Mirror",
+            width=85,
+            height=28,
+            command=callbacks['mirror_selection']
+        )
+        mirror_btn.grid(row=0, column=0, padx=2, pady=2)
+        create_tooltip(mirror_btn, "Flip selection horizontally", delay=1000)
+        
+        rotate_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Rotate",
+            width=85,
+            height=28,
+            command=callbacks['rotate_selection']
+        )
+        rotate_btn.grid(row=0, column=1, padx=2, pady=2)
+        create_tooltip(rotate_btn, "Rotate selection 90° clockwise", delay=1000)
+        
+        copy_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Copy",
+            width=85,
+            height=28,
+            command=callbacks['copy_selection']
+        )
+        copy_btn.grid(row=0, column=2, padx=2, pady=2)
+        create_tooltip(copy_btn, "Copy selection for placement", delay=1000)
+        
+        # Second row for Scale button
+        scale_btn = ctk.CTkButton(
+            selection_ops_grid,
+            text="Scale",
+            width=85,
+            height=28,
+            command=callbacks['scale_selection']
+        )
+        scale_btn.grid(row=1, column=0, padx=2, pady=2, columnspan=3, sticky="ew")
+        create_tooltip(scale_btn, "Scale selection with draggable corners", delay=1000)
+        
+        # Store references
+        selection_buttons = {
+            'mirror_btn': mirror_btn,
+            'rotate_btn': rotate_btn,
+            'copy_btn': copy_btn,
+            'scale_btn': scale_btn
+        }
+        
+        # Configure grid columns
+        for col in range(3):
+            selection_ops_grid.grid_columnconfigure(col, weight=0)
+        
+        # Store references for main window
+        tool_buttons_ref.update(tool_buttons)
+        return {
+            'mirror_btn': mirror_btn,
+            'rotate_btn': rotate_btn,
+            'copy_btn': copy_btn,
+            'scale_btn': scale_btn,
+            'tool_frame': tool_frame
+        }
+    
+    def create_palette_panel(self, left_panel, palette, callbacks):
+        """Create color palette panel"""
+        palette_frame = left_panel  # Use the panel directly, no container frame
+        
+        palette_label = ctk.CTkLabel(palette_frame, text="Palette", font=ctk.CTkFont(size=16, weight="bold"))
+        palette_label.pack(pady=(15, 3), padx=10)
+        
+        # Palette selector
+        palette_var = ctk.StringVar(value="SNES Classic")
+        palette_menu = ctk.CTkOptionMenu(
+            palette_frame,
+            variable=palette_var,
+            values=list(palette.get_preset_palettes().keys()),
+            command=callbacks['on_palette_change']
+        )
+        palette_menu.pack(pady=3, padx=10)
+        
+        # View mode selector - centered container
+        view_mode_container = ctk.CTkFrame(palette_frame, fg_color="transparent")
+        view_mode_container.pack(pady=3, padx=10)
+        
+        view_mode_frame = ctk.CTkFrame(view_mode_container, fg_color="transparent")
+        view_mode_frame.pack()
+        
+        view_mode_var = ctk.StringVar(value="grid")
+        
+        # Create a grid layout for radio buttons - centered
+        grid_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Grid",
+            variable=view_mode_var,
+            value="grid",
+            command=callbacks['on_view_mode_change']
+        )
+        grid_view_btn.grid(row=0, column=0, padx=5, pady=2)
+        
+        primary_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Primary",
+            variable=view_mode_var,
+            value="primary",
+            command=callbacks['on_view_mode_change']
+        )
+        primary_view_btn.grid(row=0, column=1, padx=5, pady=2)
+        
+        wheel_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Wheel",
+            variable=view_mode_var,
+            value="wheel",
+            command=callbacks['on_view_mode_change']
+        )
+        wheel_view_btn.grid(row=1, column=0, padx=5, pady=2)
+        
+        constants_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Constants",
+            variable=view_mode_var,
+            value="constants",
+            command=callbacks['on_view_mode_change']
+        )
+        constants_view_btn.grid(row=1, column=1, padx=5, pady=2)
+        
+        saved_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Saved",
+            variable=view_mode_var,
+            value="saved",
+            command=callbacks['on_view_mode_change']
+        )
+        saved_view_btn.grid(row=2, column=0, padx=5, pady=2)
+        
+        # Color display container - centered
+        color_display_container = ctk.CTkFrame(palette_frame, fg_color="transparent")
+        color_display_container.pack(fill="both", expand=True, pady=5, padx=10)
+        
+        # Create container frames for each view (create once, toggle visibility)
+        grid_view_frame = ctk.CTkFrame(color_display_container)
+        primary_view_frame = ctk.CTkFrame(color_display_container)
+        wheel_view_frame = ctk.CTkFrame(color_display_container)
+        constants_view_frame = ctk.CTkFrame(color_display_container)
+        saved_view_frame = ctk.CTkFrame(color_display_container)
+        
+        # Keep reference to old color_display_frame for compatibility
+        color_display_frame = grid_view_frame
+        
+        # Primary colors state (must be set BEFORE initializing views)
+        primary_colors_mode = "primary"  # "primary" or "variations"
+        selected_primary_color = None
+        color_wheel = None
+        
+        # Note: initialize_all_views() and show_view() will be called after widget references are assigned
+        
+        # Return references for main window
+        return {
+            'palette_frame': palette_frame,
+            'palette_var': palette_var,
+            'palette_menu': palette_menu,
+            'view_mode_var': view_mode_var,
+            'grid_view_btn': grid_view_btn,
+            'primary_view_btn': primary_view_btn,
+            'wheel_view_btn': wheel_view_btn,
+            'constants_view_btn': constants_view_btn,
+            'saved_view_btn': saved_view_btn,
+            'color_display_container': color_display_container,
+            'grid_view_frame': grid_view_frame,
+            'primary_view_frame': primary_view_frame,
+            'wheel_view_frame': wheel_view_frame,
+            'constants_view_frame': constants_view_frame,
+            'saved_view_frame': saved_view_frame,
+            'color_display_frame': color_display_frame,
+            'primary_colors_mode': primary_colors_mode,
+            'selected_primary_color': selected_primary_color,
+            'color_wheel': color_wheel
+        }
+    
+    def create_canvas_panel(self, canvas_frame, canvas_renderer, current_tool, tools, callbacks):
+        """Create canvas display panel"""
+        canvas_label = ctk.CTkLabel(canvas_frame, text="Canvas", font=ctk.CTkFont(size=16, weight="bold"))
+        canvas_label.pack(pady=10)
+
+        # Canvas container
+        canvas_container = ctk.CTkFrame(canvas_frame)
+        canvas_container.pack(expand=True, fill="both", padx=20, pady=20)
+
+        # Create tkinter Canvas for drawing (much simpler than pygame integration)
+        drawing_canvas = ctk.CTkCanvas(
+            canvas_container,
+            bg="lightgray",
+            highlightthickness=1,
+            highlightbackground="black"
+        )
+        drawing_canvas.pack(expand=True, fill="both")
+        # Mouse and focus events are now bound by EventDispatcher
+        
+        # Set initial cursor (brush tool is default)
+        drawing_canvas.configure(cursor=tools[current_tool].cursor)
+
+        # Initialize the drawing surface
+        canvas_renderer.init_drawing_surface()
+        
+        # Return references for main window
+        return {
+            'canvas_container': canvas_container,
+            'drawing_canvas': drawing_canvas
+        }
