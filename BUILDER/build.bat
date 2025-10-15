@@ -31,7 +31,7 @@ if errorlevel 1 (
     )
 )
 
-echo [1/5] Cleaning previous build...
+echo [1/6] Cleaning previous build...
 if exist "build" rmdir /s /q "build"
 if exist "dist" rmdir /s /q "dist"
 if exist "PixelPerfect.spec" del /q "PixelPerfect.spec"
