@@ -31,6 +31,7 @@ class ColorWheel:
         self.color_preview = None
         self.hsv_labels = None
         self.hex_label = None
+        self.wheel_thickness = 30  # Thickness of the color ring
         
         # Interaction state
         self.is_dragging_hue = False
@@ -40,7 +41,7 @@ class ColorWheel:
         
         self._create_ui()
         self._update_displays()
-    
+
     def _create_ui(self):
         """Create the color wheel UI - floating components on grey background"""
         # No main container frame - pack directly to parent for transparent look
@@ -55,13 +56,13 @@ class ColorWheel:
             height=self.size,
             bg=bg_color,
             highlightthickness=0,
-            cursor="crosshair"
+            cursor="arrow"
         )
         self.wheel_canvas.pack(pady=5)
         self.wheel_canvas.bind("<Button-1>", self._on_wheel_click)
         self.wheel_canvas.bind("<B1-Motion>", self._on_wheel_drag)
         self.wheel_canvas.bind("<ButtonRelease-1>", self._on_wheel_release)
-        
+
         # Saturation/Value square (floating)
         self.saturation_canvas = ctk.CTkCanvas(
             self.parent_frame,
@@ -217,7 +218,7 @@ class ColorWheel:
         # Convert hex to RGB tuple
         hex_color = hex_color.lstrip('#')
         return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    
+
     def _draw_hue_wheel(self):
         """Draw the HSV hue wheel"""
         self.wheel_canvas.delete("all")
@@ -242,7 +243,7 @@ class ColorWheel:
                 dy = y - center_y
                 distance = math.sqrt(dx*dx + dy*dy)
                 
-                if distance <= radius and distance >= radius - 30:  # Wheel thickness
+                if distance <= radius and distance >= radius - self.wheel_thickness:  # Wheel thickness
                     angle = math.atan2(dy, dx)
                     hue = (math.degrees(angle) + 180) % 360
                     rgb = self._hsv_to_rgb(hue, 1.0, 1.0)
@@ -428,8 +429,18 @@ class ColorWheel:
     
     def _on_wheel_click(self, event):
         """Handle hue wheel click"""
-        self.is_dragging_hue = True
-        self._update_hue_from_position(event.x, event.y)
+        # Check if the click is on the ring before starting a drag
+        center_x = self.size // 2
+        center_y = self.size // 2
+        dx = event.x - center_x
+        dy = event.y - center_y
+        distance = math.sqrt(dx*dx + dy*dy)
+        radius = (self.size - 20) // 2
+
+        if radius - self.wheel_thickness <= distance <= radius:
+            self.is_dragging_hue = True
+            self.wheel_canvas.configure(cursor="crosshair")
+            self._update_hue_from_position(event.x, event.y)
     
     def _on_wheel_drag(self, event):
         """Handle hue wheel drag"""
@@ -439,6 +450,7 @@ class ColorWheel:
     def _on_wheel_release(self, event):
         """Handle hue wheel release"""
         self.is_dragging_hue = False
+        self.wheel_canvas.configure(cursor="arrow")
     
     def _on_saturation_click(self, event):
         """Handle saturation square click"""
@@ -461,15 +473,12 @@ class ColorWheel:
         
         dx = x - center_x
         dy = y - center_y
-        distance = math.sqrt(dx*dx + dy*dy)
         
-        radius = (self.size - 20) // 2
-        if 15 <= distance <= radius:  # Within wheel bounds
-            angle = math.atan2(dy, dx)
-            # Match the drawing calculation: use +180 to align with wheel
-            self.hue = (math.degrees(angle) + 180) % 360
-            # Redraw square (depends on hue) but not wheel (just update indicator)
-            self._update_displays(redraw_wheel=False, redraw_square=True)
+        angle = math.atan2(dy, dx)
+        # Match the drawing calculation: use +180 to align with wheel
+        self.hue = (math.degrees(angle) + 180) % 360
+        # Redraw square (depends on hue) but not wheel (just update indicator)
+        self._update_displays(redraw_wheel=False, redraw_square=True)
     
     def _update_saturation_from_position(self, x: int, y: int):
         """Update saturation from horizontal position only"""
@@ -619,11 +628,16 @@ class ColorWheel:
         self.theme = theme
         bg_color = theme.bg_primary if theme else "#2b2b2b"
         
-        # Update canvas backgrounds
+        # Update frame and canvas backgrounds
+        if hasattr(self, 'wheel_frame') and self.wheel_frame:
+            self.wheel_frame.configure(fg_color="transparent")
         if hasattr(self, 'wheel_canvas') and self.wheel_canvas:
             self.wheel_canvas.configure(bg=bg_color)
         if hasattr(self, 'saturation_canvas') and self.saturation_canvas:
             self.saturation_canvas.configure(bg=bg_color)
+        
+        # Redraw the wheel with new theme
+        self._draw_hue_wheel()
     
     def get_color(self) -> Tuple[int, int, int]:
         """Get current color as RGB"""

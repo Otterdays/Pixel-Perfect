@@ -1,5 +1,40 @@
 # Pixel Perfect - Changelog
 
+## Version 1.54 - Color Wheel Clickable Area Fix
+**Date**: October 15, 2025  
+**Type**: UI/UX Enhancement
+
+### 🎯 Precise Color Wheel Interaction
+**Fixed color wheel to only respond to clicks on the rainbow ring**
+
+**Problem Solved:**
+- Color wheel canvas was fully clickable (entire 250x250px area)
+- Center area and outer areas responded to clicks even though only rainbow ring should be interactive
+- Grey background visible during theme changes
+- Complex overlay architecture with multiple canvases caused visual artifacts
+
+**Solution Implemented:**
+- **Simplified Architecture** - Removed complex `wheel_frame` and `ring_canvas` overlay approach
+- **Single Canvas Design** - Uses just `self.wheel_canvas` directly on parent frame
+- **Smart Click Detection** - Validates click position before starting drag operation
+- **Cursor Feedback** - Changes to "crosshair" during drag, "arrow" when released
+- **Configurable Thickness** - Added `self.wheel_thickness = 30` as instance variable
+
+**Technical Changes:**
+- Modified `src/ui/color_wheel.py`: Simplified canvas structure and click detection
+- Click validation: `if radius - self.wheel_thickness <= distance <= radius`
+- Removed unnecessary canvas overlay and frame wrapper
+- Cursor state changes provide visual feedback for interactive state
+
+**Result:**
+- ✅ Only rainbow ring responds to clicks
+- ✅ Center and outer areas are non-interactive
+- ✅ Cleaner, simpler code architecture
+- ✅ Better cursor feedback for user interaction
+- ✅ No grey background artifacts during theme changes
+
+---
+
 ## Version 1.53 - UI Styling Consistency Fix
 **Date**: December 19, 2024  
 **Type**: UI/UX Enhancement
@@ -29,6 +64,19 @@
 - Clean, professional dark theme with seamless panel integration
 - Consistent visual hierarchy across all UI sections
 - Improved user experience with unified styling approach
+
+**Layer Layout Fix:**
+- Fixed layer positioning - layers now appear below Layers header instead of dropping to bottom
+- Restored proper layer list container with transparent background
+- Ensured layers scroll vertically within the Layers section when more are added
+- Maintained seamless dark theme while fixing layout functionality
+
+**Color Display Fixes:**
+- Fixed color grid buttons showing grey instead of actual palette colors (SNES Classic, etc.)
+- Fixed color preview box in color wheel showing black instead of selected color
+- Modified theme application to preserve color button and preview frame colors
+- Added smart detection for color buttons (30x30, no text) and color preview frames (100x100)
+- Color palette now displays correct colors while maintaining theme consistency
 
 ---
 

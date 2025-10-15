@@ -3777,3 +3777,52 @@ All comprehensive tests passed successfully:
   - If color not in palette: switches to color wheel and sets the color
 - **Use Case**: Quickly see and select from your actual used colors
 - **Result**: Dynamic palette that updates based on artwork! ✅
+
+---
+
+## Version 0.88 - Color Wheel Clickable Area Fix (October 15, 2025)
+
+### **Problem:**
+- Color wheel had large clickable canvas area (entire 250x250px square)
+- Center area and outer areas were clickable even though only rainbow ring should be
+- Grey background visible during theme changes
+- Complex overlay approach with multiple canvases was causing issues
+
+### **Solution Implemented:**
+- **Simplified Architecture**: Removed complex `wheel_frame` and `ring_canvas` overlay
+- **Single Canvas Approach**: Uses just `self.wheel_canvas` directly on parent frame
+- **Configurable Ring Thickness**: Added `self.wheel_thickness = 30` as instance variable
+- **Smart Click Detection**: Checks if click is within ring bounds before starting drag
+- **Cursor Feedback**: Changes to "crosshair" during drag, "arrow" when released
+- **Clean Coordinates**: Uses `self.size // 2` for center calculations
+
+### **Key Implementation Details:**
+```python
+# Click detection in _on_wheel_click()
+center_x = self.size // 2
+center_y = self.size // 2
+dx = event.x - center_x
+dy = event.y - center_y
+distance = math.sqrt(dx*dx + dy*dy)
+radius = (self.size - 20) // 2
+
+# Only start drag if click is on the ring
+if radius - self.wheel_thickness <= distance <= radius:
+    self.is_dragging_hue = True
+    self.wheel_canvas.configure(cursor="crosshair")
+    self._update_hue_from_position(event.x, event.y)
+```
+
+### **Benefits:**
+- ✅ Only rainbow ring responds to clicks
+- ✅ Center and outer areas are non-interactive
+- ✅ Cleaner, simpler code architecture
+- ✅ Better cursor feedback for user interaction
+- ✅ No grey background artifacts during theme changes
+- ✅ Configurable ring thickness for future adjustments
+
+### **Technical Notes:**
+- Canvas bindings still exist on entire canvas, but click handler validates position
+- Early return pattern prevents processing of invalid clicks
+- Cursor changes provide visual feedback for interactive state
+- Single canvas eliminates z-index and overlay complexity issues

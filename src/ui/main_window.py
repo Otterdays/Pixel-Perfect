@@ -604,7 +604,7 @@ class MainWindow:
             widget.destroy()
         
         # Create grid frame - centered
-        self.color_frame = ctk.CTkFrame(self.color_display_frame)
+        self.color_frame = ctk.CTkFrame(self.color_display_frame, fg_color="transparent")
         self.color_frame.pack(padx=10, pady=10)
         
         # Store color button references for easy updating
@@ -3306,7 +3306,7 @@ class MainWindow:
         
         # Update color_frame if it exists
         if hasattr(self, 'color_frame'):
-            self.color_frame.configure(fg_color=theme.bg_secondary)
+            self.color_frame.configure(fg_color="transparent")
         
         # Update primary and variations frames
         if hasattr(self, 'primary_frame'):
@@ -3432,14 +3432,27 @@ class MainWindow:
                     widget.configure(fg_color=theme.bg_tertiary)
                     # Recursively update children
                     self._apply_theme_to_children(widget, theme)
+                elif isinstance(widget, ctk.CTkCanvas):
+                    # Skip canvas widgets - they should be handled by their specific components
+                    # (like color wheel, which has its own update_theme method)
+                    pass
                 elif isinstance(widget, ctk.CTkFrame):
-                    # Check if it's supposed to be transparent
+                    # Check if this is a color preview frame (don't override its color)
                     try:
-                        current_fg = widget.cget("fg_color")
-                        if current_fg == "transparent":
-                            widget.configure(fg_color="transparent")
+                        widget_width = widget.cget("width")
+                        widget_height = widget.cget("height")
+                        
+                        # If it's a color preview frame (100x100), skip theme application
+                        if widget_width == 100 and widget_height == 100:
+                            # This is likely a color preview frame, don't override its color
+                            pass
                         else:
-                            widget.configure(fg_color=theme.bg_primary)
+                            # Regular frame, apply theme
+                            current_fg = widget.cget("fg_color")
+                            if current_fg == "transparent":
+                                widget.configure(fg_color="transparent")
+                            else:
+                                widget.configure(fg_color=theme.bg_primary)
                     except:
                         widget.configure(fg_color=theme.bg_primary)
                     # Recursively update children
@@ -3447,11 +3460,30 @@ class MainWindow:
                 elif isinstance(widget, ctk.CTkRadioButton):
                     widget.configure(text_color=theme.text_primary)
                 elif isinstance(widget, ctk.CTkButton):
-                    widget.configure(
-                        fg_color=theme.button_normal,
-                        hover_color=theme.button_hover,
-                        text_color=theme.text_primary
-                    )
+                    # Check if this is a color button (has no text and specific size)
+                    try:
+                        button_text = widget.cget("text")
+                        button_width = widget.cget("width")
+                        button_height = widget.cget("height")
+                        
+                        # If it's a color button (no text, 30x30 size), don't override its color
+                        if button_text == "" and button_width == 30 and button_height == 30:
+                            # This is a color button, skip theme application
+                            pass
+                        else:
+                            # Regular button, apply theme
+                            widget.configure(
+                                fg_color=theme.button_normal,
+                                hover_color=theme.button_hover,
+                                text_color=theme.text_primary
+                            )
+                    except:
+                        # If we can't determine, apply theme to be safe
+                        widget.configure(
+                            fg_color=theme.button_normal,
+                            hover_color=theme.button_hover,
+                            text_color=theme.text_primary
+                        )
             except Exception as e:
                 # Skip widgets that don't support these properties
                 pass

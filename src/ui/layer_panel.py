@@ -45,9 +45,9 @@ class LayerPanel:
         )
         self.add_layer_btn.pack(side="right", padx=(5, 0))
         
-        # Layer list - pack directly to parent, no frame
-        # self.list_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
-        # self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        # Layer list frame - transparent container for layer entries
+        self.list_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
+        self.list_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Layer controls frame
         controls_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
@@ -114,7 +114,10 @@ class LayerPanel:
     
     def _create_layer_button(self, index: int, layer: Layer):
         """Create a button for a specific layer"""
-        # Pack directly to parent - no frame wrapper
+        # Create a horizontal frame for the layer row
+        layer_row = ctk.CTkFrame(self.list_frame, fg_color="transparent")
+        layer_row.pack(fill="x", pady=1)
+        
         # Visibility toggle
         visibility_var = ctk.BooleanVar(value=layer.visible)
         def on_visibility_change():
@@ -122,18 +125,18 @@ class LayerPanel:
             self._toggle_visibility(index, visibility_var.get())
         
         visibility_cb = ctk.CTkCheckBox(
-            self.layer_frame,
+            layer_row,
             text="",
             width=18,
             height=18,
             variable=visibility_var,
             command=on_visibility_change
         )
-        visibility_cb.pack(side="left", padx=(15, 5), pady=1)
+        visibility_cb.pack(side="left", padx=(5, 0))
         
         # Layer name (clickable) - make it transparent
         layer_btn = ctk.CTkButton(
-            self.layer_frame,
+            layer_row,
             text=layer.name,
             height=28,
             anchor="w",
@@ -142,7 +145,7 @@ class LayerPanel:
             hover_color="#3a3a3a",
             command=lambda: self._select_layer(index)
         )
-        layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5), pady=1)
+        layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5))
         
         # Active indicator
         if index == self.layer_manager.active_layer_index:
@@ -155,11 +158,11 @@ class LayerPanel:
         
         # Lock indicator
         if layer.locked:
-            lock_label = ctk.CTkLabel(self.layer_frame, text="🔒", width=20)
-            lock_label.pack(side="right", padx=(0, 15), pady=1)
+            lock_label = ctk.CTkLabel(layer_row, text="🔒", width=20)
+            lock_label.pack(side="right", padx=(0, 5))
         
-        # Store button reference (store the button itself, not a frame)
-        self.layer_buttons[index] = layer_btn
+        # Store button reference
+        self.layer_buttons[index] = layer_row
     
     def _update_button_states(self):
         """Update the state of control buttons"""
