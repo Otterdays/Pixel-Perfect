@@ -47,6 +47,7 @@ from ui.tool_size_manager import ToolSizeManager
 from ui.canvas_zoom_manager import CanvasZoomManager
 from ui.grid_control_manager import GridControlManager
 from ui.notes_panel import NotesPanel
+from ui.import_png_dialog import ImportPNGDialog
 
 class MainWindow:
     """Main application window"""
@@ -585,6 +586,12 @@ class MainWindow:
             else:
                 self.redo_button.configure(fg_color=("gray75", "gray25"))
     
+    def _update_size_display(self):
+        """Update the canvas size display in the toolbar"""
+        if hasattr(self, 'ui_builder') and 'size_var' in self.ui_builder.widgets:
+            size_text = f"{self.canvas.width}x{self.canvas.height}"
+            self.ui_builder.widgets['size_var'].set(size_text)
+    
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
         # Clear any tool previews when changing tools
@@ -763,388 +770,6 @@ class MainWindow:
         self._show_view(mode)
     
     def _create_constants_grid(self):
-        """Create grid showing only colors currently used on the canvas"""
-        # Clear existing widgets
-        for widget in self.color_display_frame.winfo_children():
-            widget.destroy()
-        
-        # Extract unique colors from canvas
-        used_colors = self._get_canvas_colors()
-        
-        if not used_colors:
-            # Show message if no colors are used yet
-            no_colors_label = ctk.CTkLabel(
-                self.color_display_frame,
-                text="No colors used yet.\nDraw on canvas to see\ncolors here.",
-                font=ctk.CTkFont(size=12),
-                text_color="gray"
-            )
-            no_colors_label.pack(pady=20)
-            return
-        
-        # Create grid of used colors
-        grid_frame = ctk.CTkFrame(self.color_display_frame)
-        grid_frame.pack()
-        
-        # Configure grid - 4 columns
-        for col in range(4):
-            grid_frame.grid_columnconfigure(col, weight=1)
-        
-        # Create buttons for each unique color
-        self.color_buttons = []
-        for idx, color in enumerate(used_colors):
-            row = idx // 4
-            col = idx % 4
-            
-            r, g, b, a = color
-            if a == 0:  # Skip transparent pixels
-                continue
-                
-            hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            
-            btn = ctk.CTkButton(
-                grid_frame,
-                text="",
-                width=50,
-                height=50,
-                fg_color=hex_color,
-                hover_color=hex_color,
-                border_width=2,
-                border_color="gray",
-                corner_radius=3,
-                command=lambda c=color: self._on_constant_color_click(c)
-            )
-            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
-            self.color_buttons.append(btn)
-        
-        # Show count label
-        count_label = ctk.CTkLabel(
-            self.color_display_frame,
-            text=f"{len(used_colors)} colors in use",
-            font=ctk.CTkFont(size=10),
-            text_color="gray"
-        )
-        count_label.pack(pady=(5, 0))
-    
-    def _create_saved_colors_view(self):
-        """Create saved colors view with empty slots and export button (OPTIMIZED)"""
-        # Check if view already exists - just update buttons instead of recreating
-        if hasattr(self, '_saved_view_created') and self._saved_view_created:
-            self._update_saved_color_buttons()
-            return
-        
-        # Clear existing widgets
-        for widget in self.color_display_frame.winfo_children():
-            widget.destroy()
-        
-        # Title
-        title_label = ctk.CTkLabel(
-            self.color_display_frame,
-            text="Saved Colors",
-            font=ctk.CTkFont(size=14, weight="bold")
-        )
-        title_label.pack(pady=(5, 2))
-        
-        # Instructions
-        info_label = ctk.CTkLabel(
-            self.color_display_frame,
-            text="Click empty slot to save current color",
-            font=ctk.CTkFont(size=10),
-            text_color="gray"
-        )
-        info_label.pack(pady=(0, 5))
-        
-        # Grid for saved colors
-        grid_frame = ctk.CTkFrame(self.color_display_frame)
-        grid_frame.pack(padx=10, pady=5)
-        
-        # Configure grid - 4 columns x 6 rows = 24 slots
-        for col in range(4):
-            grid_frame.grid_columnconfigure(col, weight=1)
-        
-        # Create 24 color slots (create once, update later)
-        self.saved_color_buttons = []
-        for idx in range(24):
-            row = idx // 4
-            col = idx % 4
-            
-            # Create button (will be configured in _update_saved_color_buttons)
-            btn = ctk.CTkButton(
-                grid_frame,
-                text="+",
-                width=50,
-                height=50,
-                fg_color="transparent",
-                hover_color="#3a3a3a",
-                border_width=2,
-                border_color="gray",
-                corner_radius=3
-            )
-            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
-            self.saved_color_buttons.append(btn)
-        
-        # Export button
-        export_btn = ctk.CTkButton(
-            self.color_display_frame,
-            text="Export Saved Colors",
-            height=32,
-            fg_color="#1f6aa5",
-            hover_color="#1f5a95",
-            command=self._export_saved_colors
-        )
-        export_btn.pack(fill="x", padx=10, pady=(5, 2))
-        
-        # Import button
-        import_btn = ctk.CTkButton(
-            self.color_display_frame,
-            text="Import Saved Colors",
-            height=32,
-            fg_color="#4a4a4a",
-            hover_color="#5a5a5a",
-            command=self._import_saved_colors
-        )
-        import_btn.pack(fill="x", padx=10, pady=2)
-        
-        # Clear all button
-        clear_btn = ctk.CTkButton(
-            self.color_display_frame,
-            text="Clear All Slots",
-            height=32,
-            fg_color="red",
-            hover_color="#cc0000",
-            command=self._clear_all_saved_colors
-        )
-        clear_btn.pack(fill="x", padx=10, pady=2)
-        
-        # Mark view as created
-        self._saved_view_created = True
-        
-        # Now update button states
-        self._update_saved_color_buttons()
-    
-    def _update_saved_color_buttons(self):
-        """Update saved color button states without recreating them (FAST)"""
-        if not hasattr(self, 'saved_color_buttons'):
-            return
-        
-        for idx, btn in enumerate(self.saved_color_buttons):
-            saved_color = self.saved_colors.get_color(idx)
-            
-            if saved_color:
-                # Slot has a color - configure as filled
-                r, g, b, a = saved_color
-                hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                btn.configure(
-                    text="",
-                    fg_color=hex_color,
-                    hover_color=hex_color,
-                    command=lambda i=idx: self._on_saved_color_click(i)
-                )
-            else:
-                # Empty slot - configure as empty
-                btn.configure(
-                    text="+",
-                    fg_color="transparent",
-                    hover_color="#3a3a3a",
-                    command=lambda i=idx: self._on_saved_slot_click(i)
-                )
-    
-    def _on_saved_slot_click(self, slot_index: int):
-        """Handle click on empty saved color slot - save current color"""
-        # Get current color from appropriate source
-        # If color wheel view is active, get from wheel; otherwise from palette
-        if (hasattr(self, 'color_wheel') and self.color_wheel and 
-            self.view_mode_var.get() == "wheel"):
-            rgb_color = self.color_wheel.get_color()
-            current_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-        else:
-            current_color = self.palette.get_primary_color()
-        
-        # Save to slot
-        self.saved_colors.set_color(slot_index, current_color)
-        
-        # Fast refresh - just update button states
-        self._update_saved_color_buttons()
-        
-        print(f"[SAVED] Color {current_color} saved to slot {slot_index}")
-    
-    def _on_saved_color_click(self, slot_index: int):
-        """Handle click on filled saved color slot - load color"""
-        saved_color = self.saved_colors.get_color(slot_index)
-        if saved_color:
-            # Set as primary color
-            self.palette.set_primary_color_by_rgba(saved_color)
-            self.canvas_renderer.update_pixel_display()
-            print(f"[SAVED] Loaded color {saved_color} from slot {slot_index}")
-    
-    def _export_saved_colors(self):
-        """Export saved colors to a file"""
-        from tkinter import filedialog
-        filepath = filedialog.asksaveasfilename(
-            title="Export Saved Colors",
-            defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-        )
-        if filepath:
-            if self.saved_colors.export_to_file(filepath):
-                print(f"[EXPORT] Saved colors exported to: {filepath}")
-            else:
-                print("[EXPORT] Failed to export saved colors")
-    
-    def _import_saved_colors(self):
-        """Import saved colors from a file"""
-        from tkinter import filedialog
-        filepath = filedialog.askopenfilename(
-            title="Import Saved Colors",
-            defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-        )
-        if filepath:
-            if self.saved_colors.import_from_file(filepath):
-                self._update_saved_color_buttons()
-                print(f"[IMPORT] Saved colors imported from: {filepath}")
-            else:
-                print("[IMPORT] Failed to import saved colors")
-    
-    def _clear_all_saved_colors(self):
-        """Clear all saved color slots with confirmation"""
-        # Create custom confirmation dialog
-        dialog = ctk.CTkToplevel(self.root)
-        dialog.title("Clear All Slots")
-        dialog.geometry("450x220")
-        dialog.resizable(False, False)
-        dialog.transient(self.root)
-        dialog.grab_set()
-        
-        # Center the dialog on the main window
-        dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (450 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (220 // 2)
-        dialog.geometry(f"+{x}+{y}")
-        
-        # Icon and title frame
-        header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        header_frame.pack(pady=20, padx=20, fill="x")
-        
-        # Large colorful icon (🎨 emoji)
-        icon_label = ctk.CTkLabel(
-            header_frame,
-            text="🎨",
-            font=ctk.CTkFont(size=48)
-        )
-        icon_label.pack(side="left", padx=(10, 20))
-        
-        # Title text
-        title_label = ctk.CTkLabel(
-            header_frame,
-            text="Clear All Slots",
-            font=ctk.CTkFont(size=20, weight="bold")
-        )
-        title_label.pack(side="left", anchor="w")
-        
-        # Warning message
-        message_label = ctk.CTkLabel(
-            dialog,
-            text="Are you sure you want to clear all saved colors?\nThis cannot be undone.",
-            font=ctk.CTkFont(size=14),
-            text_color="#e0e0e0"
-        )
-        message_label.pack(pady=(0, 25), padx=20)
-        
-        # Button frame
-        button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        button_frame.pack(pady=(0, 20), padx=20, fill="x")
-        
-        # Result storage
-        result = [False]
-        
-        def on_yes():
-            result[0] = True
-            dialog.destroy()
-        
-        def on_no():
-            result[0] = False
-            dialog.destroy()
-        
-        # No button (cancel)
-        no_btn = ctk.CTkButton(
-            button_frame,
-            text="No",
-            width=140,
-            height=40,
-            fg_color="#4a4a4a",
-            hover_color="#5a5a5a",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            command=on_no
-        )
-        no_btn.pack(side="right", padx=5)
-        
-        # Yes button (destructive action)
-        yes_btn = ctk.CTkButton(
-            button_frame,
-            text="Yes",
-            width=140,
-            height=40,
-            fg_color="#d32f2f",
-            hover_color="#b71c1c",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            command=on_yes
-        )
-        yes_btn.pack(side="right", padx=5)
-        
-        # Wait for dialog to close
-        self.root.wait_window(dialog)
-        
-        # Process result
-        if result[0]:
-            self.saved_colors.clear_all()
-            self._update_saved_color_buttons()  # Fast refresh
-    
-    def _get_canvas_colors(self):
-        """Extract unique colors from the canvas (all layers combined)"""
-        unique_colors = set()
-        
-        # Get all pixels from all visible layers
-        for y in range(self.canvas.height):
-            for x in range(self.canvas.width):
-                # Get pixel from the composited canvas (all visible layers)
-                pixel_color = self.canvas.get_pixel(x, y)
-                
-                # Only add non-transparent pixels
-                if pixel_color[3] > 0:
-                    unique_colors.add(tuple(pixel_color))
-        
-        # Convert set to sorted list for consistent ordering
-        return sorted(list(unique_colors))
-    
-    def _on_constant_color_click(self, color):
-        """Handle click on a constant color button"""
-        # Find if this color exists in the current palette
-        r, g, b, a = color
-        rgb_color = (r, g, b)
-        
-        # Try to find the color in the palette
-        palette_colors = self.palette.colors
-        found_index = None
-        
-        for i, pal_color in enumerate(palette_colors):
-            if (pal_color[0], pal_color[1], pal_color[2]) == rgb_color:
-                found_index = i
-                break
-        
-        if found_index is not None:
-            # Color found in palette, select it
-            self.palette.set_primary_color(found_index)
-        else:
-            # Color not in current palette, switch to color wheel and set the color
-            # Use optimized view switching (don't recreate wheel!)
-            self.view_mode_var.set("wheel")
-            self._show_view("wheel")
-            
-            # Set the color on the existing color wheel
-            if hasattr(self, 'color_wheel') and self.color_wheel:
-                self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
-    
     def _create_color_wheel(self):
         """Create color wheel view"""
         # Clear existing widgets
@@ -1233,7 +858,7 @@ class MainWindow:
         open_btn = ctk.CTkButton(file_menu, text="Open Project", command=lambda: [self.file_ops.open_project(), file_menu.destroy()])
         open_btn.pack(pady=5, padx=10, fill="x")
         
-        import_png_btn = ctk.CTkButton(file_menu, text="Import PNG", command=lambda: [self.file_ops.import_png(), file_menu.destroy()])
+        import_png_btn = ctk.CTkButton(file_menu, text="Import PNG", command=lambda: [file_menu.destroy(), self._show_import_png_dialog()])
         import_png_btn.pack(pady=5, padx=10, fill="x")
         
         save_btn = ctk.CTkButton(file_menu, text="Save Project", command=lambda: [self.file_ops.save_project(), file_menu.destroy()])
@@ -1267,6 +892,75 @@ class MainWindow:
         # Close button
         close_btn = ctk.CTkButton(file_menu, text="Close", command=file_menu.destroy)
         close_btn.pack(pady=10, padx=10, fill="x")
+    
+    def _show_import_png_dialog(self):
+        """Show import PNG dialog with preview and scale options"""
+        try:
+            dialog = ImportPNGDialog(
+                self.root,
+                on_import=self._handle_png_import,
+                theme=self.theme_manager.current_theme
+            )
+            dialog.show()
+        except Exception as e:
+            print(f"[ERROR] Failed to show import dialog: {e}")
+            self.dialog_mgr.show_error("Dialog Error", f"Failed to open import dialog:\n{e}")
+    
+    def _handle_png_import(self, file_path: str, scale_factor: int):
+        """Handle PNG import with scale factor"""
+        from src.utils.import_png import PNGImporter
+        import tempfile
+        import os
+        
+        # Create temp pixpf file
+        temp_dir = tempfile.gettempdir()
+        temp_pixpf = os.path.join(temp_dir, "imported_temp.pixpf")
+        
+        # Import PNG with scale factor
+        importer = PNGImporter()
+        success, message = importer.import_png_to_pixpf(
+            file_path,
+            temp_pixpf,
+            scale_factor=scale_factor
+        )
+        
+        if success:
+            # Load the imported project directly
+            load_success = self.project.load_project(
+                temp_pixpf,
+                self.canvas,
+                self.palette,
+                self.layer_manager,
+                self.timeline
+            )
+            
+            if load_success:
+                # Update canvas from loaded layers (composite all layers)
+                self._update_canvas_from_layers()
+                
+                # Update UI components to reflect loaded project
+                self.layer_panel.refresh()
+                self.timeline_panel.refresh()
+                
+                # Update size display in toolbar
+                self._update_size_display()
+                
+                # Force immediate display update
+                self.root.update_idletasks()
+                self.root.update()
+                
+                print(f"[IMPORT] {message}")
+            else:
+                import tkinter.messagebox as msgbox
+                msgbox.showerror("Import Failed", "Failed to load imported project")
+                return
+            
+            # Show success message using messagebox (no focus issues)
+            import tkinter.messagebox as msgbox
+            msgbox.showinfo("Import Successful", message)
+        else:
+            # Show error message
+            self.dialog_mgr.show_error("Import Failed", message)
     
 
     def _on_layer_changed(self):

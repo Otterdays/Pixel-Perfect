@@ -22,7 +22,8 @@ class PNGImporter:
     
     def import_png_to_pixpf(self, png_path: str, pixpf_path: str, 
                            palette_name: str = "SNES Classic",
-                           palette_type: str = "snes_classic") -> Tuple[bool, str]:
+                           palette_type: str = "snes_classic",
+                           scale_factor: int = 1) -> Tuple[bool, str]:
         """
         Convert PNG to basic .pixpf project
         
@@ -31,6 +32,7 @@ class PNGImporter:
             pixpf_path: Path to output .pixpf file
             palette_name: Default palette name
             palette_type: Default palette type
+            scale_factor: Scale multiplier (1x, 2x, 3x, 4x) - scales UP the imported image
             
         Returns:
             (success: bool, message: str)
@@ -52,7 +54,7 @@ class PNGImporter:
             
             # 4. Check if dimensions need downscaling (from scaled exports)
             needs_downscale = False
-            scale_factor = 1
+            detected_scale = 1
             
             if width not in self.VALID_SIZES or height not in self.VALID_SIZES:
                 # Try to detect if this is a scaled export
@@ -67,7 +69,7 @@ class PNGImporter:
                         # Found valid downscale!
                         width = scaled_width
                         height = scaled_height
-                        scale_factor = scale
+                        detected_scale = scale
                         needs_downscale = True
                         break
                 
@@ -87,7 +89,16 @@ class PNGImporter:
                 # Downscale using nearest neighbor to preserve pixel art
                 new_size = (width, height)
                 rgba_image = rgba_image.resize(new_size, Image.NEAREST)
-                print(f"Auto-downscaled from {original_width}x{original_height} to {width}x{height} ({scale_factor}x scale detected)")
+                print(f"Auto-downscaled from {original_width}x{original_height} to {width}x{height} ({detected_scale}x scale detected)")
+            
+            # 5.5. Apply user-requested scale factor (scale UP)
+            if scale_factor > 1:
+                scaled_width = width * scale_factor
+                scaled_height = height * scale_factor
+                rgba_image = rgba_image.resize((scaled_width, scaled_height), Image.NEAREST)
+                print(f"Scaling up {scale_factor}x: {width}x{height} → {scaled_width}x{scaled_height}")
+                width = scaled_width
+                height = scaled_height
             
             pixels = np.array(rgba_image, dtype=np.uint8)
             
@@ -138,10 +149,14 @@ class PNGImporter:
             with open(pixpf_path, 'w') as f:
                 json.dump(project_data, f, indent=2)
             
+            # Build success message
+            msg = f"Successfully imported PNG to {width}x{height} canvas"
             if needs_downscale:
-                return True, f"Successfully imported {original_width}x{original_height} PNG\n(Auto-downscaled {scale_factor}x to {width}x{height} canvas)"
-            else:
-                return True, f"Successfully imported {width}x{height} PNG to .pixpf"
+                msg += f"\n(Auto-downscaled from {original_width}x{original_height})"
+            if scale_factor > 1:
+                msg += f"\n(Scaled up {scale_factor}x)"
+            
+            return True, msg
             
         except Exception as e:
             return False, f"Import error: {e}"

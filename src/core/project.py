@@ -73,12 +73,18 @@ class ProjectManager:
             
             # Load canvas settings
             canvas_config = project_data.get("canvas", {})
-            canvas.width = canvas_config.get("width", 32)
-            canvas.height = canvas_config.get("height", 32)
+            new_width = canvas_config.get("width", 32)
+            new_height = canvas_config.get("height", 32)
             canvas.zoom = canvas_config.get("zoom", 8)
             canvas.show_grid = canvas_config.get("show_grid", True)
             canvas.checkerboard = canvas_config.get("checkerboard", True)
-            canvas._create_surface()
+            
+            # Resize canvas to new dimensions
+            canvas.resize(new_width, new_height)
+            
+            # Update layer manager dimensions to match canvas
+            layer_manager.width = new_width
+            layer_manager.height = new_height
             
             # Load palette
             palette_config = project_data.get("palette", {})

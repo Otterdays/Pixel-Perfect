@@ -1,3 +1,53 @@
+## Version 2.1.0 - Import PNG Dialog with Spinning Preview (December 2024)
+
+### ✨ Import PNG Dialog Feature
+**Professional PNG import with spinning preview and scale options**
+
+**Features Implemented:**
+- **Spinning Preview**: Slow 360° rotation animation (1° per frame, 18 seconds per rotation)
+- **Scale Options**: 1x, 2x, 3x, 4x buttons for upscaling imported images
+- **Auto-Resize Canvas**: Canvas automatically adjusts to scaled dimensions
+- **Real-Time Feedback**: Shows original dimensions and resulting canvas size
+- **Professional UI**: Clean dialog matching app aesthetic
+
+**Files Created:**
+- `src/ui/import_png_dialog.py` (400+ lines) - Main dialog with spinning preview
+- `docs/features/IMPORT_PNG_DIALOG.md` - Complete feature documentation
+
+**Files Modified:**
+- `src/utils/import_png.py` - Added `scale_factor` parameter for upscaling
+- `src/ui/main_window.py` - Connected File → Import PNG to new dialog
+- `src/core/event_dispatcher.py` - Added error handling to prevent TclError
+
+**Bug Fixes:**
+1. **TclError Fixed**: Changed button command order to destroy file_menu BEFORE showing dialog
+2. **Rotation Clipping Fixed**: Changed `expand=False` to `expand=True` in PIL rotation
+3. **HighDPI Warning Fixed**: Switched from `ImageTk.PhotoImage` to `CTkImage` for proper scaling
+4. **Dialog Size Increased**: 600x700 → 600x800 to accommodate scale buttons
+
+**Use Case Example:**
+```
+User wants to import 16x16 sprite at 2x scale:
+1. File → Import PNG
+2. Select 16x16.png
+3. Watch spinning preview
+4. Click "2x" button
+5. See "Import as: 32x32 (2x scaled from 16x16)"
+6. Click Import
+7. Canvas auto-resizes to 32x32 with scaled sprite!
+```
+
+**Key Technical Solution:**
+```python
+# Fixed TclError by reordering operations
+command=lambda: [file_menu.destroy(), self._show_import_png_dialog()]
+
+# Fixed HighDPI warning by using CTkImage
+ctk_image = CTkImage(light_image=img, dark_image=img, size=display_size)
+```
+
+---
+
 ## Version 2.0.0 - Fixed Saved Colors Blank Space UI Bug (December 2024)
 
 ### 🐛 Critical UI Bug Fix: Empty Frame Between Radio Buttons and Saved Colors

@@ -30,7 +30,10 @@ class EventDispatcher:
         
         # Keyboard events
         root.bind("<Key>", self.on_key_press)
-        root.focus_set()
+        try:
+            root.focus_set()
+        except Exception:
+            pass  # Ignore focus errors during initialization
         
         # Window events
         root.bind("<Configure>", self.on_window_resize)
