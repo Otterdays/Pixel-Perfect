@@ -213,7 +213,7 @@ class MainWindow:
         self.left_panel_collapsed = False
         self.right_panel_collapsed = False
         
-        # Left panel container (wrapper for CTk widget)
+        # Left panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.left_container = tk.Frame(self.paned_window, bg="#2b2b2b")
         self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
         
@@ -246,7 +246,7 @@ class MainWindow:
         self.canvas_frame = ctk.CTkFrame(canvas_container)
         self.canvas_frame.pack(fill="both", expand=True)
         
-        # Right panel container (wrapper for CTk widget)
+        # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.right_container = tk.Frame(self.paned_window, bg="#2b2b2b")
         self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
         
@@ -1254,22 +1254,17 @@ class MainWindow:
                 except:
                     pass
             
-            # Re-add the container at the beginning
-            # Get the current first pane to insert before it
-            panes = self.paned_window.panes()
-            if len(panes) > 0:
-                self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never", before=panes[0])
-            else:
-                self.paned_window.add(self.left_container, minsize=220, width=520, stretch="never")
+            # Show the container (INSTANT - no widget recreation!)
+            self.paned_window.paneconfigure(self.left_container, hide=False, minsize=220, width=520)
             
             self.left_collapse_btn.configure(text="◀")
             self.left_panel_collapsed = False
             
-            # Redraw canvas to re-center grid after panel expand
-            self.root.after(50, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel expand (optimized delay)
+            self.root.after(10, self._redraw_canvas_after_resize)
         else:
-            # Collapse panel
-            self.paned_window.forget(self.left_container)
+            # Hide the container (INSTANT - no widget destruction!)
+            self.paned_window.paneconfigure(self.left_container, hide=True)
             self.left_collapse_btn.configure(text="▶")
             self.left_panel_collapsed = True
             
@@ -1299,8 +1294,8 @@ class MainWindow:
             # Place restore button directly on left edge
             self.left_restore_btn.place(x=5, y=100)
             
-            # Redraw canvas to re-center grid after panel collapse
-            self.root.after(50, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel collapse (optimized delay)
+            self.root.after(10, self._redraw_canvas_after_resize)
     
     def _toggle_right_panel(self):
         """Collapse or expand the right panel"""
@@ -1312,17 +1307,17 @@ class MainWindow:
                 except:
                     pass
             
-            # Re-add the container at the end (panels already created - INSTANT!)
-            self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
+            # Show the container (INSTANT - no widget recreation!)
+            self.paned_window.paneconfigure(self.right_container, hide=False, minsize=220, width=500)
             
             self.right_collapse_btn.configure(text="▶")
             self.right_panel_collapsed = False
             
-            # Redraw canvas to re-center grid after panel expand
-            self.root.after(50, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel expand (optimized delay)
+            self.root.after(10, self._redraw_canvas_after_resize)
         else:
-            # Collapse panel
-            self.paned_window.forget(self.right_container)
+            # Hide the container (INSTANT - no widget destruction!)
+            self.paned_window.paneconfigure(self.right_container, hide=True)
             self.right_collapse_btn.configure(text="◀")
             self.right_panel_collapsed = True
             
@@ -1353,8 +1348,8 @@ class MainWindow:
             # Use anchor='ne' to position from right edge (match left button offset)
             self.right_restore_btn.place(relx=1.0, x=-5, y=100, anchor='ne')
             
-            # Redraw canvas to re-center grid after panel collapse
-            self.root.after(50, self._redraw_canvas_after_resize)
+            # Redraw canvas to re-center grid after panel collapse (optimized delay)
+            self.root.after(10, self._redraw_canvas_after_resize)
     
     def _on_restore_btn_enter(self, button):
         """Hover effect - color already handled in bind"""
