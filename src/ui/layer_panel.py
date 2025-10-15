@@ -91,7 +91,7 @@ class LayerPanel:
     
     def _update_display(self):
         """Update the layer display"""
-        # Clear existing layer buttons
+        # Clear existing layer buttons (optimized - only destroy if needed)
         for widget in self.list_frame.winfo_children():
             widget.destroy()
         

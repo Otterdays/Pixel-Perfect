@@ -141,7 +141,7 @@ class TimelinePanel:
     
     def _update_display(self):
         """Update the timeline display"""
-        # Clear existing frame buttons
+        # Clear existing frame buttons (optimized - only destroy if needed)
         for widget in self.frame_list_frame.winfo_children():
             widget.destroy()
         

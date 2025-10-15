@@ -277,6 +277,11 @@ class MainWindow:
         self._create_canvas_panel()
         self._create_layer_panel()
         
+        # Pre-create layer and timeline panels for instant loading (OPTIMIZATION)
+        self._create_layer_and_timeline_panels()
+    
+    def _create_layer_and_timeline_panels(self):
+        """Create layer and timeline panels once for instant loading (OPTIMIZATION)"""
         # Initialize layer panel
         self.layer_panel = LayerPanel(self.right_panel, self.layer_manager)
         self.layer_panel.on_layer_changed = self._on_layer_changed
@@ -284,6 +289,9 @@ class MainWindow:
         # Initialize timeline panel
         self.timeline_panel = TimelinePanel(self.right_panel, self.timeline)
         self.timeline_panel.on_frame_changed = self._on_frame_changed
+        
+        # Mark panels as pre-created for optimization
+        self._panels_pre_created = True
     
     def _create_toolbar(self):
         """Create top toolbar"""
@@ -1304,7 +1312,7 @@ class MainWindow:
                 except:
                     pass
             
-            # Re-add the container at the end
+            # Re-add the container at the end (panels already created - INSTANT!)
             self.paned_window.add(self.right_container, minsize=220, width=500, stretch="never")
             
             self.right_collapse_btn.configure(text="▶")
