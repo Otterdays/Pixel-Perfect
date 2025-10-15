@@ -1,5 +1,59 @@
 # Pixel Perfect - Development Scratchpad
 
+## Version 1.65 - Selection Manager Extraction
+**Date**: October 15, 2025
+**Status**: Complete ✅ (Extracted all selection operations to dedicated manager)
+
+### Selection Manager Created
+**New File**: `src/ui/selection_manager.py` (358 lines)
+
+**Purpose**: Extract all selection transformation operations from main_window.py to improve modularity and reduce token consumption.
+
+**Methods Extracted** (10 total):
+1. `on_selection_complete()` - Auto-switch to move tool after selection
+2. `mirror_selection()` - Horizontal flip transformation
+3. `rotate_selection()` - 90° clockwise rotation with dimension handling
+4. `copy_selection()` - Copy selected pixels to clipboard
+5. `scale_selection()` - Enter interactive scaling mode
+6. `apply_scale()` - Apply scaling transformation
+7. `place_copy_at()` - Place copied pixels at canvas position
+8. `get_scale_handle()` - Detect which handle/edge was clicked
+9. `draw_scale_handle()` - Draw scale handle on canvas
+10. `preview_scaled_pixels()` - Live preview during scaling
+
+**State Variables Moved**:
+- `is_scaling`, `scale_handle`, `scale_original_rect`, `scale_true_original_rect`, `scale_is_dragging`
+- `copy_buffer`, `copy_dimensions`, `is_placing_copy`
+
+**Integration**:
+- Initialized in `main_window.py` after tools creation (before UI)
+- 5 callbacks set for canvas updates, display refresh, tool selection, etc.
+- Widget references set after UI creation (drawing_canvas, scale_btn, tool_buttons)
+- All button callbacks updated to use `self.selection_mgr.*` methods
+- EventDispatcher updated to reference `selection_mgr` state variables
+
+**Line Reduction**:
+- main_window.py: 2,724 → 2,374 lines (-350 lines, -12.9%)
+- New selection_manager.py: +438 lines (includes documentation)
+- Net reduction: ~350 lines removed from main_window.py
+
+**Benefits**:
+- ✅ Clear separation of selection transformation logic
+- ✅ All numpy operations centralized in one module
+- ✅ Easier to test transformations independently
+- ✅ Move tool background clearing logic preserved
+- ✅ Scaling state management isolated
+
+**Cumulative Progress**:
+- Starting point: 3,387 lines
+- After Phase 3 (File Ops): 3,029 lines
+- After Phase 4 (Dialogs): 2,724 lines
+- After Phase 1 (Selection): 2,374 lines
+- **Total reduction**: 1,013 lines (29.9%)
+- **Remaining to target**: ~1,520 lines (3 phases)
+
+---
+
 ## Version 1.63 - Complete Application Restoration & Tool Consistency Fixes
 
 ### Problem

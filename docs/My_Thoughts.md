@@ -4,6 +4,95 @@
 
 ---
 
+## October 15, 2025 - Selection Manager Extraction
+
+**Context**: Third successful extraction! User confirmed Dialog Manager works, proceeded with Selection Manager extraction (Phase 1).
+
+**The Approach**:
+- Created `src/ui/selection_manager.py` (358 lines) with 10 transformation methods
+- Moved 8 state variables from main_window to selection_mgr
+- Updated EventDispatcher to use `selection_mgr` references
+- Used callback pattern for canvas updates
+
+**Critical Discoveries**:
+
+**1. State Variable Migration**
+Moved these from main_window to selection_mgr:
+- Scaling: `is_scaling`, `scale_handle`, `scale_original_rect`, `scale_true_original_rect`, `scale_is_dragging`
+- Copy/Paste: `copy_buffer`, `copy_dimensions`, `is_placing_copy`
+
+**Left in main_window** (used by EventDispatcher):
+- `copy_preview_pos` - EventDispatcher needs direct access for preview positioning
+- `scale_start_pos` - EventDispatcher tracks mouse start position
+
+**2. EventDispatcher Updates Required**
+Had to update all references:
+```python
+# Old
+if self.main_window.is_scaling:
+    self.main_window._place_copy_at(x, y)
+
+# New
+if self.main_window.selection_mgr.is_scaling:
+    self.main_window.selection_mgr.place_copy_at(x, y)
+```
+
+**3. Widget References Pattern**
+Set AFTER UI creation (widgets don't exist earlier):
+```python
+self.selection_mgr.drawing_canvas = self.drawing_canvas
+self.selection_mgr.scale_btn = self.scale_btn
+self.selection_mgr.tool_buttons = self.tool_buttons
+```
+
+**4. Callback Tool Coordination**
+Selection tool callback needs updating:
+```python
+# Old
+self.tools["selection"].on_selection_complete = self._on_selection_complete
+
+# New  
+self.tools["selection"].on_selection_complete = self.selection_mgr.on_selection_complete
+```
+
+**Result**:
+- ✅ main_window.py: 2,724 → 2,374 lines (-350 lines, -12.9%)
+- ✅ All selection transformations work (mirror, rotate, copy, scale)
+- ✅ EventDispatcher properly references selection_mgr
+- ✅ Move tool background clearing preserved (prevents copy-behind bug)
+- ✅ Total reduction: 1,013 lines (29.9% from baseline)
+
+**Lessons for Future Agents**:
+- When extracting operations that EventDispatcher uses, update BOTH main_window AND event_dispatcher
+- State variables that EventDispatcher reads directly should stay in main_window (avoid breaking tight coupling)
+- State variables only used by extracted methods can move to manager
+- Widget references must be set AFTER UI creation, not during manager init
+- Tool callbacks must be updated when extracting their handlers
+
+**What Makes This Hard**:
+- Selection operations touch canvas, layers, tools, and UI widgets
+- EventDispatcher has tight coupling with scaling/copy state
+- Move tool integration (background clearing to prevent bugs)
+- Widget references needed for cursor changes and button highlighting
+
+**What Worked**:
+- Callback pattern for canvas updates
+- Moving state variables to manager
+- Updating EventDispatcher systematically
+- Preserving move tool bug fixes
+
+**Next Phases** (in recommended order):
+1. ✅ File Operations (DONE)
+2. ✅ Dialog Manager (DONE)
+3. ✅ Selection Manager (DONE)
+4. Canvas Renderer (~400 lines) - Rendering logic, previews, grid
+5. UI Builder Completion (~300 lines) - Remaining UI methods
+6. Color View Manager (~600 lines) - Most complex, do LAST
+
+Target: ~850-900 lines (currently 2,374, need ~1,520 more)
+
+---
+
 ## October 15, 2025 - File Operations Manager Extraction
 
 **Context**: Continuing the modularization effort to break down the massive `main_window.py` file (3,387 lines). User requested ONE focused extraction, then documentation updates, with NO git commits.

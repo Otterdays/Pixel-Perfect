@@ -43,9 +43,10 @@ class FileOperationsManager:
         self.layer_panel = layer_panel
         self.timeline_panel = timeline_panel
         
-        # Callback for forcing canvas updates (will be set by main_window)
+        # Callbacks for forcing canvas updates (will be set by main_window)
         self.force_canvas_update_callback = None
         self.update_canvas_from_layers_callback = None
+        self.clear_selection_and_reset_tools_callback = None
     
     def new_project(self):
         """Create a new project"""
@@ -58,6 +59,10 @@ class FileOperationsManager:
         # Reset timeline
         self.timeline.clear_frames()
         self.timeline.add_frame()
+        
+        # Clear selection and reset tools to brush
+        if self.clear_selection_and_reset_tools_callback:
+            self.clear_selection_and_reset_tools_callback()
         
         # Force canvas redraw with grid and update UI
         if self.force_canvas_update_callback:

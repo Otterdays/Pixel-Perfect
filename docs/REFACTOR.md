@@ -1,26 +1,27 @@
 # Pixel Perfect - Refactoring Guide
 
 **Last Updated**: October 15, 2025  
-**Version**: 1.62  
-**Status**: 🟢 **IN PROGRESS** - Phase 3 Complete!
+**Version**: 1.65  
+**Status**: 🟢 **IN PROGRESS** - Phases 1, 3, 4 Complete!
 
 ---
 
 ## 🎯 Current Status
 
-**main_window.py**: **2,724 lines** (down from 3,387)  
-**Progress**: 19.6% reduction (663 lines removed)  
+**main_window.py**: **2,374 lines** (down from 3,387)  
+**Progress**: 29.9% reduction (1,013 lines removed)  
 **Target**: ~850-900 lines (core orchestration only)  
-**Remaining**: ~1,870 lines to extract (4 phases)
+**Remaining**: ~1,520 lines to extract (3 phases)
 
 ### Completed Extractions ✅
 - ✅ **UIBuilder** (436 lines) - Toolbar, tool panel, palette panel, canvas panel
 - ✅ **EventDispatcher** (472 lines) - All mouse/keyboard event handling
 - ✅ **FileOperationsManager** (395 lines) - All file I/O operations
-- ✅ **DialogManager** (417 lines) - All custom dialogs (size, warning, texture)
+- ✅ **DialogManager** (402 lines) - All custom dialogs (size, warning, texture)
+- ✅ **SelectionManager** (438 lines) - All selection operations (mirror, rotate, scale, copy)
 
 ### Next Up 📋
-**Phase 1: Selection Manager** (~500 lines) - Selection operations (mirror, rotate, scale, copy)
+**Phase 5: Canvas Renderer** (~400 lines) - All rendering logic (grid, pixels, previews)
 
 ---
 
@@ -31,7 +32,7 @@
 | **Starting Point** | - | - | **3,387** | Baseline |
 | Phase 3: File Ops | 400 | **358** | **3,029** | ✅ **COMPLETE** |
 | Phase 4: Dialogs | 300 | **323** | **2,724** | ✅ **COMPLETE** |
-| Phase 1: Selection | 500 | TBD | ~2,200 | 📋 **Next** |
+| Phase 1: Selection | 500 | **350** | **2,374** | ✅ **COMPLETE** |
 | Phase 5: Renderer | 400 | TBD | ~1,800 | ⏳ Pending |
 | Phase 2: Colors | 600 | TBD | ~1,200 | ⏳ Pending |
 | Phase 6: UI Builder | 300 | TBD | ~900 | ⏳ Pending |

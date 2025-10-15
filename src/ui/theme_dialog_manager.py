@@ -341,7 +341,11 @@ class ThemeDialogManager:
                     widget.configure(text_color=theme.text_primary)
                 elif isinstance(widget, ctk.CTkScrollableFrame):
                     # Style scrollable frames (like custom colors)
-                    widget.configure(fg_color=theme.bg_tertiary)
+                    widget.configure(
+                        fg_color=theme.bg_tertiary,
+                        scrollbar_button_color=theme.scrollbar_button_color,
+                        scrollbar_button_hover_color=theme.scrollbar_button_hover_color
+                    )
                     # Recursively update children
                     self._apply_theme_to_children(widget, theme)
                 elif isinstance(widget, ctk.CTkCanvas):

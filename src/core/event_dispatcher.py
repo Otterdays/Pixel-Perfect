@@ -185,31 +185,28 @@ class EventDispatcher:
         canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
 
         # Handle copy placement mode
-        if self.main_window.is_placing_copy and self.main_window.copy_buffer is not None:
+        if self.main_window.selection_mgr.is_placing_copy and self.main_window.selection_mgr.copy_buffer is not None:
             if 0 <= canvas_x < self.main_window.canvas.width and 0 <= canvas_y < self.main_window.canvas.height:
-                self.main_window._place_copy_at(canvas_x, canvas_y)
+                self.main_window.selection_mgr.place_copy_at(canvas_x, canvas_y)
             return
         
         # Handle scaling mode
-        if self.main_window.is_scaling:
+        if self.main_window.selection_mgr.is_scaling:
             selection_tool = self.main_window.tools.get("selection")
             if selection_tool and selection_tool.selection_rect:
                 left, top, width, height = selection_tool.selection_rect
                 
                 # Check if clicking near a handle or edge
-                handle = self.main_window._get_scale_handle(canvas_x, canvas_y, left, top, width, height)
+                handle = self.main_window.selection_mgr.get_scale_handle(canvas_x, canvas_y, left, top, width, height)
                 
                 if handle:
                     # Start scaling from this handle
-                    self.main_window.scaling_handle = handle
-                    self.main_window.scaling_start_x = canvas_x
-                    self.main_window.scaling_start_y = canvas_y
-                    self.main_window.scaling_original_rect = (left, top, width, height)
+                    self.main_window.selection_mgr.scale_handle = handle
                     return
                 else:
                     # Click outside handles - cancel scaling mode
-                    self.main_window.is_scaling = False
-                    self.main_window.scaling_handle = None
+                    self.main_window.selection_mgr.is_scaling = False
+                    self.main_window.selection_mgr.scale_handle = None
                     self.main_window._update_pixel_display()
                     return
         
@@ -248,7 +245,7 @@ class EventDispatcher:
         elif self.main_window.current_tool == "eraser" and self.main_window.eraser_size > 1:
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
+                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
@@ -259,11 +256,18 @@ class EventDispatcher:
         if self.main_window.current_tool == "eraser" and self.main_window.eraser_size == 1:
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
+                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
                 tool.is_erasing = True  # Set erasing state
+        elif self.main_window.current_tool == "fill":
+            # Handle fill tool with layer-based approach for consistency
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer:
+                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, current_color)
+                self.main_window._update_canvas_from_layers()
+                self.main_window.canvas_renderer.update_pixel_display()
         else:
             # Call tool's on_mouse_down method (standard interface) for other tools
             tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
@@ -279,7 +283,7 @@ class EventDispatcher:
             return
         
         # Handle scaling mode
-        if self.main_window.is_scaling and self.main_window.scaling_handle:
+        if self.main_window.selection_mgr.is_scaling and self.main_window.selection_mgr.scale_handle:
             # Finish scaling
             self.main_window.scaling_handle = None
             self.main_window.canvas_renderer.update_pixel_display()
@@ -331,7 +335,7 @@ class EventDispatcher:
             return
         
         # Handle scaling mode
-        if self.main_window.is_scaling and self.main_window.scaling_handle:
+        if self.main_window.selection_mgr.is_scaling and self.main_window.selection_mgr.scale_handle:
             canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
             self.main_window._update_scaling(canvas_x, canvas_y)
             return
@@ -369,7 +373,7 @@ class EventDispatcher:
             # Handle both 1x1 and multi-pixel eraser during drag
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_erasing') and tool.is_erasing:
-                self.main_window._draw_eraser_at(draw_layer, canvas_x, canvas_y)
+                self.main_window._erase_at(draw_layer, canvas_x, canvas_y)
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
@@ -400,12 +404,13 @@ class EventDispatcher:
             self.main_window.drawing_canvas.delete("brush_preview")
             self.main_window.drawing_canvas.delete("eraser_preview")
             self.main_window.drawing_canvas.delete("texture_preview")
-            self.main_window.copy_preview_pos = None  # Clear copy preview position
+            if hasattr(self.main_window, 'selection_mgr'):
+                self.main_window.selection_mgr.copy_preview_pos = None  # Clear copy preview position
             return
         
         # Update copy preview position if in placement mode
-        if self.main_window.is_placing_copy:
-            self.main_window.copy_preview_pos = (canvas_x, canvas_y)
+        if hasattr(self.main_window, 'selection_mgr') and self.main_window.selection_mgr.is_placing_copy:
+            self.main_window.selection_mgr.copy_preview_pos = (canvas_x, canvas_y)
             self.main_window.canvas_renderer.update_pixel_display()
             return
         

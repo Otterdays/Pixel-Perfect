@@ -42,6 +42,7 @@ from ui.ui_builder import UIBuilder
 from ui.theme_dialog_manager import ThemeDialogManager
 from ui.file_operations_manager import FileOperationsManager
 from ui.dialog_manager import DialogManager
+from ui.selection_manager import SelectionManager
 
 class MainWindow:
     """Main application window"""
@@ -49,7 +50,7 @@ class MainWindow:
     def __init__(self):
         # Set up CustomTkinter theme
         ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
+        # Note: Removed ctk.set_default_color_theme("blue") to allow custom theme colors
         
         # Create main window
         self.root = ctk.CTk()
@@ -160,11 +161,6 @@ class MainWindow:
         # Eraser size (1x1, 2x2, 3x3)
         self.eraser_size = 1
         
-        # Connect selection and move tools
-        self.tools["move"].set_selection_tool(self.tools["selection"])
-        
-        # Set up auto-switch to move tool after selection
-        self.tools["selection"].on_selection_complete = self._on_selection_complete
         
         # UI state
         self.is_drawing = False
@@ -172,19 +168,11 @@ class MainWindow:
         self._last_drawn_pixel = None  # Track last drawn pixel for efficient updates
         self._updating_display = False  # Flag to prevent recursion
         
-        # Copy/paste state
-        self.is_placing_copy = False
-        self.copy_buffer = None
-        self.copy_dimensions = None
+        # Copy preview position (EventDispatcher needs this)
         self.copy_preview_pos = None  # Mouse position for copy preview
         
-        # Scaling state
-        self.is_scaling = False
-        self.scale_handle = None  # Which handle is being dragged
+        # Scale state for EventDispatcher (points to selection_mgr)
         self.scale_start_pos = None
-        self.scale_original_rect = None  # Reference rect for calculating deltas (updates between drags)
-        self.scale_true_original_rect = None  # Never changes - used for final apply
-        self.scale_is_dragging = False  # True while actively dragging (mouse down)
         
         # Pan state
         self.pan_offset_x = 0
@@ -197,6 +185,17 @@ class MainWindow:
         self.theme_manager = ThemeManager()
         # Initialize theme dialog manager
         self.theme_dialog_manager = ThemeDialogManager(self)
+        
+        # Initialize selection manager (needed before tool connections)
+        self.selection_mgr = SelectionManager(
+            self.canvas, self.layer_manager, self.tools, self.theme_manager
+        )
+        
+        # Connect selection and move tools (after SelectionManager is initialized)
+        self.tools["move"].set_selection_tool(self.tools["selection"])
+        
+        # Set up auto-switch to move tool after selection
+        self.tools["selection"].on_selection_complete = self.selection_mgr.on_selection_complete
         
         # Initialize canvas renderer (before UI creation)
         from src.core.canvas_renderer import CanvasRenderer
@@ -310,7 +309,9 @@ class MainWindow:
         self.left_panel = ctk.CTkScrollableFrame(
             self.left_container, 
             width=self.left_panel_width,
-            fg_color=self.theme_manager.get_current_theme().bg_secondary
+            fg_color=self.theme_manager.get_current_theme().bg_secondary,
+            scrollbar_button_color=self.theme_manager.get_current_theme().scrollbar_button_color,
+            scrollbar_button_hover_color=self.theme_manager.get_current_theme().scrollbar_button_hover_color
         )
         self.left_panel.pack(side="left", fill="both", expand=True)
         
@@ -344,13 +345,21 @@ class MainWindow:
         self.right_panel = ctk.CTkScrollableFrame(
             self.right_container, 
             width=self.right_panel_width,
-            fg_color="transparent"
+            fg_color="transparent",
+            scrollbar_button_color=self.theme_manager.get_current_theme().scrollbar_button_color,
+            scrollbar_button_hover_color=self.theme_manager.get_current_theme().scrollbar_button_hover_color
         )
         self.right_panel.pack(side="right", fill="both", expand=True)
         
         # Create panels using UIBuilder
         selection_buttons = self.ui_builder.create_tool_panel(self.left_panel, self.tool_buttons, self._get_ui_callbacks())
         self.tool_frame = selection_buttons['tool_frame']
+        
+        # Assign selection button references
+        self.mirror_btn = selection_buttons['mirror_btn']
+        self.rotate_btn = selection_buttons['rotate_btn']
+        self.copy_btn = selection_buttons['copy_btn']
+        self.scale_btn = selection_buttons['scale_btn']
         
         # Update tool button text to show sizes
         self._update_brush_button_text()
@@ -399,9 +408,20 @@ class MainWindow:
         )
         self.file_ops.force_canvas_update_callback = self._force_tkinter_canvas_update
         self.file_ops.update_canvas_from_layers_callback = self._update_canvas_from_layers
+        self.file_ops.clear_selection_and_reset_tools_callback = self._clear_selection_and_reset_tools
         
         # Set dialog manager callback (dialog_mgr initialized earlier)
         self.dialog_mgr.select_tool_callback = self._select_tool
+        
+        # Set selection manager callbacks and widget references
+        self.selection_mgr.update_canvas_callback = self._update_canvas_from_layers
+        self.selection_mgr.update_display_callback = self._update_pixel_display
+        self.selection_mgr.select_tool_callback = self._select_tool
+        self.selection_mgr.update_tool_selection_callback = self._update_tool_selection
+        self.selection_mgr.get_drawing_layer_callback = self._get_drawing_layer
+        self.selection_mgr.drawing_canvas = self.drawing_canvas
+        self.selection_mgr.scale_btn = self.scale_btn
+        self.selection_mgr.tool_buttons = self.tool_buttons
         
         # Force immediate render of all panel widgets (pre-render optimization)
         # This "warms up" CustomTkinter widgets so they appear instantly later
@@ -502,10 +522,10 @@ class MainWindow:
             'show_brush_size_menu': self._show_brush_size_menu,
             'show_eraser_size_menu': self._show_eraser_size_menu,
             'open_texture_panel': self.dialog_mgr.open_texture_panel,
-            'mirror_selection': self._mirror_selection,
-            'rotate_selection': self._rotate_selection,
-            'copy_selection': self._copy_selection,
-            'scale_selection': self._scale_selection,
+            'mirror_selection': self.selection_mgr.mirror_selection,
+            'rotate_selection': self.selection_mgr.rotate_selection,
+            'copy_selection': self.selection_mgr.copy_selection,
+            'scale_selection': self.selection_mgr.scale_selection,
             'on_palette_change': self._on_palette_change,
             'on_view_mode_change': self._on_view_mode_change,
             'initialize_all_views': self._initialize_all_views,
@@ -688,20 +708,6 @@ class MainWindow:
                 if 0 <= px < layer.width and 0 <= py < layer.height:
                     layer.set_pixel(px, py, color)
     
-    def _draw_eraser_at(self, layer, x: int, y: int):
-        """Draw eraser at position with current size"""
-        # Calculate offset for centering (makes odd sizes like 3x3 centered properly)
-        offset = self.eraser_size // 2
-        
-        # Erase NxN square (set to transparent)
-        for dy in range(self.eraser_size):
-            for dx in range(self.eraser_size):
-                px = x - offset + dx
-                py = y - offset + dy
-                
-                # Check bounds
-                if 0 <= px < layer.width and 0 <= py < layer.height:
-                    layer.set_pixel(px, py, (0, 0, 0, 0))  # Transparent
     
     def _show_eraser_size_menu(self, event):
         """Show eraser size selection popup menu"""
@@ -770,12 +776,12 @@ class MainWindow:
         self.drawing_canvas.delete("texture_preview")
         
         # Exit scaling mode if active
-        if self.is_scaling:
-            self.is_scaling = False
-            self.scale_handle = None
-            self.scale_original_rect = None
-            self.scale_true_original_rect = None
-            self.scale_is_dragging = False
+        if hasattr(self, 'selection_mgr') and self.selection_mgr.is_scaling:
+            self.selection_mgr.is_scaling = False
+            self.selection_mgr.scale_handle = None
+            self.selection_mgr.scale_original_rect = None
+            self.selection_mgr.scale_true_original_rect = None
+            self.selection_mgr.scale_is_dragging = False
             self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
             # Debug: Exited scaling mode (removed for clean console)
         
@@ -797,358 +803,14 @@ class MainWindow:
                 # Debug: Selection cleared - switched to different tool (removed for clean console)
         
         self.current_tool = tool_id
+        
+        # Update tool button appearance
         self._update_tool_selection()
         
         # Update canvas cursor based on selected tool
         if hasattr(self, 'drawing_canvas') and tool_id in self.tools:
             tool = self.tools[tool_id]
             self.drawing_canvas.configure(cursor=tool.cursor)
-    
-    def _on_selection_complete(self):
-        """Called when selection is complete - auto-switch to move tool"""
-        # Automatically switch to move tool after selection
-        self._select_tool("move")
-        # Debug: Selection complete - switched to Move tool (removed for clean console)
-    
-    def _mirror_selection(self):
-        """Mirror (flip horizontally) the selected pixels"""
-        # Exit scaling mode if active
-        if self.is_scaling:
-            self.is_scaling = False
-            self.scale_handle = None
-            self.scale_original_rect = None
-            self.scale_true_original_rect = None
-            self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
-            self._update_tool_selection()
-            # Debug: Exited scaling mode (removed for clean console)
-        
-        selection_tool = self.tools.get("selection")
-        if not selection_tool or not selection_tool.has_active_selection():
-            # Debug: No selection to mirror (removed for clean console)
-            return
-        
-        # Get selection data
-        if selection_tool.selected_pixels is None:
-            return
-        
-        bounds = selection_tool.get_selection_bounds()
-        if not bounds:
-            return
-        
-        left, top, width, height = bounds
-        
-        # Mirror the pixels horizontally (flip left-right)
-        mirrored_pixels = np.flip(selection_tool.selected_pixels, axis=1).copy()
-        
-        # Update the selection with mirrored pixels
-        selection_tool.selected_pixels = mirrored_pixels
-        
-        # Redraw on canvas
-        draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            for py in range(height):
-                for px in range(width):
-                    if py < mirrored_pixels.shape[0] and px < mirrored_pixels.shape[1]:
-                        pixel_color = tuple(mirrored_pixels[py, px])
-                        canvas_x = left + px
-                        canvas_y = top + py
-                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
-            
-            # Update canvas display
-            self._update_canvas_from_layers()
-            self._update_pixel_display()
-            
-        # Debug: Selection mirrored (removed for clean console)
-    
-    def _rotate_selection(self):
-        """Rotate the selected pixels 90 degrees clockwise"""
-        # Exit scaling mode if active
-        if self.is_scaling:
-            self.is_scaling = False
-            self.scale_handle = None
-            self.scale_original_rect = None
-            self.scale_true_original_rect = None
-            self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
-            self._update_tool_selection()
-            # Debug: Exited scaling mode (removed for clean console)
-        
-        selection_tool = self.tools.get("selection")
-        if not selection_tool or not selection_tool.has_active_selection():
-            # Debug: No selection to rotate (removed for clean console)
-            return
-        
-        # Get selection data
-        if selection_tool.selected_pixels is None:
-            return
-        
-        bounds = selection_tool.get_selection_bounds()
-        if not bounds:
-            return
-        
-        left, top, width, height = bounds
-        
-        # Rotate 90 degrees clockwise: transpose then flip horizontally
-        rotated_pixels = np.rot90(selection_tool.selected_pixels, k=-1).copy()
-        
-        # Update the selection with rotated pixels
-        selection_tool.selected_pixels = rotated_pixels
-        
-        # Note: rotation changes dimensions (width becomes height, height becomes width)
-        new_width = rotated_pixels.shape[1]
-        new_height = rotated_pixels.shape[0]
-        
-        # Update selection rectangle with new dimensions
-        selection_tool.selection_rect = (left, top, new_width, new_height)
-        
-        # Clear old area
-        draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            # Clear original area
-            for py in range(height):
-                for px in range(width):
-                    canvas_x = left + px
-                    canvas_y = top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-            
-            # Draw rotated pixels
-            for py in range(new_height):
-                for px in range(new_width):
-                    if py < rotated_pixels.shape[0] and px < rotated_pixels.shape[1]:
-                        pixel_color = tuple(rotated_pixels[py, px])
-                        canvas_x = left + px
-                        canvas_y = top + py
-                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                            if pixel_color[3] > 0:  # Only draw non-transparent pixels
-                                draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
-            
-            # Update canvas display
-            self._update_canvas_from_layers()
-            self._update_pixel_display()
-            
-        # Debug: Selection rotated 90° clockwise (removed for clean console)
-    
-    def _copy_selection(self):
-        """Enter copy mode - allows placing a copy of the selection"""
-        # Exit scaling mode if active
-        if self.is_scaling:
-            self.is_scaling = False
-            self.scale_handle = None
-            self.scale_original_rect = None
-            self.scale_true_original_rect = None
-            self.scale_is_dragging = False
-            self.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
-            self._update_tool_selection()
-            # Debug: Exited scaling mode (removed for clean console)
-        
-        selection_tool = self.tools.get("selection")
-        if not selection_tool or not selection_tool.has_active_selection():
-            # Debug: No selection to copy (removed for clean console)
-            return
-        
-        # Get selection data
-        if selection_tool.selected_pixels is None:
-            return
-        
-        # Store copy data
-        self.copy_buffer = selection_tool.selected_pixels.copy()
-        bounds = selection_tool.get_selection_bounds()
-        if bounds:
-            _, _, width, height = bounds
-            self.copy_dimensions = (width, height)
-            
-            # Switch to a placement mode
-            self.is_placing_copy = True
-            
-            # Debug: Selection copied - click on canvas to place (removed for clean console)
-    
-    def _scale_selection(self):
-        """Enter scaling mode for the selection"""
-        selection_tool = self.tools.get("selection")
-        if not selection_tool or not selection_tool.has_active_selection():
-            # Debug: No selection to scale (removed for clean console)
-            return
-        
-        bounds = selection_tool.get_selection_bounds()
-        if not bounds:
-            return
-        
-        # Enter scaling mode
-        self.is_scaling = True
-        self.scale_original_rect = bounds  # Reference for calculating deltas
-        self.scale_true_original_rect = bounds  # Never changes - for final apply
-        
-        # Change cursor to arrow for grabbing handles
-        self.drawing_canvas.configure(cursor="arrow")
-        
-        # Update button states - deselect tool buttons, highlight Scale button
-        for tool_id, btn in self.tool_buttons.items():
-            btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
-        self.scale_btn.configure(fg_color="blue")
-        
-        # Update display to show handles
-        self._update_pixel_display()
-        
-        # Debug: Scaling mode messages (removed for clean console)
-        # Debug: Click away from selection to exit (removed for clean console)
-    
-    def _apply_scale(self, new_rect):
-        """Apply scaling to the selection"""
-        selection_tool = self.tools.get("selection")
-        if not selection_tool or selection_tool.selected_pixels is None:
-            return
-        
-        # Use the TRUE original rect (from when we entered scale mode)
-        old_left, old_top, old_width, old_height = self.scale_true_original_rect
-        new_left, new_top, new_width, new_height = new_rect
-        
-        # Ensure minimum size
-        if new_width < 1 or new_height < 1:
-            return
-        
-        # Scale the pixels using nearest neighbor (simple fallback method)
-            self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
-    
-    def _simple_scale(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
-        """Simple scaling without scipy"""
-        scaled_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
-        
-        for ny in range(new_height):
-            for nx in range(new_width):
-                # Map to original coordinates
-                ox = int(nx * old_width / new_width)
-                oy = int(ny * old_height / new_height)
-                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
-                    scaled_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
-        
-        selection_tool.selected_pixels = scaled_pixels
-        selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
-        
-        # Redraw
-        draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            for py in range(new_height):
-                for px in range(new_width):
-                    pixel_color = tuple(scaled_pixels[py, px])
-                    canvas_x = new_left + px
-                    canvas_y = new_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        if pixel_color[3] > 0:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
-            
-            self._update_canvas_from_layers()
-            self._update_pixel_display()
-    
-    def _preview_scaled_pixels(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
-        """Show a live preview of scaled pixels during drag (doesn't modify stored data)"""
-        # Quick nearest-neighbor scaling for preview
-        preview_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
-        
-        for ny in range(new_height):
-            for nx in range(new_width):
-                # Map to original coordinates
-                ox = int(nx * old_width / new_width)
-                oy = int(ny * old_height / new_height)
-                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
-                    preview_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
-        
-        # Temporarily draw the preview on canvas
-        draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            # Clear the TRUE original area (where pixels actually were)
-            true_orig_left, true_orig_top, true_orig_width, true_orig_height = self.scale_true_original_rect
-            for py in range(true_orig_height):
-                for px in range(true_orig_width):
-                    canvas_x = true_orig_left + px
-                    canvas_y = true_orig_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-            
-            # Draw the scaled preview
-            for py in range(new_height):
-                for px in range(new_width):
-                    pixel_color = tuple(preview_pixels[py, px])
-                    canvas_x = new_left + px
-                    canvas_y = new_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        if pixel_color[3] > 0:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
-            
-            self._update_canvas_from_layers()
-            self._update_pixel_display()
-    
-    def _get_scale_handle(self, x: int, y: int, left: int, top: int, width: int, height: int):
-        """Detect which scale handle/edge the user clicked near"""
-        handle_tolerance = max(3, 8 // self.canvas.zoom)  # Adjust based on zoom
-        
-        right = left + width
-        bottom = top + height
-        
-        # Check corners first (higher priority)
-        if abs(x - left) <= handle_tolerance and abs(y - top) <= handle_tolerance:
-            return "tl"  # Top-left
-        if abs(x - right) <= handle_tolerance and abs(y - top) <= handle_tolerance:
-            return "tr"  # Top-right
-        if abs(x - left) <= handle_tolerance and abs(y - bottom) <= handle_tolerance:
-            return "bl"  # Bottom-left
-        if abs(x - right) <= handle_tolerance and abs(y - bottom) <= handle_tolerance:
-            return "br"  # Bottom-right
-        
-        # Check edges
-        if abs(x - left) <= handle_tolerance and top <= y <= bottom:
-            return "l"  # Left edge
-        if abs(x - right) <= handle_tolerance and top <= y <= bottom:
-            return "r"  # Right edge
-        if abs(y - top) <= handle_tolerance and left <= x <= right:
-            return "t"  # Top edge
-        if abs(y - bottom) <= handle_tolerance and left <= x <= right:
-            return "b"  # Bottom edge
-        
-        return None
-    
-    def _draw_scale_handle(self, x: float, y: float, size: int, color: str):
-        """Draw a scale handle on the canvas"""
-        half_size = size / 2
-        self.drawing_canvas.create_rectangle(
-            x - half_size, y - half_size,
-            x + half_size, y + half_size,
-            fill=color,
-            outline="black",
-            width=1,
-            tags="selection"
-        )
-    
-    def _place_copy_at(self, canvas_x: int, canvas_y: int):
-        """Place the copied pixels at the specified position"""
-        if self.copy_buffer is None or self.copy_dimensions is None:
-            return
-        
-        width, height = self.copy_dimensions
-        
-        # Place pixels
-        draw_layer = self._get_drawing_layer()
-        if draw_layer:
-            for py in range(height):
-                for px in range(width):
-                    if py < self.copy_buffer.shape[0] and px < self.copy_buffer.shape[1]:
-                        pixel_color = tuple(self.copy_buffer[py, px])
-                        dest_x = canvas_x + px
-                        dest_y = canvas_y + py
-                        if 0 <= dest_x < self.canvas.width and 0 <= dest_y < self.canvas.height:
-                            # Only draw non-transparent pixels
-                            if pixel_color[3] > 0:
-                                draw_layer.set_pixel(dest_x, dest_y, pixel_color)
-            
-            # Update canvas display
-            self._update_canvas_from_layers()
-            self._update_pixel_display()
-            
-        # Exit placement mode
-        self.is_placing_copy = False
-        # Debug: Copy placed (removed for clean console)
     
     def _update_tool_selection(self):
         """Update tool button appearance"""
@@ -1982,10 +1644,16 @@ class MainWindow:
         
         # Update canvas with the flattened result
         self.canvas.pixels = flattened_pixels
-        self.canvas._redraw_surface()
+    
+    def _clear_selection_and_reset_tools(self):
+        """Clear any active selection and reset tools to brush"""
+        # Clear selection if there is one
+        selection_tool = self.tools.get("selection")
+        if selection_tool and selection_tool.has_selection:
+            selection_tool.clear_selection()
         
-        # Refresh the tkinter display (use update instead of initial draw to prevent loop)
-        self._update_pixel_display()
+        # Reset tool to brush
+        self._select_tool("brush")
     
     def _get_drawing_layer(self):
         """Get the layer to draw on (active layer or topmost visible layer)"""
@@ -2515,22 +2183,21 @@ class MainWindow:
             self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2 - corner_size, screen_y2, fill="white", width=3, tags="selection")
             self.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2, screen_y2 - corner_size, fill="white", width=3, tags="selection")
             
-            # Draw scale handles if in scaling mode
-            if self.is_scaling:
-                handle_size = 8
-                # Draw corner handles
-                self.canvas_renderer.draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")  # Top-left
-                self.canvas_renderer.draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")  # Top-right
-                self.canvas_renderer.draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")  # Bottom-left
-                self.canvas_renderer.draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")  # Bottom-right
-                
-                # Draw edge handles
-                mid_x = (screen_x1 + screen_x2) / 2
-                mid_y = (screen_y1 + screen_y2) / 2
-                self.canvas_renderer.draw_scale_handle(mid_x, screen_y1, handle_size, "orange")  # Top
-                self.canvas_renderer.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")  # Bottom
-                self.canvas_renderer.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")  # Left
-                self.canvas_renderer.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")  # Right
+            # Draw selection handles (always visible when there's a selection)
+            handle_size = 8
+            # Draw corner handles
+            self.canvas_renderer.draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")  # Top-left
+            self.canvas_renderer.draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")  # Top-right
+            self.canvas_renderer.draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")  # Bottom-left
+            self.canvas_renderer.draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")  # Bottom-right
+            
+            # Draw edge handles
+            mid_x = (screen_x1 + screen_x2) / 2
+            mid_y = (screen_y1 + screen_y2) / 2
+            self.canvas_renderer.draw_scale_handle(mid_x, screen_y1, handle_size, "orange")  # Top
+            self.canvas_renderer.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")  # Bottom
+            self.canvas_renderer.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")  # Left
+            self.canvas_renderer.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")  # Right
         
         # Draw move preview if actively moving selection
         move_tool = self.tools.get("move")
@@ -2561,16 +2228,18 @@ class MainWindow:
                             )
         
         # Draw copy preview if in placement mode
-        if self.is_placing_copy and self.copy_preview_pos and self.copy_buffer is not None and self.copy_dimensions:
-            preview_x, preview_y = self.copy_preview_pos
-            width, height = self.copy_dimensions
+        if (hasattr(self, 'selection_mgr') and self.selection_mgr.is_placing_copy and 
+            self.selection_mgr.copy_preview_pos and self.selection_mgr.copy_buffer is not None and 
+            self.selection_mgr.copy_dimensions):
+            preview_x, preview_y = self.selection_mgr.copy_preview_pos
+            width, height = self.selection_mgr.copy_dimensions
             zoom = self.canvas.zoom
             
             # Draw preview pixels with semi-transparency effect (stipple pattern)
             for py in range(height):
                 for px in range(width):
-                    if py < self.copy_buffer.shape[0] and px < self.copy_buffer.shape[1]:
-                        pixel_color = tuple(self.copy_buffer[py, px])
+                    if py < self.selection_mgr.copy_buffer.shape[0] and px < self.selection_mgr.copy_buffer.shape[1]:
+                        pixel_color = tuple(self.selection_mgr.copy_buffer[py, px])
                         if pixel_color[3] > 0:  # Only draw non-transparent pixels
                             canvas_x = preview_x + px
                             canvas_y = preview_y + py

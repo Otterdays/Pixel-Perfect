@@ -158,19 +158,19 @@ class CanvasRenderer:
             self.app.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2 - corner_size, screen_y2, fill="white", width=3, tags="selection")
             self.app.drawing_canvas.create_line(screen_x2, screen_y2, screen_x2, screen_y2 - corner_size, fill="white", width=3, tags="selection")
             
-            if self.app.is_scaling:
-                handle_size = 8
-                self.draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")
-                self.draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")
-                self.draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")
-                self.draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")
-                
-                mid_x = (screen_x1 + screen_x2) / 2
-                mid_y = (screen_y1 + screen_y2) / 2
-                self.draw_scale_handle(mid_x, screen_y1, handle_size, "orange")
-                self.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")
-                self.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")
-                self.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")
+            # Draw selection handles (always visible when there's a selection)
+            handle_size = 8
+            self.draw_scale_handle(screen_x1, screen_y1, handle_size, "yellow")
+            self.draw_scale_handle(screen_x2, screen_y1, handle_size, "yellow")
+            self.draw_scale_handle(screen_x1, screen_y2, handle_size, "yellow")
+            self.draw_scale_handle(screen_x2, screen_y2, handle_size, "yellow")
+            
+            mid_x = (screen_x1 + screen_x2) / 2
+            mid_y = (screen_y1 + screen_y2) / 2
+            self.draw_scale_handle(mid_x, screen_y1, handle_size, "orange")
+            self.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")
+            self.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")
+            self.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")
         
         move_tool = self.app.tools.get("move")
         if (move_tool and move_tool.is_moving and selection_tool and 
@@ -195,15 +195,17 @@ class CanvasRenderer:
                                 fill=hex_color, outline="", tags="move_preview"
                             )
         
-        if self.app.is_placing_copy and self.app.copy_preview_pos and self.app.copy_buffer is not None and self.app.copy_dimensions:
-            preview_x, preview_y = self.app.copy_preview_pos
-            width, height = self.app.copy_dimensions
+        if (hasattr(self.app, 'selection_mgr') and self.app.selection_mgr.is_placing_copy and 
+            self.app.selection_mgr.copy_preview_pos and self.app.selection_mgr.copy_buffer is not None and 
+            self.app.selection_mgr.copy_dimensions):
+            preview_x, preview_y = self.app.selection_mgr.copy_preview_pos
+            width, height = self.app.selection_mgr.copy_dimensions
             zoom = self.app.canvas.zoom
             
             for py in range(height):
                 for px in range(width):
-                    if py < self.app.copy_buffer.shape[0] and px < self.app.copy_buffer.shape[1]:
-                        pixel_color = tuple(self.app.copy_buffer[py, px])
+                    if py < self.app.selection_mgr.copy_buffer.shape[0] and px < self.app.selection_mgr.copy_buffer.shape[1]:
+                        pixel_color = tuple(self.app.selection_mgr.copy_buffer[py, px])
                         if pixel_color[3] > 0:
                             canvas_x = preview_x + px
                             canvas_y = preview_y + py

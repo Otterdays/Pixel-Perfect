@@ -199,7 +199,9 @@ class ColorWheel:
         # Scrollable frame for custom colors grid
         self.custom_colors_container = ctk.CTkScrollableFrame(
             self.parent_frame,
-            height=150
+            height=150,
+            scrollbar_button_color=self.theme.scrollbar_button_color if self.theme else "#3b3b3b",
+            scrollbar_button_hover_color=self.theme.scrollbar_button_hover_color if self.theme else "#505050"
         )
         self.custom_colors_container.pack(fill="both", expand=True, padx=5, pady=5)
         
@@ -635,6 +637,13 @@ class ColorWheel:
             self.wheel_canvas.configure(bg=bg_color)
         if hasattr(self, 'saturation_canvas') and self.saturation_canvas:
             self.saturation_canvas.configure(bg=bg_color)
+        
+        # Update scrollable frame scrollbar colors
+        if hasattr(self, 'custom_colors_container') and self.custom_colors_container:
+            self.custom_colors_container.configure(
+                scrollbar_button_color=theme.scrollbar_button_color if theme else "#3b3b3b",
+                scrollbar_button_hover_color=theme.scrollbar_button_hover_color if theme else "#505050"
+            )
         
         # Redraw the wheel with new theme
         self._draw_hue_wheel()

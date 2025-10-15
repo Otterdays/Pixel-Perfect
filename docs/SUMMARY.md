@@ -1,10 +1,38 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 1.64  
-**Last Updated**: October 15, 2025 - Dialog Manager Extraction
+**Version**: 1.66  
+**Last Updated**: October 15, 2025 - Critical Bug Fixes & UI Improvements
 
-## Latest Updates (v1.64)
+## Latest Updates (v1.66)
+
+### 🐛 Critical Bug Fixes
+**Selection & UI issues resolved**
+- **Copy-Behind Bug Fixed**: Move + mirror/rotate operations no longer leave duplicate pixels at original location
+- **Selection Handles Restored**: Drag handles now visible on all selections (not just scaling mode)
+- **Cursor Updates Fixed**: Canvas cursor properly changes when auto-switching from selection to move tool
+- **AttributeError Fixes**: All scaling/copy attributes correctly reference SelectionManager
+- **Tool Selection Fixed**: Tools now respond to clicks and show proper visual feedback
+- **Fill Tool Fixed**: Fill operations now persist when switching to brush tool (layer-based approach)
+- **New Project Reset**: New project now properly clears selection box and resets tool to brush
+- **Eraser Tool Fixed**: Eraser now properly erases individual pixels instead of clearing entire canvas
+- **Copy-Behind Bug Fixed**: Move + mirror/rotate operations no longer leave duplicate pixels (proper finalize_move implementation)
+
+### 🎨 Selection Manager Extraction (v1.65)
+
+### 🎨 Selection Manager Extraction
+**Phase 1 complete - All selection operations extracted to dedicated manager**
+- **New Module**: `src/ui/selection_manager.py` (438 lines)
+- **10 Methods Extracted**: Mirror, rotate, copy, scale operations + helpers
+- **8 State Variables Moved**: Scaling and copy/paste state
+- **Line Reduction**: main_window.py reduced from 2,724 → 2,374 lines (-350 lines, -12.9%)
+- **Cumulative**: Down from 3,387 → 2,374 lines (1,013 lines, 29.9% total reduction)
+- **EventDispatcher Updated**: All scaling/copy references point to selection_mgr
+- **Benefits**: Clean transformation logic, numpy operations centralized, easier testing
+
+---
+
+## Previous Updates (v1.64)
 
 ### 💬 Dialog Manager Extraction
 **Phase 4 complete - Custom dialogs extracted to dedicated manager**

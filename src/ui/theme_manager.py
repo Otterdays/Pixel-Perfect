@@ -41,6 +41,11 @@ class Theme:
         self.selection_outline = "#ffffff"
         self.selection_handle = "#ffff00"
         self.selection_edge = "#ffa500"
+        
+        # Scrollbar colors
+        self.scrollbar_button_color = "#3b3b3b"
+        self.scrollbar_button_hover_color = "#505050"
+        self.scrollbar_track_color = "#2b2b2b"
 
 class BasicGreyTheme(Theme):
     """Default dark grey theme with darker canvas and buttons"""
@@ -64,6 +69,11 @@ class BasicGreyTheme(Theme):
         # Tool colors - match backgrounds for floating appearance
         self.tool_selected = "#1f6aa5"   # Blue for selected tools
         self.tool_unselected = "#2b2b2b" # Match bg_secondary for invisible background
+        
+        # Scrollbar colors - darker theme (more distinct from blue)
+        self.scrollbar_button_color = "#404040"   # Medium grey - clearly visible
+        self.scrollbar_button_hover_color = "#505050"  # Lighter grey on hover
+        self.scrollbar_track_color = "#2a2a2a"    # Dark grey track
 
 class AngelicTheme(Theme):
     """Light, angelic theme with soft colors"""
@@ -101,6 +111,11 @@ class AngelicTheme(Theme):
         self.selection_outline = "#4338ca"
         self.selection_handle = "#fbbf24"
         self.selection_edge = "#f97316"
+        
+        # Scrollbar colors - light theme
+        self.scrollbar_button_color = "#e0e7ff"
+        self.scrollbar_button_hover_color = "#c7d2fe"
+        self.scrollbar_track_color = "#f5f5f5"
 
 class AmericanTheme(Theme):
     """Patriotic American theme with red, white, and blue colors"""
@@ -138,6 +153,11 @@ class AmericanTheme(Theme):
         self.selection_outline = "#dc2626"  # Red outline (American flag red)
         self.selection_handle = "#1d4ed8"   # Blue handle (American flag blue)
         self.selection_edge = "#f59e0b"     # Gold accent
+        
+        # Scrollbar colors - patriotic theme
+        self.scrollbar_button_color = "#fef2f2"   # Light red background
+        self.scrollbar_button_hover_color = "#fee2e2"  # Medium red hover
+        self.scrollbar_track_color = "#f8fafc"    # Light grey-white
 
 class GeminiTheme(Theme):
     """A polished, modern dark theme with blue and purple accents."""
@@ -177,6 +197,11 @@ class GeminiTheme(Theme):
         self.selection_outline = "#8ab4f8"
         self.selection_handle = "#fdd835" # A bright yellow for contrast
         self.selection_edge = "#4285F4"
+        
+        # Scrollbar colors - Gemini theme (toned down)
+        self.scrollbar_button_color = "#3a4049"  # More subtle grey
+        self.scrollbar_button_hover_color = "#4a5159"  # Slightly lighter
+        self.scrollbar_track_color = "#2d3239"  # Toned down track
 
 class ThemeManager:
     """Manages application themes"""
