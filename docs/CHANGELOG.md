@@ -1,5 +1,30 @@
 # Pixel Perfect - Changelog
 
+## Version 1.68 - Undo/Redo System Fix
+**Date**: December 19, 2024  
+**Type**: Critical Bug Fix
+
+### ✅ Undo/Redo Functionality Restored
+**Fixed completely non-functional undo/redo system**
+
+**Issues Fixed:**
+- **Missing Callback Connection**: Undo manager's state change callback wasn't connected to button updates
+- **No State Saving**: Drawing operations weren't saving states before making changes
+- **Button State Management**: Buttons now properly show blue when actions available, gray when not
+
+**Technical Changes:**
+- Connected `undo_manager.on_state_changed` to `_update_undo_redo_buttons` in main window initialization
+- Added undo state saving before all drawing operations (brush, eraser, fill, shapes) in event dispatcher
+- Proper state management ensures each drawing action can be undone/redone
+
+**User Experience:**
+- Undo/redo buttons now work with all drawing tools
+- Visual feedback shows when actions are available
+- Keyboard shortcuts (Ctrl+Z, Ctrl+Y) work properly
+- Professional workflow restored
+
+---
+
 ## Version 1.67 - Build System Compatibility Update
 **Date**: October 15, 2025  
 **Type**: Build System / Module Integration

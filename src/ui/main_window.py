@@ -105,6 +105,7 @@ class MainWindow:
         self.palette = ColorPalette()
         self.layer_manager = LayerManager(32, 32)
         self.undo_manager = UndoManager()
+        self.undo_manager.on_state_changed = self._update_undo_redo_buttons
         self.timeline = AnimationTimeline(32, 32)
         
         # Initialize responsive panel sizing

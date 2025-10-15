@@ -24,6 +24,7 @@
 - **New Project Reset**: New project now properly clears selection box and resets tool to brush
 - **Eraser Tool Fixed**: Eraser now properly erases individual pixels instead of clearing entire canvas
 - **Copy-Behind Bug Fixed**: Move + mirror/rotate operations no longer leave duplicate pixels (proper finalize_move implementation)
+- **Undo/Redo System Fixed**: Undo/redo buttons now work properly with visual feedback and state management
 
 ### 🎨 Selection Manager Extraction (v1.65)
 

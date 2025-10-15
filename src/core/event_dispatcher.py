@@ -214,6 +214,12 @@ class EventDispatcher:
         if not (0 <= canvas_x < self.main_window.canvas.width and 0 <= canvas_y < self.main_window.canvas.height):
             return
         
+        # Save undo state before any drawing operation
+        if self.main_window.current_tool in ["brush", "eraser", "fill", "texture", "line", "rectangle", "circle"]:
+            active_layer = self.main_window.layer_manager.get_active_layer()
+            if active_layer:
+                self.main_window.undo_manager.save_state(active_layer.pixels.copy(), self.main_window.layer_manager.active_layer_index)
+        
         # Set dragging state
         self.is_dragging = True
         self.last_canvas_x = canvas_x
@@ -261,13 +267,13 @@ class EventDispatcher:
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
                 tool.is_erasing = True  # Set erasing state
-        elif self.main_window.current_tool in ["fill", "line", "rectangle", "circle"]:
-            # Handle fill and shape tools with layer-based approach for consistency
+        elif self.main_window.current_tool in ["fill", "texture", "line", "rectangle", "circle"]:
+            # Handle fill, texture, and shape tools with layer-based approach for consistency
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
                 tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, current_color)
-                if self.main_window.current_tool == "fill":
-                    # Fill tool updates immediately
+                if self.main_window.current_tool in ["fill", "texture"]:
+                    # Fill and texture tools update immediately
                     self.main_window._update_canvas_from_layers()
                     self.main_window.canvas_renderer.update_pixel_display()
                 # Shape tools don't update on mouse down, only on mouse up
