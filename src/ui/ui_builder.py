@@ -56,7 +56,7 @@ class UIBuilder:
         self.widgets['zoom_menu'] = ctk.CTkOptionMenu(
             self.widgets['toolbar'],
             variable=self.widgets['zoom_var'],
-            values=["0.25x", "0.5x", "1x", "2x", "4x", "8x", "16x", "32x"],
+            values=["0.25x", "0.5x", "1x", "2x", "4x", "8x", "16x", "32x", "64x"],
             command=self.callbacks['on_zoom_change']
         )
         self.widgets['zoom_menu'].pack(side="left", padx=5)
@@ -223,17 +223,29 @@ class UIBuilder:
         
         # Note: Button text updates will be called after UIBuilder completes
         
-        # Texture button (special - opens panel, not a drawing tool)
+        # Texture button (squished to make room for Edge button)
         texture_btn = ctk.CTkButton(
             tool_grid,
             text="Texture",
-            width=175,  # Span 2 columns
+            width=85,  # Reduced from 175px to standard button size
             height=28,
             command=callbacks['open_texture_panel']
         )
-        texture_btn.grid(row=3, column=1, columnspan=2, padx=2, pady=2)
+        texture_btn.grid(row=3, column=1, padx=2, pady=2)  # Removed columnspan=2
         tool_buttons["texture"] = texture_btn  # Add to tool buttons for highlighting
         create_tooltip(texture_btn, "Open texture panel (T)", delay=1000)
+        
+        # Edge button (new tool for drawing edges around pixel shapes)
+        edge_btn = ctk.CTkButton(
+            tool_grid,
+            text="Edge",
+            width=85,
+            height=28,
+            command=lambda: callbacks['select_tool']('edge')
+        )
+        edge_btn.grid(row=3, column=2, padx=2, pady=2)
+        tool_buttons["edge"] = edge_btn
+        create_tooltip(edge_btn, "Draw edges around pixel shapes (G)", delay=1000)
         
         # Configure grid columns - buttons stay fixed size
         for col in range(3):

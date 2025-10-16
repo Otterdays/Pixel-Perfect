@@ -1,10 +1,19 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.3.0  
-**Last Updated**: January 2025 - Import PNG Dialog Scale Calculation Fix
+**Version**: 2.4.0  
+**Last Updated**: January 2025 - Edge Tool Feature
 
-## Latest Updates (v2.3.0)
+## Latest Updates (v2.4.0)
+
+### 🎨 Major Feature: Edge Tool
+- **✅ Smart Edge Detection**: Automatically detects shape boundaries and draws clean outlines
+- **✅ Three Edge Modes**: Outline, Inner, and Outer edge placement options
+- **✅ Shape Recognition**: Uses flood fill algorithm to identify connected pixel shapes
+- **✅ Right-click Mode Cycling**: Cycle through edge modes with right-click
+- **✅ Thickness Control**: 1-3 pixel thick edges for different artistic needs
+
+## Previous Updates (v2.3.0)
 
 ### 🐛 Critical Import Dialog Fixes
 - **✅ Fixed GUI Scale Calculation**: Dialog now uses validated base dimensions for scale calculations instead of raw file dimensions

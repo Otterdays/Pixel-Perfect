@@ -27,7 +27,7 @@ class CanvasScrollbar:
         self.on_zoom_callback = on_zoom_callback
         
         # Zoom levels configuration
-        self.zoom_levels = [0.25, 0.5, 1, 2, 4, 8, 16, 32]
+        self.zoom_levels = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]
         self.current_zoom_index = 4  # Default to 4x
         
         # Scrollbar dimensions

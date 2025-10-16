@@ -293,6 +293,9 @@ class CanvasRenderer:
                 
                 self.draw_selection_on_tkinter(x_offset, y_offset)
                 
+                # Redraw edge lines after canvas is redrawn
+                self._redraw_edge_lines_using_tool()
+                
                 if self.app.grid_control_mgr.grid_overlay and self.app.canvas.show_grid:
                     self.app.drawing_canvas.tag_raise("grid")
         finally:
@@ -682,3 +685,10 @@ class CanvasRenderer:
         # Force tkinter to process all pending events and update display
         self.app.root.update_idletasks()
         self.app.root.update()
+    
+    def _redraw_edge_lines_using_tool(self):
+        """Redraw edge lines using the Edge tool's stored data"""
+        if hasattr(self.app, 'tools') and 'edge' in self.app.tools:
+            edge_tool = self.app.tools['edge']
+            if hasattr(edge_tool, 'redraw_all_edges'):
+                edge_tool.redraw_all_edges()

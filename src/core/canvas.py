@@ -22,7 +22,7 @@ class Canvas:
     def __init__(self, width: int, height: int, zoom: int = 8):
         self.width = width
         self.height = height
-        self.zoom = max(0.25, min(32, zoom))  # Clamp zoom between 0.25x and 32x
+        self.zoom = max(0.25, min(64, zoom))  # Clamp zoom between 0.25x and 64x
         
         # Create pixel data array (RGBA)
         self.pixels = np.zeros((height, width, 4), dtype=np.uint8)
@@ -94,7 +94,7 @@ class Canvas:
     
     def set_zoom(self, zoom: float):
         """Set zoom level and recreate surface"""
-        self.zoom = max(0.25, min(32, zoom))
+        self.zoom = max(0.25, min(64, zoom))
         self._create_surface()
     
     def toggle_grid(self):

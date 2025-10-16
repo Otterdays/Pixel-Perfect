@@ -217,7 +217,7 @@ class CanvasZoomManager:
     def on_zoom_change(self, zoom_str: str):
         """Handle zoom level change"""
         zoom_map = {
-            "0.25x": 0.25, "0.5x": 0.5, "1x": 1, "2x": 2, "4x": 4, "8x": 8, "16x": 16, "32x": 32
+            "0.25x": 0.25, "0.5x": 0.5, "1x": 1, "2x": 2, "4x": 4, "8x": 8, "16x": 16, "32x": 32, "64x": 64
         }
         
         if zoom_str in zoom_map:

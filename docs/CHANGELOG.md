@@ -1,5 +1,25 @@
 # Pixel Perfect - Changelog
 
+## Version 2.4.0 - Edge Tool Feature
+**Date**: January 2025  
+**Type**: Major Feature Addition
+
+### 🎨 Major Feature: Edge Tool
+- **✅ Smart Edge Detection**: Automatically detects shape boundaries and draws clean outlines
+- **✅ Three Edge Modes**: Outline, Inner, and Outer edge placement options
+- **✅ Shape Recognition**: Uses flood fill algorithm to identify connected pixel shapes
+- **✅ Right-click Mode Cycling**: Cycle through edge modes with right-click
+- **✅ Thickness Control**: 1-3 pixel thick edges for different artistic needs
+
+### 🔧 UI Improvements
+- **✅ Squished Texture Button**: Reduced from 175px to 85px width to make room
+- **✅ Added Edge Button**: New Edge tool button positioned next to texture button
+- **✅ Tooltip Support**: "Draw edges around pixel shapes (G)" tooltip
+
+### 📚 Documentation
+- Added comprehensive Edge tool feature documentation
+- Updated changelog with edge tool implementation details
+
 ## Version 2.3.0 - Import PNG Dialog Scale Calculation Fix
 **Date**: January 2025  
 **Type**: Critical Bug Fix

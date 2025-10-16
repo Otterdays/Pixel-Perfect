@@ -186,6 +186,7 @@ class MainWindow:
         
         # Initialize tools
         self.loading_manager.update_loading("Setting up drawing tools...", 35)
+        from src.tools.edge import EdgeTool
         self.tools = {
             "brush": BrushTool(),
             "eraser": EraserTool(),
@@ -197,9 +198,15 @@ class MainWindow:
             "rectangle": RectangleTool(),
             "circle": CircleTool(),
             "pan": PanTool(),
-            "texture": TextureTool()
+            "texture": TextureTool(),
+            "edge": EdgeTool()
         }
         self.current_tool = "brush"
+        
+        # Set main window reference for tools that need it
+        for tool in self.tools.values():
+            if hasattr(tool, 'set_main_window'):
+                tool.set_main_window(self)
         
         # Texture library
         self.texture_library = TextureLibrary()
