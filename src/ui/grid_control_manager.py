@@ -27,6 +27,7 @@ class GridControlManager:
         # Widget references (set by main_window after UI creation)
         self.grid_button = None
         self.grid_overlay_button = None
+        self.grid_mode_button = None
     
     def toggle_grid(self):
         """Toggle grid visibility"""
@@ -61,4 +62,45 @@ class GridControlManager:
             else:
                 self.grid_overlay_button.configure(text="Overlay: OFF")
                 self.grid_overlay_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
+    
+    def toggle_grid_mode(self):
+        """Toggle between auto, dark, and light grid modes"""
+        if self.canvas.grid_mode == "auto":
+            self.canvas.grid_mode = "dark"
+        elif self.canvas.grid_mode == "dark":
+            self.canvas.grid_mode = "light"
+        else:  # light
+            self.canvas.grid_mode = "auto"
+        
+        self.update_grid_mode_button()
+        if self.force_canvas_update_callback:
+            self.force_canvas_update_callback()
+
+    def update_grid_mode_button(self):
+        """Update grid mode button icon and appearance"""
+        if self.grid_mode_button:
+            theme = self.theme_manager.get_current_theme()
+            
+            # Determine if current theme is light or dark
+            is_light_theme = theme.name in ["Angelic", "American"]
+            
+            # Choose icon based on current mode and theme
+            if self.canvas.grid_mode == "auto":
+                icon = "🌓"  # Auto mode - half moon
+                tooltip = f"Grid Mode: Auto ({'Light' if is_light_theme else 'Dark'} theme)"
+            elif self.canvas.grid_mode == "dark":
+                icon = "🌙"  # Dark mode - moon
+                tooltip = "Grid Mode: Dark"
+            else:  # light
+                icon = "☀️"  # Light mode - sun
+                tooltip = "Grid Mode: Light"
+            
+            # Update button
+            self.grid_mode_button.configure(text=icon)
+            
+            # Set button color based on mode
+            if self.canvas.grid_mode == "auto":
+                self.grid_mode_button.configure(fg_color=theme.button_active)
+            else:
+                self.grid_mode_button.configure(fg_color=theme.button_normal)
 

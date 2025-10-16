@@ -4,7 +4,9 @@
 
 **Mission Accomplished!** Reduced executable size from **330 MB to ~24-25 MB** (92-93% reduction) while maintaining full functionality.
 
-**Latest Update (v1.31):** Further optimized from 29 MB to ~24-25 MB through bytecode optimization, module exclusions, and environment cleanup. Build time reduced to ~45-48 seconds.
+**Latest Update (v1.45):** Comprehensive build system documentation added. **CRITICAL:** When adding new modules (like `background_control_manager.py`), you MUST update the `--hidden-import` list in `BUILDER/build.bat` or the executable will fail to start.
+
+> **📖 For complete build system documentation, see [BUILD_SYSTEM.md](BUILD_SYSTEM.md)**
 
 ---
 

@@ -1,10 +1,86 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.0.0  
-**Last Updated**: December 2024 - Critical UI Bug Fix
+**Version**: 2.0.6  
+**Last Updated**: December 2024 - Pan Tool and Window Resize Fixes
 
-## Latest Updates (v2.0.0)
+## Latest Updates (v2.0.6)
+
+### 🔧 Pan Tool Jumping Fix
+**Fixed pan tool jumping back to original position after dragging**
+- **Problem**: Pan tool would temporarily move canvas during drag, then jump back on release
+- **Root Cause**: Pan offset was never permanently applied - only temporarily during drag
+- **Solution**: Modified mouse up handler to get final pan offset and apply it permanently
+- **Files Modified**: `src/core/event_dispatcher.py`
+- **Status**: ✅ **RESOLVED** - Pan tool now properly maintains position after dragging
+
+### 🎯 Canvas Grid Centering Fix
+**Fixed canvas grid staying in original screen position during window resize**
+- **Problem**: Grid didn't recalculate center position when window was resized
+- **Root Cause**: EventDispatcher never called WindowStateManager's resize handler
+- **Solution**: Added proper resize handler call and enhanced delayed redraw mechanism
+- **Files Modified**: `src/core/event_dispatcher.py`, `src/core/window_state_manager.py`, `src/core/canvas_renderer.py`
+- **Status**: ✅ **RESOLVED** - Canvas grid now properly centers during window resize
+
+### 🎨 Brush Cursor Alignment Fix
+**Fixed brush cursor appearing outside actual grid area after panning**
+- **Problem**: Brush cursor (white dotted square) appeared outside actual grid
+- **Root Cause**: Cursor preview methods didn't properly account for pan offset
+- **Solution**: Fixed pan offset calculation in all cursor preview methods
+- **Files Modified**: `src/core/canvas_renderer.py`
+- **Status**: ✅ **RESOLVED** - Brush cursor now properly follows panned grid
+
+---
+
+## Previous Updates (v2.0.5)
+
+### 🔧 Color Wheel Hardcoded Palette Fix
+**Fixed hardcoded palette calls breaking color wheel brush color update**
+- **Problem**: After fixing grid leak, color wheel brush color update was broken again
+- **Root Cause**: Two locations had hardcoded `palette.get_primary_color()` calls instead of using `get_current_color()`
+- **Solution**: Changed hardcoded calls to use `get_current_color()` which properly respects color wheel mode
+- **Files Modified**: `src/core/canvas_renderer.py`, `src/core/event_dispatcher.py`
+- **Status**: ✅ **RESOLVED** - Color wheel brush color update works correctly without leaking to grid
+
+---
+
+## Previous Updates (v2.0.3)
+
+### 🔒 Color Wheel Grid Leak Fix
+**Fixed color wheel colors leaking into preset palette grid**
+- **Problem**: Using color wheel colors caused them to appear in grid layout, polluting preset palettes
+- **Root Cause**: Previous fix introduced leak by calling `palette.set_primary_color_by_rgba()` which auto-adds colors
+- **Solution**: Reverted to original behavior - `get_current_color()` already handles wheel colors correctly
+- **Files Modified**: `src/ui/color_view_manager.py`
+- **Status**: ✅ **RESOLVED** - Color wheel colors no longer leak into grid layout
+
+---
+
+## Previous Updates (v2.0.2)
+
+### 🎨 Color Wheel Brush Color Fix
+**Fixed color wheel clicks not updating brush color**
+- **Problem**: Clicking colors on color wheel didn't change brush color - brush used old palette color
+- **Root Cause**: `ColorViewManager.on_color_wheel_changed()` wasn't calling `palette.set_primary_color_by_rgba()`
+- **Solution**: Added palette update call to convert RGB to RGBA and set as primary color
+- **Files Modified**: `src/ui/color_view_manager.py`
+- **Status**: ✅ **RESOLVED** - Color wheel clicks now properly update brush color
+
+---
+
+## Previous Updates (v2.0.1)
+
+### 🎯 Critical Color Wheel Fix
+**Fixed recurring color wheel display issue**
+- **Problem**: Selecting "Wheel" radio button showed empty canvas instead of color wheel interface
+- **Root Cause**: Logic error in `_show_view()` method - condition `and self.color_wheel` always failed since `self.color_wheel` is intentionally `None` during initialization
+- **Solution**: Removed faulty condition from both `main_window.py` and `color_view_manager.py`
+- **Files Modified**: `src/ui/main_window.py`, `src/ui/color_view_manager.py`
+- **Status**: ✅ **RESOLVED** - Color wheel now displays correctly when selected
+
+---
+
+## Previous Updates (v2.0.0)
 
 ### 🐛 Critical UI Bug Fix: Saved Colors Blank Space
 **Fixed persistent blank space in saved colors view**

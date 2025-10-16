@@ -93,7 +93,7 @@ class ColorViewManager:
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
                                            before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             self.primary_view.create()
-        elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
+        elif mode == "wheel":
             # Pack palette_content_frame before color_display_container (maintains order)
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
                                            before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
@@ -103,6 +103,10 @@ class ColorViewManager:
             self.color_wheel.on_color_changed = self.on_color_wheel_changed
             self.color_wheel.on_save_custom_color = self.save_custom_color
             self.color_wheel.on_remove_custom_color = self.remove_custom_color
+            
+            # Update MainWindow's color wheel reference
+            if hasattr(self, 'main_window') and self.main_window:
+                self.main_window.color_wheel = self.color_wheel
         elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
             # Pack palette_content_frame before color_display_container (maintains order)
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,

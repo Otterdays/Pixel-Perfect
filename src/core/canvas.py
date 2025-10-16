@@ -29,10 +29,12 @@ class Canvas:
         # Grid settings
         self.show_grid = True
         self.grid_color = (100, 100, 100, 180)  # More visible gray with higher opacity
+        self.grid_mode = "auto"  # "auto", "dark", "light"
         
         # Background settings
         self.background_color = (255, 255, 255, 255)  # White
         self.checkerboard = True
+        self.background_mode = "auto"  # "auto", "dark", "light"
         
         # Mouse tracking
         self.mouse_pos = (0, 0)

@@ -22,6 +22,17 @@ class CanvasRenderer:
         """Initialize the tkinter drawing surface"""
         # Schedule initial draw after window is fully loaded
         self.app.root.after(100, self.initial_draw)
+    
+    def get_background_color(self):
+        """Get background color based on background mode"""
+        if self.app.canvas.background_mode == "auto":
+            return self.app.theme_manager.get_current_theme().canvas_bg
+        elif self.app.canvas.background_mode == "dark":
+            # Force dark background (visible on light themes)
+            return "#0d1117"  # Very dark background
+        else:  # light mode
+            # Force light background (visible on dark themes)
+            return "#fafafa"  # Light background
 
     def initial_draw(self):
         """Do the initial drawing of the canvas"""
@@ -67,9 +78,18 @@ class CanvasRenderer:
             traceback.print_exc()
 
     def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
-        """Draw grid lines on tkinter canvas"""
+        """Draw grid lines on tkinter canvas with mode support"""
         theme = self.app.theme_manager.get_current_theme()
-        grid_color = theme.grid_color
+        
+        # Determine grid color based on mode
+        if self.app.canvas.grid_mode == "auto":
+            grid_color = theme.grid_color  # Use theme default
+        elif self.app.canvas.grid_mode == "dark":
+            # Force dark grid (visible on light backgrounds)
+            grid_color = "#404040"  # Dark grey
+        else:  # light mode
+            # Force light grid (visible on dark backgrounds)
+            grid_color = "#e0e0e0"  # Light grey
 
         for x in range(0, self.app.canvas.width + 1):
             screen_x = x_offset + (x * self.app.canvas.zoom)
@@ -94,8 +114,15 @@ class CanvasRenderer:
         self.app._updating_display = True
         
         try:
+            # Force canvas to update its dimensions before calculating centering
+            self.app.drawing_canvas.update_idletasks()
             width = self.app.drawing_canvas.winfo_width()
             height = self.app.drawing_canvas.winfo_height()
+            
+            # Double-check: if dimensions seem wrong, try again after a brief delay
+            if width <= 1 or height <= 1:
+                self.app.root.after(50, self.update_pixel_display)
+                return
 
             if width > 1 and height > 1:
                 canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
@@ -267,8 +294,8 @@ class CanvasRenderer:
         canvas_height = self.app.drawing_canvas.winfo_height()
         canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         offset = self.app.tool_size_mgr.brush_size // 2
         for dy in range(self.app.tool_size_mgr.brush_size):
             for dx in range(self.app.tool_size_mgr.brush_size):
@@ -277,7 +304,7 @@ class CanvasRenderer:
                 if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
                     screen_x = x_offset + (px * self.app.canvas.zoom)
                     screen_y = y_offset + (py * self.app.canvas.zoom)
-                    r, g, b, a = self.app.palette.get_primary_color()
+                    r, g, b, a = self.app.get_current_color()
                     color_hex = f"#{r:02x}{g:02x}{b:02x}"
                     self.app.drawing_canvas.create_rectangle(
                         screen_x, screen_y,
@@ -302,8 +329,8 @@ class CanvasRenderer:
         canvas_height = self.app.drawing_canvas.winfo_height()
         canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         offset = self.app.tool_size_mgr.eraser_size // 2
         for dy in range(self.app.tool_size_mgr.eraser_size):
             for dx in range(self.app.tool_size_mgr.eraser_size):
@@ -338,8 +365,8 @@ class CanvasRenderer:
         canvas_height = self.app.drawing_canvas.winfo_height()
         canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         tex_height, tex_width = texture_data.shape[0], texture_data.shape[1]
         for ty in range(tex_height):
             for tx in range(tex_width):
@@ -375,8 +402,8 @@ class CanvasRenderer:
         canvas_height = self.app.drawing_canvas.winfo_height()
         canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
         canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x
-        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         color_hex = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
         if self.app.current_tool == "line" and tool.is_drawing:
             start_x, start_y = tool.start_point

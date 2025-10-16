@@ -71,12 +71,12 @@ class EventDispatcher:
             # Save window state after resize
             if hasattr(self.main_window, 'window_state_manager'):
                 self.main_window.window_state_manager.save_state()
+                # Call WindowStateManager's resize handler to trigger redraw
+                self.main_window.window_state_manager.on_window_resize(event)
             
-            # Update grid centering if canvas exists
-            if hasattr(self.main_window, 'canvas') and self.main_window.canvas:
-                # Trigger a redraw to recenter the grid
-                if hasattr(self.main_window, 'canvas_renderer'):
-                    self.main_window.canvas_renderer.update_pixel_display()
+            # Still update cursor preview position after resize
+            if hasattr(self.main_window, 'canvas_renderer'):
+                self._update_cursor_preview_after_resize()
     
     def on_restore_btn_enter(self, button):
         """Handle mouse enter on restore button"""
@@ -95,6 +95,57 @@ class EventDispatcher:
         # Refresh timeline panel if it exists
         if hasattr(self.main_window, 'timeline_panel') and self.main_window.timeline_panel:
             self.main_window.timeline_panel.refresh()
+    
+    def _update_cursor_preview_after_resize(self):
+        """Update cursor preview position after window resize"""
+        try:
+            # Get current mouse position
+            mouse_x = self.main_window.root.winfo_pointerx() - self.main_window.root.winfo_rootx()
+            mouse_y = self.main_window.root.winfo_pointery() - self.main_window.root.winfo_rooty()
+            
+            # Check if mouse is over the drawing canvas
+            canvas_x = self.main_window.drawing_canvas.winfo_x()
+            canvas_y = self.main_window.drawing_canvas.winfo_y()
+            canvas_width = self.main_window.drawing_canvas.winfo_width()
+            canvas_height = self.main_window.drawing_canvas.winfo_height()
+            
+            # Check if mouse is within canvas bounds
+            if (canvas_x <= mouse_x <= canvas_x + canvas_width and 
+                canvas_y <= mouse_y <= canvas_y + canvas_height):
+                
+                # Convert to canvas coordinates
+                canvas_coords = self.main_window._tkinter_screen_to_canvas_coords(
+                    mouse_x - canvas_x, mouse_y - canvas_y
+                )
+                canvas_x_coord, canvas_y_coord = canvas_coords
+                
+                # Check if we're in bounds
+                if (0 <= canvas_x_coord < self.main_window.canvas.width and 
+                    0 <= canvas_y_coord < self.main_window.canvas.height):
+                    
+                    # Update cursor preview based on current tool
+                    if self.main_window.current_tool == "brush":
+                        self.main_window.canvas_renderer.draw_brush_preview(canvas_x_coord, canvas_y_coord)
+                    elif self.main_window.current_tool == "eraser":
+                        self.main_window.canvas_renderer.draw_eraser_preview(canvas_x_coord, canvas_y_coord)
+                    elif self.main_window.current_tool == "texture":
+                        texture_tool = self.main_window.tools.get("texture")
+                        if texture_tool:
+                            self.main_window.canvas_renderer.draw_texture_preview(texture_tool, canvas_x_coord, canvas_y_coord)
+                else:
+                    # Mouse is outside canvas bounds, clear previews
+                    self.main_window.drawing_canvas.delete("brush_preview")
+                    self.main_window.drawing_canvas.delete("eraser_preview")
+                    self.main_window.drawing_canvas.delete("texture_preview")
+            else:
+                # Mouse is outside canvas, clear previews
+                self.main_window.drawing_canvas.delete("brush_preview")
+                self.main_window.drawing_canvas.delete("eraser_preview")
+                self.main_window.drawing_canvas.delete("texture_preview")
+                
+        except Exception as e:
+            # Silently handle any errors during cursor update
+            pass
     
     def on_window_close(self):
         """Handle window close event"""
@@ -301,6 +352,10 @@ class EventDispatcher:
         # Handle pan tool end
         if self.main_window.current_tool == "pan":
             tool = self.main_window.tools["pan"]
+            # Get the final pan offset and apply it permanently
+            result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)
+            if result is not None:
+                self.main_window.pan_offset_x, self.main_window.pan_offset_y = result
             tool.end_pan()
             self.main_window.canvas_renderer.update_pixel_display()
             return
@@ -466,7 +521,7 @@ class EventDispatcher:
         elif self.main_window.current_tool in ["line", "rectangle", "circle"]:
             shape_tool = self.main_window.tools.get(self.main_window.current_tool)
             if shape_tool:
-                current_color = self.main_window.palette.get_primary_color()
+                current_color = self.main_window.get_current_color()
                 self.main_window.canvas_renderer.draw_shape_preview(shape_tool, canvas_x, canvas_y, current_color)
         else:
             # Clear previews for other tools

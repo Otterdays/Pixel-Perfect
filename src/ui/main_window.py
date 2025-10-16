@@ -46,6 +46,7 @@ from ui.selection_manager import SelectionManager
 from ui.tool_size_manager import ToolSizeManager
 from ui.canvas_zoom_manager import CanvasZoomManager
 from ui.grid_control_manager import GridControlManager
+from ui.background_control_manager import BackgroundControlManager
 from ui.notes_panel import NotesPanel
 from ui.import_png_dialog import ImportPNGDialog
 from ui.canvas_operations_manager import CanvasOperationsManager
@@ -262,6 +263,14 @@ class MainWindow:
         # Initialize canvas renderer (before UI creation)
         from src.core.canvas_renderer import CanvasRenderer
         self.canvas_renderer = CanvasRenderer(self)
+        
+        # Initialize background control manager (after canvas_renderer)
+        self.background_control_mgr = BackgroundControlManager(
+            self.canvas, 
+            self.theme_manager,
+            self.canvas_renderer,
+            self
+        )
         
         # Initialize event dispatcher (bind events after UI creation)
         self.event_dispatcher = EventDispatcher(self)
@@ -488,11 +497,20 @@ class MainWindow:
         # Set grid control manager references and callbacks
         self.grid_control_mgr.grid_button = self.grid_button
         self.grid_control_mgr.grid_overlay_button = self.grid_overlay_button
+        self.grid_control_mgr.grid_mode_button = self.ui_builder.widgets['grid_mode_button']
         self.grid_control_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
+        
+        # Set background control manager references and callbacks
+        self.background_control_mgr.background_mode_button = self.ui_builder.widgets['background_mode_button']
+        self.background_control_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         
         # Initialize grid button states
         self.grid_control_mgr.update_grid_button_text()
         self.grid_control_mgr.update_grid_overlay_button_text()
+        self.grid_control_mgr.update_grid_mode_button()
+        
+        # Initialize background mode button state
+        self.background_control_mgr.update_background_mode_button()
         
         palette_widgets = self.ui_builder.create_palette_panel(self.left_panel, self.palette, self._get_ui_callbacks())
         # Assign palette widget references
@@ -593,6 +611,8 @@ class MainWindow:
         # Set callbacks
         self.color_view_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
         self.color_view_mgr.select_tool_callback = self._select_tool
+        # Set MainWindow reference
+        self.color_view_mgr.main_window = self
         
         # Initialize palette views (after UI creation so palette_content_frame exists)
         self.grid_view = GridView(
@@ -668,6 +688,8 @@ class MainWindow:
             'show_settings_dialog': self.theme_dialog_manager.show_settings_dialog,
             'toggle_grid': self.grid_control_mgr.toggle_grid,
             'toggle_grid_overlay': self.grid_control_mgr.toggle_grid_overlay,
+            'toggle_grid_mode': self.grid_control_mgr.toggle_grid_mode,
+            'toggle_background_mode': self.background_control_mgr.toggle_background_mode,
             'toggle_notes': self._toggle_notes,
             'select_tool': self._select_tool,
             'update_tool_selection': self._update_tool_selection,
@@ -890,7 +912,7 @@ class MainWindow:
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
                                            before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
             self.primary_view.create()
-        elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
+        elif mode == "wheel":
             # Pack palette_content_frame before color_display_container (maintains order)
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
                                            before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)

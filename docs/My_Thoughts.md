@@ -1,3 +1,143 @@
+# Pan Tool and Window Resize Fixes - December 2024 🎯
+
+## Critical Bug Fix #8 - Pan Tool Jumping Back to Original Position
+
+**Problem**: Pan tool would temporarily move the canvas during drag, but on mouse release, the canvas would jump back to its original position. The pan offset was never permanently applied.
+
+**Root Cause**: The `on_tkinter_canvas_mouse_up()` method in EventDispatcher called `tool.end_pan()` but never applied the final pan offset. The pan offset was only temporarily applied during drag, then immediately restored.
+
+**Solution**: 
+1. Modified `on_tkinter_canvas_mouse_up()` to get the final pan offset before ending pan
+2. Added `result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)` 
+3. Set `self.main_window.pan_offset_x, self.main_window.pan_offset_y = result` permanently
+
+**Files Fixed**:
+- `src/core/event_dispatcher.py` lines 357-361
+
+**Status**: ✅ **FIXED** - Pan tool now properly maintains position after dragging!
+
+---
+
+## Critical Bug Fix #9 - Canvas Grid Centering During Window Resize
+
+**Problem**: Canvas grid would stay in its original screen position when the window was resized. The grid didn't recalculate its center position for the new window dimensions, causing a visual disconnect.
+
+**Root Cause**: EventDispatcher handled window resize events but never called WindowStateManager's resize handler. This meant the redraw callback was never triggered, so the grid never recalculated its position.
+
+**Solution**: 
+1. Added call to `window_state_manager.on_window_resize(event)` in EventDispatcher
+2. Enhanced WindowStateManager with proper delayed redraw mechanism
+3. Added `update_idletasks()` to force canvas dimension update before centering
+4. Increased resize delay from 100ms to 150ms for better timing
+
+**Files Fixed**:
+- `src/core/event_dispatcher.py` line 75
+- `src/core/window_state_manager.py` lines 327, 329-332
+- `src/core/canvas_renderer.py` line 118
+
+**Status**: ✅ **FIXED** - Canvas grid now properly centers during window resize!
+
+---
+
+## Critical Bug Fix #10 - Brush Cursor Alignment After Panning
+
+**Problem**: Brush cursor (white dotted square) would appear outside the actual grid area after panning. There was a misalignment between the visual grid and the cursor position.
+
+**Root Cause**: Cursor preview methods were adding pan offset directly instead of multiplying by zoom level. This caused inconsistent pan offset handling between the main grid and cursor preview.
+
+**Solution**: 
+1. Fixed pan offset calculation in all cursor preview methods
+2. Changed from `+ self.app.pan_offset_x` to `+ self.app.pan_offset_x * self.app.canvas.zoom`
+3. Applied fix to brush, eraser, and texture preview methods
+
+**Files Fixed**:
+- `src/core/canvas_renderer.py` lines 297-298, 332-333, 368-369
+
+**Status**: ✅ **FIXED** - Brush cursor now properly follows the panned grid!
+
+---
+
+## Critical Bug Fix #5 - Color Wheel Reference Issue (PREVIOUS FIX!)
+
+**Problem**: Color wheel rainbow ring selection was stuck on black brush. Clicking colors on the color wheel didn't change the brush color. Debug output showed `self.color_wheel exists: None` despite wheel mode being active.
+
+**Root Cause**: ColorViewManager creates the color wheel object, but MainWindow never gets updated with the reference. MainWindow.color_wheel remained `None` even when ColorViewManager.color_wheel was properly created. The `get_current_color()` condition `self.color_wheel` was always `False` because it was `None`.
+
+**Solution**: 
+1. Added MainWindow reference to ColorViewManager: `self.color_view_mgr.main_window = self`
+2. Added code in ColorViewManager to update MainWindow reference when creating wheel:
+   ```python
+   if hasattr(self, 'main_window') and self.main_window:
+       self.main_window.color_wheel = self.color_wheel
+   ```
+3. Added debug output to confirm reference updates
+
+**Files Fixed**:
+- `src/ui/main_window.py` lines 614-615
+- `src/ui/color_view_manager.py` lines 107-110
+
+**Status**: ✅ **FIXED** - Color wheel now properly updates brush color when selecting colors!
+
+---
+
+## Critical Bug Fix #1 - Color Wheel Not Displaying
+
+**Problem**: Color wheel was completely broken - selecting "Wheel" radio button showed empty canvas area instead of color wheel interface.
+
+**Root Cause**: Logic error in `_show_view()` method. The condition `elif mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:` was checking if `self.color_wheel` exists, but `self.color_wheel` is intentionally set to `None` during initialization to prevent startup creation. This meant the condition always failed and the color wheel was never created!
+
+**Solution**: Removed the `and self.color_wheel` condition from both `main_window.py` and `color_view_manager.py`. Now the color wheel creates properly when "Wheel" view is selected.
+
+**Files Fixed**:
+- `src/ui/main_window.py` line 913
+- `src/ui/color_view_manager.py` line 96
+
+**Status**: ✅ **FIXED** - Color wheel now displays correctly when selected.
+
+## Critical Bug Fix #2 - Color Wheel Click Not Updating Brush Color
+
+**Problem**: Clicking colors on the color wheel didn't change the brush color - brush continued using old palette color.
+
+**Root Cause**: The `ColorViewManager.on_color_wheel_changed()` method wasn't updating the palette's primary color. It only called `update_canvas_callback()` and `select_tool_callback()`, but didn't call `palette.set_primary_color_by_rgba()` to actually set the new color.
+
+**Solution**: Modified `ColorViewManager.on_color_wheel_changed()` to convert RGB to RGBA and call `self.palette.set_primary_color_by_rgba(rgba_color)` to update the palette's primary color.
+
+**Files Fixed**:
+- `src/ui/color_view_manager.py` line 146-163
+
+**Status**: ✅ **FIXED** - Color wheel clicks now properly update brush color.
+
+## Critical Bug Fix #3 - Color Wheel Colors Leaking Into Grid Layout
+
+**Problem**: Using colors from the color wheel caused them to appear in the grid layout of colors, polluting the preset palette.
+
+**Root Cause**: The fix for Bug #2 introduced this leak by calling `palette.set_primary_color_by_rgba()`, which automatically adds colors to the palette if they don't exist (lines 275-277 in `color_palette.py`).
+
+**Solution**: Reverted the `palette.set_primary_color_by_rgba()` call. The `get_current_color()` method already handles color wheel colors correctly by getting them directly from the wheel when in wheel mode, without adding them to the palette.
+
+**Files Fixed**:
+- `src/ui/color_view_manager.py` line 146-158 (reverted to original behavior)
+
+**Status**: ✅ **FIXED** - Color wheel colors no longer leak into grid layout.
+
+## Critical Bug Fix #4 - Hardcoded Palette Calls Breaking Color Wheel
+
+**Problem**: After fixing the grid leak, color wheel brush color update was broken again because some parts of the code had hardcoded calls to `palette.get_primary_color()` instead of using `get_current_color()`.
+
+**Root Cause**: Two locations were bypassing the `get_current_color()` method:
+- `src/core/canvas_renderer.py` line 300: `r, g, b, a = self.app.palette.get_primary_color()`
+- `src/core/event_dispatcher.py` line 522: `current_color = self.main_window.palette.get_primary_color()`
+
+**Solution**: Changed both hardcoded calls to use `get_current_color()` instead, which properly respects the color wheel mode.
+
+**Files Fixed**:
+- `src/core/canvas_renderer.py` line 300
+- `src/core/event_dispatcher.py` line 522
+
+**Status**: ✅ **FIXED** - Color wheel brush color update now works correctly without leaking to grid.
+
+---
+
 # Major Modular Refactor Success 🎉
 
 ## The Big Win - October 15, 2025

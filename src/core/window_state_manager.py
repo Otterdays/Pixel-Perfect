@@ -324,7 +324,12 @@ class WindowStateManager:
                 except:
                     pass  # Timer already executed or cancelled
             
-            self.resize_timer = self.root.after(100, self.redraw_callback)
+            self.resize_timer = self.root.after(150, self._delayed_redraw)
+    
+    def _delayed_redraw(self):
+        """Delayed redraw callback"""
+        if self.redraw_callback:
+            self.redraw_callback()
     
     def toggle_left_panel(self, show_loading_callback=None, finish_toggle_callback=None):
         """Collapse or expand the left panel"""

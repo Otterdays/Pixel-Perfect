@@ -2,6 +2,17 @@
 
 This folder contains the build scripts and tools to create standalone executables for Pixel Perfect.
 
+> **📖 For complete build system documentation, see [docs/BUILD_SYSTEM.md](../docs/BUILD_SYSTEM.md)**
+
+## ⚠️ IMPORTANT: Adding New Modules
+
+**When you create a new Python module** (like `background_control_manager.py`), you **MUST** add it to the build script or the executable will fail to start with `ModuleNotFoundError`.
+
+**Add to `build.bat`:**
+```batch
+--hidden-import=src.path.to.your.new.module
+```
+
 ## Quick Start
 
 Simply run:
@@ -12,7 +23,7 @@ build.bat
 This will:
 1. Check and install PyInstaller if needed
 2. Clean previous builds
-3. Build the executable with all dependencies
+3. Build the executable with all dependencies (~24-25 MB)
 4. Copy assets and documentation
 5. Create a release package ready for distribution
 

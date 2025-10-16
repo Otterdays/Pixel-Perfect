@@ -142,7 +142,9 @@ class ThemeDialogManager:
         self.main_window.toolbar.configure(fg_color=theme.bg_secondary)
         self.main_window.tool_frame.configure(fg_color=theme.bg_primary)
         self.main_window.canvas_frame.configure(fg_color=theme.bg_primary)
-        self.main_window.drawing_canvas.configure(bg=theme.canvas_bg)
+        # Use background mode logic for canvas background
+        bg_color = self.main_window.canvas_renderer.get_background_color()
+        self.main_window.drawing_canvas.configure(bg=bg_color)
         
         # Update panel containers and buttons
         self.main_window.left_container.configure(bg=theme.bg_primary)
@@ -327,6 +329,14 @@ class ThemeDialogManager:
                 self.main_window.grid_overlay_button.configure(fg_color="green", text_color=theme.text_primary)
             else:
                 self.main_window.grid_overlay_button.configure(fg_color=theme.button_normal, text_color=theme.text_primary)
+        
+        # Update grid mode button if it exists
+        if hasattr(self.main_window, 'grid_control_mgr') and hasattr(self.main_window.grid_control_mgr, 'grid_mode_button'):
+            self.main_window.grid_control_mgr.update_grid_mode_button()
+        
+        # Update background mode button if it exists
+        if hasattr(self.main_window, 'background_control_mgr') and hasattr(self.main_window.background_control_mgr, 'background_mode_button'):
+            self.main_window.background_control_mgr.update_background_mode_button()
         
         # Update canvas elements (grid, borders) without full redraw
         self._update_theme_canvas_elements(theme)

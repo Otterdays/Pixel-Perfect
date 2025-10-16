@@ -296,11 +296,14 @@ The modular architecture makes it easy to add new features. Each tool, export fo
 ## Support & Documentation
 
 Complete documentation available in the `docs/` folder:
+- **BUILD_SYSTEM.md**: Complete build system documentation (NEW!)
+- **DEVELOPER_QUICK_REFERENCE.md**: Essential commands for developers (NEW!)
+- **BUILD_OPTIMIZATION.md**: Size reduction from 330MB to 24MB
 - **ARCHITECTURE.md**: Technical architecture and component breakdown
 - **SCRATCHPAD.md**: Development notes and version history
 - **SBOM.md**: Software Bill of Materials and dependencies
 - **SUMMARY.md**: Project status and feature overview
-- **AI_PYTHON_KNOWLEDGE.md**: Comprehensive Python guide for AI agents (NEW!)
+- **AI_PYTHON_KNOWLEDGE.md**: Comprehensive Python guide for AI agents
 
 ---
 

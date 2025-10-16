@@ -113,6 +113,28 @@ class UIBuilder:
         self.widgets['settings_button'].pack(side="right", padx=5)
         create_tooltip(self.widgets['settings_button'], "Settings (Coming Soon)", delay=500)
 
+        # Background mode toggle (new button)
+        self.widgets['background_mode_button'] = ctk.CTkButton(
+            self.widgets['toolbar'], 
+            text="🌗",  # Default auto icon
+            width=40,
+            command=self.callbacks['toggle_background_mode'],
+            font=ctk.CTkFont(size=16)
+        )
+        self.widgets['background_mode_button'].pack(side="right", padx=5)
+        create_tooltip(self.widgets['background_mode_button'], "Background Mode: Auto", delay=500)
+        
+        # Grid mode toggle (new button)
+        self.widgets['grid_mode_button'] = ctk.CTkButton(
+            self.widgets['toolbar'], 
+            text="🌓",  # Default auto icon
+            width=40,
+            command=self.callbacks['toggle_grid_mode'],
+            font=ctk.CTkFont(size=16)
+        )
+        self.widgets['grid_mode_button'].pack(side="right", padx=5)
+        create_tooltip(self.widgets['grid_mode_button'], "Grid Mode: Auto", delay=500)
+
         # Grid toggles
         self.widgets['grid_button'] = ctk.CTkButton(self.widgets['toolbar'], text="Grid", width=60, command=self.callbacks['toggle_grid'])
         self.widgets['grid_button'].pack(side="right", padx=5)
