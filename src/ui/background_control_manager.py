@@ -31,12 +31,14 @@ class BackgroundControlManager:
         self.background_mode_button = None
     
     def toggle_background_mode(self):
-        """Toggle between auto, dark, and light background modes"""
+        """Toggle between auto, dark, light, and texture background modes"""
         if self.canvas.background_mode == "auto":
             self.canvas.background_mode = "dark"
         elif self.canvas.background_mode == "dark":
             self.canvas.background_mode = "light"
-        else:  # light
+        elif self.canvas.background_mode == "light":
+            self.canvas.background_mode = "texture"
+        else:  # texture
             self.canvas.background_mode = "auto"
         
         self.update_background_mode_button()
@@ -64,12 +66,23 @@ class BackgroundControlManager:
             elif self.canvas.background_mode == "dark":
                 icon = "⚫"  # Dark mode - black circle
                 tooltip = "Background Mode: Dark"
-            else:  # light
+            elif self.canvas.background_mode == "light":
                 icon = "⚪"  # Light mode - white circle
                 tooltip = "Background Mode: Light"
+            else:  # texture
+                icon = "📄"  # Texture mode - paper icon (same as grid paper mode)
+                tooltip = "Background Mode: Paper Texture"
             
             # Update button
             self.background_mode_button.configure(text=icon)
+            
+            # Update tooltip if possible
+            try:
+                from src.ui.tooltip import update_tooltip
+                update_tooltip(self.background_mode_button, tooltip)
+            except (ImportError, AttributeError):
+                # Tooltip update not available, that's okay
+                pass
             
             # Set button color based on mode
             if self.canvas.background_mode == "auto":

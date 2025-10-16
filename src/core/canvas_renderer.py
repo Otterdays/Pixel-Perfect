@@ -30,9 +30,12 @@ class CanvasRenderer:
         elif self.app.canvas.background_mode == "dark":
             # Force dark background (visible on light themes)
             return "#0d1117"  # Very dark background
-        else:  # light mode
+        elif self.app.canvas.background_mode == "light":
             # Force light background (visible on dark themes)
             return "#fafafa"  # Light background
+        else:  # texture mode
+            # Return base texture color for background texture mode
+            return self.app.canvas.background_texture_base_color
 
     def initial_draw(self):
         """Do the initial drawing of the canvas"""
@@ -187,6 +190,62 @@ class CanvasRenderer:
                     fill=grain_color, width=1, tags="grid"
                 )
 
+    def draw_background_texture(self, x_offset, y_offset, canvas_width, canvas_height):
+        """Draw organic background texture"""
+        import random
+        import math
+        
+        zoom = self.app.canvas.zoom
+        base_color = self.app.canvas.background_texture_base_color
+        grain_color = self.app.canvas.background_texture_grain_color
+        intensity = self.app.canvas.background_texture_intensity
+        
+        # Create background texture
+        self.app.drawing_canvas.create_rectangle(
+            x_offset, y_offset,
+            x_offset + canvas_width, y_offset + canvas_height,
+            fill=base_color, outline="", tags="background"
+        )
+        
+        # Add organic texture patterns
+        random.seed(123)  # Different seed from paper texture for variety
+        
+        # Draw subtle texture lines (more subtle than paper)
+        for i in range(int(canvas_width * canvas_height / (zoom * zoom * 6))):
+            # Random position
+            x1 = x_offset + random.randint(0, canvas_width)
+            y1 = y_offset + random.randint(0, canvas_height)
+            
+            # Random length and direction
+            length = random.randint(1, 6)
+            angle = random.uniform(0, 2 * math.pi)
+            x2 = x1 + int(length * math.cos(angle))
+            y2 = y1 + int(length * math.sin(angle))
+            
+            # Keep within bounds
+            x2 = max(x_offset, min(x_offset + canvas_width, x2))
+            y2 = max(y_offset, min(y_offset + canvas_height, y2))
+            
+            # Draw texture line with varying opacity
+            opacity = random.uniform(0.05, intensity * 0.5)
+            if opacity > 0.08:  # Only draw visible texture
+                self.app.drawing_canvas.create_line(
+                    x1, y1, x2, y2,
+                    fill=grain_color, width=1, tags="background"
+                )
+        
+        # Add subtle texture dots
+        for i in range(int(canvas_width * canvas_height / (zoom * zoom * 12))):
+            x = x_offset + random.randint(0, canvas_width)
+            y = y_offset + random.randint(0, canvas_height)
+            
+            # Small texture dots
+            if random.random() < intensity * 0.2:
+                self.app.drawing_canvas.create_oval(
+                    x-1, y-1, x+1, y+1,
+                    fill=grain_color, outline="", tags="background"
+                )
+
     def update_pixel_display(self):
         """Update tkinter display to show all pixel changes (full redraw)"""
         if self.app._updating_display:
@@ -215,6 +274,10 @@ class CanvasRenderer:
                 y_offset += self.app.pan_offset_y * self.app.canvas.zoom
 
                 self.app.drawing_canvas.delete("all")
+
+                # Draw background texture FIRST if in texture mode (so grid appears on top)
+                if self.app.canvas.background_mode == "texture":
+                    self.draw_background_texture(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
                 if self.app.canvas.show_grid:
                     self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)

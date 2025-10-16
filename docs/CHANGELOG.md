@@ -1,5 +1,45 @@
 # Pixel Perfect - Changelog
 
+## Version 2.0.8 - Background Texture Mode
+**Date**: December 2024  
+**Type**: New Feature
+
+### 🎨 Added Background Texture Mode
+**Extended background toggle to include paper texture option**
+
+**New Feature:**
+- **Background Texture Mode**: Added 4th mode to background toggle (Auto → Dark → Light → **Paper** → Auto)
+- **Organic Background Rendering**: Realistic paper texture background with organic grain patterns
+- **Consistent Paper Colors**: Uses same cream base (#f5f5dc) and grain (#e6e6d4) as grid paper mode
+- **📄 Icon**: Background paper mode shows document emoji with "Background Mode: Paper Texture" tooltip
+- **Proper Rendering Order**: Background texture drawn first, grid appears on top (fixes override issue)
+
+**Technical Implementation:**
+- Extended `background_mode` from 3 to 4 modes in `src/core/canvas.py`
+- Added `draw_background_texture()` method in `src/core/canvas_renderer.py`
+- Updated `toggle_background_mode()` to cycle through 4 modes in `src/ui/background_control_manager.py`
+- Fixed rendering order: background texture → grid → border → pixels → selection
+- Added background texture settings (intensity, base color, grain color)
+- Organic grain patterns using random seed (123) for consistent texture
+
+**Bug Fixes:**
+- **Fixed Background Override Issue**: Background paper texture no longer overrides grid colors
+- **Proper Layer Order**: Grid now renders on top of background texture correctly
+- **Consistent Colors**: Both grid and background paper modes use identical color scheme
+
+**User Experience:**
+- Click yin-yang button (🌗/⚫/⚪/📄) to cycle through all 4 background modes
+- Paper mode provides realistic paper texture background
+- Grid colors work properly regardless of background mode
+- Maintains all existing functionality (zoom, pan, themes, etc.)
+
+**Files Modified:**
+- `src/core/canvas.py` - Added background texture mode and settings
+- `src/core/canvas_renderer.py` - Added background texture rendering and fixed order
+- `src/ui/background_control_manager.py` - Extended to 4-mode cycle with 📄 icon
+
+---
+
 ## Version 2.0.7 - Paper Texture Grid Mode
 **Date**: December 2024  
 **Type**: New Feature

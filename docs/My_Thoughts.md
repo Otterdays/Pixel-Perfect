@@ -1,3 +1,46 @@
+# Background Texture Mode - December 2024 🎨
+
+## New Feature - Background Paper Texture Mode
+
+**Request**: User wanted to add the same paper texture feature to the background toggle (yin-yang ☯️ icon) as was implemented for the grid toggle.
+
+**Implementation**: 
+1. **Extended Background Mode System**: Added 4th mode "texture" to existing 3-mode cycle (Auto → Dark → Light → **Paper** → Auto)
+2. **Organic Background Rendering**: Created realistic paper texture background using organic, non-straight lines
+3. **Consistent Paper Colors**: Used same cream base (#f5f5dc) and grain (#e6e6d4) as grid paper mode
+4. **UI Integration**: Added 📄 icon for background paper mode with "Background Mode: Paper Texture" tooltip
+5. **Fixed Rendering Order**: Background texture drawn first, grid appears on top (fixes override issue)
+
+**Technical Details**:
+- **Canvas System**: Extended `background_mode` from 3 to 4 modes in `src/core/canvas.py`
+- **Rendering Engine**: Added `draw_background_texture()` method in `src/core/canvas_renderer.py` with:
+  - Organic grain patterns using random seed (123) for variety from grid texture
+  - Subtle background texture dots and irregular grain lines
+  - Same color scheme as grid paper mode for consistency
+- **Control Manager**: Updated `toggle_background_mode()` to cycle through 4 modes in `src/ui/background_control_manager.py`
+- **Rendering Order Fix**: Moved background texture drawing before grid to prevent override
+
+**Bug Fixes**:
+- **Background Override Issue**: Fixed problem where background paper texture was overriding grid colors
+- **Proper Layer Order**: Background texture now draws first, grid renders on top correctly
+- **Consistent Colors**: Both grid and background paper modes use identical color scheme
+
+**User Experience**:
+- Click yin-yang button to cycle: 🌗 (Auto) → ⚫ (Dark) → ⚪ (Light) → **📄 (Paper)** → 🌗 (Auto)
+- Background paper mode provides realistic paper texture background
+- Grid colors work properly regardless of background mode
+- Maintains all existing functionality (zoom, pan, themes, etc.)
+- Seamless integration with current UI patterns
+
+**Files Modified**:
+- `src/core/canvas.py` - Added background texture mode and settings
+- `src/core/canvas_renderer.py` - Added background texture rendering and fixed order
+- `src/ui/background_control_manager.py` - Extended to 4-mode cycle with 📄 icon
+
+**Status**: ✅ **COMPLETE** - Background texture mode fully implemented and bug-free!
+
+---
+
 # Paper Texture Grid Mode - December 2024 🎨
 
 ## New Feature - Organic Paper Texture Grid Mode
