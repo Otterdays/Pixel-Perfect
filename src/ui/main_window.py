@@ -51,6 +51,7 @@ from ui.import_png_dialog import ImportPNGDialog
 from ui.canvas_operations_manager import CanvasOperationsManager
 from ui.layer_animation_manager import LayerAnimationManager
 from ui.color_view_manager import ColorViewManager
+from ui.loading_screen import LoadingManager
 
 class MainWindow:
     """Main application window"""
@@ -82,6 +83,13 @@ class MainWindow:
         
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         print(f"[Window] Initialized at {window_width}x{window_height} (screen: {screen_width}x{screen_height})")
+        
+        # Initialize loading screen manager
+        print("[Main Window] Initializing loading manager...")
+        self.loading_manager = LoadingManager(self.root)
+        print("[Main Window] Loading manager initialized")
+        self.loading_manager.start_loading()
+        print("[Main Window] Loading screen started")
         
         # Set window icon
         try:
@@ -127,6 +135,7 @@ class MainWindow:
             print(f"[WARN] Could not load icon: {e}")
         
         # Initialize core systems
+        self.loading_manager.update_loading("Initializing core systems...", 15)
         self.canvas = Canvas(32, 32, zoom=16)  # Higher zoom for better grid visibility
         self.palette = ColorPalette()
         self.layer_manager = LayerManager(32, 32)
@@ -144,6 +153,7 @@ class MainWindow:
             self.left_panel_width, self.right_panel_width = temp_canvas_ops.calculate_optimal_panel_widths()
         
         # Initialize custom colors manager
+        self.loading_manager.update_loading("Loading color systems...", 25)
         from src.core.custom_colors import CustomColorManager
         self.custom_colors = CustomColorManager()
         
@@ -162,6 +172,7 @@ class MainWindow:
         self.presets = PresetManager()
         
         # Initialize tools
+        self.loading_manager.update_loading("Setting up drawing tools...", 35)
         self.tools = {
             "brush": BrushTool(),
             "eraser": EraserTool(),
@@ -265,26 +276,65 @@ class MainWindow:
         self.theme_manager.on_theme_changed = self.theme_dialog_manager.apply_theme
         
         # Create UI
+        print("[Main Window] Creating UI...")
+        self.loading_manager.update_loading("Building user interface...", 50)
         self._create_ui()
+        print("[Main Window] UI created")
+        # Ensure loading screen stays on top after UI creation
+        self.loading_manager.loading_screen.loading_frame.lift()
+        print("[Main Window] Loading screen lifted after UI creation")
         
+        # Apply initial theme (Basic Grey) to all UI elements IMMEDIATELY after UI creation
+        print("[Main Window] Applying theme...")
+        self.loading_manager.update_loading("Applying theme...", 60)
+        self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
+        print("[Main Window] Theme applied")
+
         # Initialize canvas operations manager (after UI creation)
+        print("[Main Window] Initializing canvas operations manager...")
+        self.loading_manager.update_loading("Initializing canvas...", 70)
         self.canvas_ops_mgr = CanvasOperationsManager(self.root, self.canvas, self.drawing_canvas)
         self.canvas_ops_mgr.left_container = self.left_container
         self.canvas_ops_mgr.right_container = self.right_container
         self.canvas_ops_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
-        
-        # Apply initial theme (Basic Grey) to all UI elements
-        self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
+        print("[Main Window] Canvas operations manager initialized")
         
         # Update tool selection to highlight brush
+        print("[Main Window] Updating tool selection...")
+        self.loading_manager.update_loading("Configuring tools...", 80)
         self._update_tool_selection()
+        print("[Main Window] Tool selection updated")
         
-        # Initialize palette views and show grid
+        # Initialize palette views and show grid (only once)
+        print("[Main Window] Initializing palette views...")
+        self.loading_manager.update_loading("Setting up palette views...", 85)
         self._initialize_all_views()
+        print("[Main Window] Palette views initialized")
+        print("[Main Window] Showing grid view...")
         self._show_view("grid")
+        print("[Main Window] Grid view shown")
         
         # Initialize canvas integration
+        print("[Main Window] Syncing canvas with layers...")
+        self.loading_manager.update_loading("Finalizing...", 95)
         self._sync_canvas_with_layers()
+        print("[Main Window] Canvas synced with layers")
+
+        # Complete loading after everything is initialized
+        print("[Main Window] Completing loading...")
+        # Delay completion until after window is fully rendered and visible
+        self.root.after(100, self._finish_loading)
+
+    def _finish_loading(self):
+        """Finish the loading process after window is fully rendered"""
+        print("[Main Window] Finishing loading process...")
+        self.loading_manager.finish_loading()
+        print("[Main Window] Loading completed")
+        # Force a final update to ensure everything is visible
+        self.root.update_idletasks()
+        # Final update to render the window after loading screen is hidden
+        self.root.after(100, lambda: [self.root.update(), print("[Main Window] Window fully rendered and visible")])
+
     
     def _create_ui(self):
         """Create the user interface"""
@@ -372,6 +422,11 @@ class MainWindow:
         # Notes panel (hidden by default)
         self.notes_panel = NotesPanel(canvas_container, self)
         self.notes_panel.hide()
+        
+        # Keep loading screen on top after notes panel creation
+        if hasattr(self, 'loading_manager'):
+            self.loading_manager.loading_screen.loading_frame.lift()
+            print("[Main Window] Loading screen lifted after notes panel creation")
         
         # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.right_container = tk.Frame(self.paned_window, bg="#1a1a1a")
@@ -518,6 +573,12 @@ class MainWindow:
         self.window_state_manager.left_panel_width = self.left_panel_width
         self.window_state_manager.right_panel_width = self.right_panel_width
         
+        # Set up loading completion callback
+        # Loading completion is now handled at the end of initialization
+        
+        # Pass loading screen reference to window state manager
+        self.window_state_manager.loading_screen_frame = self.loading_manager.loading_screen.loading_frame
+        
         # Try to restore saved window state (overrides calculated sizes if successful)
         self.window_state_manager.restore_state()
         
@@ -550,12 +611,9 @@ class MainWindow:
             on_color_select=self._select_color,
             on_tool_switch=self._select_tool
         )
-        # Initialize color wheel first (needed by other views)
-        from src.ui.color_wheel import ColorWheel
-        self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
-        self.color_wheel.on_color_changed = self._on_color_wheel_changed
-        self.color_wheel.on_save_custom_color = self._save_custom_color
-        self.color_wheel.on_remove_custom_color = self._remove_custom_color
+        # Initialize color wheel lazily (only when wheel view is requested)
+        # This prevents the color wheel from being created during startup
+        self.color_wheel = None
         
         self.saved_view = SavedView(
             self.saved_view_frame, 
@@ -992,7 +1050,7 @@ class MainWindow:
             if load_success:
                 # Update canvas from loaded layers (composite all layers)
                 self._update_canvas_from_layers()
-                
+
                 # Update UI components to reflect loaded project
                 self.layer_panel.refresh()
                 self.timeline_panel.refresh()

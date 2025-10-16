@@ -46,6 +46,12 @@ class WindowStateManager:
         # Default panel widths (510px each for best first impression)
         self.left_panel_width = 510
         self.right_panel_width = 510
+        
+        # Loading completion callback
+        self.on_loading_complete = None
+        
+        # Loading screen reference (set by main window)
+        self.loading_screen_frame = None
     
     def save_state(self):
         """Save current window and panel state to config file"""
@@ -147,6 +153,11 @@ class WindowStateManager:
                 new_geometry = f"{width}x{height}+{x_pos}+{y_pos}"
                 self.root.geometry(new_geometry)
                 print(f"[Window State] Applied geometry: {new_geometry} (screen: {screen_width}x{screen_height})")
+                
+                # Immediately lift loading screen after geometry change
+                if self.loading_screen_frame and self.loading_screen_frame.winfo_exists():
+                    self.loading_screen_frame.lift()
+                    print("[Window State] Loading screen lifted after geometry change")
             
             # Restore panel widths, but ensure they're reasonable
             if 'left_panel_width' in state and 'right_panel_width' in state:
@@ -177,84 +188,109 @@ class WindowStateManager:
     def _apply_panel_widths(self):
         """Apply panel widths to the paned window"""
         try:
-            # Force window to update and render first
+            # Use update_idletasks only (doesn't render the window)
             self.root.update_idletasks()
-            self.root.update()
             
-            # Schedule the application after the window is fully initialized
-            # Increased delay to ensure window is rendered
-            self.root.after(500, self._do_apply_panel_widths)
+            # Try immediate application first
+            if self._do_apply_panel_widths_immediate():
+                print("[Window State] Panel widths applied immediately!")
+                return
+            
+            # If immediate failed, schedule delayed application (reduced delay)
+            self.root.after(10, self._do_apply_panel_widths)
         except Exception as e:
             print(f"[Window State] Error scheduling panel width application: {e}")
+    
+    def _do_apply_panel_widths_immediate(self):
+        """Try to apply panel widths immediately"""
+        try:
+            if hasattr(self, 'paned_window') and self.paned_window:
+                paned_width = self.paned_window.winfo_width()
+                if paned_width > 200:  # If paned window is ready
+                    return self._configure_panels(paned_width)
+            return False
+        except:
+            return False
+    
+    def _configure_panels(self, paned_width):
+        """Configure panel widths and return True if successful"""
+        try:
+            # Calculate the right panel width from the total paned window width
+            available_width = paned_width
+            
+            # If the saved widths don't fit in the current window, recalculate proportionally
+            total_saved_width = self.left_panel_width + self.right_panel_width
+            if total_saved_width > available_width:
+                # Scale down proportionally to fit
+                scale_factor = available_width / total_saved_width
+                self.left_panel_width = int(self.left_panel_width * scale_factor)
+                self.right_panel_width = int(self.right_panel_width * scale_factor)
+                print(f"[Window State] Scaled panel widths to fit window (scale: {scale_factor:.2f})")
+            
+            right_panel_actual_width = available_width - self.left_panel_width
+            
+            # Ensure minimum panel widths
+            min_panel_width = 250
+            if self.left_panel_width < min_panel_width:
+                self.left_panel_width = min_panel_width
+            if right_panel_actual_width < min_panel_width:
+                self.left_panel_width = available_width - min_panel_width
+                right_panel_actual_width = min_panel_width
+            
+            # Configure the paned window panels with proper widths
+            sash_position = self.left_panel_width
+            
+            # Configure left panel
+            self.paned_window.paneconfig(self.left_container, width=self.left_panel_width, minsize=200)
+            
+            # Configure right panel  
+            self.paned_window.paneconfig(self.right_container, width=self.right_panel_width, minsize=200)
+            
+            # Set the sash position
+            self.paned_window.sash_place(0, sash_position, 0)
+            
+            # Force the paned window to update its layout
+            self.paned_window.update()
+            
+            print(f"[Window State] Applied panel widths to paned window:")
+            print(f"  - Paned window width: {paned_width}")
+            print(f"  - Left panel: {self.left_panel_width}px")
+            print(f"  - Right panel: {right_panel_actual_width}px")
+            print(f"  - Sash position: {sash_position}")
+            
+            # Loading completion is now handled at the end of MainWindow initialization
+            
+            return True
+            
+        except Exception as e:
+            print(f"[Window State] Error configuring panels: {e}")
+            return False
     
     def _do_apply_panel_widths(self):
         """Actually apply the panel widths to the paned window"""
         try:
             if hasattr(self, 'paned_window') and self.paned_window:
-                # Get the actual paned window width (not root window width)
                 paned_width = self.paned_window.winfo_width()
-                if paned_width > 100:  # Make sure paned window is actually visible
-                    
-                    # Calculate the right panel width from the total paned window width
-                    # Total width = left_width + right_width
-                    # So right_width = total_width - left_width
-                    available_width = paned_width
-                    
-                    # If the saved widths don't fit in the current window, recalculate proportionally
-                    total_saved_width = self.left_panel_width + self.right_panel_width
-                    if total_saved_width > available_width:
-                        # Scale down proportionally to fit
-                        scale_factor = available_width / total_saved_width
-                        self.left_panel_width = int(self.left_panel_width * scale_factor)
-                        self.right_panel_width = int(self.right_panel_width * scale_factor)
-                        print(f"[Window State] Scaled panel widths to fit window (scale: {scale_factor:.2f})")
-                    
-                    right_panel_actual_width = available_width - self.left_panel_width
-                    
-                    # Ensure minimum panel widths
-                    min_panel_width = 250  # Increased minimum for better usability
-                    if self.left_panel_width < min_panel_width:
-                        self.left_panel_width = min_panel_width
-                    if right_panel_actual_width < min_panel_width:
-                        # Adjust left panel to accommodate minimum right panel
-                        self.left_panel_width = available_width - min_panel_width
-                        right_panel_actual_width = min_panel_width
-                    
-                    # Configure the paned window panels with proper widths
-                    sash_position = self.left_panel_width
-                    
-                    # Configure left panel
-                    self.paned_window.paneconfig(self.left_container, width=self.left_panel_width, minsize=200)
-                    
-                    # Configure right panel  
-                    self.paned_window.paneconfig(self.right_container, width=self.right_panel_width, minsize=200)
-                    
-                    # Set the sash position
-                    self.paned_window.sash_place(0, sash_position, 0)
-                    
-                    # Force the paned window to update its layout
-                    self.paned_window.update()
-                    
-                    print(f"[Window State] Applied panel widths to paned window:")
-                    print(f"  - Paned window width: {paned_width}")
-                    print(f"  - Left panel: {self.left_panel_width}px")
-                    print(f"  - Right panel: {right_panel_actual_width}px")
-                    print(f"  - Sash position: {sash_position}")
+                if paned_width > 100:
+                    if self._configure_panels(paned_width):
+                        return
                 else:
                     print(f"[Window State] Paned window not ready (width: {paned_width}), retrying...")
-                    # Retry after a short delay (max 3 attempts)
+                    # Retry after a short delay (max 5 attempts)
                     if not hasattr(self, '_panel_width_retry_count'):
                         self._panel_width_retry_count = 0
                     self._panel_width_retry_count += 1
                     
                     if self._panel_width_retry_count < 5:
-                        self.root.after(200, self._do_apply_panel_widths)
+                        self.root.after(10, self._do_apply_panel_widths)  # Much faster retry
                     else:
                         print(f"[Window State] ERROR: Paned window failed to initialize properly after {self._panel_width_retry_count} attempts")
                         # Force a reasonable default anyway
                         try:
                             self.paned_window.sash_place(0, self.left_panel_width, 0)
                             print(f"[Window State] Forced sash position to {self.left_panel_width} as fallback")
+                            
+                            # Loading completion is now handled at the end of MainWindow initialization
                         except:
                             pass
         except Exception as e:
