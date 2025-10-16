@@ -39,6 +39,7 @@ class CanvasZoomManager:
         # Callbacks (set by main_window)
         self.update_canvas_callback = None
         self.force_canvas_update_callback = None
+        self.sync_scrollbar_callback = None
     
     # ========================================
     # CANVAS SIZE METHODS
@@ -57,7 +58,7 @@ class CanvasZoomManager:
                 else:
                     # Restore to current actual size
                     current_size = f"{self.canvas.width}x{self.canvas.height}"
-                    if current_size in ["16x16", "32x32", "16x32", "32x64", "64x64"]:
+                    if current_size in ["8x8", "16x16", "32x32", "16x32", "32x64", "64x64"]:
                         self.size_var.set(current_size)
                     else:
                         self.size_var.set("32x32")
@@ -68,6 +69,7 @@ class CanvasZoomManager:
             return
         
         size_map = {
+            "8x8": CanvasSize.TINY,
             "16x16": CanvasSize.SMALL,
             "32x32": CanvasSize.MEDIUM,
             "16x32": CanvasSize.WIDE,
@@ -223,4 +225,7 @@ class CanvasZoomManager:
             # Update display immediately
             if self.force_canvas_update_callback:
                 self.force_canvas_update_callback()
+            # Sync scrollbar position
+            if self.sync_scrollbar_callback:
+                self.sync_scrollbar_callback()
 

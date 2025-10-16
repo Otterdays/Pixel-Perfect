@@ -14,7 +14,7 @@ from PIL import Image
 class PNGImporter:
     """Handles PNG to .pixpf conversion"""
     
-    VALID_SIZES = [16, 32, 64]
+    VALID_SIZES = [8, 16, 32, 64]  # Added 8 for 8x8 canvas support
     SCALE_FACTORS = [1, 2, 4, 8]  # Common export scales
     
     def __init__(self):
@@ -56,31 +56,30 @@ class PNGImporter:
             needs_downscale = False
             detected_scale = 1
             
-            if width not in self.VALID_SIZES or height not in self.VALID_SIZES:
-                # Try to detect if this is a scaled export
-                # Check scales in REVERSE order (8x first) to match original export scale
-                for scale in reversed(self.SCALE_FACTORS):
-                    scaled_width = width // scale
-                    scaled_height = height // scale
-                    
-                    if (scaled_width in self.VALID_SIZES and 
-                        scaled_height in self.VALID_SIZES and
-                        width % scale == 0 and height % scale == 0):
-                        # Found valid downscale!
-                        width = scaled_width
-                        height = scaled_height
-                        detected_scale = scale
-                        needs_downscale = True
-                        break
+            # PRIORITY: Check if it's a scaled export FIRST (before direct sizes)
+            # This prevents 64x64 from being treated as direct size when it's actually 8x8 scaled
+            for scale in reversed(self.SCALE_FACTORS):
+                scaled_width = width // scale
+                scaled_height = height // scale
                 
-                # If still invalid after checking scales, return error
-                if not needs_downscale:
-                    return False, (
-                        f"Invalid dimensions: {original_width}x{original_height}\n\n"
-                        f"Valid sizes: 16x16, 32x32, 64x64\n"
-                        f"(or scaled versions: 128x128, 256x256, 512x512, etc.)\n\n"
-                        f"Your image: {original_width}x{original_height}"
-                    )
+                if (scaled_width in self.VALID_SIZES and 
+                    scaled_height in self.VALID_SIZES and
+                    width % scale == 0 and height % scale == 0):
+                    # Found valid downscale!
+                    width = scaled_width
+                    height = scaled_height
+                    detected_scale = scale
+                    needs_downscale = True
+                    break
+            
+            # SECONDARY: Check direct sizes only if no scaled export detected
+            if not needs_downscale and (width not in self.VALID_SIZES or height not in self.VALID_SIZES):
+                return False, (
+                    f"Invalid dimensions: {original_width}x{original_height}\n\n"
+                    f"Valid sizes: 8x8, 16x16, 32x32, 64x64\n"
+                    f"(or scaled versions: 128x128, 256x256, 512x512, etc.)\n\n"
+                    f"Your image: {original_width}x{original_height}"
+                )
             
             # 5. Convert to RGBA and downscale if needed
             rgba_image = image.convert('RGBA')
@@ -219,11 +218,8 @@ class PNGImporter:
             image = Image.open(png_path)
             width, height = image.size
             
-            # Check direct sizes
-            if width in self.VALID_SIZES and height in self.VALID_SIZES:
-                return True, f"Valid dimensions: {width}x{height}", width, height
-            
-            # Check if it's a scaled export (check 8x first to match original export scale)
+            # PRIORITY: Check if it's a scaled export FIRST (before direct sizes)
+            # This prevents 64x64 from being treated as direct size when it's actually 8x8 scaled
             for scale in reversed(self.SCALE_FACTORS):
                 scaled_width = width // scale
                 scaled_height = height // scale
@@ -233,7 +229,11 @@ class PNGImporter:
                     width % scale == 0 and height % scale == 0):
                     return True, f"Valid scaled export: {width}x{height} (will downscale {scale}x to {scaled_width}x{scaled_height})", scaled_width, scaled_height
             
-            return False, f"Invalid dimensions: {width}x{height}. Must be 16x16, 32x32, 64x64 (or scaled versions)", width, height
+            # SECONDARY: Check direct sizes only if no scaled export detected
+            if width in self.VALID_SIZES and height in self.VALID_SIZES:
+                return True, f"Valid dimensions: {width}x{height}", width, height
+            
+            return False, f"Invalid dimensions: {width}x{height}. Must be 8x8, 16x16, 32x32, 64x64 (or scaled versions)", width, height
                 
         except Exception as e:
             return False, f"Error reading PNG: {e}", 0, 0

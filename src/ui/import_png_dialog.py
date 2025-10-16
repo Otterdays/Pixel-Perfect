@@ -39,6 +39,10 @@ class ImportPNGDialog:
         self.file_label = None
         self.dimension_label = None
         self.scale_buttons = []
+        
+        # Validated dimensions (base size, not raw file size)
+        self.base_width = None
+        self.base_height = None
     
     def show(self):
         """Show the import PNG dialog"""
@@ -223,7 +227,13 @@ class ImportPNGDialog:
     def _select_file(self):
         """Open file dialog to select PNG"""
         try:
+            # Ensure dialog stays on top by temporarily lowering parent
+            self.parent.lift()
+            self.dialog.lift()
+            self.dialog.focus_force()
+            
             filepath = filedialog.askopenfilename(
+                parent=self.dialog,  # Set parent to keep dialog on top
                 title="Select PNG Image",
                 filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
             )
@@ -247,15 +257,33 @@ class ImportPNGDialog:
             filename = filepath.split("/")[-1].split("\\")[-1]
             self.file_label.configure(text=filename, text_color="white")
             
-            # Update dimension label
-            w, h = image.size
-            self.dimension_label.configure(
-                text=f"Original: {w}x{h} pixels",
-                text_color="white"
-            )
+            # Use validation logic to get correct dimensions
+            from src.utils.import_png import PNGImporter
+            importer = PNGImporter()
+            is_valid, message, base_width, base_height = importer.validate_png_dimensions(filepath)
             
-            # Update result label
-            self._update_result_label(w, h)
+            if is_valid:
+                # Show the detected base dimensions (not raw file dimensions)
+                self.dimension_label.configure(
+                    text=f"Original: {base_width}x{base_height} pixels",
+                    text_color="white"
+                )
+                # Store base dimensions for scale calculations
+                self.base_width = base_width
+                self.base_height = base_height
+                # Update result label with base dimensions
+                self._update_result_label(base_width, base_height)
+            else:
+                # Fallback to raw dimensions if validation fails
+                w, h = image.size
+                self.dimension_label.configure(
+                    text=f"Original: {w}x{h} pixels",
+                    text_color="white"
+                )
+                # Store raw dimensions as base dimensions
+                self.base_width = w
+                self.base_height = h
+                self._update_result_label(w, h)
             
             # Start rotation animation
             self._start_rotation()
@@ -334,10 +362,9 @@ class ImportPNGDialog:
             else:
                 btn.configure(fg_color="#4a4a4a", hover_color="#5a5a5a")
         
-        # Update result label
-        if self.preview_image:
-            w, h = self.preview_image.size
-            self._update_result_label(w, h)
+        # Update result label using stored base dimensions
+        if self.base_width is not None and self.base_height is not None:
+            self._update_result_label(self.base_width, self.base_height)
     
     def _update_result_label(self, orig_w: int, orig_h: int):
         """Update the result dimensions label"""

@@ -76,6 +76,7 @@ class FileOperationsManager:
         """Open an existing project"""
         try:
             file_path = filedialog.askopenfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Open Pixel Perfect Project",
                 filetypes=[("Pixel Perfect Files", "*.pixpf"), ("All Files", "*.*")]
             )
@@ -132,6 +133,7 @@ class FileOperationsManager:
         """Save project with new name"""
         try:
             file_path = filedialog.asksaveasfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Save Pixel Perfect Project",
                 defaultextension=".pixpf",
                 filetypes=[("Pixel Perfect Files", "*.pixpf"), ("All Files", "*.*")]
@@ -155,6 +157,7 @@ class FileOperationsManager:
         try:
             # Open file dialog for PNG selection
             png_path = filedialog.askopenfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Import PNG Image",
                 filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
             )
@@ -171,7 +174,7 @@ class FileOperationsManager:
                 messagebox.showerror(
                     "Invalid PNG Dimensions",
                     f"{message}\n\n"
-                    f"Valid sizes: 16x16, 32x32, or 64x64\n"
+                    f"Valid sizes: 8x8, 16x16, 32x32, or 64x64\n"
                     f"(or scaled versions: 128x128, 256x256, 512x512)"
                 )
                 return
@@ -262,6 +265,7 @@ class FileOperationsManager:
         """Export canvas as PNG"""
         try:
             file_path = filedialog.asksaveasfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Export as PNG",
                 defaultextension=".png",
                 filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
@@ -286,6 +290,7 @@ class FileOperationsManager:
         """Export animation as GIF"""
         try:
             file_path = filedialog.asksaveasfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Export as GIF",
                 defaultextension=".gif",
                 filetypes=[("GIF Files", "*.gif"), ("All Files", "*.*")]
@@ -311,6 +316,7 @@ class FileOperationsManager:
         """Export as sprite sheet"""
         try:
             file_path = filedialog.asksaveasfilename(
+                parent=self.root,  # Set parent to keep dialog on top
                 title="Export Sprite Sheet",
                 defaultextension=".png",
                 filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]

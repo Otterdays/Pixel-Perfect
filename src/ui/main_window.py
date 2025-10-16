@@ -53,6 +53,7 @@ from ui.canvas_operations_manager import CanvasOperationsManager
 from ui.layer_animation_manager import LayerAnimationManager
 from ui.color_view_manager import ColorViewManager
 from ui.loading_screen import LoadingManager
+from ui.canvas_scrollbar import CanvasScrollbar
 
 class MainWindow:
     """Main application window"""
@@ -316,6 +317,15 @@ class MainWindow:
         self.canvas_ops_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
         print("[Main Window] Canvas operations manager initialized")
         
+        # Initialize canvas scrollbar (zoom control on right side of canvas)
+        print("[Main Window] Initializing canvas scrollbar...")
+        self.canvas_scrollbar = CanvasScrollbar(
+            self.drawing_canvas,
+            self.theme_manager,
+            self._on_scrollbar_zoom_change
+        )
+        print("[Main Window] Canvas scrollbar initialized")
+        
         # Update tool selection to highlight brush
         print("[Main Window] Updating tool selection...")
         self.loading_manager.update_loading("Configuring tools...", 80)
@@ -493,6 +503,7 @@ class MainWindow:
         self.canvas_zoom_mgr.zoom_var = self.zoom_var
         self.canvas_zoom_mgr.update_canvas_callback = self._update_canvas_from_layers
         self.canvas_zoom_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
+        self.canvas_zoom_mgr.sync_scrollbar_callback = self._sync_scrollbar_with_zoom
         
         # Set grid control manager references and callbacks
         self.grid_control_mgr.grid_button = self.grid_button
@@ -786,10 +797,14 @@ class MainWindow:
                     print("[TOOL SWITCH] Finalized pending move operation")
             
             selection_tool = self.tools.get("selection")
+            move_tool = self.tools.get("move")
             if selection_tool and selection_tool.has_selection:
                 selection_tool.clear_selection()
+                # Reset move tool state when clearing selection
+                if move_tool:
+                    move_tool.reset_state()
                 self.canvas_renderer.update_pixel_display()
-                print("[TOOL SWITCH] Selection cleared - switched to different tool")
+                print("[TOOL SWITCH] Selection cleared and move tool reset - switched to different tool")
         
         self.current_tool = tool_id
         
@@ -967,6 +982,27 @@ class MainWindow:
         if hasattr(self, 'color_view_mgr'):
             self.color_view_mgr.remove_custom_color(color)
     
+    def _on_scrollbar_zoom_change(self, zoom_value: float):
+        """Handle zoom change from canvas scrollbar"""
+        # Convert float zoom to string format (e.g., 4.0 -> "4x")
+        if zoom_value >= 1:
+            zoom_str = f"{int(zoom_value)}x"
+        else:
+            zoom_str = f"{zoom_value}x"
+        
+        # Update the zoom dropdown
+        if hasattr(self, 'zoom_var'):
+            self.zoom_var.set(zoom_str)
+        
+        # Apply zoom through canvas zoom manager
+        if hasattr(self, 'canvas_zoom_mgr'):
+            self.canvas_zoom_mgr.on_zoom_change(zoom_str)
+    
+    def _sync_scrollbar_with_zoom(self):
+        """Sync scrollbar position when zoom changes from dropdown or other source"""
+        if hasattr(self, 'canvas_scrollbar') and hasattr(self, 'canvas'):
+            self.canvas_scrollbar.update_zoom_index(self.canvas.zoom)
+    
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""
         self.theme_manager.set_theme(theme_name)
@@ -1113,8 +1149,12 @@ class MainWindow:
         """Clear any active selection and reset tools to brush"""
         # Clear selection if there is one
         selection_tool = self.tools.get("selection")
+        move_tool = self.tools.get("move")
         if selection_tool and selection_tool.has_selection:
             selection_tool.clear_selection()
+            # Reset move tool state when clearing selection
+            if move_tool:
+                move_tool.reset_state()
         
         # Reset tool to brush
         self._select_tool("brush")

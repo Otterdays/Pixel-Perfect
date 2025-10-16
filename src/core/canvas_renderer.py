@@ -440,30 +440,39 @@ class CanvasRenderer:
         x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
         y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         offset = self.app.tool_size_mgr.brush_size // 2
-        for dy in range(self.app.tool_size_mgr.brush_size):
-            for dx in range(self.app.tool_size_mgr.brush_size):
-                px = canvas_x - offset + dx
-                py = canvas_y - offset + dy
-                if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
-                    screen_x = x_offset + (px * self.app.canvas.zoom)
-                    screen_y = y_offset + (py * self.app.canvas.zoom)
-                    r, g, b, a = self.app.get_current_color()
-                    color_hex = f"#{r:02x}{g:02x}{b:02x}"
-                    self.app.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
-                        fill=color_hex, outline=color_hex, stipple="gray50",
-                        tags="brush_preview"
-                    )
-        screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
-        screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
-        self.app.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ffffff", width=2, dash=(4, 4),
-            tags="brush_preview"
-        )
+        
+        # Check if any part of the brush would be in bounds
+        min_x = canvas_x - offset
+        max_x = canvas_x - offset + self.app.tool_size_mgr.brush_size
+        min_y = canvas_y - offset
+        max_y = canvas_y - offset + self.app.tool_size_mgr.brush_size
+        
+        # Only draw preview if brush area intersects with canvas bounds
+        if max_x > 0 and min_x < self.app.canvas.width and max_y > 0 and min_y < self.app.canvas.height:
+            for dy in range(self.app.tool_size_mgr.brush_size):
+                for dx in range(self.app.tool_size_mgr.brush_size):
+                    px = canvas_x - offset + dx
+                    py = canvas_y - offset + dy
+                    if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
+                        screen_x = x_offset + (px * self.app.canvas.zoom)
+                        screen_y = y_offset + (py * self.app.canvas.zoom)
+                        r, g, b, a = self.app.get_current_color()
+                        color_hex = f"#{r:02x}{g:02x}{b:02x}"
+                        self.app.drawing_canvas.create_rectangle(
+                            screen_x, screen_y,
+                            screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
+                            fill=color_hex, outline=color_hex, stipple="gray50",
+                            tags="brush_preview"
+                        )
+            screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
+            screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
+            screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
+            screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.brush_size) * self.app.canvas.zoom)
+            self.app.drawing_canvas.create_rectangle(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                outline="#ffffff", width=2, dash=(4, 4),
+                tags="brush_preview"
+            )
 
     def draw_eraser_preview(self, canvas_x: int, canvas_y: int):
         """Draw live preview of eraser tool on tkinter canvas"""
@@ -475,28 +484,37 @@ class CanvasRenderer:
         x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
         y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         offset = self.app.tool_size_mgr.eraser_size // 2
-        for dy in range(self.app.tool_size_mgr.eraser_size):
-            for dx in range(self.app.tool_size_mgr.eraser_size):
-                px = canvas_x - offset + dx
-                py = canvas_y - offset + dy
-                if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
-                    screen_x = x_offset + (px * self.app.canvas.zoom)
-                    screen_y = y_offset + (py * self.app.canvas.zoom)
-                    self.app.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
-                        fill="#ff0000", outline="#ff0000", stipple="gray50",
-                        tags="eraser_preview"
-                    )
-        screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
-        screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
-        self.app.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ff0000", width=2, dash=(4, 4),
-            tags="eraser_preview"
-        )
+        
+        # Check if any part of the eraser would be in bounds
+        min_x = canvas_x - offset
+        max_x = canvas_x - offset + self.app.tool_size_mgr.eraser_size
+        min_y = canvas_y - offset
+        max_y = canvas_y - offset + self.app.tool_size_mgr.eraser_size
+        
+        # Only draw preview if eraser area intersects with canvas bounds
+        if max_x > 0 and min_x < self.app.canvas.width and max_y > 0 and min_y < self.app.canvas.height:
+            for dy in range(self.app.tool_size_mgr.eraser_size):
+                for dx in range(self.app.tool_size_mgr.eraser_size):
+                    px = canvas_x - offset + dx
+                    py = canvas_y - offset + dy
+                    if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
+                        screen_x = x_offset + (px * self.app.canvas.zoom)
+                        screen_y = y_offset + (py * self.app.canvas.zoom)
+                        self.app.drawing_canvas.create_rectangle(
+                            screen_x, screen_y,
+                            screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
+                            fill="#ff0000", outline="#ff0000", stipple="gray50",
+                            tags="eraser_preview"
+                        )
+            screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
+            screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
+            screen_x2 = x_offset + ((canvas_x - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
+            screen_y2 = y_offset + ((canvas_y - offset + self.app.tool_size_mgr.eraser_size) * self.app.canvas.zoom)
+            self.app.drawing_canvas.create_rectangle(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                outline="#ff0000", width=2, dash=(4, 4),
+                tags="eraser_preview"
+            )
 
     def draw_texture_preview(self, tool, canvas_x: int, canvas_y: int):
         """Draw live preview of texture tool on tkinter canvas"""
@@ -511,31 +529,34 @@ class CanvasRenderer:
         x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
         y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
         tex_height, tex_width = texture_data.shape[0], texture_data.shape[1]
-        for ty in range(tex_height):
-            for tx in range(tex_width):
-                pixel_color = texture_data[ty, tx]
-                if pixel_color[3] > 0:
-                    px = canvas_x + tx
-                    py = canvas_y + ty
-                    if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
-                        screen_x = x_offset + (px * self.app.canvas.zoom)
-                        screen_y = y_offset + (py * self.app.canvas.zoom)
-                        color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
-                        self.app.drawing_canvas.create_rectangle(
-                            screen_x, screen_y,
-                            screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
-                            fill=color_hex, outline=color_hex, stipple="gray50",
-                            tags="texture_preview"
-                        )
-        screen_x1 = x_offset + (canvas_x * self.app.canvas.zoom)
-        screen_y1 = y_offset + (canvas_y * self.app.canvas.zoom)
-        screen_x2 = x_offset + ((canvas_x + tex_width) * self.app.canvas.zoom)
-        screen_y2 = y_offset + ((canvas_y + tex_height) * self.app.canvas.zoom)
-        self.app.drawing_canvas.create_rectangle(
-            screen_x1, screen_y1, screen_x2, screen_y2,
-            outline="#ffffff", width=2, dash=(4, 4),
-            tags="texture_preview"
-        )
+        
+        # Check if any part of the texture would be in bounds
+        if canvas_x + tex_width > 0 and canvas_x < self.app.canvas.width and canvas_y + tex_height > 0 and canvas_y < self.app.canvas.height:
+            for ty in range(tex_height):
+                for tx in range(tex_width):
+                    pixel_color = texture_data[ty, tx]
+                    if pixel_color[3] > 0:
+                        px = canvas_x + tx
+                        py = canvas_y + ty
+                        if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
+                            screen_x = x_offset + (px * self.app.canvas.zoom)
+                            screen_y = y_offset + (py * self.app.canvas.zoom)
+                            color_hex = f'#{pixel_color[0]:02x}{pixel_color[1]:02x}{pixel_color[2]:02x}'
+                            self.app.drawing_canvas.create_rectangle(
+                                screen_x, screen_y,
+                                screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
+                                fill=color_hex, outline=color_hex, stipple="gray50",
+                                tags="texture_preview"
+                            )
+            screen_x1 = x_offset + (canvas_x * self.app.canvas.zoom)
+            screen_y1 = y_offset + (canvas_y * self.app.canvas.zoom)
+            screen_x2 = x_offset + ((canvas_x + tex_width) * self.app.canvas.zoom)
+            screen_y2 = y_offset + ((canvas_y + tex_height) * self.app.canvas.zoom)
+            self.app.drawing_canvas.create_rectangle(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                outline="#ffffff", width=2, dash=(4, 4),
+                tags="texture_preview"
+            )
 
     def draw_shape_preview(self, tool, canvas_x: int, canvas_y: int, color: tuple):
         """Draw live preview of shape tools (Line, Square, Circle) on tkinter canvas"""

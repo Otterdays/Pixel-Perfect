@@ -31,11 +31,9 @@ class LayerPanel:
         header_frame = ctk.CTkFrame(self.layer_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=(15, 5))
         
-        # Title
-        title_label = ctk.CTkLabel(header_frame, text="Layers", font=ctk.CTkFont(size=16, weight="bold"))
-        title_label.pack(side="left")
+        # Title removed - LayerAnimationManager already creates the title
         
-        # Add layer button
+        # Add layer button - centered since no title
         self.add_layer_btn = ctk.CTkButton(
             header_frame, 
             text="+", 

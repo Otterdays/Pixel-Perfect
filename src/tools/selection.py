@@ -128,6 +128,18 @@ class MoveTool(Tool):
         """Set reference to selection tool"""
         self.selection_tool = selection_tool
     
+    def reset_state(self):
+        """Reset move tool state (called when selection is cleared or tool is switched)"""
+        self.is_moving = False
+        self.move_offset = (0, 0)
+        self.original_selection = None
+        self.cleared_background = None
+        self.pixels_cleared = False  # Reset for new selection
+        self.has_been_moved = False
+        self.last_drawn_position = None
+        self.saved_background = None
+        print("[MOVE] State reset - ready for new selection")
+    
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Start moving selection"""
         print(f"[MOVE DEBUG] Mouse down at ({x}, {y}) - selection tool has selection: {self.selection_tool.has_active_selection() if self.selection_tool else False}")
@@ -145,18 +157,16 @@ class MoveTool(Tool):
                     # FIRST PICKUP: Clear original pixels
                     if not self.original_selection:
                         self.original_selection = (left, top, width, height)
-                        # Clear the original pixels from canvas
-                        for py in range(height):
-                            for px in range(width):
-                                if (py < self.selection_tool.selected_pixels.shape[0] and 
-                                    px < self.selection_tool.selected_pixels.shape[1]):
-                                    pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                    if pixel_color[3] > 0:  # Non-transparent
-                                        canvas_x = left + px
-                                        canvas_y = top + py
-                                        if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                            canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
-                        print("[MOVE] First pickup - cleared original pixels")
+                        # Clear ONLY the actual selected pixels from canvas
+                        for py in range(min(height, self.selection_tool.selected_pixels.shape[0])):
+                            for px in range(min(width, self.selection_tool.selected_pixels.shape[1])):
+                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                                if pixel_color[3] > 0:  # Only clear actual non-transparent pixels
+                                    canvas_x = left + px
+                                    canvas_y = top + py
+                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                        canvas.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                        print("[MOVE] First pickup - cleared ONLY selected pixels")
                     
                     # SUBSEQUENT PICKUPS: Restore saved background (from last drop)
                     elif self.saved_background and self.last_drawn_position:
@@ -199,17 +209,15 @@ class MoveTool(Tool):
                                 row.append((0, 0, 0, 0))
                         self.saved_background.append(row)
                     
-                    # Draw pixels at new position
-                    for py in range(height):
-                        for px in range(width):
-                            if (py < self.selection_tool.selected_pixels.shape[0] and 
-                                px < self.selection_tool.selected_pixels.shape[1]):
-                                pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                                if pixel_color[3] > 0:  # Non-transparent
-                                    canvas_x = left + px
-                                    canvas_y = top + py
-                                    if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
-                                        canvas.set_pixel(canvas_x, canvas_y, pixel_color)
+                    # Draw ONLY the actual selected pixels at new position
+                    for py in range(min(height, self.selection_tool.selected_pixels.shape[0])):
+                        for px in range(min(width, self.selection_tool.selected_pixels.shape[1])):
+                            pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                            if pixel_color[3] > 0:  # Only place actual non-transparent pixels
+                                canvas_x = left + px
+                                canvas_y = top + py
+                                if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
+                                    canvas.set_pixel(canvas_x, canvas_y, pixel_color)
                     
                     # Track this position for next pickup
                     self.last_drawn_position = (left, top)
@@ -221,8 +229,11 @@ class MoveTool(Tool):
                             self.has_been_moved = True
                             print(f"[MOVE] Pixels drawn (background saved for non-destructive adjustment)")
                             
-                            # Auto-finalize the move operation to clear original position
-                            self.finalize_move(canvas)
+                            # Only finalize on the FIRST move to clear original position
+                            # Subsequent moves don't need finalization since original is already cleared
+                            if not self.pixels_cleared:  # Only finalize once
+                                self.finalize_move(canvas)
+                                self.pixels_cleared = True
     
     def on_mouse_move(self, canvas, x: int, y: int, color: Tuple[int, int, int, int]):
         """Update selection position while moving"""
@@ -249,35 +260,35 @@ class MoveTool(Tool):
             if bounds:
                 left, top, width, height = bounds
                 
-                # Step 1: Clear original pixels from layer using ORIGINAL dimensions
-                for py in range(orig_height):
-                    for px in range(orig_width):
-                        if (py < self.selection_tool.selected_pixels.shape[0] and 
-                            px < self.selection_tool.selected_pixels.shape[1]):
-                            pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                            if pixel_color[3] > 0:  # Non-transparent pixel
-                                canvas_x = orig_left + px
-                                canvas_y = orig_top + py
-                                if 0 <= canvas_x < layer.width and 0 <= canvas_y < layer.height:
-                                    layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                # Step 1: Clear ONLY the actual selected pixels from original position
+                # This prevents destroying pixels in empty spaces of the selection rectangle
+                for py in range(min(orig_height, self.selection_tool.selected_pixels.shape[0])):
+                    for px in range(min(orig_width, self.selection_tool.selected_pixels.shape[1])):
+                        pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                        if pixel_color[3] > 0:  # Only clear actual non-transparent pixels
+                            canvas_x = orig_left + px
+                            canvas_y = orig_top + py
+                            if 0 <= canvas_x < layer.width and 0 <= canvas_y < layer.height:
+                                layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
                 
                 # Step 2: Place pixels at new position on layer
-                for py in range(height):
-                    for px in range(width):
-                        if (py < self.selection_tool.selected_pixels.shape[0] and 
-                            px < self.selection_tool.selected_pixels.shape[1]):
-                            pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
-                            if pixel_color[3] > 0:  # Non-transparent pixel
-                                canvas_x = left + px
-                                canvas_y = top + py
-                                if 0 <= canvas_x < layer.width and 0 <= canvas_y < layer.height:
-                                    layer.set_pixel(canvas_x, canvas_y, pixel_color)
+                for py in range(min(height, self.selection_tool.selected_pixels.shape[0])):
+                    for px in range(min(width, self.selection_tool.selected_pixels.shape[1])):
+                        pixel_color = tuple(self.selection_tool.selected_pixels[py, px])
+                        if pixel_color[3] > 0:  # Only place actual non-transparent pixels
+                            canvas_x = left + px
+                            canvas_y = top + py
+                            if 0 <= canvas_x < layer.width and 0 <= canvas_y < layer.height:
+                                layer.set_pixel(canvas_x, canvas_y, pixel_color)
                 
-                print(f"[MOVE] Finalized move - cleared original position, placed at new position (LAYER DATA UPDATED)")
+                print(f"[MOVE] Finalized move - cleared ONLY selected pixels, placed at new position (LAYER DATA UPDATED)")
                 
-                # Reset state
+                # Reset state - but KEEP original_selection so subsequent pickups
+                # know this isn't a first-time pickup and won't clear pixels underneath
                 self.has_been_moved = False
                 self.pixels_cleared = False
-                self.original_selection = None
+                # DON'T reset original_selection here - it prevents the bug where
+                # picking up again deletes pixels underneath
+                # self.original_selection = None  # ⚠️ REMOVED - this caused the bug
                 self.saved_background = None  # Clear saved background after finalization
                 print(f"[MOVE] Cleared saved_background after finalization")

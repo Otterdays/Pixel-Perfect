@@ -133,6 +133,7 @@ class NotesPanel:
             
             # Ask user where to save
             file_path = filedialog.asksaveasfilename(
+                parent=self.main_window.root,  # Set parent to keep dialog on top
                 title="Export Notes",
                 defaultextension=".txt",
                 filetypes=[

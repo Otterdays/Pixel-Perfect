@@ -1,10 +1,87 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.0.8  
-**Last Updated**: December 2024 - Background Texture Mode
+**Version**: 2.3.0  
+**Last Updated**: January 2025 - Import PNG Dialog Scale Calculation Fix
 
-## Latest Updates (v2.0.8)
+## Latest Updates (v2.3.0)
+
+### 🐛 Critical Import Dialog Fixes
+- **✅ Fixed GUI Scale Calculation**: Dialog now uses validated base dimensions for scale calculations instead of raw file dimensions
+- **✅ Fixed Import Logic Priority**: Import process now prioritizes scaled export detection over direct size detection
+- **✅ Fixed Scale Switching**: No more GUI state corruption when switching between scale options
+
+## Previous Updates (v2.2.9)
+
+### 🐛 Critical Algorithm Fix
+- **✅ Fixed PNG Validation Priority**: Algorithm now prioritizes scaled export detection over direct size detection
+- **✅ Fixed 8x8 Scaled Export Detection**: 8x8 images exported at 8x scale now correctly detected as 8x8 base size
+
+## Previous Updates (v2.2.8)
+
+### 🐛 Critical Import Dialog Fix
+- **✅ Fixed Import PNG Dialog Dimensions**: Dialog now shows detected base dimensions instead of raw file dimensions
+- **✅ Fixed Scaled Export Display**: 8x8 images exported at 8x scale now correctly show "Original: 8x8 pixels"
+
+## Previous Updates (v2.2.7)
+
+### 🐛 Critical Import Fix
+- **✅ Fixed 8x8 PNG Import Validation**: 8x8 images now correctly import without dimension detection errors
+- **✅ Fixed Import Dialog Display**: Import PNG dialog now shows correct dimensions for 8x8 images
+
+## Previous Updates (v2.2.6)
+
+### 🎨 UI Styling Fixes
+- **✅ Fixed Double "Layers" Text**: Removed duplicate "Layers" title in the Layers panel
+- **✅ Removed Visual Boxes**: Eliminated unwanted rectangular boxes around Layers and Animation panels for cleaner appearance
+
+## Previous Updates (v2.2.5)
+
+### 🎯 Quality of Life Improvements
+- **✅ Added 8x8 Canvas Size**: New "Tiny" preset for micro icons and detailed pixel work
+- **✅ Fixed File Dialog Layering**: All file dialogs now properly appear on top of the main application window
+
+## Previous Updates (v2.2.4)
+
+### 🐛 Selection Move Tool Pixel Duplication Fix - CRITICAL
+**Fixed pixel duplication when moving selection multiple times**
+- **New Bug**: After fixing the "pixels deleted underneath" bug, pixels were being duplicated on second move
+- **Root Cause**: `finalize_move()` was being called automatically after every drop, causing double drawing
+- **Solution**: Only call `finalize_move()` on the FIRST move using `pixels_cleared` flag
+- **Files Modified**: `src/tools/selection.py` - Added conditional finalization logic
+- **Result**: Multiple moves now work correctly without pixel duplication
+- **Status**: ✅ **FIXED** - Selection moves work perfectly for unlimited repositioning
+
+## Previous Updates (v2.2.3)
+
+### 🐛 Selection Move Tool Bug Fix - CRITICAL
+**Fixed pixels being deleted underneath when moving selection multiple times**
+- **Critical Bug**: Picking up moved selection again would delete pixels underneath at new location
+- **User Impact**: Users couldn't make adjustments to placement without destroying pixels
+- **Root Cause**: `finalize_move()` was resetting `original_selection = None` after first move
+- **Solution**: Preserve `original_selection` during moves, only reset when switching tools
+- **New Method**: Added `reset_state()` to properly reset move tool state
+- **Files Modified**: `src/tools/selection.py`, `src/ui/main_window.py`
+- **Result**: Users can now pick up and reposition selections unlimited times without data loss
+- **Documentation**: `docs/bugfixes/SELECTION_MOVE_TOOL_PIXEL_DELETION_FIX.md`
+- **Status**: ✅ **FIXED** - Non-destructive selection adjustment now working correctly
+
+## Previous Updates (v2.0.9)
+
+### 🖱️ Scroll Wheel Zoom & Draggable Canvas Scrollbar
+**Added mouse wheel zoom and visual scrollbar for intuitive canvas control**
+- **Scroll Wheel Zoom**: Mouse wheel over canvas zooms in/out smoothly (Windows/Linux/Mac)
+- **Draggable Scrollbar**: Custom widget on right edge with + button (top), handle (middle), - button (bottom)
+- **Perfect Synchronization**: Scroll wheel, scrollbar, and dropdown stay perfectly in sync
+- **Theme Aware**: Scrollbar colors adapt to Basic Grey and Angelic themes automatically
+- **Visual Feedback**: Proportional handle position shows current zoom level
+- **Smooth Interaction**: Drag handle for precise zoom control, click buttons for single-level jumps
+- **Cross-Platform**: Works on Windows, Linux, and macOS with native event handling
+- **Files Created**: `src/ui/canvas_scrollbar.py` (240 lines)
+- **Files Modified**: `src/ui/main_window.py`, `src/ui/canvas_zoom_manager.py`, `src/ui/theme_dialog_manager.py`
+- **Status**: ✅ **COMPLETE** - Full implementation tested and integrated
+
+## Previous Updates (v2.0.8)
 
 ### 🎨 Background Texture Mode
 **Added paper texture as 4th background mode option**

@@ -1,5 +1,179 @@
 # Pixel Perfect - Changelog
 
+## Version 2.3.0 - Import PNG Dialog Scale Calculation Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Critical Import Dialog Fixes
+- **✅ Fixed GUI Scale Calculation**: Dialog now uses validated base dimensions for scale calculations instead of raw file dimensions
+- **✅ Fixed Import Logic Priority**: Import process now prioritizes scaled export detection over direct size detection
+- **✅ Fixed Scale Switching**: No more GUI state corruption when switching between scale options
+
+### 🔧 Technical Changes
+- Added base dimension storage in Import PNG dialog
+- Fixed scale calculation to use validated dimensions
+- Applied priority logic to import process matching validation logic
+- Eliminated GUI state corruption during scale switching
+
+### 📚 Documentation
+- Added comprehensive scale calculation fix documentation
+- Updated import dialog behavior documentation
+
+## Version 2.2.9 - PNG Validation Algorithm Priority Fix
+**Date**: January 2025  
+**Type**: Critical Algorithm Fix
+
+### 🐛 Critical Algorithm Fix
+- **✅ Fixed PNG Validation Priority**: Algorithm now prioritizes scaled export detection over direct size detection
+- **✅ Fixed 8x8 Scaled Export Detection**: 8x8 images exported at 8x scale now correctly detected as 8x8 base size
+
+### 🔧 Technical Changes
+- Reordered validation logic to check scaled exports before direct sizes
+- Fixed algorithm priority preventing 64x64 from being treated as direct size when it's actually 8x8 scaled
+- Added clear comments explaining validation priority system
+
+### 📚 Documentation
+- Added comprehensive algorithm priority fix documentation
+- Updated validation logic explanation
+
+## Version 2.2.8 - Import PNG Dialog Dimension Detection Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Critical Import Dialog Fix
+- **✅ Fixed Import PNG Dialog Dimensions**: Dialog now shows detected base dimensions instead of raw file dimensions
+- **✅ Fixed Scaled Export Display**: 8x8 images exported at 8x scale now correctly show "Original: 8x8 pixels"
+
+### 🔧 Technical Changes
+- Modified Import PNG dialog to use validation logic for dimension display
+- Added fallback to raw dimensions if validation fails
+- Integrated PNGImporter validation with dialog UI
+
+### 📚 Documentation
+- Added comprehensive dimension detection fix documentation
+- Updated import dialog behavior documentation
+
+## Version 2.2.7 - PNG Import 8x8 Validation Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Critical Import Fix
+- **✅ Fixed 8x8 PNG Import Validation**: 8x8 images now correctly import without dimension detection errors
+- **✅ Fixed Import Dialog Display**: Import PNG dialog now shows correct dimensions for 8x8 images
+
+### 🔧 Technical Changes
+- Added `8` to `VALID_SIZES` array in PNG validation system
+- Updated error messages to include 8x8 as valid size
+- Fixed validation logic to properly recognize 8x8 images
+
+### 📚 Documentation
+- Added comprehensive PNG import validation fix documentation
+- Updated error messages and validation text
+
+## Version 2.2.6 - UI Styling Fixes
+**Date**: January 2025  
+**Type**: UI/UX Improvements
+
+### 🎨 UI Styling Fixes
+- **✅ Fixed Double "Layers" Text**: Removed duplicate "Layers" title in the Layers panel
+- **✅ Removed Visual Boxes**: Eliminated unwanted rectangular boxes around Layers and Animation panels for cleaner appearance
+
+### 🔧 Technical Changes
+- Changed panel containers from `fg_color=theme.bg_secondary` to `fg_color="transparent"`
+- Removed duplicate title creation in `LayerPanel` class
+- Improved visual consistency across all themes
+
+### 📚 Documentation
+- Added comprehensive UI styling fix documentation
+- Updated changelog with visual improvement details
+
+## Version 2.2.5 - Quality of Life Improvements
+**Date**: January 2025  
+**Type**: Quality of Life Fixes
+
+### 🎯 Quality of Life Improvements
+- **✅ Added 8x8 Canvas Size**: New "Tiny" preset for micro icons and detailed pixel work
+- **✅ Fixed File Dialog Layering**: All file dialogs (Import PNG, Open/Save Project, Export functions) now properly appear on top of the main application window
+
+### 🔧 Technical Changes
+- Added `CanvasSize.TINY = (8, 8)` to canvas size enum
+- Updated UI dropdown to include "8x8" option  
+- Fixed all `filedialog` calls with proper `parent` parameter
+- Enhanced Import PNG dialog with focus management
+
+### 📚 Documentation
+- Added comprehensive file dialog layering fix documentation
+- Updated canvas size documentation with new 8x8 option
+
+## Version 2.2.4 - Selection Move Tool Pixel Duplication Fix
+**Date**: October 16, 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Fixed Pixel Duplication Bug
+**Fixed pixels being duplicated when moving selection multiple times**
+
+**The Bug:**
+- After fixing the "pixels deleted underneath" bug, a new bug appeared
+- Moving a selection a second time would DUPLICATE the pixels on the canvas
+- Pixels would appear twice at the new location, creating unwanted duplicates
+
+**Root Cause:**
+- `finalize_move()` was being called automatically after EVERY drop
+- This caused pixels to be drawn twice: once in `on_mouse_up()` and again in `finalize_move()`
+- The automatic finalization was meant to clear the original position, but was running on every move
+
+**The Fix:**
+- Only call `finalize_move()` on the FIRST move, not on subsequent moves
+- Added `pixels_cleared` flag to track if finalization has already occurred
+- `reset_state()` properly resets the flag for new selections
+
+**Files Modified:**
+- `src/tools/selection.py`: Added conditional finalization logic with `pixels_cleared` flag
+
+**Result:**
+✅ First move: Clears original position, draws at new location  
+✅ Second move: Only draws at new location (no duplication)  
+✅ Third move: Only draws at new location (no duplication)  
+✅ Tool switch: Properly finalizes and resets state  
+
+---
+
+## Version 2.2.3 - Selection Move Tool Bug Fix
+**Date**: October 16, 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Fixed Critical Selection Move Bug
+**Fixed pixels being deleted underneath when moving selection multiple times**
+
+**The Bug:**
+- When using Selection tool → Move tool, moving pixels once worked fine
+- But picking them up again to adjust position would DELETE pixels underneath
+- Users couldn't make adjustments without destroying artwork
+- Only happened under the pixels being moved, not the entire selection area
+
+**Root Cause:**
+- `finalize_move()` was resetting `original_selection = None` after first move
+- Next pickup treated it as "first pickup" and cleared pixels at current location
+- This destroyed pixels underneath that should have been preserved
+
+**The Fix:**
+- Don't reset `original_selection` in `finalize_move()` - preserve it for subsequent moves
+- Added `reset_state()` method to properly reset move tool only when switching tools
+- Subsequent pickups now correctly use saved_background restoration logic
+- Pixels underneath are preserved via the background saving mechanism
+
+**Files Modified:**
+- `src/tools/selection.py`: Commented out problematic reset, added `reset_state()` method
+- `src/ui/main_window.py`: Call `reset_state()` when clearing selection or switching tools
+
+**Result:**
+✅ Users can now pick up and reposition selections multiple times  
+✅ Pixels underneath are preserved during adjustments  
+✅ No more destructive behavior when fine-tuning placement  
+✅ Clean state management when switching tools
+
+---
+
 ## Version 2.0.8 - Background Texture Mode
 **Date**: December 2024  
 **Type**: New Feature

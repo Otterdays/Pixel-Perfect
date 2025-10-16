@@ -82,8 +82,8 @@ class LayerAnimationManager:
         )
         add_layer_btn.pack(side="right")
         
-        # Layer panel container
-        layer_panel_container = ctk.CTkFrame(layer_section, fg_color=theme.bg_secondary)
+        # Layer panel container - transparent to remove visual box
+        layer_panel_container = ctk.CTkFrame(layer_section, fg_color="transparent")
         layer_panel_container.pack(fill="both", expand=True, padx=10, pady=2)
         
         # Create layer panel
@@ -106,8 +106,8 @@ class LayerAnimationManager:
         )
         anim_title.pack(side="left")
         
-        # Timeline panel container
-        timeline_panel_container = ctk.CTkFrame(anim_section, fg_color=theme.bg_secondary)
+        # Timeline panel container - transparent to remove visual box
+        timeline_panel_container = ctk.CTkFrame(anim_section, fg_color="transparent")
         timeline_panel_container.pack(fill="x", padx=10, pady=2)
         
         # Create timeline panel

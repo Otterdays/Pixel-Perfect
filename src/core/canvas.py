@@ -9,6 +9,7 @@ from enum import Enum
 
 class CanvasSize(Enum):
     """Preset canvas sizes"""
+    TINY = (8, 8)         # Micro icons
     SMALL = (16, 16)      # Item icons
     MEDIUM = (32, 32)     # Character sprites
     WIDE = (16, 32)       # Tall sprites

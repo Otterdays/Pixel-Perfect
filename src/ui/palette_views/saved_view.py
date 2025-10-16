@@ -202,6 +202,7 @@ class SavedView:
     def _export_saved_colors(self):
         """Export saved colors to a file"""
         filepath = filedialog.asksaveasfilename(
+            parent=self.parent_frame.winfo_toplevel(),  # Set parent to keep dialog on top
             title="Export Saved Colors",
             defaultextension=".json",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
@@ -215,6 +216,7 @@ class SavedView:
     def _import_saved_colors(self):
         """Import saved colors from a file"""
         filepath = filedialog.askopenfilename(
+            parent=self.parent_frame.winfo_toplevel(),  # Set parent to keep dialog on top
             title="Import Saved Colors",
             defaultextension=".json",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]

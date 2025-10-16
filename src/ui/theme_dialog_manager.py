@@ -497,3 +497,7 @@ class ThemeDialogManager:
             # Raise grid above pixels if overlay mode is enabled
             if self.main_window.grid_control_mgr.grid_overlay and self.main_window.canvas.show_grid:
                 self.main_window.drawing_canvas.tag_raise("grid")
+            
+            # Update scrollbar colors for theme change
+            if hasattr(self.main_window, 'canvas_scrollbar'):
+                self.main_window.canvas_scrollbar.update_theme()

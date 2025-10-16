@@ -1,3 +1,71 @@
+# Selection Move Tool Pixel Duplication Bug Fix - October 16, 2025 🐛
+
+## New Bug After First Fix - Pixel Duplication
+
+**Discovered**: After fixing the "pixels deleted underneath" bug, a new bug appeared where moving a selection a second time would DUPLICATE the pixels.
+
+**The Bug Chain**:
+1. First fix preserved `original_selection` to prevent pixel deletion ✓
+2. But this caused `finalize_move()` to be called after EVERY drop
+3. `finalize_move()` draws pixels at the current location
+4. But pixels were already drawn in `on_mouse_up()` 
+5. Result: Pixels drawn twice = duplication ✗
+
+**Root Cause**: Automatic `finalize_move()` call after every drop was meant to clear original position, but after the first move, the original is already cleared. Subsequent calls just duplicate the drawing.
+
+**The Fix**: Only call `finalize_move()` on the FIRST move using a `pixels_cleared` flag:
+```python
+if not self.pixels_cleared:  # Only finalize once
+    self.finalize_move(canvas)
+    self.pixels_cleared = True
+```
+
+**Key Insight**: Automatic operations should have clear boundaries. Don't repeat operations that should only happen once. Use flags to track operation state.
+
+**Testing Strategy**: 
+- Select → Move → Move → Move (should work without duplication)
+- Each move should only draw pixels once at the new location
+- Tool switching should reset state properly
+
+**Files Modified**: `src/tools/selection.py` - Added conditional finalization logic
+
+**Lesson Learned**: After fixing one bug, always test the "do it again" scenario. Edge cases often appear when fixing related functionality.
+
+---
+
+# Selection Move Tool Bug Fix - October 16, 2025 🐛
+
+## Critical Bug - Pixels Being Deleted Underneath Moved Selections
+
+**Discovered**: User reported that when moving a selection multiple times, pixels underneath were being destroyed.
+
+**The Bug**: 
+- Select pixels → Move once (works) → Pick up again to adjust → **BOOM! Pixels underneath are deleted**
+- This was a critical bug making the move tool destructive and unusable for iterative adjustments
+
+**Root Cause Analysis**:
+The bug was in the state management of the MoveTool. After the first move, `finalize_move()` was resetting `self.original_selection = None`. This caused the NEXT pickup to be treated as a "first pickup", which runs the pixel clearing logic. But now we're picking up from a NEW location that might have OTHER pixels underneath that shouldn't be cleared!
+
+**The Fix**:
+1. **DON'T reset `original_selection` in `finalize_move()`** - preserve it so subsequent pickups know this isn't the first time
+2. **Add `reset_state()` method** - properly reset all move tool state when switching tools or clearing selection
+3. **Call `reset_state()` at the right times** - in `_select_tool()` and `_clear_selection_and_reset_tools()`
+
+**Key Insight**: The code already had a mechanism to save and restore backgrounds (`saved_background`), but it could never be used because the state was being reset too aggressively. By preserving `original_selection` during moves, the elif branch for subsequent pickups can now execute correctly.
+
+**Testing Strategy**:
+- Select → Move → Pick up again → Move → Pick up again → etc.
+- Each pickup should restore the saved background, not clear pixels
+- Only the FIRST pickup should clear from the original location
+
+**Files Modified**:
+- `src/tools/selection.py`: Commented out problematic reset, added reset_state()
+- `src/ui/main_window.py`: Call reset_state() when appropriate
+
+**Lesson Learned**: State should only be reset at logical boundaries (tool switches, selection clears), not in the middle of iterative operations. Premature state resets break workflows that need to reference previous state.
+
+---
+
 # Background Texture Mode - December 2024 🎨
 
 ## New Feature - Background Paper Texture Mode
