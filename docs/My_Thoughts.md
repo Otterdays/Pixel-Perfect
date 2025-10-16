@@ -1,3 +1,40 @@
+# Paper Texture Grid Mode - December 2024 🎨
+
+## New Feature - Organic Paper Texture Grid Mode
+
+**Request**: User wanted to add an organic, real-looking paper texture as a setting to the grid colorations, extending the existing white orb (🌓/🌙/☀️) grid mode toggle.
+
+**Implementation**: 
+1. **Extended Grid Mode System**: Added 4th mode "paper" to existing 3-mode cycle (Auto → Dark → Light → **Paper** → Auto)
+2. **Organic Paper Rendering**: Created realistic paper grain patterns using organic, non-straight lines instead of simple grid lines
+3. **Configurable Settings**: Added paper texture intensity (0.3), base color (#f5f5dc), and grain color (#e6e6d4)
+4. **UI Integration**: Added 📄 icon for paper mode with "Grid Mode: Paper Texture" tooltip
+
+**Technical Details**:
+- **Canvas System**: Extended `grid_mode` from 3 to 4 modes in `src/core/canvas.py`
+- **Rendering Engine**: Added `draw_paper_texture_grid()` method in `src/core/canvas_renderer.py` with:
+  - Organic grain patterns using random seed (42) for consistent texture
+  - Subtle paper fiber dots and irregular grain lines
+  - Very light grid lines with reduced opacity for realistic appearance
+- **Control Manager**: Updated `toggle_grid_mode()` to cycle through 4 modes in `src/ui/grid_control_manager.py`
+- **UI Builder**: Updated tooltip system to handle paper mode
+
+**User Experience**:
+- Click white orb to cycle: 🌓 (Auto) → 🌙 (Dark) → ☀️ (Light) → **📄 (Paper)** → 🌓 (Auto)
+- Paper mode provides realistic paper texture background
+- Maintains all existing functionality (zoom, pan, overlay, themes)
+- Seamless integration with current UI patterns
+
+**Files Modified**:
+- `src/core/canvas.py` - Added paper texture mode and settings
+- `src/core/canvas_renderer.py` - Added organic paper texture rendering
+- `src/ui/grid_control_manager.py` - Extended to 4-mode cycle with 📄 icon
+- `src/ui/ui_builder.py` - Updated tooltip for paper mode
+
+**Status**: ✅ **COMPLETE** - Paper texture mode fully implemented and ready for testing!
+
+---
+
 # Pan Tool and Window Resize Fixes - December 2024 🎯
 
 ## Critical Bug Fix #8 - Pan Tool Jumping Back to Original Position

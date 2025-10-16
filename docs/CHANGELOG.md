@@ -1,5 +1,41 @@
 # Pixel Perfect - Changelog
 
+## Version 2.0.7 - Paper Texture Grid Mode
+**Date**: December 2024  
+**Type**: New Feature
+
+### 🎨 Added Organic Paper Texture Grid Mode
+**New paper texture option for realistic grid backgrounds**
+
+**New Feature:**
+- **Paper Texture Mode**: Added 4th mode to grid toggle (Auto → Dark → Light → **Paper** → Auto)
+- **Organic Rendering**: Realistic paper grain patterns with organic, non-straight lines
+- **Configurable Settings**: Paper base color (#f5f5dc), grain color (#e6e6d4), and intensity (0.3)
+- **📄 Icon**: Paper mode shows document emoji with "Grid Mode: Paper Texture" tooltip
+- **Seamless Integration**: Works with existing zoom, pan, and theme systems
+
+**Technical Implementation:**
+- Extended `grid_mode` from 3 to 4 modes in `src/core/canvas.py`
+- Added `draw_paper_texture_grid()` method in `src/core/canvas_renderer.py`
+- Updated `toggle_grid_mode()` to cycle through 4 modes in `src/ui/grid_control_manager.py`
+- Added paper texture settings (intensity, base color, grain color)
+- Organic grain patterns using random seed for consistent texture
+- Subtle grid lines with reduced opacity for realistic paper appearance
+
+**User Experience:**
+- Click white orb (🌓/🌙/☀️/📄) to cycle through all 4 grid modes
+- Paper mode provides realistic paper texture background
+- Maintains all existing functionality (zoom, pan, overlay, etc.)
+- Consistent with current theme and UI patterns
+
+**Files Modified:**
+- `src/core/canvas.py` - Added paper texture mode and settings
+- `src/core/canvas_renderer.py` - Added organic paper texture rendering
+- `src/ui/grid_control_manager.py` - Extended to 4-mode cycle with 📄 icon
+- `src/ui/ui_builder.py` - Updated tooltip for paper mode
+
+---
+
 ## Version 2.0.6 - Pan Tool and Window Resize Fixes
 **Date**: December 2024  
 **Type**: Critical Bug Fixes

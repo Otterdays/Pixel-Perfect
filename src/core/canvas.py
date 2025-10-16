@@ -29,7 +29,12 @@ class Canvas:
         # Grid settings
         self.show_grid = True
         self.grid_color = (100, 100, 100, 180)  # More visible gray with higher opacity
-        self.grid_mode = "auto"  # "auto", "dark", "light"
+        self.grid_mode = "auto"  # "auto", "dark", "light", "paper"
+        
+        # Paper texture settings
+        self.paper_texture_intensity = 0.3  # 0.0 to 1.0
+        self.paper_base_color = "#f5f5dc"  # Cream/beige base
+        self.paper_grain_color = "#e6e6d4"  # Slightly darker grain
         
         # Background settings
         self.background_color = (255, 255, 255, 255)  # White

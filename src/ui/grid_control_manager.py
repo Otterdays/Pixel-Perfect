@@ -64,12 +64,14 @@ class GridControlManager:
                 self.grid_overlay_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
     
     def toggle_grid_mode(self):
-        """Toggle between auto, dark, and light grid modes"""
+        """Toggle between auto, dark, light, and paper grid modes"""
         if self.canvas.grid_mode == "auto":
             self.canvas.grid_mode = "dark"
         elif self.canvas.grid_mode == "dark":
             self.canvas.grid_mode = "light"
-        else:  # light
+        elif self.canvas.grid_mode == "light":
+            self.canvas.grid_mode = "paper"
+        else:  # paper
             self.canvas.grid_mode = "auto"
         
         self.update_grid_mode_button()
@@ -91,12 +93,23 @@ class GridControlManager:
             elif self.canvas.grid_mode == "dark":
                 icon = "🌙"  # Dark mode - moon
                 tooltip = "Grid Mode: Dark"
-            else:  # light
+            elif self.canvas.grid_mode == "light":
                 icon = "☀️"  # Light mode - sun
                 tooltip = "Grid Mode: Light"
+            else:  # paper
+                icon = "📄"  # Paper mode - document
+                tooltip = "Grid Mode: Paper Texture"
             
             # Update button
             self.grid_mode_button.configure(text=icon)
+            
+            # Update tooltip if possible
+            try:
+                from src.ui.tooltip import update_tooltip
+                update_tooltip(self.grid_mode_button, tooltip)
+            except (ImportError, AttributeError):
+                # Tooltip update not available, that's okay
+                pass
             
             # Set button color based on mode
             if self.canvas.grid_mode == "auto":

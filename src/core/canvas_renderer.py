@@ -81,6 +81,11 @@ class CanvasRenderer:
         """Draw grid lines on tkinter canvas with mode support"""
         theme = self.app.theme_manager.get_current_theme()
         
+        # Handle paper texture mode
+        if self.app.canvas.grid_mode == "paper":
+            self.draw_paper_texture_grid(x_offset, y_offset, canvas_width, canvas_height)
+            return
+        
         # Determine grid color based on mode
         if self.app.canvas.grid_mode == "auto":
             grid_color = theme.grid_color  # Use theme default
@@ -106,6 +111,81 @@ class CanvasRenderer:
                 x_offset + canvas_width, screen_y,
                 fill=grid_color, width=1, tags="grid"
             )
+
+    def draw_paper_texture_grid(self, x_offset, y_offset, canvas_width, canvas_height):
+        """Draw organic paper texture as grid background"""
+        import random
+        import math
+        
+        zoom = self.app.canvas.zoom
+        base_color = self.app.canvas.paper_base_color
+        grain_color = self.app.canvas.paper_grain_color
+        intensity = self.app.canvas.paper_texture_intensity
+        
+        # Create paper texture background
+        self.app.drawing_canvas.create_rectangle(
+            x_offset, y_offset,
+            x_offset + canvas_width, y_offset + canvas_height,
+            fill=base_color, outline="", tags="grid"
+        )
+        
+        # Add organic grain patterns
+        random.seed(42)  # Consistent seed for stable texture
+        
+        # Draw subtle grain lines (organic, not straight)
+        for i in range(int(canvas_width * canvas_height / (zoom * zoom * 4))):
+            # Random position
+            x1 = x_offset + random.randint(0, canvas_width)
+            y1 = y_offset + random.randint(0, canvas_height)
+            
+            # Random length and direction
+            length = random.randint(2, 8)
+            angle = random.uniform(0, 2 * math.pi)
+            x2 = x1 + int(length * math.cos(angle))
+            y2 = y1 + int(length * math.sin(angle))
+            
+            # Keep within bounds
+            x2 = max(x_offset, min(x_offset + canvas_width, x2))
+            y2 = max(y_offset, min(y_offset + canvas_height, y2))
+            
+            # Draw grain line with varying opacity
+            opacity = random.uniform(0.1, intensity)
+            if opacity > 0.15:  # Only draw visible grain
+                self.app.drawing_canvas.create_line(
+                    x1, y1, x2, y2,
+                    fill=grain_color, width=1, tags="grid"
+                )
+        
+        # Add subtle paper fiber patterns
+        for i in range(int(canvas_width * canvas_height / (zoom * zoom * 8))):
+            x = x_offset + random.randint(0, canvas_width)
+            y = y_offset + random.randint(0, canvas_height)
+            
+            # Small fiber dots
+            if random.random() < intensity * 0.3:
+                self.app.drawing_canvas.create_oval(
+                    x-1, y-1, x+1, y+1,
+                    fill=grain_color, outline="", tags="grid"
+                )
+        
+        # Draw subtle grid lines (very light)
+        grid_alpha = intensity * 0.2
+        if grid_alpha > 0.05:
+            for x in range(0, self.app.canvas.width + 1):
+                screen_x = x_offset + (x * zoom)
+                self.app.drawing_canvas.create_line(
+                    screen_x, y_offset,
+                    screen_x, y_offset + canvas_height,
+                    fill=grain_color, width=1, tags="grid"
+                )
+
+            for y in range(0, self.app.canvas.height + 1):
+                screen_y = y_offset + (y * zoom)
+                self.app.drawing_canvas.create_line(
+                    x_offset, screen_y,
+                    x_offset + canvas_width, screen_y,
+                    fill=grain_color, width=1, tags="grid"
+                )
 
     def update_pixel_display(self):
         """Update tkinter display to show all pixel changes (full redraw)"""
