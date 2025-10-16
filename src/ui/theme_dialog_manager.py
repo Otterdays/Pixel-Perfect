@@ -27,8 +27,9 @@ class ThemeDialogManager:
         """Create settings dialog once at startup (OPTIMIZED - pre-render for instant display)"""
         dialog = ctk.CTkToplevel(self.main_window.root)
         dialog.title("Settings")
-        dialog.geometry("500x350")
-        dialog.resizable(False, False)
+        dialog.geometry("500x450")
+        dialog.resizable(True, True)
+        dialog.minsize(500, 450)
         dialog.transient(self.main_window.root)
         
         # Header frame with gear icon
@@ -52,7 +53,7 @@ class ThemeDialogManager:
         
         # Coming soon message
         message_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        message_frame.pack(pady=20, padx=20, fill="both", expand=True)
+        message_frame.pack(pady=(10, 20), padx=20, fill="both", expand=True)
         
         message_label = ctk.CTkLabel(
             message_frame,
@@ -83,7 +84,7 @@ class ThemeDialogManager:
         
         # Credits section
         credits_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        credits_frame.pack(pady=(20, 10), padx=20, fill="x")
+        credits_frame.pack(pady=(15, 5), padx=20, fill="x")
         
         credits_label = ctk.CTkLabel(
             credits_frame,
