@@ -128,19 +128,26 @@ class ThemeDialogManager:
         dialog.withdraw()
     
     def _show_settings_dialog(self):
-        """Show pre-created settings dialog instantly (INSTANT - no widget creation)"""
-        if self.settings_dialog:
-            # Center dialog on screen
-            self.settings_dialog.update_idletasks()
-            x = self.main_window.root.winfo_x() + (self.main_window.root.winfo_width() // 2) - (500 // 2)
-            y = self.main_window.root.winfo_y() + (self.main_window.root.winfo_height() // 2) - (350 // 2)
-            self.settings_dialog.geometry(f"+{x}+{y}")
-            
-            # Show dialog instantly
-            self.settings_dialog.deiconify()
-            self.settings_dialog.grab_set()
-            self.settings_dialog.lift()
-            self.settings_dialog.focus_force()
+        """Show settings dialog with latest changes"""
+        # Force recreation to pick up any code changes
+        if self.settings_dialog is not None:
+            self.settings_dialog.destroy()
+            self.settings_dialog = None
+        
+        # Create fresh dialog with latest changes
+        self._create_settings_dialog()
+        
+        # Center dialog on screen
+        self.settings_dialog.update_idletasks()
+        x = self.main_window.root.winfo_x() + (self.main_window.root.winfo_width() // 2) - (500 // 2)
+        y = self.main_window.root.winfo_y() + (self.main_window.root.winfo_height() // 2) - (450 // 2)
+        self.settings_dialog.geometry(f"+{x}+{y}")
+        
+        # Show dialog
+        self.settings_dialog.deiconify()
+        self.settings_dialog.grab_set()
+        self.settings_dialog.lift()
+        self.settings_dialog.focus_force()
     
     def _hide_settings_dialog(self):
         """Hide settings dialog (withdraw for instant re-show)"""
