@@ -27,14 +27,14 @@ class ThemeDialogManager:
         """Create settings dialog once at startup (OPTIMIZED - pre-render for instant display)"""
         dialog = ctk.CTkToplevel(self.main_window.root)
         dialog.title("Settings")
-        dialog.geometry("500x450")
+        dialog.geometry("500x550")
         dialog.resizable(True, True)
-        dialog.minsize(500, 450)
+        dialog.minsize(500, 550)
         dialog.transient(self.main_window.root)
         
         # Header frame with gear icon
         header_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        header_frame.pack(pady=20, padx=20, fill="x")
+        header_frame.pack(pady=(15, 10), padx=20, fill="x")
         
         icon_label = ctk.CTkLabel(
             header_frame,
@@ -53,7 +53,7 @@ class ThemeDialogManager:
         
         # Coming soon message
         message_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        message_frame.pack(pady=(10, 20), padx=20, fill="both", expand=True)
+        message_frame.pack(pady=(5, 15), padx=20, fill="both", expand=True)
         
         message_label = ctk.CTkLabel(
             message_frame,
@@ -84,7 +84,7 @@ class ThemeDialogManager:
         
         # Credits section
         credits_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        credits_frame.pack(pady=(15, 5), padx=20, fill="x")
+        credits_frame.pack(pady=(10, 5), padx=20, fill="x")
         
         credits_label = ctk.CTkLabel(
             credits_frame,
@@ -140,7 +140,7 @@ class ThemeDialogManager:
         # Center dialog on screen
         self.settings_dialog.update_idletasks()
         x = self.main_window.root.winfo_x() + (self.main_window.root.winfo_width() // 2) - (500 // 2)
-        y = self.main_window.root.winfo_y() + (self.main_window.root.winfo_height() // 2) - (450 // 2)
+        y = self.main_window.root.winfo_y() + (self.main_window.root.winfo_height() // 2) - (550 // 2)
         self.settings_dialog.geometry(f"+{x}+{y}")
         
         # Show dialog
