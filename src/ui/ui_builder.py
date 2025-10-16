@@ -218,6 +218,10 @@ class UIBuilder:
             if tool_id == "eraser":
                 btn.bind("<Button-3>", callbacks['show_eraser_size_menu'])
             
+            # Add right-click menu for edge thickness
+            if tool_id == "edge":
+                btn.bind("<Button-3>", callbacks['show_edge_thickness_menu'])
+            
             # Add tooltip
             create_tooltip(btn, tooltip_text, delay=1000)
         
@@ -245,7 +249,9 @@ class UIBuilder:
         )
         edge_btn.grid(row=3, column=2, padx=2, pady=2)
         tool_buttons["edge"] = edge_btn
-        create_tooltip(edge_btn, "Draw edges around pixel shapes (G)", delay=1000)
+        create_tooltip(edge_btn, "Draw edges around pixel shapes (G) | Right-click for thickness", delay=1000)
+        # Bind right-click on Edge button to open thickness menu (parity with brush/eraser)
+        edge_btn.bind("<Button-3>", callbacks['show_edge_thickness_menu'])
         
         # Configure grid columns - buttons stay fixed size
         for col in range(3):

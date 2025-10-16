@@ -1,10 +1,35 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.5.0  
-**Last Updated**: January 2025 - 64x Zoom and Edge Tool Complete
+**Version**: 2.5.3  
+**Last Updated**: January 2025 - Edge Tool Flickering Fix
 
-## Latest Updates (v2.5.0)
+## Latest Updates (v2.5.3)
+
+### 🐛 Edge Tool Flickering Lines Fix
+- **✅ Flickering Eliminated**: Fixed critical issue where edge lines flickered during continuous drawing
+- **✅ Preview System Isolation**: Disabled hover preview during active drawing to prevent interference
+- **✅ Clean Drawing Experience**: Edge lines now draw smoothly without visual artifacts
+- **✅ Preserved Functionality**: All edge tool features remain intact (thickness, erase, etc.)
+
+## Previous Updates (v2.5.2)
+
+### 🎨 Edge Tool Variable Thickness Feature
+- **✅ Variable Edge Thickness**: Edge tool now supports 5 thickness levels (0.1P, 0.25P, 0.5P, 1.0P, 2.0P)
+- **✅ Right-Click Thickness Menu**: Right-click edge tool button to select thickness with visual indicators
+- **✅ Thickness Display**: Edge button shows current thickness: `Edge [0.1P]`, `Edge [0.25P]`, etc.
+- **✅ Zoom-Scaled Line Width**: Edge lines scale properly with zoom level for consistent appearance
+- **✅ Fine Line Control**: Ultra-fine 0.1P thickness for detailed edge work and line art
+
+## Previous Updates (v2.5.1)
+
+### 🐛 Edge Tool Critical Fix
+- **✅ Fixed Edge Detection Bug**: Edge tool now correctly detects all edges (top, bottom, left, right) instead of only drawing on top edges
+- **✅ Float Precision Coordinates**: Added separate coordinate system for edge tool with fractional precision
+- **✅ Improved Edge Targeting**: Users can now reliably click on any edge of a pixel
+- **✅ New Project Edge Clearing**: Edge lines are now properly cleared when creating new projects
+
+## Previous Updates (v2.5.0)
 
 ### 🔍 Zoom System Improvements
 - **✅ Added 64x Zoom**: New maximum zoom level for extreme detail work on tiny canvases

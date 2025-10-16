@@ -16,7 +16,7 @@ class FileOperationsManager:
     """Manages all file operations for the application"""
     
     def __init__(self, root, canvas, palette, layer_manager, timeline, project, 
-                 export_manager, presets, layer_panel, timeline_panel):
+                 export_manager, presets, layer_panel, timeline_panel, tools):
         """
         Initialize the FileOperationsManager.
         
@@ -31,6 +31,7 @@ class FileOperationsManager:
             presets: The presets manager object
             layer_panel: The layer panel UI object
             timeline_panel: The timeline panel UI object
+            tools: Dictionary of all tools (including edge tool)
         """
         self.root = root
         self.canvas = canvas
@@ -42,6 +43,7 @@ class FileOperationsManager:
         self.presets = presets
         self.layer_panel = layer_panel
         self.timeline_panel = timeline_panel
+        self.tools = tools
         
         # Callbacks for forcing canvas updates (will be set by main_window)
         self.force_canvas_update_callback = None
@@ -59,6 +61,12 @@ class FileOperationsManager:
         # Reset timeline
         self.timeline.clear_frames()
         self.timeline.add_frame()
+        
+        # Clear edge lines if edge tool exists
+        if hasattr(self, 'tools') and 'edge' in self.tools:
+            edge_tool = self.tools['edge']
+            if hasattr(edge_tool, 'clear_all_edges'):
+                edge_tool.clear_all_edges()
         
         # Clear selection and reset tools to brush
         if self.clear_selection_and_reset_tools_callback:

@@ -46,15 +46,12 @@ class PanTool(Tool):
         self.start_offset_y = None
     
     # Required abstract methods (not used for pan tool)
-    def on_mouse_down(self, x, y, layer, color):
+    def on_mouse_down(self, canvas, x, y, button, color):
         pass
     
-    def on_mouse_move(self, layer, x, y, color):
+    def on_mouse_move(self, canvas, x, y, color):
         pass
         
-    def on_mouse_up(self, x, y, layer, color):
-        pass
-        
-    def draw_preview(self, surface, x, y, color):
+    def on_mouse_up(self, canvas, x, y, button, color):
         pass
 

@@ -501,6 +501,9 @@ class MainWindow:
         self.tool_size_mgr.tool_buttons = self.tool_buttons
         self.tool_size_mgr.select_tool_callback = self._select_tool
         
+        # Update edge button text to show current thickness
+        self.tool_size_mgr.update_edge_button_text()
+        
         # Update brush and eraser button text to show default sizes
         self.tool_size_mgr.update_brush_button_text()
         self.tool_size_mgr.update_eraser_button_text()
@@ -573,7 +576,7 @@ class MainWindow:
         self.file_ops = FileOperationsManager(
             self.root, self.canvas, self.palette, self.layer_manager,
             self.timeline, self.project, self.export_manager, self.presets,
-            self.layer_panel, self.timeline_panel
+            self.layer_panel, self.timeline_panel, self.tools
         )
         self.file_ops.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         self.file_ops.update_canvas_from_layers_callback = self._update_canvas_from_layers
@@ -713,6 +716,7 @@ class MainWindow:
             'update_tool_selection': self._update_tool_selection,
             'show_brush_size_menu': self.tool_size_mgr.show_brush_size_menu,
             'show_eraser_size_menu': self.tool_size_mgr.show_eraser_size_menu,
+            'show_edge_thickness_menu': self.tool_size_mgr.show_edge_thickness_menu,
             'open_texture_panel': self.dialog_mgr.open_texture_panel,
             'mirror_selection': self.selection_mgr.mirror_selection,
             'rotate_selection': self.selection_mgr.rotate_selection,
@@ -772,6 +776,37 @@ class MainWindow:
         # Clamp to canvas bounds
         canvas_x = max(0, min(canvas_x, self.canvas.width - 1))
         canvas_y = max(0, min(canvas_y, self.canvas.height - 1))
+        
+        return (canvas_x, canvas_y)
+    
+    def _tkinter_screen_to_canvas_coords_float(self, screen_x: int, screen_y: int) -> tuple[float, float]:
+        """Convert tkinter screen coordinates to canvas coordinates with float precision (for edge tool)"""
+        if not hasattr(self, 'drawing_canvas') or not self.drawing_canvas:
+            return (0.0, 0.0)
+        
+        # Get canvas dimensions
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        
+        # Calculate canvas pixel dimensions
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        
+        # Calculate canvas offset (centered in the drawing area)
+        x_offset = (canvas_width - canvas_pixel_width) // 2
+        y_offset = (canvas_height - canvas_pixel_height) // 2
+        
+        # Add pan offset
+        x_offset += self.pan_offset_x * self.canvas.zoom
+        y_offset += self.pan_offset_y * self.canvas.zoom
+        
+        # Convert screen coordinates to canvas pixel coordinates (preserve float precision)
+        canvas_x = (screen_x - x_offset) / self.canvas.zoom
+        canvas_y = (screen_y - y_offset) / self.canvas.zoom
+        
+        # Clamp to canvas bounds
+        canvas_x = max(0.0, min(canvas_x, self.canvas.width - 1.0))
+        canvas_y = max(0.0, min(canvas_y, self.canvas.height - 1.0))
         
         return (canvas_x, canvas_y)
     

@@ -1,5 +1,84 @@
 # Pixel Perfect - Changelog
 
+## Version 2.5.3 - Edge Tool Flickering Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Edge Tool Flickering Lines Fix
+- **✅ Flickering Eliminated**: Fixed critical issue where edge lines flickered in and out during continuous drawing
+- **✅ Preview System Isolation**: Disabled hover preview during active drawing to prevent interference
+- **✅ Clean Drawing Experience**: Edge lines now draw smoothly without visual artifacts
+- **✅ Preserved Functionality**: All edge tool features remain intact (thickness, erase, etc.)
+
+### 🔧 Technical Fix
+- Modified `on_mouse_move()` to only update preview when not actively drawing
+- Added preview clearing before starting to draw and after completing drawing
+- Maintained deferred drawing optimization for performance
+- Preserved all existing edge tool functionality
+
+## Version 2.5.2 - Edge Tool Variable Thickness
+**Date**: October 16, 2025  
+**Type**: Feature Enhancement
+
+### 🎨 Edge Tool Variable Thickness Feature
+- **✅ Variable Edge Thickness**: Edge tool now supports 5 different thickness levels (0.1P, 0.25P, 0.5P, 1.0P, 2.0P)
+- **✅ Right-Click Thickness Menu**: Right-click edge tool button to select thickness with visual indicators
+- **✅ Thickness Display**: Edge button shows current thickness: `Edge [0.1P]`, `Edge [0.25P]`, etc.
+- **✅ Zoom-Scaled Line Width**: Edge lines scale properly with zoom level for consistent appearance
+- **✅ Thickness Persistence**: Each edge line remembers its thickness when redrawn
+- **✅ Preview Thickness**: Hover preview shows actual thickness that will be drawn
+- **✅ Fine Line Control**: Ultra-fine 0.1P thickness for detailed edge work and line art
+
+### 🔧 Technical Implementation
+- Added `edge_thickness` property to ToolSizeManager with 0.1P default
+- Implemented `show_edge_thickness_menu()` with 5 thickness options and checkmarks
+- Updated `_draw_edge_line_on_canvas()` to accept and use variable thickness
+- Modified edge data storage to include thickness for persistence
+- Added `update_edge_button_text()` to display current thickness
+- Enhanced preview system to show actual thickness being drawn
+- Integrated right-click menu binding in UIBuilder
+
+### 🎯 User Experience
+- **Ultra Fine (0.1P)**: Perfect for detailed line art and fine edges
+- **Fine (0.25P)**: Great for subtle outlines and detailed work
+- **Medium (0.5P)**: Good balance for most edge drawing
+- **Thick (1.0P)**: Bold edges for emphasis
+- **Extra Thick (2.0P)**: Heavy outlines for dramatic effect
+
+---
+
+## Version 2.5.1 - Edge Tool Detection Fix
+**Date**: October 16, 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Edge Tool Critical Fix
+- **✅ Fixed Edge Detection Bug**: Edge tool now correctly detects all edges (top, bottom, left, right)
+- **✅ Float Precision Coordinates**: Added separate coordinate system for edge tool with fractional precision
+- **✅ Improved Edge Targeting**: Users can now reliably click on any edge of a pixel
+- **✅ New Project Edge Clearing**: Edge lines are now properly cleared when creating new projects
+- **✅ Right-Click Erase**: Added right-click functionality to erase edge lines near clicked pixels
+- **✅ Visual Feedback Fix**: Edge tool now shows hover preview like brush and eraser tools
+- **✅ Enhanced Distance Detection**: Multi-pixel edge detection with 3x3 scanning and 40% edge zone
+
+### 🔧 Technical Changes
+- Added `_tkinter_screen_to_canvas_coords_float()` method for edge tool precision
+- Modified event dispatcher to use float coordinates specifically for edge tool
+- Updated edge tool method signatures to accept float coordinates
+- Added edge clearing functionality to FileOperationsManager
+- Added right-click event handling (`<Button-3>`) for edge tool erasing
+- Implemented smart edge detection for erasing nearby edge lines
+- Added edge tool visual feedback integration to mouse move event handler
+- Added edge preview cleanup across all preview clearing locations
+- Implemented multi-pixel edge detection with 3x3 scanning system
+- Enhanced edge zone from 25% to 40% for more forgiving detection
+- Added cross-pixel edge detection for cursor positioning between pixels
+- Added distance prioritization system for optimal edge selection
+- Maintained backward compatibility with other tools
+
+### 📚 Documentation
+- Added comprehensive edge tool detection bug fix documentation
+- Updated technical architecture documentation
+
 ## Version 2.5.0 - 64x Zoom and Edge Tool Complete
 **Date**: January 2025  
 **Type**: Major Feature Release
@@ -2227,3 +2306,19 @@ User clicks "Yes" → Resize proceeds with pixel loss
 - Custom .pixpf project format
 - File association system
 - Comprehensive keyboard shortcuts
+
+## Version 2.5.4 - Edge Tool UX Fixes
+**Date**: January 2025  
+**Type**: Bug Fixes / UX Improvements
+
+### 🧹 Right-Click Drag Erase (Edge)
+- **✅ Continuous erase** while holding right mouse button and dragging
+- Uses the same enhanced edge detection as drawing
+
+### 🖱️ Edge Thickness Menu Reliability
+- **✅ Right-click on Edge button** opens thickness menu consistently
+- Verified UI binding and callback wiring
+
+### 🔧 Internal
+- Added right-button drag and release event routing in canvas event dispatcher
+- Ensured float-precision coordinate path for erasing

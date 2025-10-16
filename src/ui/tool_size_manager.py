@@ -26,6 +26,7 @@ class ToolSizeManager:
         # Tool sizes
         self.brush_size = 1
         self.eraser_size = 1
+        self.edge_thickness = 0.1  # Default edge thickness in pixels
         
         # Widget references (set after UI creation)
         self.tool_buttons = None
@@ -33,6 +34,56 @@ class ToolSizeManager:
         # Callbacks (set by main_window)
         self.update_canvas_callback = None
         self.select_tool_callback = None
+    
+    # ========================================
+    # EDGE THICKNESS METHODS
+    # ========================================
+    
+    def show_edge_thickness_menu(self, event):
+        """Show edge thickness selection popup menu"""
+        # Create popup menu
+        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white", 
+                      activebackground="#1a73e8", activeforeground="white",
+                      relief=tk.FLAT, borderwidth=0)
+        
+        # Add thickness options with visual indicators
+        thicknesses = [
+            (0.1, "0.1P • Ultra Fine"),
+            (0.25, "0.25P • Fine"),
+            (0.5, "0.5P • Medium"),
+            (1.0, "1.0P • Thick"),
+            (2.0, "2.0P • Extra Thick")
+        ]
+        
+        for thickness, label in thicknesses:
+            # Add checkmark for current thickness
+            display_label = f"✓ {label}" if thickness == self.edge_thickness else f"   {label}"
+            menu.add_command(
+                label=display_label,
+                command=lambda t=thickness: self.set_edge_thickness(t),
+                font=("Segoe UI", 10)
+            )
+        
+        # Show menu at mouse position
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+    
+    def set_edge_thickness(self, thickness: float):
+        """Set edge thickness"""
+        self.edge_thickness = thickness
+        self.update_edge_button_text()
+        
+        # Auto-select edge tool
+        if self.select_tool_callback:
+            self.select_tool_callback("edge")
+    
+    def update_edge_button_text(self):
+        """Update edge button to show current thickness"""
+        if self.tool_buttons and "edge" in self.tool_buttons:
+            thickness_text = f"{self.edge_thickness:.1f}P" if self.edge_thickness < 1.0 else f"{self.edge_thickness:.0f}P"
+            self.tool_buttons["edge"].configure(text=f"Edge [{thickness_text}]")
     
     # ========================================
     # BRUSH SIZE METHODS

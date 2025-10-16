@@ -691,4 +691,5 @@ class CanvasRenderer:
         if hasattr(self.app, 'tools') and 'edge' in self.app.tools:
             edge_tool = self.app.tools['edge']
             if hasattr(edge_tool, 'redraw_all_edges'):
-                edge_tool.redraw_all_edges()
+                # Force redraw to ensure edges are restored after canvas clears
+                edge_tool.redraw_all_edges(force=True)
