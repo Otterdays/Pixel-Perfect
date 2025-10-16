@@ -190,7 +190,9 @@ class EventDispatcher:
         
         # Ctrl+N for new project
         if event.state & 0x4 and event.keysym.lower() == 'n':
-            self.main_window.new_project()
+            # Route through FileOperationsManager to ensure full cleanup
+            if hasattr(self.main_window, 'file_ops'):
+                self.main_window.file_ops.new_project()
             return
         
         # Handle rotation preview mode

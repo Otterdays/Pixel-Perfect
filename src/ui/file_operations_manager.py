@@ -49,9 +49,16 @@ class FileOperationsManager:
         self.force_canvas_update_callback = None
         self.update_canvas_from_layers_callback = None
         self.clear_selection_and_reset_tools_callback = None
+        self.purge_canvas_overlays_callback = None
     
     def new_project(self):
         """Create a new project"""
+        # First, purge any transient overlays/edge artifacts
+        if self.purge_canvas_overlays_callback:
+            try:
+                self.purge_canvas_overlays_callback()
+            except Exception:
+                pass
         # Clear canvas
         self.canvas.clear()
         

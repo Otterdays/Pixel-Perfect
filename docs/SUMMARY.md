@@ -1,10 +1,25 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.5.3  
-**Last Updated**: January 2025 - Edge Tool Flickering Fix
+**Version**: 2.5.6  
+**Last Updated**: January 2025 - Layer Visibility Toggle Fix
 
-## Latest Updates (v2.5.3)
+## Latest Updates (v2.5.6)
+
+### 👁️ Layer Visibility Toggle Fix
+- **✅ Fixed layer checkbox toggles** - clicking visibility checkboxes now immediately updates canvas
+- **✅ Instant visual feedback** - hiding/showing layers updates display immediately
+- **✅ Complete layer system** - all layer operations now provide proper visual feedback
+
+## Previous Updates (v2.5.5)
+
+### 🎨 Layer System Drawing Fix
+- **✅ Fixed layer selection confusion** - clicking a layer now always selects it
+- **✅ Clear visual feedback** - active layer highlighted in blue  
+- **✅ Predictable drawing behavior** - drawing always goes to the highlighted layer
+- **✅ Removed confusing deselect behavior** that made layers appear broken
+
+## Previous Updates (v2.5.3)
 
 ### 🐛 Edge Tool Flickering Lines Fix
 - **✅ Flickering Eliminated**: Fixed critical issue where edge lines flickered during continuous drawing

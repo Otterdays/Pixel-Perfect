@@ -98,6 +98,13 @@ self.main_window.drawing_canvas.bind("<Button-3>", self.on_tkinter_canvas_right_
 - **Bulk erasing**: Right-click drag to erase multiple edges
 - **Edge selection**: Click to select specific edges before erasing
 
+## Reliability Improvements
+
+- New Project now performs a canvas overlay purge to eliminate any stuck edge lines (rare). The purge:
+  - Deletes overlay tags (`edge_preview`, `edge_lines`, etc.)
+  - Calls `EdgeTool.clear_all_edges()` to wipe stored lines
+- `Ctrl+N` is wired to use FileOps `new_project()` so the purge always runs.
+
 ---
 
 **Status**: ✅ Complete and ready for testing  

@@ -312,11 +312,15 @@ class EdgeTool(Tool):
         if thickness is None:
             thickness = getattr(self.main_window.tool_size_mgr, 'edge_thickness', 0.1)
         
+        # Normalize to a canonical representation so the same physical edge
+        # isn't stored twice (e.g., bottom of (x,y) == top of (x,y+1)).
+        canon_x, canon_y, canon_edge = self._canonicalize_edge(pixel_x, pixel_y, edge)
+
         # Store the edge line data
         edge_data = {
-            'pixel_x': pixel_x,
-            'pixel_y': pixel_y,
-            'edge': edge,
+            'pixel_x': canon_x,
+            'pixel_y': canon_y,
+            'edge': canon_edge,
             'color': color,
             'thickness': thickness
         }
@@ -324,9 +328,11 @@ class EdgeTool(Tool):
         # Check if this edge line already exists (comparing without thickness for backward compatibility)
         edge_exists = False
         for existing_edge in self.edge_lines:
-            if (existing_edge['pixel_x'] == edge_data['pixel_x'] and
-                existing_edge['pixel_y'] == edge_data['pixel_y'] and
-                existing_edge['edge'] == edge_data['edge'] and
+            # Compare using canonical form to avoid duplicates across opposite sides
+            ex_x, ex_y, ex_edge = self._canonicalize_edge(existing_edge['pixel_x'], existing_edge['pixel_y'], existing_edge['edge'])
+            if (ex_x == edge_data['pixel_x'] and
+                ex_y == edge_data['pixel_y'] and
+                ex_edge == edge_data['edge'] and
                 existing_edge['color'] == edge_data['color']):
                 edge_exists = True
                 break
@@ -430,10 +436,12 @@ class EdgeTool(Tool):
         
         # Redraw all stored edge lines
         for edge_data in self.edge_lines:
+            # Support legacy entries by drawing their canonical form
+            draw_x, draw_y, draw_edge = self._canonicalize_edge(edge_data['pixel_x'], edge_data['pixel_y'], edge_data['edge'])
             self._draw_edge_line_on_canvas(
-                edge_data['pixel_x'],
-                edge_data['pixel_y'],
-                edge_data['edge'],
+                draw_x,
+                draw_y,
+                draw_edge,
                 edge_data['color'],
                 edge_data.get('thickness', 0.1)  # Use stored thickness or default
             )
@@ -465,19 +473,15 @@ class EdgeTool(Tool):
             return
         
         target_pixel_x, target_pixel_y, target_edge = edge_result
-        
-        # Find edges to remove - look for edges that match the detected edge
+
+        # Canonicalize the target to match storage format
+        canon_tx, canon_ty, canon_edge = self._canonicalize_edge(target_pixel_x, target_pixel_y, target_edge)
+
+        # Find edges to remove - match canonical form, also tolerate legacy non-canonical entries
         edges_to_remove = []
-        
         for edge_data in self.edge_lines:
-            edge_pixel_x = edge_data['pixel_x']
-            edge_pixel_y = edge_data['pixel_y']
-            edge_type = edge_data['edge']
-            
-            # Check if this edge matches the detected edge
-            if (edge_pixel_x == target_pixel_x and 
-                edge_pixel_y == target_pixel_y and 
-                edge_type == target_edge):
+            ex_x, ex_y, ex_edge = self._canonicalize_edge(edge_data['pixel_x'], edge_data['pixel_y'], edge_data['edge'])
+            if ex_x == canon_tx and ex_y == canon_ty and ex_edge == canon_edge:
                 edges_to_remove.append(edge_data)
         
         # Remove the found edges
@@ -489,6 +493,19 @@ class EdgeTool(Tool):
             self.pending_redraw = True
 
             print(f"[Edge Tool] Erased {len(edges_to_remove)} edge line(s) at {target_edge} edge of pixel ({target_pixel_x}, {target_pixel_y})")
+
+    def _canonicalize_edge(self, pixel_x: int, pixel_y: int, edge: str) -> tuple[int, int, str]:
+        """Return a canonical representation of an edge so each physical line has one id.
+        Canonical rules:
+          - right of (x,y) -> left of (x+1,y)
+          - bottom of (x,y) -> top of (x,y+1)
+          - left/top unchanged
+        """
+        if edge == "right":
+            return pixel_x + 1, pixel_y, "left"
+        if edge == "bottom":
+            return pixel_x, pixel_y + 1, "top"
+        return pixel_x, pixel_y, edge
     
     def _is_edge_near_pixel(self, edge_pixel_x: int, edge_pixel_y: int, edge_type: str, target_x: int, target_y: int) -> bool:
         """Check if an edge is near the target pixel"""

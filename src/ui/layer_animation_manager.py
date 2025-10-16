@@ -189,12 +189,12 @@ class LayerAnimationManager:
         Returns:
             Layer object or None
         """
-        # If a specific layer is selected, use it
-        if self.layer_manager.active_layer_index is not None:
-            return self.layer_manager.get_active_layer()
+        # Always use the active layer if it's valid
+        active_layer = self.layer_manager.get_active_layer()
+        if active_layer is not None:
+            return active_layer
         
-        # Otherwise, if in "show all layers" mode (active_layer_index is None),
-        # we'll draw on the first layer (background)
+        # Fallback: if no active layer, use the first layer (background)
         if len(self.layer_manager.layers) > 0:
             return self.layer_manager.layers[0]
         

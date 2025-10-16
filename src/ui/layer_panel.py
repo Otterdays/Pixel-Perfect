@@ -148,9 +148,6 @@ class LayerPanel:
         # Active indicator
         if index == self.layer_manager.active_layer_index:
             layer_btn.configure(fg_color="blue")
-        elif self.layer_manager.active_layer_index == -1:
-            # No layer selected (show all) - make all layers slightly highlighted
-            layer_btn.configure(fg_color="darkblue")
         else:
             layer_btn.configure(fg_color="transparent")
         
@@ -173,12 +170,9 @@ class LayerPanel:
         self.merge_btn.configure(state="normal" if active_index > 0 else "disabled")
     
     def _select_layer(self, index: int):
-        """Select a layer (or deselect if clicking on active layer)"""
-        # If clicking on the active layer, deselect it (show all layers)
-        if index == self.layer_manager.active_layer_index:
-            self.layer_manager.active_layer_index = -1  # -1 means no layer selected (show all)
-        else:
-            self.layer_manager.set_active_layer(index)
+        """Select a layer"""
+        # Always set the clicked layer as active (no deselect behavior)
+        self.layer_manager.set_active_layer(index)
         
         self._update_display()
         

@@ -581,6 +581,7 @@ class MainWindow:
         self.file_ops.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         self.file_ops.update_canvas_from_layers_callback = self._update_canvas_from_layers
         self.file_ops.clear_selection_and_reset_tools_callback = self._clear_selection_and_reset_tools
+        self.file_ops.purge_canvas_overlays_callback = self._purge_canvas_overlays
         
         # Set dialog manager callback (dialog_mgr initialized earlier)
         self.dialog_mgr.select_tool_callback = self._select_tool
@@ -727,6 +728,30 @@ class MainWindow:
             'initialize_all_views': self._initialize_all_views,
             'show_view': self._show_view,
         }
+
+    def _purge_canvas_overlays(self):
+        """Delete all transient canvas overlays and clear edge tool previews/lines.
+        This is a safety purge to resolve any 'immortal' overlay items that may
+        survive redraws due to tag ordering or throttled redraws.
+        """
+        if hasattr(self, 'drawing_canvas') and self.drawing_canvas:
+            # Remove all known transient tags
+            for tag in [
+                "edge_preview", "edge_lines", "shape_preview", "brush_preview",
+                "eraser_preview", "texture_preview", "selection", "move_preview",
+                "rotate_preview", "copy_preview", "scale_handle", "border"
+            ]:
+                try:
+                    self.drawing_canvas.delete(tag)
+                except Exception:
+                    pass
+        # Ask edge tool to forget stored lines as well (full purge scenario)
+        edge_tool = self.tools.get("edge") if hasattr(self, 'tools') else None
+        if edge_tool and hasattr(edge_tool, 'clear_all_edges'):
+            try:
+                edge_tool.clear_all_edges()
+            except Exception:
+                pass
 
     def _update_undo_redo_buttons(self):
         """Update undo/redo button states"""
@@ -1186,6 +1211,9 @@ class MainWindow:
         
         # Update canvas with the flattened result
         self.canvas.pixels = flattened_pixels
+        
+        # Trigger display update to show the changes
+        self.canvas_renderer.update_pixel_display()
     
     def _clear_selection_and_reset_tools(self):
         """Clear any active selection and reset tools to brush"""

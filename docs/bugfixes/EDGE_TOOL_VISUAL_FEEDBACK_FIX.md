@@ -112,6 +112,16 @@ The edge tool has a sophisticated preview system built into its `on_mouse_move` 
 4. **Canvas Boundaries**: Test hover behavior at canvas edges
 5. **Zoom Levels**: Verify preview works at different zoom levels
 
+## Related Hardening: Immortal Edge Lines Purge
+
+In rare cases, edge overlays could persist after redraws. We added a safety purge:
+
+- Main window now includes ` _purge_canvas_overlays()` which deletes overlay tags (`edge_preview`, `edge_lines`, `shape_preview`, `selection`, etc.) and asks the Edge tool to clear stored lines.
+- `FileOperationsManager.new_project()` calls this purge first to guarantee a clean slate.
+- `Ctrl+N` now routes to `FileOperationsManager.new_project()` to ensure the same cleanup path.
+
+This guarantees New Project and session resets cannot inherit “immortal” edge lines.
+
 ---
 
 **Status**: ✅ Complete and ready for testing  

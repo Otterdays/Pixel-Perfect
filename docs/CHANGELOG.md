@@ -1,5 +1,17 @@
 # Pixel Perfect - Changelog
 
+## Version 2.5.4 - Edge Tool Reliability Hardening
+**Date**: October 16, 2025  
+**Type**: Reliability Improvements
+
+### 🧹 Immortal Edge Lines Purge and New Project Consistency
+- **✅ Safety Purge Added**: `MainWindow._purge_canvas_overlays()` deletes all transient overlay tags and clears EdgeTool storage
+- **✅ New Project Cleanup**: `FileOperationsManager.new_project()` calls purge first to guarantee a clean slate
+- **✅ Keyboard Consistency**: `Ctrl+N` now routes to FileOps `new_project()` so the same cleanup path always runs
+- **🧩 Context**: Rare reports of “immortal” edge lines persisting after redraws; this hardening ensures overlays cannot survive resets
+
+---
+
 ## Version 2.5.3 - Edge Tool Flickering Fix
 **Date**: January 2025  
 **Type**: Critical Bug Fix
@@ -2306,6 +2318,34 @@ User clicks "Yes" → Resize proceeds with pixel loss
 - Custom .pixpf project format
 - File association system
 - Comprehensive keyboard shortcuts
+
+## Version 2.5.6 - Layer Visibility Toggle Fix
+**Date**: January 2025  
+**Type**: Bug Fix
+
+### 👁️ Layer Visibility Toggle Fix
+- **✅ Fixed layer checkbox toggles** - clicking visibility checkboxes now immediately updates canvas
+- **✅ Instant visual feedback** - hiding/showing layers updates display immediately
+- **✅ Complete layer system** - all layer operations now provide proper visual feedback
+
+### 🔧 Technical Fix
+- Added missing `canvas_renderer.update_pixel_display()` call to `_update_canvas_from_layers()`
+- Ensures layer visibility changes trigger immediate canvas display updates
+
+## Version 2.5.5 - Layer System Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🎨 Layer System Drawing Fix
+- **✅ Fixed layer selection confusion** - clicking a layer now always selects it
+- **✅ Clear visual feedback** - active layer highlighted in blue
+- **✅ Predictable drawing behavior** - drawing always goes to the highlighted layer
+- **✅ Removed confusing deselect behavior** that made layers appear broken
+
+### 🔧 Technical Changes
+- Simplified layer selection logic in `layer_panel.py`
+- Fixed drawing layer resolution in `layer_animation_manager.py`
+- Removed confusing `-1` state handling that caused silent fallbacks
 
 ## Version 2.5.4 - Edge Tool UX Fixes
 **Date**: January 2025  

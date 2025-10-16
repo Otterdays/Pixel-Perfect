@@ -101,6 +101,11 @@ def _update_hover_preview(self, canvas, x: float, y: float, color: Tuple[int, in
 4. Verify hover preview shows correct edge
 5. Test continuous drawing (drag) across multiple pixels
 
+## Related Hardening
+
+- Added global overlay purge in main window (`_purge_canvas_overlays`) and called it from New Project to prevent persistent edge artifacts.
+- Ensured `Ctrl+N` triggers the FileOps `new_project()` path so the purge runs consistently.
+
 ## Technical Details
 
 **Algorithm**: Euclidean distance minimization
