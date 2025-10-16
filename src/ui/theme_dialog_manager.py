@@ -81,6 +81,29 @@ class ThemeDialogManager:
         )
         info_label.pack(pady=10)
         
+        # Credits section
+        credits_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        credits_frame.pack(pady=(20, 10), padx=20, fill="x")
+        
+        credits_label = ctk.CTkLabel(
+            credits_frame,
+            text="Developed with the power of AI",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#1a73e8"
+        )
+        credits_label.pack()
+        
+        credits_text = "Ryan - Developer\nJames - Designer"
+        
+        credits_text_label = ctk.CTkLabel(
+            credits_frame,
+            text=credits_text,
+            font=ctk.CTkFont(size=11),
+            text_color="#888888",
+            justify="center"
+        )
+        credits_text_label.pack(pady=(5, 0))
+        
         # Close button
         button_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         button_frame.pack(pady=(0, 20), padx=20, fill="x")
