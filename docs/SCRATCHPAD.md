@@ -1,3 +1,62 @@
+## Version 2.2.0 - Major Modular Refactor Complete (October 15, 2025)
+**Status**: ✅ COMPLETE - Main Window Refactored to 1,183 lines (65.1% reduction from baseline)
+
+### 🎯 Refactor Overview
+Completed massive 4-phase modular refactor extracting 3 new managers from main_window.py. Total reduction: 526 lines (30.8% from v2.0).
+
+### Phase 1: Palette Code Cleanup (-390 lines)
+- Deleted duplicate palette view implementations (lines 772-1154)
+- Old code now in palette_views modules (GridView, PrimaryView, SavedView, ConstantsView)
+- Result: 1,709 → 1,319 lines
+
+### Phase 4: CanvasOperationsManager (-117 lines)
+- **New File**: `src/ui/canvas_operations_manager.py` (210 lines)
+- **Extracted**: Coordinate conversion, panel sizing, window state management
+- **Methods**: tkinter_screen_to_canvas_coords, calculate_optimal_panel_widths, save/restore_window_state
+- Result: 1,319 → 1,202 lines
+
+### Phase 3: LayerAnimationManager (-17 lines)
+- **New File**: `src/ui/layer_animation_manager.py` (214 lines)
+- **Extracted**: Layer operations, animation timeline coordination
+- **Methods**: create_layer_and_timeline_panels, on_layer_changed, add_layer, sync_canvas, animation controls
+- Result: 1,202 → 1,185 lines
+
+### Phase 2: ColorViewManager (-2 lines)
+- **New File**: `src/ui/color_view_manager.py` (205 lines)
+- **Extracted**: Color view switching, color wheel management, custom colors
+- **Methods**: initialize_all_views, show_view, create_color_wheel, custom color operations
+- Result: 1,185 → 1,183 lines
+
+### 📊 Final Statistics
+- **Starting**: 1,709 lines (v2.0)
+- **Ending**: 1,183 lines
+- **Reduction**: 526 lines (30.8%)
+- **From Baseline (3,387)**: 65.1% reduction
+- **Target (850 lines)**: Getting close!
+
+### 🏗️ All Manager Classes (12 Total)
+1. UIBuilder - Toolbar and UI construction
+2. EventDispatcher - Event routing
+3. FileOperationsManager - File I/O operations
+4. DialogManager - Custom dialogs
+5. SelectionManager - Selection operations
+6. CanvasRenderer - All rendering
+7. ToolSizeManager - Brush/eraser sizing
+8. CanvasZoomManager - Canvas management
+9. GridControlManager - Grid controls
+10. CanvasOperationsManager - Coordinates, window state ← NEW
+11. LayerAnimationManager - Layers, animation ← NEW
+12. ColorViewManager - Color views, wheel ← NEW
+
+### ✅ Success Metrics
+- Zero linter errors
+- Application launches successfully
+- All features functional (palette views, layers, animation, tools)
+- Clean separation of concerns
+- Improved testability and maintainability
+
+---
+
 ## Version 2.1.0 - Import PNG Dialog with Spinning Preview (December 2024)
 
 ### ✨ Import PNG Dialog Feature

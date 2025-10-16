@@ -48,6 +48,9 @@ from ui.canvas_zoom_manager import CanvasZoomManager
 from ui.grid_control_manager import GridControlManager
 from ui.notes_panel import NotesPanel
 from ui.import_png_dialog import ImportPNGDialog
+from ui.canvas_operations_manager import CanvasOperationsManager
+from ui.layer_animation_manager import LayerAnimationManager
+from ui.color_view_manager import ColorViewManager
 
 class MainWindow:
     """Main application window"""
@@ -60,7 +63,25 @@ class MainWindow:
         # Create main window
         self.root = ctk.CTk()
         self.root.title("Pixel Perfect - Retro Pixel Art Editor")
-        self.root.geometry("1200x800")
+        
+        # Get screen dimensions and calculate appropriate window size
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Calculate window size that leaves space for taskbar
+        # Most taskbars are 40-50px, so use 60px margin to be safe
+        available_height = screen_height - 60
+        
+        # Set reasonable window size that fits above taskbar
+        window_width = min(1400, screen_width - 40)  # Leave some margin on sides
+        window_height = min(800, available_height)   # Increased by 150px from 650, still above taskbar
+        
+        # Center the window on screen
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2 - 30  # Slightly above center to account for taskbar
+        
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        print(f"[Window] Initialized at {window_width}x{window_height} (screen: {screen_width}x{screen_height})")
         
         # Set window icon
         try:
@@ -115,8 +136,12 @@ class MainWindow:
         
         # Initialize responsive panel sizing
         # Try to restore saved window state first, fallback to calculated optimal sizes
-        if not self._restore_window_state():
-            self.left_panel_width, self.right_panel_width = self._calculate_optimal_panel_widths()
+        temp_canvas_ops = CanvasOperationsManager(self.root, self.canvas, None)
+        restored = temp_canvas_ops.restore_window_state()
+        if restored:
+            self.left_panel_width, self.right_panel_width = restored
+        else:
+            self.left_panel_width, self.right_panel_width = temp_canvas_ops.calculate_optimal_panel_widths()
         
         # Initialize custom colors manager
         from src.core.custom_colors import CustomColorManager
@@ -241,6 +266,12 @@ class MainWindow:
         
         # Create UI
         self._create_ui()
+        
+        # Initialize canvas operations manager (after UI creation)
+        self.canvas_ops_mgr = CanvasOperationsManager(self.root, self.canvas, self.drawing_canvas)
+        self.canvas_ops_mgr.left_container = self.left_container
+        self.canvas_ops_mgr.right_container = self.right_container
+        self.canvas_ops_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
         
         # Apply initial theme (Basic Grey) to all UI elements
         self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
@@ -427,17 +458,21 @@ class MainWindow:
         self.drawing_canvas = canvas_widgets['drawing_canvas']  # Alias for compatibility
         
         # Pre-create layer and timeline panels for instant loading (OPTIMIZATION)
-        self._create_layer_and_timeline_panels()
-    
-    def _create_layer_and_timeline_panels(self):
-        """Create layer and timeline panels once for instant loading (OPTIMIZATION)"""
-        # Initialize layer panel
-        self.layer_panel = LayerPanel(self.right_panel, self.layer_manager)
-        self.layer_panel.on_layer_changed = self._on_layer_changed
-        
-        # Initialize timeline panel
-        self.timeline_panel = TimelinePanel(self.right_panel, self.timeline)
-        self.timeline_panel.on_frame_changed = self._on_frame_changed
+        # Initialize layer animation manager
+        self.layer_anim_mgr = LayerAnimationManager(
+            self.root, self.canvas, self.layer_manager, self.timeline,
+            None, None  # layer_panel and timeline_panel will be created below
+        )
+        self.layer_panel, self.timeline_panel = self.layer_anim_mgr.create_layer_and_timeline_panels(
+            self.right_panel, self.theme_manager
+        )
+        # Update manager with created panels
+        self.layer_anim_mgr.layer_panel = self.layer_panel
+        self.layer_anim_mgr.timeline_panel = self.timeline_panel
+        # Set callbacks
+        self.layer_anim_mgr.update_canvas_callback = self._update_canvas_from_layers
+        self.layer_anim_mgr.clear_selection_callback = self._clear_selection_and_reset_tools
+        self.layer_anim_mgr.update_pixel_display_callback = self.canvas_renderer.update_pixel_display
         
         # Initialize file operations manager
         self.file_ops = FileOperationsManager(
@@ -484,7 +519,21 @@ class MainWindow:
         self.window_state_manager.right_panel_width = self.right_panel_width
         
         # Try to restore saved window state (overrides calculated sizes if successful)
-        self._restore_window_state()
+        self.window_state_manager.restore_state()
+        
+        # Initialize color view manager
+        self.color_view_mgr = ColorViewManager(
+            self.root, self.palette, self.theme_manager, 
+            self.custom_colors, self.left_panel
+        )
+        # Set UI component references
+        self.color_view_mgr.palette_content_frame = self.palette_content_frame
+        self.color_view_mgr.color_display_frame = self.color_display_frame
+        self.color_view_mgr.saved_view_frame = self.saved_view_frame
+        self.color_view_mgr.view_mode_var = self.view_mode_var
+        # Set callbacks
+        self.color_view_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
+        self.color_view_mgr.select_tool_callback = self._select_tool
         
         # Initialize palette views (after UI creation so palette_content_frame exists)
         self.grid_view = GridView(
@@ -526,6 +575,13 @@ class MainWindow:
             on_show_view=self._show_view
         )
         
+        # Set view references in color view manager
+        self.color_view_mgr.grid_view = self.grid_view
+        self.color_view_mgr.primary_view = self.primary_view
+        self.color_view_mgr.saved_view = self.saved_view
+        self.color_view_mgr.constants_view = self.constants_view
+        self.color_view_mgr.color_wheel = self.color_wheel
+        
         # Bind all events (after UI creation so widgets exist)
         self.event_dispatcher.bind_all_events()
     
@@ -540,9 +596,9 @@ class MainWindow:
             self.window_state_manager.toggle_right_panel()
     
     def _redraw_canvas_after_resize(self):
-        """Redraw canvas after window/panel resize"""
-        if hasattr(self, 'canvas_renderer'):
-            self.canvas_renderer.update_pixel_display()
+        """Redraw canvas after window/panel resize - delegates to canvas operations manager"""
+        if hasattr(self, 'canvas_ops_mgr'):
+            self.canvas_ops_mgr.redraw_canvas_after_resize()
     
     def _get_ui_callbacks(self):
         """Returns a dictionary of callbacks for the UI builder."""
@@ -591,6 +647,37 @@ class MainWindow:
         if hasattr(self, 'ui_builder') and 'size_var' in self.ui_builder.widgets:
             size_text = f"{self.canvas.width}x{self.canvas.height}"
             self.ui_builder.widgets['size_var'].set(size_text)
+    
+    def _tkinter_screen_to_canvas_coords(self, screen_x: int, screen_y: int) -> tuple[int, int]:
+        """Convert tkinter screen coordinates to canvas coordinates"""
+        if not hasattr(self, 'drawing_canvas') or not self.drawing_canvas:
+            return (0, 0)
+        
+        # Get canvas dimensions
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        
+        # Calculate canvas pixel dimensions
+        canvas_pixel_width = self.canvas.width * self.canvas.zoom
+        canvas_pixel_height = self.canvas.height * self.canvas.zoom
+        
+        # Calculate canvas offset (centered in the drawing area)
+        x_offset = (canvas_width - canvas_pixel_width) // 2
+        y_offset = (canvas_height - canvas_pixel_height) // 2
+        
+        # Add pan offset
+        x_offset += self.pan_offset_x * self.canvas.zoom
+        y_offset += self.pan_offset_y * self.canvas.zoom
+        
+        # Convert screen coordinates to canvas pixel coordinates
+        canvas_x = int((screen_x - x_offset) / self.canvas.zoom)
+        canvas_y = int((screen_y - y_offset) / self.canvas.zoom)
+        
+        # Clamp to canvas bounds
+        canvas_x = max(0, min(canvas_x, self.canvas.width - 1))
+        canvas_y = max(0, min(canvas_y, self.canvas.height - 1))
+        
+        return (canvas_x, canvas_y)
     
     def _select_tool(self, tool_id: str):
         """Select a drawing tool"""
@@ -687,7 +774,12 @@ class MainWindow:
         self._show_view("grid")
     
     def _initialize_all_views(self):
-        """Initialize all palette views once at startup (OPTIMIZED)"""
+        """Initialize all palette views once at startup - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.initialize_all_views()
+            return
+        
+        # Fallback if manager not ready yet (OLD IMPLEMENTATION)"""
         # Initialize grid view
         if hasattr(self, 'grid_view') and self.grid_view:
             self.grid_view.create()
@@ -710,7 +802,12 @@ class MainWindow:
         # Note: color_display_frame should remain as the palette container, not left_panel
     
     def _show_view(self, mode: str):
-        """Show specific view by toggling visibility (INSTANT)"""
+        """Show specific view - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.show_view(mode)
+            return
+        
+        # Fallback if manager not ready yet (OLD IMPLEMENTATION)"""
         # Hide all view frames first
         for frame_name in ['grid_view_frame', 'primary_view_frame', 'wheel_view_frame', 
                           'constants_view_frame', 'saved_view_frame']:
@@ -765,74 +862,32 @@ class MainWindow:
             self.root.after(10, lambda: self.left_panel._parent_canvas.yview_moveto(0))
     
     def _on_view_mode_change(self):
-        """Handle view mode change - now instant!"""
-        mode = self.view_mode_var.get()
-        self._show_view(mode)
+        """Handle view mode change - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.on_view_mode_change()
+        else:
+            mode = self.view_mode_var.get()
+            self._show_view(mode)
     
-    def _create_constants_grid(self):
     def _create_color_wheel(self):
-        """Create color wheel view"""
-        # Clear existing widgets
-        for widget in self.color_display_frame.winfo_children():
-            widget.destroy()
-        
-        # Import and create color wheel
-        from src.ui.color_wheel import ColorWheel
-        self.color_wheel = ColorWheel(self.color_display_frame, theme=self.theme_manager.current_theme)
-        self.color_wheel.on_color_changed = self._on_color_wheel_changed
-        
-        # Connect color wheel callbacks to custom colors management
-        self.color_wheel.on_save_custom_color = self._save_custom_color
-        self.color_wheel.on_remove_custom_color = self._remove_custom_color
-        
-        # Update custom colors grid with existing colors
-        self._update_custom_colors_display()
+        """Create color wheel view - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.create_color_wheel()
     
     def _on_color_wheel_changed(self, rgb_color):
-        """Handle color wheel color change"""
-        # Color wheel colors are NOT added to the palette grid
-        # The get_current_color() method will get the color from the wheel when in wheel mode
-        # This prevents colors from being added to the preset palette grid
-        
-        # Update color display in UI
-        self.canvas_renderer.update_pixel_display()
-        
-        # Auto-switch to brush tool for immediate painting
-        if self.current_tool != "brush":
-            self._select_tool("brush")
+        """Handle color wheel color change - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.on_color_wheel_changed(rgb_color)
     
     def _save_custom_color(self, rgb_color):
-        """Save current color wheel color to custom colors"""
-        # Convert RGB tuple to RGBA
-        if len(rgb_color) == 3:
-            rgba_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-        else:
-            rgba_color = rgb_color
-        
-        # Add to custom colors
-        if self.custom_colors.add_color(rgba_color):
-            print(f"[OK] Saved custom color: {rgba_color}")
-            # Update the display
-            self._update_custom_colors_display()
-        else:
-            if self.custom_colors.has_color(rgba_color):
-                print(f"[WARN] Color already in custom colors: {rgba_color}")
-            elif self.custom_colors.is_full():
-                print(f"[WARN] Custom colors full (max {self.custom_colors.max_colors})")
+        """Save current color wheel color to custom colors - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.save_custom_color(rgb_color)
     
     def _remove_custom_color(self, color):
-        """Remove a custom color"""
-        if self.custom_colors.remove_color_by_value(color):
-            print(f"[DELETE] Removed custom color: {color}")
-            # Update the display
-            self._update_custom_colors_display()
-    
-        self._select_tool("texture")
-        
-        # Close texture panel
-        window.destroy()
-        
-        print(f"[TEXTURE] Selected {texture_data.shape[1]}x{texture_data.shape[0]} texture")
+        """Remove a custom color - delegates to color view manager"""
+        if hasattr(self, 'color_view_mgr'):
+            self.color_view_mgr.remove_custom_color(color)
     
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""
@@ -964,9 +1019,9 @@ class MainWindow:
     
 
     def _on_layer_changed(self):
-        """Handle layer changes"""
-        # Update canvas to show all visible layers combined
-        self._update_canvas_from_layers()
+        """Handle layer changes - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.on_layer_changed()
     
     def _update_canvas_from_layers(self):
         """Update canvas to show all visible layers combined"""
@@ -987,15 +1042,10 @@ class MainWindow:
         self._select_tool("brush")
     
     def _get_drawing_layer(self):
-        """Get the layer to draw on (active layer or topmost visible layer)"""
-        active_layer = self.layer_manager.get_active_layer()
-        if active_layer is None:
-            # No layer selected (all layers view) - find topmost visible layer
-            for i in range(len(self.layer_manager.layers) - 1, -1, -1):
-                layer = self.layer_manager.layers[i]
-                if layer.visible:
-                    return layer
-        return active_layer
+        """Get the layer to draw on - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            return self.layer_anim_mgr.get_drawing_layer()
+        return None
     
     def get_current_color(self):
         """Get current color based on view mode (palette or color wheel)"""
@@ -1132,190 +1182,39 @@ class MainWindow:
                 self.root.update_idletasks()
     
     def _add_layer(self):
-        """Add a new layer"""
-        if self.layer_manager.add_layer():
-            self.layer_panel.refresh()
-            self._on_layer_changed()
+        """Add a new layer - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.add_layer()
     
     def _sync_canvas_with_layers(self):
-        """Sync canvas with layer manager"""
-        # Update layer manager canvas size
-        self.layer_manager.resize_layers(self.canvas.width, self.canvas.height)
-        
-        # Set canvas pixels from active layer
-        active_layer = self.layer_manager.get_active_layer()
-        if active_layer:
-            self.canvas.pixels = active_layer.pixels.copy()
-            self.canvas._redraw_surface()
-
-    def _tkinter_screen_to_canvas_coords(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
-        """Convert tkinter screen coordinates to canvas coordinates"""
-        # Get drawing canvas dimensions
-        canvas_width = self.drawing_canvas.winfo_width()
-        canvas_height = self.drawing_canvas.winfo_height()
-
-        # Calculate the canvas display size and offsets (same as in _update_tkinter_canvas)
-        canvas_pixel_width = self.canvas.width * self.canvas.zoom
-        canvas_pixel_height = self.canvas.height * self.canvas.zoom
-        x_offset = (canvas_width - canvas_pixel_width) // 2
-        y_offset = (canvas_height - canvas_pixel_height) // 2
-
-        # Convert screen coordinates to canvas-relative coordinates
-        # event.x and event.y are already relative to the widget, so no need to subtract winfo_x/y
-        relative_x = screen_x - x_offset
-        relative_y = screen_y - y_offset
-
-        # Convert to canvas pixel coordinates
-        canvas_coord_x = relative_x // self.canvas.zoom
-        canvas_coord_y = relative_y // self.canvas.zoom
-        
-        # Apply pan offset
-        canvas_coord_x -= self.pan_offset_x
-        canvas_coord_y -= self.pan_offset_y
-
-        return canvas_coord_x, canvas_coord_y
-
+        """Sync canvas with layer manager - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.sync_canvas_with_layers()
 
     def _on_frame_changed(self):
-        """Handle frame change in timeline"""
-        current_frame = self.timeline.get_current_frame()
-        if current_frame:
-            # Update canvas with current frame pixels
-            self.canvas.pixels = current_frame.pixels.copy()
-            self.canvas._redraw_surface()
-            # Update the tkinter display
-            self.canvas_renderer.update_pixel_display()
+        """Handle frame change in timeline - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.on_frame_changed()
     
     def _toggle_animation(self):
-        """Toggle animation playback"""
-        if self.timeline.is_playing:
-            self.timeline.pause()
-        else:
-            self.timeline.play()
-        self.timeline_panel.refresh()
+        """Toggle animation playback - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.toggle_animation()
     
     def _previous_frame(self):
-        """Go to previous frame"""
-        self.timeline.previous_frame()
-        self.timeline_panel.refresh()
-        self._on_frame_changed()
+        """Go to previous frame - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.previous_frame()
     
     def _next_frame(self):
-        """Go to next frame"""
-        self.timeline.next_frame()
-        self.timeline_panel.refresh()
-        self._on_frame_changed()
-    
-    def _calculate_optimal_panel_widths(self):
-        """Calculate optimal panel widths based on screen resolution"""
-        try:
-            # Get screen dimensions
-            screen_width = self.root.winfo_screenwidth()
-            screen_height = self.root.winfo_screenheight()
-            
-            print(f"[Panel Sizing] Screen resolution: {screen_width}x{screen_height}")
-            
-            # Calculate optimal panel widths based on screen size
-            if screen_width <= 1366:  # Small laptop screens (1366x768)
-                left_width, right_width = 280, 260
-                print(f"[Panel Sizing] Small screen detected - using compact panels: {left_width}x{right_width}")
-            elif screen_width <= 1920:  # Standard desktop (1920x1080)
-                left_width, right_width = 350, 320
-                print(f"[Panel Sizing] Standard desktop detected - using balanced panels: {left_width}x{right_width}")
-            elif screen_width <= 2560:  # Large desktop (2560x1440)
-                left_width, right_width = 400, 380
-                print(f"[Panel Sizing] Large desktop detected - using spacious panels: {left_width}x{right_width}")
-            else:  # Ultra-wide or 4K (2560+)
-                left_width, right_width = 450, 420
-                print(f"[Panel Sizing] Ultra-wide/4K detected - using wide panels: {left_width}x{right_width}")
-            
-            # Ensure minimum widths
-            left_width = max(left_width, 200)
-            right_width = max(right_width, 200)
-            
-            # Calculate total panel usage percentage
-            total_panel_width = left_width + right_width
-            panel_percentage = (total_panel_width / screen_width) * 100
-            
-            print(f"[Panel Sizing] Panel usage: {total_panel_width}px ({panel_percentage:.1f}% of screen)")
-            print(f"[Panel Sizing] Canvas space: {screen_width - total_panel_width}px")
-            
-            return left_width, right_width
-            
-        except Exception as e:
-            print(f"[Panel Sizing] Error calculating panel widths: {e}")
-            # Fallback to reasonable defaults
-            return 350, 320
+        """Go to next frame - delegates to layer animation manager"""
+        if hasattr(self, 'layer_anim_mgr'):
+            self.layer_anim_mgr.next_frame()
     
     def _save_window_state(self):
-        """Save current window and panel state to config file"""
-        try:
-            import json
-            import os
-            
-            # Get current state
-            state = {
-                'window_geometry': self.root.geometry(),
-                'left_panel_width': self.left_container.winfo_width(),
-                'right_panel_width': self.right_container.winfo_width(),
-                'screen_width': self.root.winfo_screenwidth(),
-                'screen_height': self.root.winfo_screenheight()
-            }
-            
-            # Save to user config directory
-            config_dir = os.path.join(os.path.expanduser("~"), ".pixelperfect")
-            os.makedirs(config_dir, exist_ok=True)
-            config_file = os.path.join(config_dir, "window_state.json")
-            
-            with open(config_file, 'w') as f:
-                json.dump(state, f, indent=2)
-                
-            print(f"[Window State] Saved to: {config_file}")
-            
-        except Exception as e:
-            print(f"[Window State] Error saving state: {e}")
-    
-    def _restore_window_state(self):
-        """Restore saved window state on startup"""
-        try:
-            import json
-            import os
-            
-            config_dir = os.path.join(os.path.expanduser("~"), ".pixelperfect")
-            config_file = os.path.join(config_dir, "window_state.json")
-            
-            if not os.path.exists(config_file):
-                print("[Window State] No saved state found, using defaults")
-                return False
-            
-            with open(config_file, 'r') as f:
-                state = json.load(f)
-            
-            # Check if screen resolution matches (don't restore if resolution changed)
-            current_screen_width = self.root.winfo_screenwidth()
-            current_screen_height = self.root.winfo_screenheight()
-            
-            if (state.get('screen_width') != current_screen_width or 
-                state.get('screen_height') != current_screen_height):
-                print(f"[Window State] Screen resolution changed, recalculating panel sizes")
-                return False
-            
-            # Restore window geometry
-            if 'window_geometry' in state:
-                self.root.geometry(state['window_geometry'])
-                print(f"[Window State] Restored window geometry: {state['window_geometry']}")
-            
-            # Restore panel widths
-            if 'left_panel_width' in state and 'right_panel_width' in state:
-                self.left_panel_width = state['left_panel_width']
-                self.right_panel_width = state['right_panel_width']
-                print(f"[Window State] Restored panel widths: {self.left_panel_width}x{self.right_panel_width}")
-                return True
-            
-        except Exception as e:
-            print(f"[Window State] Error restoring state: {e}")
-        
-        return False
+        """Save current window and panel state - delegates to canvas operations manager"""
+        if hasattr(self, 'canvas_ops_mgr'):
+            self.canvas_ops_mgr.save_window_state()
     
     def _toggle_notes(self):
         """Toggle notes panel visibility"""
