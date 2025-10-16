@@ -1,5 +1,34 @@
 # Pixel Perfect - Changelog
 
+## Version 2.5.0 - 64x Zoom and Edge Tool Complete
+**Date**: January 2025  
+**Type**: Major Feature Release
+
+### 🔍 Zoom System Improvements
+- **✅ Added 64x Zoom**: New maximum zoom level for extreme detail work
+- **✅ Updated Zoom Dropdown**: Added 64x option to toolbar zoom menu
+- **✅ Updated Scrollbar**: Added 64x to scrollable zoom bar
+- **✅ Increased Zoom Limits**: Canvas zoom limits increased from 32x to 64x
+
+### 🎨 Edge Tool Complete Implementation
+- **✅ Edge Tool Fully Functional**: Draws thin lines on pixel boundaries with hover preview
+- **✅ Edge Line Persistence**: Edge lines survive canvas redraws and tool switching
+- **✅ Hover Preview System**: Real-time preview shows where edge line will be drawn
+- **✅ Edge Detection Zones**: 0.1 pixel width zones detect top/bottom/left/right edges
+- **✅ Canvas Integration**: Edge tool properly integrated with canvas renderer system
+
+### 🔧 Technical Changes
+- Updated zoom arrays in ui_builder.py, canvas_zoom_manager.py, canvas_scrollbar.py
+- Increased canvas zoom limits from 32x to 64x in canvas.py
+- Added Edge tool with persistent storage system
+- Implemented canvas renderer integration for edge line persistence
+- Added main window reference system for tools
+
+### 📚 Documentation
+- Added comprehensive Edge tool feature documentation
+- Updated zoom functionality documentation
+- Updated changelog with all improvements
+
 ## Version 2.4.0 - Edge Tool Feature
 **Date**: January 2025  
 **Type**: Major Feature Addition
