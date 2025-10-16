@@ -84,14 +84,12 @@ class MainWindow:
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         print(f"[Window] Initialized at {window_width}x{window_height} (screen: {screen_width}x{screen_height})")
         
-        # Initialize loading screen manager
-        print("[Main Window] Initializing loading manager...")
-        self.loading_manager = LoadingManager(self.root)
-        print("[Main Window] Loading manager initialized")
-        self.loading_manager.start_loading()
-        print("[Main Window] Loading screen started")
+        # HIDE the window completely until loading finishes
+        # This prevents any UI elements from showing before loading screen is ready
+        self.root.withdraw()
+        print("[Window] Window withdrawn (hidden) until loading completes")
         
-        # Set window icon
+        # Set window icon BEFORE showing anything
         try:
             # Get the correct base path (works for both dev and PyInstaller)
             if getattr(sys, 'frozen', False):
@@ -134,6 +132,22 @@ class MainWindow:
         except Exception as e:
             print(f"[WARN] Could not load icon: {e}")
         
+        # Initialize loading screen manager NOW - after icon but before any UI
+        print("[Main Window] Initializing loading manager...")
+        self.loading_manager = LoadingManager(self.root)
+        print("[Main Window] Loading manager initialized")
+        
+        # NOW show the window FIRST so geometry is correct
+        self.root.deiconify()
+        print("[Main Window] Window shown (deiconified) with loading screen")
+        self.root.update()
+        self.root.update_idletasks()  # Ensure all rendering is complete
+        print("[Main Window] Window fully rendered")
+        
+        # THEN start the loading screen with correct geometry
+        self.loading_manager.start_loading()
+        print("[Main Window] Loading screen started with correct geometry")
+        
         # Initialize core systems
         self.loading_manager.update_loading("Initializing core systems...", 15)
         self.canvas = Canvas(32, 32, zoom=16)  # Higher zoom for better grid visibility
@@ -144,13 +158,10 @@ class MainWindow:
         self.timeline = AnimationTimeline(32, 32)
         
         # Initialize responsive panel sizing
-        # Try to restore saved window state first, fallback to calculated optimal sizes
+        # ALWAYS use 510px panel widths for consistent UI
         temp_canvas_ops = CanvasOperationsManager(self.root, self.canvas, None)
-        restored = temp_canvas_ops.restore_window_state()
-        if restored:
-            self.left_panel_width, self.right_panel_width = restored
-        else:
-            self.left_panel_width, self.right_panel_width = temp_canvas_ops.calculate_optimal_panel_widths()
+        self.left_panel_width, self.right_panel_width = temp_canvas_ops.calculate_optimal_panel_widths()
+        print(f"[Main Window] Using panel widths: {self.left_panel_width}x{self.right_panel_width}")
         
         # Initialize custom colors manager
         self.loading_manager.update_loading("Loading color systems...", 25)
@@ -280,9 +291,6 @@ class MainWindow:
         self.loading_manager.update_loading("Building user interface...", 50)
         self._create_ui()
         print("[Main Window] UI created")
-        # Ensure loading screen stays on top after UI creation
-        self.loading_manager.loading_screen.loading_frame.lift()
-        print("[Main Window] Loading screen lifted after UI creation")
         
         # Apply initial theme (Basic Grey) to all UI elements IMMEDIATELY after UI creation
         print("[Main Window] Applying theme...")
@@ -330,6 +338,7 @@ class MainWindow:
         print("[Main Window] Finishing loading process...")
         self.loading_manager.finish_loading()
         print("[Main Window] Loading completed")
+        
         # Force a final update to ensure everything is visible
         self.root.update_idletasks()
         # Final update to render the window after loading screen is hidden
@@ -422,11 +431,6 @@ class MainWindow:
         # Notes panel (hidden by default)
         self.notes_panel = NotesPanel(canvas_container, self)
         self.notes_panel.hide()
-        
-        # Keep loading screen on top after notes panel creation
-        if hasattr(self, 'loading_manager'):
-            self.loading_manager.loading_screen.loading_frame.lift()
-            print("[Main Window] Loading screen lifted after notes panel creation")
         
         # Right panel container (wrapper for CTk widget) - OPTIMIZED for instant visibility
         self.right_container = tk.Frame(self.paned_window, bg="#1a1a1a")
@@ -552,10 +556,6 @@ class MainWindow:
         self.selection_mgr.scale_btn = self.scale_btn
         self.selection_mgr.tool_buttons = self.tool_buttons
         
-        # Force immediate render of all panel widgets (pre-render optimization)
-        # This "warms up" CustomTkinter widgets so they appear instantly later
-        self.root.update_idletasks()
-        
         # Mark panels as pre-created for optimization
         self._panels_pre_created = True
         
@@ -573,14 +573,12 @@ class MainWindow:
         self.window_state_manager.left_panel_width = self.left_panel_width
         self.window_state_manager.right_panel_width = self.right_panel_width
         
-        # Set up loading completion callback
-        # Loading completion is now handled at the end of initialization
-        
         # Pass loading screen reference to window state manager
         self.window_state_manager.loading_screen_frame = self.loading_manager.loading_screen.loading_frame
         
-        # Try to restore saved window state (overrides calculated sizes if successful)
-        self.window_state_manager.restore_state()
+        # DON'T restore window state during loading - it interferes with panel sizing
+        # Window state will be restored after loading completes
+        print("[Main Window] Skipping window state restoration during loading")
         
         # Initialize color view manager
         self.color_view_mgr = ColorViewManager(

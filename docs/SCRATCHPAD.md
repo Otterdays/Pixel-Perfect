@@ -1,3 +1,99 @@
+## Version 2.2.2 - Loading Screen Overlay Fix (October 16, 2025)
+**Status**: ✅ COMPLETE - Fixed loading screen disappearing during UI creation
+
+### 🐛 Issue Fixed
+Loading screen would disappear at 50% during UI creation, showing incomplete UI, then reappear to finish loading.
+
+### 🔍 Root Cause Analysis
+1. Loading screen was using `place()` geometry manager
+2. During UI creation, other widgets' geometry changes would override loading screen
+3. `geometry()` and `update()` calls during window state restoration forced premature UI rendering
+4. Loading screen's `lift()` calls weren't enough to keep it on top
+
+### ✨ Solution: System-Level Overlay
+Completely redesigned loading screen to use a system-level overlay window:
+
+```python
+# OLD: Regular frame with place() - could be displaced
+self.loading_frame = ctk.CTkFrame(self.root)
+self.loading_frame.place(x=0, y=0, relwidth=1, relheight=1)
+
+# NEW: System-level overlay window - always stays on top
+self.loading_frame = tk.Toplevel(self.root)
+self.loading_frame.overrideredirect(True)  # No window decorations
+self.loading_frame.attributes('-topmost', True)  # Always on top
+```
+
+### 🔧 Key Technical Changes
+1. **Window Type**: Changed from `CTkFrame` to `Toplevel` window
+   - Independent window that can't be affected by main window's widget geometry
+   - System-level "always on top" capability
+   - Complete control over visibility and focus
+
+2. **Visibility Control**: Updated show/hide methods
+   - `withdraw()` instead of `place_forget()`
+   - `deiconify()` to show window
+   - `focus_force()` to prevent interaction with main window
+
+3. **Position Management**: Added dynamic positioning
+   ```python
+   # Keep overlay aligned with main window
+   x = self.root.winfo_x()
+   y = self.root.winfo_y()
+   width = self.root.winfo_width()
+   height = self.root.winfo_height()
+   self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
+   ```
+
+4. **Update Handling**: Enhanced progress updates
+   - Reposition overlay after each update
+   - Maintain focus and topmost status
+   - Use `update_idletasks()` to prevent flicker
+
+### 📝 Technical Notes for Future Reference
+1. **NEVER** use `place()` for overlay UI elements that must stay visible
+2. **ALWAYS** use `Toplevel` with `overrideredirect` and `-topmost` for system-level overlays
+3. **REMEMBER** `Toplevel` windows use different methods:
+   - Use `withdraw()` / `deiconify()` instead of `place()` / `place_forget()`
+   - Must manually manage position with `geometry()`
+   - Need `focus_force()` to prevent interaction with parent window
+
+### 🎯 Result
+Loading screen now stays perfectly visible throughout the entire startup process:
+- No disappearing or flickering
+- Can't be displaced by other widgets
+- Properly blocks interaction with main window
+- Stays aligned even if window moves
+
+---
+
+## Version 2.2.1 - Loading Screen Flash Fix (October 16, 2025)
+**Status**: ⚠️ PARTIALLY FIXED - Superseded by Version 2.2.2
+
+### 🐛 Issue Fixed
+Fixed loading screen briefly disappearing to show incomplete UI during startup, then reappearing to finish loading.
+
+### 🔧 Root Cause
+Multiple `update_idletasks()` calls during UI creation caused window to render prematurely:
+1. Line 561 in main_window.py: `self.root.update_idletasks()` after widget creation
+2. Window state restoration called during UI creation triggered more updates
+3. Each update briefly showed incomplete UI before loading screen was lifted back on top
+
+### ✅ Solution
+1. **Removed premature update**: Eliminated `update_idletasks()` call at line 561
+2. **Deferred window state restoration**: Moved from during UI creation to after loading completes
+3. **Removed unnecessary lifts**: Cleaned up explicit loading screen lift calls after notes/UI creation
+4. **Optimized update sequence**: Only call `update()` once at start for loading screen, then wait until loading finishes
+
+### 📝 Files Modified
+- `src/ui/main_window.py`: Removed premature updates, deferred window state restoration
+- `src/core/window_state_manager.py`: Removed loading screen lift after geometry change
+
+### 🎯 Result
+Loading screen now stays visible throughout entire startup process without flickering or showing incomplete UI.
+
+---
+
 ## Version 2.2.0 - Major Modular Refactor Complete (October 15, 2025)
 **Status**: ✅ COMPLETE - Main Window Refactored to 1,183 lines (65.1% reduction from baseline)
 
@@ -5012,3 +5108,95 @@ if radius - self.wheel_thickness <= distance <= radius:
 - ✅ Switches to Grid view for palette colors, Wheel for non-palette colors
 - ✅ Grid colors refresh immediately when preset switches
 - ✅ Complete workflow: Sample → Find → Switch → Refresh → Select
+
+---
+
+## Version 2.2.3 - Loading Screen Geometry Fix
+
+**Date**: 2025-01-15
+**Issue**: Loading screen appeared small and in top-left corner instead of covering main window
+**Root Cause**: Loading screen was reading main window geometry while window was withdrawn (hidden)
+
+**Technical Details**:
+- Main window calls `self.root.withdraw()` at line 89 to hide window
+- Loading screen manager initialized at line 137
+- Loading screen `start_loading()` called at line 139 BEFORE window shown
+- Loading screen reads `self.root.geometry()` while window is withdrawn
+- Withdrawn windows return default/minimal geometry, not actual size
+- Loading screen positioned incorrectly based on wrong geometry
+
+**Solution**:
+- Reorder initialization sequence in `main_window.py`
+- Show window FIRST with `self.root.deiconify()` and `self.root.update()`
+- THEN start loading screen so it reads correct geometry
+- Loading screen now positions correctly to cover entire main window
+
+**Files Modified**:
+- `src/ui/main_window.py` - Fixed initialization sequence (lines 140-148)
+
+**Result**:
+- ✅ Loading screen now covers entire main window correctly
+- ✅ Proper positioning and sizing based on actual window geometry
+- ✅ No more small overlay in top-left corner
+- ✅ Loading screen appears as intended system-level overlay
+
+---
+
+## Version 2.2.4 - Loading Screen Size Fix
+
+**Date**: 2025-01-15
+**Issue**: Loading screen still appeared too small despite geometry fix
+**Root Cause**: Loading screen was using `geometry()` string instead of actual rendered dimensions
+
+**Technical Details**:
+- Main window `geometry()` returns "1400x800+100+100" (requested size)
+- Main window `winfo_width()`/`winfo_height()` returns actual rendered size (e.g., 2100x1200)
+- DPI scaling causes actual rendered size to be larger than geometry string
+- Loading screen was positioning based on geometry string, not actual size
+- Result: Loading screen appeared smaller than main window
+
+**Solution**:
+- Modified `loading_screen.py` to use `winfo_x()`, `winfo_y()`, `winfo_width()`, `winfo_height()`
+- These methods return actual rendered dimensions, not requested geometry
+- Loading screen now matches main window's actual size perfectly
+
+**Files Modified**:
+- `src/ui/loading_screen.py` - Updated `show()` and `update_progress()` methods (lines 167-179, 257-263)
+
+**Result**:
+- ✅ Loading screen now matches main window's actual rendered size
+- ✅ Proper coverage regardless of DPI scaling
+- ✅ No more size mismatch between loading screen and main window
+- ✅ Perfect overlay positioning and sizing
+
+---
+
+## Version 2.2.5 - Loading Screen Alignment Fix
+
+**Date**: 2025-01-15
+**Issue**: Loading screen appeared off-center and misaligned with main window
+**Root Cause**: Loading screen used client-area coordinates instead of screen coordinates, causing drift with window decorations and DPI scaling
+
+**Technical Details**:
+- Loading screen was using `winfo_x()`/`winfo_y()` which return client-area coordinates
+- Window decorations (title bar, borders) not accounted for in positioning
+- DPI scaling caused coordinate system mismatches
+- Loading screen would drift off to the side during loading sequence
+- Main window UI visible underneath the misaligned overlay
+
+**Solution**:
+- Added `_get_main_window_bounds()` method using `winfo_rootx()`/`winfo_rooty()` for screen coordinates
+- Integrated Windows API `GetWindowRect()` to include window decorations in bounds calculation
+- Bound `_sync_overlay_bounds()` to main window's `<Configure>` event for continuous tracking
+- Updated `show()` and `update_progress()` to use robust bounds calculation
+- Overlay now stays perfectly aligned during moves/resizes/DPI changes
+
+**Files Modified**:
+- `src/ui/loading_screen.py` - Added robust overlay synchronization (lines 67-120, 180-190, 270-280)
+
+**Result**:
+- ✅ Loading screen perfectly covers main window with no drift
+- ✅ Handles DPI scaling and window decorations correctly
+- ✅ Continuous alignment during window moves/resizes
+- ✅ No more UI visible underneath the loading screen
+- ✅ Professional loading experience maintained

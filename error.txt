@@ -1,0 +1,203 @@
+Starting Pixel Perfect with Python 3.13.6...
+[Window] Initialized at 1400x800 (screen: 1707x1067)
+[Window] Window withdrawn (hidden) until loading completes
+[OK] Icon loaded: C:\Users\Ry\Desktop\PixelPerfect\Pixel-Perfect\assets\icons\app_icon.ico
+[Main Window] Initializing loading manager...
+[Loading Screen] Initializing for root: .
+[Loading Screen] Creating loading UI...
+[Loading Screen] Creating UI elements...
+[Loading Screen] Created main frame: .!ctkframe
+[Loading Screen] Placed main frame to cover window
+[Loading Screen] Created and placed main container
+[Loading Screen] Created title label
+[Loading Screen] Created subtitle label
+[Loading Screen] Created progress bar: .!ctkframe.!ctkframe.!ctkprogressbar
+[Loading Screen] Created status label: .!ctkframe.!ctkframe.!ctklabel3
+[Loading Screen] Created version label
+[Loading Screen] Initially hidden loading frame
+[Loading Screen] Loading UI created successfully
+[Main Window] Loading manager initialized
+[Loading Manager] Starting loading screen...
+[Loading Screen] Show called, visible: False
+[Loading Screen] Showing loading frame: .!ctkframe
+[Loading Screen] Loading frame placed and lifted
+[Loading Screen] Set visible to True, now: True
+[Loading Screen] Root updated (idletasks only)
+[Loading Manager] Loading screen shown
+[Loading Screen] Update progress called: 'Initializing core systems...' (10%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Initializing core systems...'
+[Loading Screen] Progress bar set to: 10%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Loading Manager] Next step called
+[Main Window] Loading screen started
+[Main Window] Window shown (deiconified) with loading screen
+[Main Window] Window rendered with loading screen visible
+[Loading Manager] Update loading: 'Initializing core systems...' (15%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Initializing core systems...' (15%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Initializing core systems...'
+[Loading Screen] Progress bar set to: 15%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Window State] Restored window geometry: 1200x700+487+174
+[Window State] Restored panel widths: 200x200
+[Loading Manager] Update loading: 'Loading color systems...' (25%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Loading color systems...' (25%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Loading color systems...'
+[Loading Screen] Progress bar set to: 25%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+Loaded 10 custom colors from C:\Users\Ry\AppData\Local\PixelPerfect\custom_colors.json
+[SAVED COLORS] Loaded from: C:\Users\Ry\AppData\Roaming\PixelPerfect\saved_colors.json
+[Loading Manager] Update loading: 'Setting up drawing tools...' (35%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Setting up drawing tools...' (35%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Setting up drawing tools...'
+[Loading Screen] Progress bar set to: 35%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Main Window] Creating UI...
+[Loading Manager] Update loading: 'Building user interface...' (50%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Building user interface...' (50%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Building user interface...'
+[Loading Screen] Progress bar set to: 50%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[NOTES] Loaded from: C:\Users\Ry\.pixelperfect\notes.json
+[Window State] Final dimensions: 1200x700 (max allowed: 997)
+[Window State] Applied geometry: 1200x700+487+174 (screen: 1707x1067)
+[Window State] Saved panel widths too small (200x200), using better defaults
+[Window State] Using panel widths: 510x510
+[Window State] Applied panel widths to paned window:
+  - Paned window width: 1770
+  - Left panel: 510px
+  - Right panel: 1260px
+  - Sash position: 510
+[Window State] Panel widths applied immediately!
+[Main Window] UI created
+[Main Window] Applying theme...
+[Loading Manager] Update loading: 'Applying theme...' (60%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Applying theme...' (60%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Applying theme...'
+[Loading Screen] Progress bar set to: 60%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[OK] Theme 'Basic Grey' applied (instant mode)
+[Main Window] Theme applied
+[Main Window] Initializing canvas operations manager...
+[Loading Manager] Update loading: 'Initializing canvas...' (70%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Initializing canvas...' (70%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Initializing canvas...'
+[Loading Screen] Progress bar set to: 70%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Main Window] Canvas operations manager initialized
+[Main Window] Updating tool selection...
+[Loading Manager] Update loading: 'Configuring tools...' (80%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Configuring tools...' (80%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Configuring tools...'
+[Loading Screen] Progress bar set to: 80%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Main Window] Tool selection updated
+[Main Window] Initializing palette views...
+[Loading Manager] Update loading: 'Setting up palette views...' (85%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Setting up palette views...' (85%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Setting up palette views...'
+[Loading Screen] Progress bar set to: 85%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Main Window] Palette views initialized
+[Main Window] Showing grid view...
+[Main Window] Grid view shown
+[Main Window] Syncing canvas with layers...
+[Loading Manager] Update loading: 'Finalizing...' (95%)
+[Loading Manager] Loading not complete, updating screen...
+[Loading Screen] Update progress called: 'Finalizing...' (95%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Finalizing...'
+[Loading Screen] Progress bar set to: 95%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Main Window] Canvas synced with layers
+[Main Window] Completing loading...
+[Main Window] Finishing loading process...
+[Loading Manager] Finish loading called, loading_complete: False
+[Loading Manager] Finishing loading...
+[Loading Screen] Update progress called: 'Ready!' (100%)
+[Loading Screen] Visible: True
+[Loading Screen] Status label exists: 1
+[Loading Screen] Progress bar exists: 1
+[Loading Screen] Frame exists: 1
+[Loading Screen] Root exists: 1
+[Loading Screen] Status label updated to: 'Ready!'
+[Loading Screen] Progress bar set to: 100%
+[Loading Screen] Frame lifted to stay on top
+[Loading Screen] Root updated (idletasks only)
+[Loading Manager] Progress updated to Ready!
+[Loading Manager] Sleeping for 0.3 seconds...
+[Loading Screen] Hide called, visible: True
+[Loading Screen] Hiding loading frame: .!ctkframe
+[Loading Screen] Loading frame forgotten
+[Loading Screen] Set visible to False, now: False
+[Loading Screen] Root updated after hide (idletasks only)
+[Loading Manager] Loading screen hidden
+[Loading Manager] Loading complete set to True, now: True
+[Main Window] Loading completed
+[Main Window] Window fully rendered and visible

@@ -154,29 +154,31 @@ class WindowStateManager:
                 self.root.geometry(new_geometry)
                 print(f"[Window State] Applied geometry: {new_geometry} (screen: {screen_width}x{screen_height})")
                 
-                # Immediately lift loading screen after geometry change
+                # CRITICAL: Immediately lift loading screen after geometry change
+                # The geometry() call forces a window render which can show UI beneath loading screen
                 if self.loading_screen_frame and self.loading_screen_frame.winfo_exists():
                     self.loading_screen_frame.lift()
-                    print("[Window State] Loading screen lifted after geometry change")
+                    self.root.update_idletasks()
+                    print("[Window State] Loading screen lifted and updated after geometry change")
             
             # Restore panel widths, but ensure they're reasonable
             if 'left_panel_width' in state and 'right_panel_width' in state:
                 saved_left = state['left_panel_width']
                 saved_right = state['right_panel_width']
                 
-                # If saved widths are too small, use better defaults
-                min_reasonable_width = 400
-                if saved_left < min_reasonable_width or saved_right < min_reasonable_width:
-                    print(f"[Window State] Saved panel widths too small ({saved_left}x{saved_right}), using better defaults")
-                    self.left_panel_width = 510  # Good size for tools and palette
-                    self.right_panel_width = 510  # Good size for layers and animation
-                else:
-                    self.left_panel_width = saved_left
-                    self.right_panel_width = saved_right
+                # ALWAYS use our default panel widths for consistent UI
+                print(f"[Window State] Using default panel widths instead of saved ({saved_left}x{saved_right})")
+                self.left_panel_width = 510  # Good size for tools and palette
+                self.right_panel_width = 510  # Good size for layers and animation
                 
                 print(f"[Window State] Using panel widths: {self.left_panel_width}x{self.right_panel_width}")
                 
                 # Apply the restored widths to the paned window
+                self._apply_panel_widths()
+                return True
+            else:
+                # No saved panel widths, use the calculated defaults
+                print(f"[Window State] No saved panel widths, using calculated defaults: {self.left_panel_width}x{self.right_panel_width}")
                 self._apply_panel_widths()
                 return True
             
@@ -190,6 +192,10 @@ class WindowStateManager:
         try:
             # Use update_idletasks only (doesn't render the window)
             self.root.update_idletasks()
+            
+            # Lift loading screen after update
+            if self.loading_screen_frame and self.loading_screen_frame.winfo_exists():
+                self.loading_screen_frame.lift()
             
             # Try immediate application first
             if self._do_apply_panel_widths_immediate():
@@ -252,11 +258,18 @@ class WindowStateManager:
             # Force the paned window to update its layout
             self.paned_window.update()
             
+            # CRITICAL: Immediately lift loading screen after paned window update
+            # The update() call forces a window render which can show UI beneath loading screen
+            if self.loading_screen_frame and self.loading_screen_frame.winfo_exists():
+                self.loading_screen_frame.lift()
+                self.root.update_idletasks()
+            
             print(f"[Window State] Applied panel widths to paned window:")
             print(f"  - Paned window width: {paned_width}")
             print(f"  - Left panel: {self.left_panel_width}px")
             print(f"  - Right panel: {right_panel_actual_width}px")
             print(f"  - Sash position: {sash_position}")
+            print(f"[Window State] Loading screen lifted after panel update")
             
             # Loading completion is now handled at the end of MainWindow initialization
             

@@ -2,6 +2,22 @@
 Loading Screen Manager for Pixel Perfect
 Provides a professional loading screen that covers the UI during initialization
 
+TECHNICAL NOTES:
+1. This loading screen uses a Toplevel window as a system-level overlay
+2. This design is CRITICAL for preventing the loading screen from being displaced
+   by widget geometry changes during UI creation
+3. Key components:
+   - Toplevel window with overrideredirect and -topmost attributes
+   - Dynamic positioning to stay aligned with main window
+   - Focus management to prevent interaction
+   - Proper show/hide methods (withdraw/deiconify)
+
+DO NOT MODIFY THIS DESIGN WITHOUT UNDERSTANDING THE IMPLICATIONS:
+- Don't change to regular Frame/CTkFrame (will break overlay behavior)
+- Don't remove topmost/overrideredirect (will allow window to be hidden)
+- Don't skip geometry updates (will misalign overlay)
+- Don't use place/place_forget (use withdraw/deiconify)
+
 Copyright © 2024-2025 Diamond Clad Studios
 All Rights Reserved - Proprietary Software
 """
@@ -47,26 +63,103 @@ class LoadingScreen:
         print("[Loading Screen] Creating loading UI...")
         self._create_loading_ui()
         print("[Loading Screen] Loading UI created successfully")
+        
+        # Keep overlay synced to the window at all times (moves/resizes/DPI changes)
+        try:
+            self.root.bind('<Configure>', self._sync_overlay_bounds)
+        except Exception as e:
+            print(f"[Loading Screen] Could not bind Configure event: {e}")
+
+    def _get_main_window_bounds(self):
+        """Return screen-aligned bounds (x, y, width, height) of the main window.
+
+        Uses robust Windows API query when available to include decorations
+        (title bar and borders). Falls back to Tk's winfo metrics otherwise.
+        """
+        try:
+            # Ensure the window has computed its latest layout
+            if self.root and self.root.winfo_exists():
+                self.root.update_idletasks()
+
+            # Base metrics from Tk (client area + root position in screen coords)
+            x = int(self.root.winfo_rootx())
+            y = int(self.root.winfo_rooty())
+            width = int(self.root.winfo_width())
+            height = int(self.root.winfo_height())
+
+            # On Windows, prefer the real outer window rect (includes decorations)
+            import platform
+            if platform.system() == 'Windows':
+                try:
+                    import ctypes
+                    from ctypes import wintypes
+
+                    hwnd = int(self.root.winfo_id())
+                    rect = wintypes.RECT()
+                    if ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+                        win_x = int(rect.left)
+                        win_y = int(rect.top)
+                        win_w = int(rect.right - rect.left)
+                        win_h = int(rect.bottom - rect.top)
+
+                        # Choose conservative values that guarantee coverage
+                        x = min(x, win_x)
+                        y = min(y, win_y)
+                        width = max(width, win_w)
+                        height = max(height, win_h)
+                except Exception as e:
+                    print(f"[Loading Screen] Win32 GetWindowRect failed, using winfo: {e}")
+
+            return x, y, width, height
+        except Exception as e:
+            print(f"[Loading Screen] Error computing window bounds: {e}")
+            # Safe fallback
+            return 0, 0, max(1, self.root.winfo_width()), max(1, self.root.winfo_height())
+
+    def _sync_overlay_bounds(self, *args):
+        """Synchronize overlay to main window bounds when it moves/resizes."""
+        try:
+            if not self.is_visible:
+                return
+            if not (self.loading_frame and self.loading_frame.winfo_exists()):
+                return
+
+            # Compute accurate bounds and apply to overlay
+            x, y, width, height = self._get_main_window_bounds()
+            self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
+            self.loading_frame.lift()
+        except Exception as e:
+            print(f"[Loading Screen] Error syncing overlay bounds: {e}")
     
     def _create_loading_ui(self):
         """Create the loading screen UI"""
         print(f"[Loading Screen] Creating UI elements...")
         # Create main loading frame that covers the entire window
         try:
-            self.loading_frame = ctk.CTkFrame(
-                self.root,
-                fg_color="#1a1a1a",  # Dark background
+            # Create loading frame as a system-level overlay window
+            self.loading_frame = tk.Toplevel(self.root)
+            self.loading_frame.withdraw()  # Initially hidden
+            
+            # Make it look like part of the main window
+            self.loading_frame.overrideredirect(True)  # No window decorations
+            self.loading_frame.attributes('-topmost', True)  # Always on top
+            
+            # Style it
+            self.loading_frame.configure(bg="#1a1a1a")
+            print(f"[Loading Screen] Created main frame as overlay: {self.loading_frame}")
+            
+            # Inner frame for CustomTkinter widgets
+            self.inner_frame = ctk.CTkFrame(
+                self.loading_frame,
+                fg_color="#1a1a1a",
                 corner_radius=0
             )
-            print(f"[Loading Screen] Created main frame: {self.loading_frame}")
-
-            # Make it cover the entire window
-            self.loading_frame.place(x=0, y=0, relwidth=1, relheight=1)
-            print("[Loading Screen] Placed main frame to cover window")
+            self.inner_frame.place(x=0, y=0, relwidth=1, relheight=1)
+            print("[Loading Screen] Created and placed inner frame")
 
             # Main container for centered content
             main_container = ctk.CTkFrame(
-                self.loading_frame,
+                self.inner_frame,
                 fg_color="transparent"
             )
             main_container.place(relx=0.5, rely=0.5, anchor="center")
@@ -124,9 +217,9 @@ class LoadingScreen:
             version_label.pack(pady=(40, 0))
             print("[Loading Screen] Created version label")
 
-            # Initially hidden
-            self.loading_frame.place_forget()
-            print("[Loading Screen] Initially hidden loading frame")
+            # Initially hidden (Toplevel windows use withdraw instead of place_forget)
+            self.loading_frame.withdraw()
+            print("[Loading Screen] Initially hidden loading frame (withdrawn)")
         except Exception as e:
             print(f"[Loading Screen] Error creating UI: {e}")
             raise
@@ -138,9 +231,24 @@ class LoadingScreen:
             try:
                 print(f"[Loading Screen] Showing loading frame: {self.loading_frame}")
                 if self.loading_frame and self.loading_frame.winfo_exists():
-                    self.loading_frame.place(x=0, y=0, relwidth=1, relheight=1)
-                    self.loading_frame.lift()  # Raise above all other widgets
-                    print("[Loading Screen] Loading frame placed and lifted")
+                    # Ensure rendering is up-to-date, then compute precise bounds
+                    self.root.update()
+                    self.root.update_idletasks()
+
+                    x, y, width, height = self._get_main_window_bounds()
+                    print(f"[Loading Screen] Using bounds x={x}, y={y}, w={width}, h={height}")
+
+                    # Apply geometry to overlay and update
+                    self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
+                    self.loading_frame.update_idletasks()
+                    self.loading_frame.update()
+                    
+                    
+                    # Show the overlay
+                    self.loading_frame.deiconify()
+                    self.loading_frame.lift()
+                    self.loading_frame.focus_force()  # Prevent interaction with main window
+                    print("[Loading Screen] Loading frame shown and lifted")
                 else:
                     print("[Loading Screen] Loading frame does not exist!")
                 self.is_visible = True
@@ -161,8 +269,8 @@ class LoadingScreen:
             try:
                 print(f"[Loading Screen] Hiding loading frame: {self.loading_frame}")
                 if hasattr(self, 'loading_frame') and self.loading_frame and self.loading_frame.winfo_exists():
-                    self.loading_frame.place_forget()
-                    print("[Loading Screen] Loading frame forgotten")
+                    self.loading_frame.withdraw()
+                    print("[Loading Screen] Loading frame withdrawn")
                 else:
                     print("[Loading Screen] Loading frame does not exist for hiding!")
                 self.is_visible = False
@@ -209,7 +317,13 @@ class LoadingScreen:
                 # Keep loading screen on top after each update
                 if frame_exists:
                     self.loading_frame.lift()
-                    print("[Loading Screen] Frame lifted to stay on top")
+                    self.loading_frame.focus_force()  # Prevent interaction with main window
+
+                    # Update overlay to exact bounds again (handles live moves/resizes)
+                    x, y, width, height = self._get_main_window_bounds()
+                    self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
+                    print(f"[Loading Screen] Frame repositioned to exact bounds: {x},{y} {width}x{height}")
+                    self.loading_frame.update_idletasks()
                 
                 if root_exists:
                     # Use update_idletasks instead of update to avoid rendering flicker

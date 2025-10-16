@@ -65,45 +65,11 @@ class CanvasOperationsManager:
         return canvas_coord_x, canvas_coord_y
     
     def calculate_optimal_panel_widths(self) -> Tuple[int, int]:
-        """Calculate optimal panel widths based on screen resolution"""
-        try:
-            # Get screen dimensions
-            screen_width = self.root.winfo_screenwidth()
-            screen_height = self.root.winfo_screenheight()
-            
-            print(f"[Panel Sizing] Screen resolution: {screen_width}x{screen_height}")
-            
-            # Calculate optimal panel widths based on screen size
-            if screen_width <= 1366:  # Small laptop screens (1366x768)
-                left_width, right_width = 280, 260
-                print(f"[Panel Sizing] Small screen detected - using compact panels: {left_width}x{right_width}")
-            elif screen_width <= 1920:  # Standard desktop (1920x1080)
-                left_width, right_width = 350, 320
-                print(f"[Panel Sizing] Standard desktop detected - using balanced panels: {left_width}x{right_width}")
-            elif screen_width <= 2560:  # Large desktop (2560x1440)
-                left_width, right_width = 400, 380
-                print(f"[Panel Sizing] Large desktop detected - using spacious panels: {left_width}x{right_width}")
-            else:  # Ultra-wide or 4K (2560+)
-                left_width, right_width = 450, 420
-                print(f"[Panel Sizing] Ultra-wide/4K detected - using wide panels: {left_width}x{right_width}")
-            
-            # Ensure minimum widths
-            left_width = max(left_width, 200)
-            right_width = max(right_width, 200)
-            
-            # Calculate total panel usage percentage
-            total_panel_width = left_width + right_width
-            panel_percentage = (total_panel_width / screen_width) * 100
-            
-            print(f"[Panel Sizing] Panel usage: {total_panel_width}px ({panel_percentage:.1f}% of screen)")
-            print(f"[Panel Sizing] Canvas space: {screen_width - total_panel_width}px")
-            
-            return left_width, right_width
-            
-        except Exception as e:
-            print(f"[Panel Sizing] Error calculating panel widths: {e}")
-            # Fallback to reasonable defaults
-            return 350, 320
+        """Return fixed panel widths of 510px for consistent UI"""
+        # Always use 510px for both panels
+        left_width = right_width = 510
+        print(f"[Panel Sizing] Using fixed panel widths: {left_width}x{right_width}")
+        return left_width, right_width
     
     def save_window_state(self):
         """Save current window and panel state to config file"""
