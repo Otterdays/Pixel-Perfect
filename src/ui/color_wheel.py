@@ -315,11 +315,11 @@ class ColorWheel:
         """Draw the saturation selection indicator"""
         square_size = 180
         
-        # Calculate position based on current saturation
+        # Calculate position based on current saturation and brightness
         # X-axis represents saturation (0% left to 100% right)
         x = self.saturation * (square_size - 1)
-        # Y follows cursor position for natural dragging feel (stored in self.cursor_y)
-        y = getattr(self, 'cursor_y', square_size // 2)
+        # Y-axis represents brightness (100% top to 0% bottom)
+        y = (1.0 - self.value) * (square_size - 1)
         
         # Draw indicator circle with tag for easy deletion
         self.saturation_canvas.create_oval(
@@ -528,7 +528,7 @@ class ColorWheel:
         self._update_displays(redraw_wheel=False, redraw_square=True)
     
     def _update_saturation_from_position(self, x: int, y: int):
-        """Update saturation from horizontal position only"""
+        """Update saturation and brightness from position"""
         square_size = 180
         
         # Clamp coordinates
@@ -538,9 +538,15 @@ class ColorWheel:
         # Store cursor Y position for indicator display
         self.cursor_y = y
         
-        # Only update saturation (X-axis controls saturation)
+        # X-axis controls saturation (0% left to 100% right)
         self.saturation = x / (square_size - 1)
-        # Brightness/Value is controlled by the slider only (Y-axis doesn't affect value)
+        
+        # Y-axis controls brightness/value (100% top to 0% bottom)
+        self.value = 1.0 - (y / (square_size - 1))
+        
+        # Update brightness slider to match
+        if hasattr(self, 'brightness_slider') and self.brightness_slider and self.brightness_slider.winfo_exists():
+            self.brightness_slider.set(self.value * 100)
         
         # Update displays - no need to redraw wheel or square when just dragging
         self._update_displays(redraw_wheel=False, redraw_square=False)

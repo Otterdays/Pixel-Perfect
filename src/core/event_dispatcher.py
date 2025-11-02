@@ -263,16 +263,11 @@ class EventDispatcher:
                 self.main_window.selection_mgr.place_copy_at(canvas_x, canvas_y)
             return
         
-        # Handle rotation preview mode - commit if clicking outside selection
+        # Handle rotation preview mode - commit rotation on ANY click,
+        # then continue handling this click (so user can immediately start a move)
         if self.main_window.selection_mgr.is_rotating:
-            selection_tool = self.main_window.tools.get("selection")
-            if selection_tool and selection_tool.selection_rect:
-                left, top, width, height = selection_tool.selection_rect
-                # Check if click is outside selection bounds
-                if not (left <= canvas_x < left + width and top <= canvas_y < top + height):
-                    # Click outside selection - commit the rotation
-                    self.main_window.selection_mgr.apply_rotation()
-                    return
+            self.main_window.selection_mgr.apply_rotation()
+            # Do not return; fall through to normal processing
         
         # Handle scaling mode
         if self.main_window.selection_mgr.is_scaling:

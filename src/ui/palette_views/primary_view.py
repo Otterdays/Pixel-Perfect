@@ -29,6 +29,12 @@ class PrimaryView:
         self.on_color_select = on_color_select
         self.on_tool_switch = on_tool_switch
         
+        # Store the currently selected Primary color (separate from main palette)
+        self.current_primary_color = None
+        
+        # Track the currently selected variation button for visual feedback
+        self.selected_variation_button = None
+        
         # UI components
         self.primary_frame = None
         self.variations_frame = None
@@ -51,15 +57,15 @@ class PrimaryView:
     
     def _create_primary_colors_grid(self):
         """Create the main primary colors grid"""
-        # Title frame
-        title_frame = ctk.CTkFrame(self.parent_frame)
+        # Title frame - transparent background
+        title_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         title_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         title_label = ctk.CTkLabel(title_frame, text="Primary Colors", font=ctk.CTkFont(size=14, weight="bold"))
         title_label.pack(pady=5)
         
-        # Primary colors grid
-        self.primary_frame = ctk.CTkFrame(self.parent_frame)
+        # Primary colors grid - transparent background
+        self.primary_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         self.primary_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Define primary colors (bright, vibrant colors)
@@ -95,14 +101,18 @@ class PrimaryView:
                 command=lambda c=color: self._select_primary_color(c)
             )
             btn.grid(row=row, column=col, padx=3, pady=3)
+        
+        # Configure grid to center the columns
+        for col in range(cols):
+            self.primary_frame.grid_columnconfigure(col, weight=1)
     
     def _create_color_variations_grid(self):
         """Create color variations grid for selected primary color"""
         if not self.selected_primary_color:
             return
             
-        # Back button frame
-        back_frame = ctk.CTkFrame(self.parent_frame)
+        # Back button frame - transparent background
+        back_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         back_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         back_btn = ctk.CTkButton(
@@ -119,8 +129,8 @@ class PrimaryView:
         title_label = ctk.CTkLabel(back_frame, text=f"{color_name} Variations", font=ctk.CTkFont(size=14, weight="bold"))
         title_label.pack(pady=(0, 5))
         
-        # Variations grid
-        self.variations_frame = ctk.CTkFrame(self.parent_frame)
+        # Variations grid - transparent background
+        self.variations_frame = ctk.CTkFrame(self.parent_frame, fg_color="transparent")
         self.variations_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Generate color variations
@@ -128,6 +138,9 @@ class PrimaryView:
         
         # Clear button references
         self.variation_buttons.clear()
+        
+        # Clear selection reference to prevent "bad window path name" errors
+        self.selected_variation_button = None
         
         # Only create buttons for actual color variations (no grey placeholders)
         if variations:
@@ -145,6 +158,7 @@ class PrimaryView:
                     fg_color=f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}",
                     hover_color=f"#{min(255, color[0] + 30):02x}{min(255, color[1] + 30):02x}{min(255, color[2] + 30):02x}",
                     border_width=0,
+                    border_color="",
                     command=lambda c=color: self._select_color_variation(c)
                 )
                 btn.grid(row=row, column=col, padx=2, pady=2)
@@ -155,6 +169,10 @@ class PrimaryView:
                 # Add hover effects
                 btn.bind("<Enter>", lambda e, b=btn: self._on_variation_hover_enter(b))
                 btn.bind("<Leave>", lambda e, b=btn: self._on_variation_hover_leave(b))
+            
+            # Configure grid to center the columns
+            for col in range(cols):
+                self.variations_frame.grid_columnconfigure(col, weight=1)
     
     def _get_color_name(self, color):
         """Get color name from RGB values"""
@@ -261,6 +279,8 @@ class PrimaryView:
     def _select_primary_color(self, color):
         """Handle primary color selection"""
         self.selected_primary_color = color
+        # Store the selected color for get_current_color()
+        self.current_primary_color = color
         self.mode = "variations"
         self.create()
     
@@ -268,59 +288,61 @@ class PrimaryView:
         """Return to primary colors grid"""
         self.mode = "primary"
         self.selected_primary_color = None
+        # Clear variation selection
+        self.selected_variation_button = None
         self.create()
     
     def _on_variation_hover_enter(self, button):
         """Handle hover enter on variation button"""
-        # Find the button data to check if it's selected
-        button_data = None
-        for btn_data in self.variation_buttons:
-            if btn_data['button'] == button:
-                button_data = btn_data
-                break
-        
         # Only add hover effects if button is not currently selected
-        if button_data is not None:
-            btn_color = button_data['color']
-            # Check if this color is currently selected
-            current_color = self.palette.get_primary_color()
-            if not (btn_color[0] == current_color[0] and btn_color[1] == current_color[1] and btn_color[2] == current_color[2]):
-                button.configure(border_width=2, border_color="white")
-                button.configure(width=32, height=32)
+        if button != self.selected_variation_button:
+            button.configure(border_width=2, border_color="white")
+            button.configure(width=32, height=32)
     
     def _on_variation_hover_leave(self, button):
         """Handle hover leave on variation button"""
-        # Find the button data to check if it's selected
-        button_data = None
-        for btn_data in self.variation_buttons:
-            if btn_data['button'] == button:
-                button_data = btn_data
-                break
-        
-        # Only remove hover effects if button is not selected
-        if button_data is not None:
-            btn_color = button_data['color']
-            # Check if this color is currently selected
-            current_color = self.palette.get_primary_color()
-            if not (btn_color[0] == current_color[0] and btn_color[1] == current_color[1] and btn_color[2] == current_color[2]):
-                button.configure(border_width=0, border_color="")
-                button.configure(width=30, height=30)
+        # Only remove hover effects if button is not currently selected
+        if button != self.selected_variation_button:
+            button.configure(border_width=0, border_color="")
+            button.configure(width=30, height=30)
     
     def _select_color_variation(self, color):
         """Handle color variation selection"""
-        # Set this color as the primary color in the palette
-        self.palette.set_primary_color_by_rgba(color)
+        # Primary palette colors should NOT be added to the main palette
+        # Store the selected color in the Primary view instead
+        self.current_primary_color = color
         
-        # Update canvas color
-        self.canvas.current_color = color
+        # Clear previous selection visual feedback
+        if self.selected_variation_button:
+            try:
+                # Check if button still exists before configuring
+                self.selected_variation_button.winfo_exists()
+                # Reset button to original size and remove border
+                self.selected_variation_button.configure(width=30, height=30, border_width=0, border_color="")
+            except:
+                # Button was destroyed, clear the reference
+                self.selected_variation_button = None
         
-        # Notify parent
-        if self.on_color_select:
-            self.on_color_select(color)
+        # Find and highlight the selected variation button
+        for variation_data in self.variation_buttons:
+            if variation_data['color'] == color:
+                self.selected_variation_button = variation_data['button']
+                # Add selection highlight - make it more visible
+                try:
+                    # Method 1: Change button size to make it stand out
+                    self.selected_variation_button.configure(width=35, height=35)
+                    # Method 2: Add a thick white border
+                    self.selected_variation_button.configure(border_width=4, border_color="white")
+                except Exception as e:
+                    pass  # Silently handle any configuration errors
+                break
         
-        # Auto-switch to brush tool
-        if self.on_tool_switch:
-            self.on_tool_switch("brush")
+        # Note: Primary view does NOT call on_color_select to prevent auto-switching to brush
+        # This prevents color bleeding to grid when just selecting colors
+    
+    def get_current_color(self):
+        """Get the currently selected Primary color"""
+        return self.current_primary_color
     
     def apply_theme(self, theme):
         """Apply theme to primary view"""

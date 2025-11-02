@@ -21,7 +21,7 @@ from core.canvas import Canvas, CanvasSize
 from core.event_dispatcher import EventDispatcher
 from core.canvas_renderer import CanvasRenderer
 from core.window_state_manager import WindowStateManager
-from ui.palette_views import GridView, PrimaryView, SavedView, ConstantsView
+from .palette_views import GridView, PrimaryView, SavedView, ConstantsView
 from core.color_palette import ColorPalette
 from tools.brush import BrushTool
 from tools.eraser import EraserTool
@@ -33,27 +33,27 @@ from tools.pan import PanTool
 from tools.texture import TextureTool, TextureLibrary
 from core.layer_manager import LayerManager
 from core.undo_manager import UndoManager, UndoState
-from ui.layer_panel import LayerPanel
+from .layer_panel import LayerPanel
 from animation.timeline import AnimationTimeline
-from ui.timeline_panel import TimelinePanel
-from ui.tooltip import create_tooltip
-from ui.theme_manager import ThemeManager
-from ui.ui_builder import UIBuilder
-from ui.theme_dialog_manager import ThemeDialogManager
-from ui.file_operations_manager import FileOperationsManager
-from ui.dialog_manager import DialogManager
-from ui.selection_manager import SelectionManager
-from ui.tool_size_manager import ToolSizeManager
-from ui.canvas_zoom_manager import CanvasZoomManager
-from ui.grid_control_manager import GridControlManager
-from ui.background_control_manager import BackgroundControlManager
-from ui.notes_panel import NotesPanel
-from ui.import_png_dialog import ImportPNGDialog
-from ui.canvas_operations_manager import CanvasOperationsManager
-from ui.layer_animation_manager import LayerAnimationManager
-from ui.color_view_manager import ColorViewManager
-from ui.loading_screen import LoadingManager
-from ui.canvas_scrollbar import CanvasScrollbar
+from .timeline_panel import TimelinePanel
+from .tooltip import create_tooltip
+from .theme_manager import ThemeManager
+from .ui_builder import UIBuilder
+from .theme_dialog_manager import ThemeDialogManager
+from .file_operations_manager import FileOperationsManager
+from .dialog_manager import DialogManager
+from .selection_manager import SelectionManager
+from .tool_size_manager import ToolSizeManager
+from .canvas_zoom_manager import CanvasZoomManager
+from .grid_control_manager import GridControlManager
+from .background_control_manager import BackgroundControlManager
+from .notes_panel import NotesPanel
+from .import_png_dialog import ImportPNGDialog
+from .canvas_operations_manager import CanvasOperationsManager
+from .layer_animation_manager import LayerAnimationManager
+from .color_view_manager import ColorViewManager
+from .loading_screen import LoadingManager
+from .canvas_scrollbar import CanvasScrollbar
 
 class MainWindow:
     """Main application window"""
@@ -680,6 +680,13 @@ class MainWindow:
         self.color_view_mgr.constants_view = self.constants_view
         self.color_view_mgr.color_wheel = self.color_wheel
         
+        # Set cross-references between views
+        self.saved_view.primary_view = self.primary_view
+        self.saved_view.main_window = self
+        
+        # Track last active view for proper color saving
+        self.last_active_view = "grid"  # Default to grid
+        
         # Bind all events (after UI creation so widgets exist)
         self.event_dispatcher.bind_all_events()
     
@@ -1023,6 +1030,11 @@ class MainWindow:
     
     def _on_view_mode_change(self):
         """Handle view mode change - delegates to color view manager"""
+        # Track the last active view before switching
+        current_mode = self.view_mode_var.get()
+        if current_mode != "saved":
+            self.last_active_view = current_mode
+        
         if hasattr(self, 'color_view_mgr'):
             self.color_view_mgr.on_view_mode_change()
         else:
@@ -1242,8 +1254,68 @@ class MainWindow:
             hasattr(self, 'view_mode_var') and self.view_mode_var.get() == "wheel"):
             rgb_color = self.color_wheel.get_color()
             return (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        elif (hasattr(self, 'view_mode_var') and self.view_mode_var.get() == "primary" and
+              hasattr(self, 'primary_view') and self.primary_view):
+            # Get color from Primary view (separate from main palette)
+            primary_color = self.primary_view.get_current_color()
+            if primary_color:
+                return primary_color
+            else:
+                # Fallback to palette if no Primary color selected
+                return self.palette.get_primary_color()
+        elif (hasattr(self, 'view_mode_var') and self.view_mode_var.get() == "saved" and
+              hasattr(self, 'saved_view') and self.saved_view):
+            # Get color from Saved view (separate from main palette)
+            saved_color = self.saved_view.get_current_color()
+            if saved_color:
+                return saved_color
+            else:
+                # Fallback to palette if no Saved color selected
+                return self.palette.get_primary_color()
         else:
             return self.palette.get_primary_color()
+    
+    def get_source_color(self):
+        """Get current color from the actual source view (ignoring saved view mode)"""
+        # Determine which view to get color from
+        current_mode = self.view_mode_var.get() if hasattr(self, 'view_mode_var') else "grid"
+        
+        # If in saved view mode, use the last active view to determine source
+        if current_mode == "saved":
+            source_mode = getattr(self, 'last_active_view', 'grid')
+        else:
+            source_mode = current_mode
+        
+        # Get color from the appropriate source view
+        if source_mode == "grid":
+            # If in grid view, get from palette
+            return self.palette.get_primary_color()
+        elif source_mode == "primary" and hasattr(self, 'primary_view') and self.primary_view:
+            # Get color from Primary view
+            primary_color = self.primary_view.get_current_color()
+            if primary_color:
+                return primary_color
+            else:
+                # Fallback to palette if no Primary color selected
+                return self.palette.get_primary_color()
+        elif source_mode == "wheel" and hasattr(self, 'color_wheel') and self.color_wheel:
+            # Get color from Wheel view
+            rgb_color = self.color_wheel.get_color()
+            return (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        
+        # Fallback: Check Primary view first (most recent selection)
+        if (hasattr(self, 'primary_view') and self.primary_view):
+            primary_color = self.primary_view.get_current_color()
+            if primary_color:
+                return primary_color
+        
+        # Check Wheel view
+        if (hasattr(self, 'color_wheel') and self.color_wheel):
+            rgb_color = self.color_wheel.get_color()
+            return (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        
+        # Fallback to palette
+        return self.palette.get_primary_color()
     
     def _handle_eyedropper_click(self, canvas_x: int, canvas_y: int, button: int):
         """Handle eyedropper tool click to sample colors"""

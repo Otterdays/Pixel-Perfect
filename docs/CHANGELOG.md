@@ -1,5 +1,96 @@
 # Pixel Perfect - Changelog
 
+## Version 2.5.11 - Primary Color Variations Highlighting Fix
+**Date**: January 2025  
+**Type**: Visual Bug Fix
+
+### 🎨 Primary Color Variations Highlighting Fix
+- **✅ Fixed Visual Feedback**: Resolved Primary color variations not showing selection highlighting
+- **✅ Root Cause**: Missing visual feedback system for variation button selection
+- **✅ Solution**: Added white border highlighting for selected color variations
+- **✅ User Impact**: Clear visual indication of which color variation is currently selected
+
+**Technical Details**:
+- **Issue**: Clicking color variations in Primary subcategories showed no visual feedback
+- **Location**: `src/ui/palette_views/primary_view.py` `_select_color_variation()` method
+- **Fix**: Added selection tracking and white border highlighting system
+- **Files Modified**: `src/ui/palette_views/primary_view.py`
+
+---
+
+## Version 2.5.10 - Saved Colors Auto-Selection Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Saved Colors Auto-Selection Fix
+- **✅ Fixed Brush Color Issue**: Resolved saved colors not becoming active brush color after saving
+- **✅ Root Cause**: Saving colors only stored them but didn't select them as current color
+- **✅ Solution**: Automatically select saved color as current brush color when saving
+- **✅ User Impact**: Seamless painting workflow - saved colors immediately become active brush color
+
+**Technical Details**:
+- **Issue**: After saving colors from Primary/Wheel views, brush reverted to Grid color
+- **Location**: `src/ui/palette_views/saved_view.py` `_on_saved_slot_click()` method
+- **Fix**: Added `self.current_saved_color = current_color` to auto-select saved color
+- **Files Modified**: `src/ui/palette_views/saved_view.py`
+
+---
+
+## Version 2.5.9 - Primary Colors Centering Fix
+**Date**: January 2025  
+**Type**: Visual Bug Fix
+
+### 🎨 Primary Colors Centering Fix
+- **✅ Fixed Grid Centering**: Resolved Primary colors grid being left-aligned instead of centered
+- **✅ Root Cause**: Missing `grid_columnconfigure` to center columns within container
+- **✅ Solution**: Added proper grid column configuration with `weight=1` for all columns
+- **✅ User Impact**: Primary colors and variations grids now properly centered for better visual balance
+
+**Technical Details**:
+- **Issue**: Primary colors grid appeared left-aligned with empty space on the right
+- **Location**: `src/ui/palette_views/primary_view.py` `_create_primary_colors_grid()` method
+- **Fix**: Added `grid_columnconfigure(col, weight=1)` for both Primary colors and variations grids
+- **Files Modified**: `src/ui/palette_views/primary_view.py`
+
+---
+
+## Version 2.5.8 - Grid and Wheel Color Saving Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Grid and Wheel Color Saving Fix
+- **✅ Fixed Color Saving Issue**: Resolved Grid and Wheel colors not saving to Saved Colors palette
+- **✅ Root Cause**: `get_source_color()` method was checking current view mode instead of using `last_active_view` when in saved mode
+- **✅ Solution**: Modified method to use `last_active_view` to determine source view when in saved mode
+- **✅ User Impact**: Users can now properly save colors from any view (Grid, Primary, or Wheel) to Saved Colors
+
+**Technical Details**:
+- **Issue**: When in "saved" view mode, system was saving Primary colors instead of actual selected colors
+- **Location**: `src/ui/main_window.py` `get_source_color()` method
+- **Fix**: Use `last_active_view` to determine which view was active before switching to saved mode
+- **Files Modified**: `src/ui/main_window.py`
+
+---
+
+## Version 2.5.7 - Primary Color Selection Fix
+**Date**: January 2025  
+**Type**: Critical Bug Fix
+
+### 🐛 Primary Color Selection TypeError Fix
+- **✅ Fixed Color Selection Crash**: Resolved TypeError when selecting colors in Primary palette view
+- **✅ Root Cause**: `primary_view.py` was passing color tuples instead of integer indices to `on_color_select` callback
+- **✅ Solution**: Updated `_select_color_variation` method to pass `palette.primary_color` index instead of color tuple
+- **✅ Consistency**: Now matches behavior of `grid_view.py` which was already working correctly
+- **✅ User Impact**: Users can now select color variations from Primary palette without application crashes
+
+**Technical Details**:
+- **Error**: `TypeError: '<=' not supported between instances of 'int' and 'tuple'`
+- **Location**: `src/ui/palette_views/primary_view.py` line 319
+- **Fix**: Pass `color_index` instead of `color` tuple to `on_color_select` callback
+- **Files Modified**: `src/ui/palette_views/primary_view.py`
+
+---
+
 ## Version 2.5.4 - Edge Tool Reliability Hardening
 **Date**: October 16, 2025  
 **Type**: Reliability Improvements

@@ -290,11 +290,81 @@ class CanvasRenderer:
                 )
 
                 self.draw_all_pixels_on_tkinter(x_offset, y_offset)
+
+                # Live move preview: draw selected pixels at current drag position (non-destructive)
+                move_tool = self.app.tools.get("move")
+                sel_tool = self.app.tools.get("selection")
+                if (move_tool and sel_tool and getattr(move_tool, "is_moving", False)
+                    and sel_tool.selected_pixels is not None and sel_tool.selection_rect):
+                    zoom = self.app.canvas.zoom
+                    left, top, width, height = sel_tool.selection_rect
+                    # Draw preview pixels using a lightweight overlay tag
+                    preview_tag = "move_preview"
+                    # No need to delete specifically because we wiped the canvas with delete("all") above
+                    for py in range(min(height, sel_tool.selected_pixels.shape[0])):
+                        for px in range(min(width, sel_tool.selected_pixels.shape[1])):
+                            rgba = tuple(sel_tool.selected_pixels[py, px])
+                            if rgba and rgba[3] > 0:
+                                screen_x = x_offset + ((left + px) * zoom)
+                                screen_y = y_offset + ((top + py) * zoom)
+                                hex_color = f"#{rgba[0]:02x}{rgba[1]:02x}{rgba[2]:02x}"
+                                self.app.drawing_canvas.create_rectangle(
+                                    screen_x, screen_y,
+                                    screen_x + zoom, screen_y + zoom,
+                                    fill=hex_color, outline="", tags=preview_tag
+                                )
+
+                # Edge lines: during a move, preview the selected edges at the drag position
+                move_tool = self.app.tools.get("move")
+                sel_tool = self.app.tools.get("selection")
+                if (move_tool and getattr(move_tool, "is_moving", False)
+                    and sel_tool and getattr(sel_tool, "selected_edge_lines", None)):
+                    zoom = self.app.canvas.zoom
+                    # Compute offset relative to the ORIGINAL selection
+                    if move_tool.original_selection and sel_tool.selection_rect:
+                        orig_left, orig_top, _, _ = move_tool.original_selection
+                        left, top, _, _ = sel_tool.selection_rect
+                        off_x = left - orig_left
+                        off_y = top - orig_top
+                    else:
+                        off_x = 0
+                        off_y = 0
+                    # Draw each edge line as a preview
+                    for edge_data in sel_tool.selected_edge_lines:
+                        px = edge_data.get('pixel_x', 0) + off_x
+                        py = edge_data.get('pixel_y', 0) + off_y
+                        edge = edge_data.get('edge', 'top')
+                        color = edge_data.get('color', (255, 0, 0, 255))
+                        thickness = edge_data.get('thickness', 0.1)
+                        color_hex = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+                        line_width = max(1, int(thickness * zoom))
+                        # Compute screen coords for each edge type
+                        if edge == 'top':
+                            sx1 = x_offset + (px * zoom)
+                            sx2 = x_offset + ((px + 1) * zoom)
+                            sy = y_offset + (py * zoom)
+                            self.app.drawing_canvas.create_line(sx1, sy, sx2, sy, fill=color_hex, width=line_width, tags="edge_preview")
+                        elif edge == 'bottom':
+                            sx1 = x_offset + (px * zoom)
+                            sx2 = x_offset + ((px + 1) * zoom)
+                            sy = y_offset + ((py + 1) * zoom)
+                            self.app.drawing_canvas.create_line(sx1, sy, sx2, sy, fill=color_hex, width=line_width, tags="edge_preview")
+                        elif edge == 'left':
+                            sx = x_offset + (px * zoom)
+                            sy1 = y_offset + (py * zoom)
+                            sy2 = y_offset + ((py + 1) * zoom)
+                            self.app.drawing_canvas.create_line(sx, sy1, sx, sy2, fill=color_hex, width=line_width, tags="edge_preview")
+                        elif edge == 'right':
+                            sx = x_offset + ((px + 1) * zoom)
+                            sy1 = y_offset + (py * zoom)
+                            sy2 = y_offset + ((py + 1) * zoom)
+                            self.app.drawing_canvas.create_line(sx, sy1, sx, sy2, fill=color_hex, width=line_width, tags="edge_preview")
+                else:
+                    # Normal path: redraw stored edge lines
+                    # Redraw edge lines BEFORE selection box so selection appears on top
+                    self._redraw_edge_lines_using_tool()
                 
                 self.draw_selection_on_tkinter(x_offset, y_offset)
-                
-                # Redraw edge lines after canvas is redrawn
-                self._redraw_edge_lines_using_tool()
                 
                 if self.app.grid_control_mgr.grid_overlay and self.app.canvas.show_grid:
                     self.app.drawing_canvas.tag_raise("grid")
@@ -639,23 +709,40 @@ class CanvasRenderer:
         """Draw all pixels from the canvas onto the tkinter canvas"""
         zoom = self.app.canvas.zoom
         
-        # Check if we're in a move operation to skip original selection area
+        # During live move or rotate preview, hide the source area so pixels don't appear doubled.
         move_tool = self.app.tools.get("move")
-        skip_original_selection = False
+        selection_tool = self.app.tools.get("selection")
+        skip_orig = False
         orig_left, orig_top, orig_width, orig_height = 0, 0, 0, 0
-        
-        if (move_tool and move_tool.is_moving and move_tool.original_selection):
-            skip_original_selection = True
-            orig_left, orig_top, orig_width, orig_height = move_tool.original_selection
+        # Also hide the last placed area while dragging (background is restored on pick-up,
+        # but the flattened canvas may lag until we resync layers).
+        skip_last = False
+        last_left, last_top, last_width, last_height = 0, 0, 0, 0
+        rotating_preview = bool(getattr(self.app, 'selection_mgr', None) and self.app.selection_mgr.is_rotating)
+        if move_tool and move_tool.is_moving:
+            if move_tool.original_selection:
+                skip_orig = True
+                orig_left, orig_top, orig_width, orig_height = move_tool.original_selection
+            sel_tool = selection_tool
+            if move_tool.last_drawn_position and sel_tool and sel_tool.selection_rect:
+                skip_last = True
+                last_left, last_top = move_tool.last_drawn_position
+                _, _, last_width, last_height = sel_tool.selection_rect
+        elif rotating_preview and selection_tool and selection_tool.selection_rect:
+            # Hide the current selection area during rotate preview to avoid double-draw
+            skip_last = True
+            last_left, last_top, last_width, last_height = selection_tool.selection_rect
         
         # Draw all visible layers combined
         for y in range(self.app.canvas.height):
             for x in range(self.app.canvas.width):
-                # Skip pixels in original selection area during move
-                if skip_original_selection:
-                    if (orig_left <= x < orig_left + orig_width and 
-                        orig_top <= y < orig_top + orig_height):
-                        continue  # Don't draw original selection pixels during move
+                # Skip pixels in original/last areas during move (visual cleanliness)
+                if skip_orig and (orig_left <= x < orig_left + orig_width and 
+                                  orig_top <= y < orig_top + orig_height):
+                    continue
+                if skip_last and (last_left <= x < last_left + last_width and 
+                                  last_top <= y < last_top + last_height):
+                    continue
                 
                 color = self.app.canvas.get_pixel(x, y)
                 if color and color[3] > 0:  # Only draw non-transparent pixels

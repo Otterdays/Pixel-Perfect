@@ -36,6 +36,13 @@ class SavedView:
         # UI components
         self.saved_color_buttons: List[ctk.CTkButton] = []
         self.view_created = False
+        
+        # View references (set later by main window)
+        self.primary_view = None
+        self.main_window = None
+        
+        # Store the currently selected Saved color (separate from main palette)
+        self.current_saved_color = None
     
     def create(self):
         """Create the saved colors view"""
@@ -173,31 +180,63 @@ class SavedView:
     
     def _on_saved_slot_click(self, slot_index: int):
         """Handle click on empty saved color slot - save current color"""
-        # Get current color from appropriate source
-        # If color wheel view is active, get from wheel; otherwise from palette
-        if self.color_wheel and self.view_mode_var.get() == "wheel":
-            rgb_color = self.color_wheel.get_color()
-            current_color = (rgb_color[0], rgb_color[1], rgb_color[2], 255)
-        else:
-            current_color = self.palette.get_primary_color()
+        # Get current color from appropriate source using same logic as main window
+        current_color = self._get_current_color()
         
         # Save to slot
         self.saved_colors.set_color(slot_index, current_color)
         
+        # Automatically select the saved color as the current color for painting
+        # This ensures the brush uses the color you just saved
+        self.current_saved_color = current_color
+        
         # Fast refresh - just update button states
         self.update_buttons()
         
-        print(f"[SAVED] Color {current_color} saved to slot {slot_index}")
+        # Update display to show the selected color
+        if self.on_update_display:
+            self.on_update_display()
+        
+        print(f"[SAVED] Color {current_color} saved to slot {slot_index} and selected for painting")
+    
+    def _get_current_color(self):
+        """Get current color from the actual source view (ignoring saved view mode)"""
+        # Always get the current color from the main window's get_source_color method
+        # This ensures we get the correct color from Primary/Wheel views even when in Saved view
+        if hasattr(self, 'main_window') and self.main_window:
+            return self.main_window.get_source_color()
+        
+        # Fallback logic if main_window reference is not available
+        # Check Primary view first (most recent selection)
+        if (hasattr(self, 'primary_view') and self.primary_view):
+            primary_color = self.primary_view.get_current_color()
+            if primary_color:
+                return primary_color
+        
+        # Check Wheel view
+        if (self.color_wheel):
+            rgb_color = self.color_wheel.get_color()
+            return (rgb_color[0], rgb_color[1], rgb_color[2], 255)
+        
+        # Fallback to palette
+        return self.palette.get_primary_color()
     
     def _on_saved_color_click(self, slot_index: int):
         """Handle click on filled saved color slot - load color"""
         saved_color = self.saved_colors.get_color(slot_index)
         if saved_color:
-            # Set as primary color
-            self.palette.set_primary_color_by_rgba(saved_color)
+            # Store the selected color in the Saved view (separate from main palette)
+            # This prevents color bleeding to grid when just selecting colors
+            self.current_saved_color = saved_color
+            
+            # Update display to show the selected color
             if self.on_update_display:
                 self.on_update_display()
             print(f"[SAVED] Loaded color {saved_color} from slot {slot_index}")
+    
+    def get_current_color(self):
+        """Get the currently selected Saved color"""
+        return self.current_saved_color
     
     def _export_saved_colors(self):
         """Export saved colors to a file"""

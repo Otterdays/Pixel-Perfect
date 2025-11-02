@@ -90,12 +90,11 @@ class SelectionManager:
         
         left, top, width, height = bounds
         
-        # Clear move tool's background restoration state to prevent copy-behind bug
-        move_tool = self.tools.get("move")
-        if move_tool:
-            move_tool.saved_background = None
-            move_tool.last_drawn_position = None
-            print("[MIRROR] Cleared move tool state to prevent copy-behind bug")
+        # Prepare background so transform replaces the previous drop
+        # rather than stacking duplicates. This restores the last drop's
+        # background on the layer, then snapshots a fresh background so the
+        # next pickup can restore correctly.
+        self._restore_and_prepare_move_background(left, top, width, height)
         
         # Mirror the pixels horizontally (flip left-right)
         mirrored_pixels = np.flip(selection_tool.selected_pixels, axis=1).copy()
@@ -148,12 +147,9 @@ class SelectionManager:
         
         left, top, width, height = bounds
         
-        # Clear move tool's background restoration state to prevent copy-behind bug
-        move_tool = self.tools.get("move")
-        if move_tool:
-            move_tool.saved_background = None
-            move_tool.last_drawn_position = None
-            print("[ROTATE] Cleared move tool state to prevent copy-behind bug")
+        # Prepare background and state like mirror does so transforms don't stack
+        # on top of the last drop and the next pickup restores correctly.
+        self._restore_and_prepare_move_background(left, top, width, height)
         
         # Enter rotation preview mode
         self.is_rotating = True
@@ -198,17 +194,25 @@ class SelectionManager:
         # Apply rotation to the layer
         draw_layer = self._get_drawing_layer()
         if draw_layer and self.rotated_pixels_preview is not None:
-            # Clear original area first
-            orig_left, orig_top, orig_width, orig_height = self.original_rect_backup
-            for py in range(orig_height):
-                for px in range(orig_width):
-                    if py < self.original_pixels_backup.shape[0] and px < self.original_pixels_backup.shape[1]:
-                        original_pixel = tuple(self.original_pixels_backup[py, px])
-                        if original_pixel[3] > 0:  # Was non-transparent
-                            canvas_x = orig_left + px
-                            canvas_y = orig_top + py
-                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                                draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+            # If the user had previously dropped the selection (move tool active),
+            # restore that area's background first to avoid stacking duplicates.
+            # Otherwise (no prior move), fall back to clearing the original area.
+            move_tool = self.tools.get("move")
+            had_prior_drop = bool(move_tool and move_tool.last_drawn_position)
+            if had_prior_drop:
+                self._restore_and_prepare_move_background(left, top, width, height)
+            else:
+                # No prior drop to restore; clear original area where needed
+                orig_left, orig_top, orig_width, orig_height = self.original_rect_backup
+                for py in range(orig_height):
+                    for px in range(orig_width):
+                        if py < self.original_pixels_backup.shape[0] and px < self.original_pixels_backup.shape[1]:
+                            original_pixel = tuple(self.original_pixels_backup[py, px])
+                            if original_pixel[3] > 0:  # Was non-transparent
+                                canvas_x = orig_left + px
+                                canvas_y = orig_top + py
+                                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                                    draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
             
             # Draw rotated pixels from preview
             rotated_pixels = self.rotated_pixels_preview
@@ -227,6 +231,14 @@ class SelectionManager:
             
             # Now update the selection with the rotated pixels
             selection_tool.selected_pixels = rotated_pixels
+            # Ensure selection_rect keeps new dimensions
+            selection_tool.selection_rect = (left, top, rotated_pixels.shape[1], rotated_pixels.shape[0])
+            # Reset move tool state flags so first pickup after rotation acts as adjustment
+            move_tool = self.tools.get("move")
+            if move_tool:
+                # Do not reset original_selection; keep it from initial selection
+                move_tool.pixels_cleared = True  # original area has been cleared already by rotation
+                move_tool.last_drawn_position = (left, top)
             
             # Update canvas display
             if self.update_canvas_callback:
@@ -268,6 +280,45 @@ class SelectionManager:
         # Update display
         if self.update_display_callback:
             self.update_display_callback()
+
+    def _restore_and_prepare_move_background(self, left: int, top: int, width: int, height: int):
+        """Restore the last drop's background on the active layer (removing the
+        currently placed selection) and snapshot a new background under the
+        current bounds so the next pickup can restore it correctly.
+
+        This keeps move/transform workflows non-destructive and prevents
+        duplicate stacking when the user mirrors/rotates then moves again.
+        """
+        move_tool = self.tools.get("move")
+        draw_layer = self._get_drawing_layer()
+        if not move_tool or not draw_layer:
+            return
+        # 1) Restore previous background if we have it
+        if move_tool.saved_background is not None and move_tool.last_drawn_position is not None:
+            restore_left, restore_top = move_tool.last_drawn_position
+            for py in range(len(move_tool.saved_background)):
+                for px in range(len(move_tool.saved_background[0])):
+                    bg_pixel = move_tool.saved_background[py][px]
+                    canvas_x = restore_left + px
+                    canvas_y = restore_top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        draw_layer.set_pixel(canvas_x, canvas_y, bg_pixel)
+            print("[TRANSFORM] Restored background at previous drop")
+        # 2) Snapshot fresh background under current bounds for the next pickup
+        new_saved_background = []
+        for py in range(height):
+            row = []
+            for px in range(width):
+                cx = left + px
+                cy = top + py
+                if 0 <= cx < self.canvas.width and 0 <= cy < self.canvas.height:
+                    row.append(draw_layer.get_pixel(cx, cy))
+                else:
+                    row.append((0, 0, 0, 0))
+            new_saved_background.append(row)
+        move_tool.saved_background = new_saved_background
+        move_tool.last_drawn_position = (left, top)
+        print("[TRANSFORM] Snapshotted new background for transformed selection")
     
     def copy_selection(self):
         """Enter copy mode - allows placing a copy of the selection"""

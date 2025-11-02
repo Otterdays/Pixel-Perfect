@@ -342,6 +342,7 @@ class EdgeTool(Tool):
             # Schedule a redraw instead of immediately redrawing during active operations
             self.pending_redraw = True
     
+    
     def _draw_edge_line_on_canvas(self, pixel_x: int, pixel_y: int, edge: str, color: Tuple[int, int, int, int], thickness: float = None):
         """Draw a single edge line on the canvas"""
         if not self.main_window:

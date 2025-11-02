@@ -107,6 +107,9 @@ class ColorViewManager:
             # Update MainWindow's color wheel reference
             if hasattr(self, 'main_window') and self.main_window:
                 self.main_window.color_wheel = self.color_wheel
+                # Also update SavedView's color wheel reference
+                if hasattr(self.main_window, 'saved_view') and self.main_window.saved_view:
+                    self.main_window.saved_view.color_wheel = self.color_wheel
         elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
             # Pack palette_content_frame before color_display_container (maintains order)
             self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
