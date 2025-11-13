@@ -1,10 +1,27 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.5.11  
-**Last Updated**: January 2025 - Primary Color Variations Highlighting Fix
+**Version**: 2.6.0  
+**Last Updated**: November 13, 2025 - Spray Tool & Palette Overhaul
 
-## Latest Updates (v2.5.11)
+## Latest Updates (v2.6.0)
+
+### ✒️ Spray Paint Tool
+- **✅ Natural Coverage** - Drag to spray continuous droplets with adjustable radius/density.
+- **✅ Full Integration** - Shares Tool Size manager UI, cursor preview, and undo path with existing tools.
+- **✅ Artist Shortcuts** - `Y` hotkey plus right-click context menu for quick parameter changes.
+
+### 🧭 Canvas Zoom Scrollbar
+- **✅ Visual Zooming** - Canvas renders a themed scrollbar with +/− buttons and draggable handle.
+- **✅ Wheel Harmony** - Scroll wheel, dropdown, and scrollbar stay perfectly synchronized.
+- **✅ 64× Support** - Zoom range now spans 0.25× through 64× for detail or overview work.
+
+### 🎨 JSON Palette Loader
+- **✅ Auto-Discovery** - On launch, all `assets/palettes/*.json` files populate the palette dropdown.
+- **✅ Safe Naming** - Duplicate names receive suffixes, keeping the list unique.
+- **✅ Grass Palette** - Bundled `grass.json` introduces 16 natural tones as a working example.
+
+## Previous Updates (v2.5.11)
 
 ### 🎨 Primary Color Variations Highlighting Fix
 - **✅ Fixed Visual Feedback** - Resolved Primary color variations not showing selection highlighting

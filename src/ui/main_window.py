@@ -25,6 +25,7 @@ from .palette_views import GridView, PrimaryView, SavedView, ConstantsView
 from core.color_palette import ColorPalette
 from tools.brush import BrushTool
 from tools.eraser import EraserTool
+from tools.spray import SprayTool
 from tools.fill import FillTool
 from tools.eyedropper import EyedropperTool
 from tools.selection import SelectionTool, MoveTool
@@ -190,6 +191,7 @@ class MainWindow:
         self.tools = {
             "brush": BrushTool(),
             "eraser": EraserTool(),
+            "spray": SprayTool(),
             "fill": FillTool(),
             "eyedropper": EyedropperTool(),
             "selection": SelectionTool(),
@@ -507,6 +509,9 @@ class MainWindow:
         # Update brush and eraser button text to show default sizes
         self.tool_size_mgr.update_brush_button_text()
         self.tool_size_mgr.update_eraser_button_text()
+        # Update spray button text
+        if hasattr(self.tool_size_mgr, 'update_spray_button_text'):
+            self.tool_size_mgr.update_spray_button_text()
         
         # Set canvas/zoom manager references and callbacks
         self.canvas_zoom_mgr.size_var = self.size_var
@@ -724,6 +729,7 @@ class MainWindow:
             'update_tool_selection': self._update_tool_selection,
             'show_brush_size_menu': self.tool_size_mgr.show_brush_size_menu,
             'show_eraser_size_menu': self.tool_size_mgr.show_eraser_size_menu,
+            'show_spray_size_menu': self.tool_size_mgr.show_spray_size_menu,
             'show_edge_thickness_menu': self.tool_size_mgr.show_edge_thickness_menu,
             'open_texture_panel': self.dialog_mgr.open_texture_panel,
             'mirror_selection': self.selection_mgr.mirror_selection,
@@ -745,7 +751,7 @@ class MainWindow:
             # Remove all known transient tags
             for tag in [
                 "edge_preview", "edge_lines", "shape_preview", "brush_preview",
-                "eraser_preview", "texture_preview", "selection", "move_preview",
+                "eraser_preview", "spray_preview", "texture_preview", "selection", "move_preview",
                 "rotate_preview", "copy_preview", "scale_handle", "border"
             ]:
                 try:
@@ -847,6 +853,7 @@ class MainWindow:
         # Clear any tool previews when changing tools
         self.drawing_canvas.delete("brush_preview")
         self.drawing_canvas.delete("eraser_preview")
+        self.drawing_canvas.delete("spray_preview")
         self.drawing_canvas.delete("texture_preview")
         
         # Exit scaling mode if active
@@ -928,7 +935,7 @@ class MainWindow:
 
     def _on_palette_change(self, palette_name: str):
         """Handle palette change - automatically switch to Grid view"""
-        self.palette.load_preset(palette_name)
+        self.palette.load_by_name(palette_name)
         
         # Always switch to Grid view when changing palette
         self.view_mode_var.set("grid")
@@ -1365,15 +1372,15 @@ class MainWindow:
             self._show_view("grid")
             self._update_color_grid_selection()
         else:
-            # Color not in current palette, search across ALL presets
+            # Color not in current palette, search across ALL available JSON palettes
             preset_result = self.palette.find_color_in_presets(rgba_color)
             
             if preset_result:
                 # Color found in another preset!
                 preset_name, color_index = preset_result
                 
-                # Switch to that preset
-                self.palette.load_preset(preset_name)
+                # Switch to that palette by name (JSON-backed)
+                self.palette.load_by_name(preset_name)
                 self.palette_var.set(preset_name)
                 
                 # Set the found color as primary/secondary
@@ -1387,7 +1394,7 @@ class MainWindow:
                 self._show_view("grid")
                 self._update_color_grid_selection()
                 
-                print(f"[EYEDROPPER] Found color in preset '{preset_name}', switched to it")
+                print(f"[EYEDROPPER] Found color in palette '{preset_name}', switched to it")
             else:
                 # Color not found in any preset, switch to color wheel view
                 self.view_mode_var.set("wheel")

@@ -7,6 +7,7 @@ All Rights Reserved - Proprietary Software
 """
 
 import tkinter as tk
+import math
 
 
 class ToolSizeManager:
@@ -27,6 +28,9 @@ class ToolSizeManager:
         self.brush_size = 1
         self.eraser_size = 1
         self.edge_thickness = 0.1  # Default edge thickness in pixels
+        # Spray tool parameters
+        self.spray_radius = 8
+        self.spray_density = 40  # droplets per application tick
         
         # Widget references (set after UI creation)
         self.tool_buttons = None
@@ -211,4 +215,88 @@ class ToolSizeManager:
                 if 0 <= px < layer.width and 0 <= py < layer.height:
                     # Set to transparent (0, 0, 0, 0)
                     layer.set_pixel(px, py, (0, 0, 0, 0))
+
+    # ========================================
+    # SPRAY TOOL METHODS
+    # ========================================
+
+    def show_spray_size_menu(self, event):
+        """Show spray radius and density selection popup menu"""
+        import tkinter as tk
+        menu = tk.Menu(self.root, tearoff=0, bg="#2d2d2d", fg="white",
+                       activebackground="#1a73e8", activeforeground="white",
+                       relief=tk.FLAT, borderwidth=0)
+
+        # Radius options
+        radius_options = [
+            (4, "Radius 4 • Fine"),
+            (8, "Radius 8 • Small"),
+            (12, "Radius 12 • Medium"),
+            (16, "Radius 16 • Large"),
+            (24, "Radius 24 • XL"),
+        ]
+        menu.add_command(label="— Size —", state="disabled")
+        for r, label in radius_options:
+            display_label = f"✓ {label}" if r == self.spray_radius else f"   {label}"
+            menu.add_command(label=display_label, command=lambda rv=r: self.set_spray_radius(rv), font=("Segoe UI", 10))
+
+        # Density options
+        density_map = [
+            (15, "Low Density"),
+            (40, "Medium Density"),
+            (80, "High Density"),
+            (120, "Ultra Density"),
+        ]
+        menu.add_separator()
+        menu.add_command(label="— Density —", state="disabled")
+        for d, label in density_map:
+            display_label = f"✓ {label}" if d == self.spray_density else f"   {label}"
+            menu.add_command(label=display_label, command=lambda dv=d: self.set_spray_density(dv), font=("Segoe UI", 10))
+
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+
+    def set_spray_radius(self, radius: int):
+        """Set spray radius and update button text; auto-select Spray."""
+        self.spray_radius = radius
+        self.update_spray_button_text()
+        if self.select_tool_callback:
+            self.select_tool_callback("spray")
+
+    def set_spray_density(self, density: int):
+        """Set spray density and update button text; auto-select Spray."""
+        self.spray_density = density
+        self.update_spray_button_text()
+        if self.select_tool_callback:
+            self.select_tool_callback("spray")
+
+    def update_spray_button_text(self):
+        """Update Spray button to show current radius and density"""
+        if self.tool_buttons and "spray" in self.tool_buttons:
+            # Show density as L/M/H/U based on numeric value
+            if self.spray_density <= 20:
+                d_text = "L"
+            elif self.spray_density <= 50:
+                d_text = "M"
+            elif self.spray_density <= 90:
+                d_text = "H"
+            else:
+                d_text = "U"
+            self.tool_buttons["spray"].configure(text=f"Spray [R:{self.spray_radius} D:{d_text}]")
+
+    def spray_at(self, layer, x: int, y: int, color: tuple):
+        """Apply spray droplets centered at (x, y) using current radius/density."""
+        import random
+        # Convert radius to pixel units (already pixels); sample points in disk
+        r = max(1, int(self.spray_radius))
+        for _ in range(int(self.spray_density)):
+            # Polar sampling with sqrt for uniform disk distribution
+            angle = random.random() * 6.283185307179586  # 2*pi
+            dist = r * (random.random() ** 0.5)
+            px = int(round(x + dist * (math.cos(angle))))
+            py = int(round(y + dist * (math.sin(angle))))
+            if 0 <= px < layer.width and 0 <= py < layer.height:
+                layer.set_pixel(px, py, color)
 

@@ -1,41 +1,39 @@
 # Pixel Perfect - Architecture Documentation
 
 ## System Overview
-Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive feature set including animation, layers, custom colors, and export capabilities.
+Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive features including animation, layers, custom colors, palette management, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 2.0.0
-**Status**: All Features Complete - Production Ready with UI Bug Fixes
+**Version**: 2.6.0  
+**Status**: All Core Systems Complete - Production Ready with Spray Tool & Palette Overhaul
 
 ### Latest Updates
-- **v2.0.0**: Critical UI Bug Fix - Fixed saved colors blank space by properly managing palette_content_frame visibility
-- **v1.71**: Notes Panel Feature - Persistent note-taking integrated into the editor with auto-save and export
-- **v1.70**: Move Tool Critical Fixes - Fixed layer synchronization and added live visual feedback
-- **v1.69**: Grid Control Manager - Extracted grid controls to dedicated manager
-- **v1.68**: Tool Size & Canvas/Zoom Managers - Extracted tool sizing and canvas management
+- **v2.6.0**: Added Spray tool, canvas zoom scrollbar, and JSON palette auto-loader.
+- **v2.5.x**: Palette UX hardening (highlighting, saved color behavior, edge tool fixes).
+- **v2.0.x**: Build size optimization, panel refactors, background/grid texture modes.
 
 ## Core Components
 
 ### Canvas System (`src/core/canvas.py`)
-- **Purpose**: Main drawing surface with pixel-perfect grid rendering
+- **Purpose**: Main drawing surface with pixel-perfect grid rendering.
 - **Key Features**:
-  - Zoom levels (1x to 32x) with visible grid overlay
-  - Preset canvas sizes (16x16, 32x32, 16x32, 32x64, 64x64)
-  - Grid overlay with toggle and proper visibility
-  - **Grid overlay mode** - Grid lines can appear on top of pixels for precise editing
-  - Mouse position tracking and coordinate conversion
-  - Real-time pixel manipulation with numpy arrays
-  - Pan tool for camera movement around canvas
-- **Dependencies**: Pygame for rendering, numpy for efficient pixel operations
+  - Zoom levels (0.25× to 64×) with visible grid overlay.
+  - Preset canvas sizes (8×8 through 64×64) plus custom sizing.
+  - Grid overlay with toggle and overlay mode to render on top of pixels.
+  - Paper/background texture modes rendered directly in Tkinter.
+  - Mouse position tracking and coordinate conversion helpers.
+  - Real-time pixel manipulation backed by numpy arrays.
+  - Pan tool for camera movement around canvas.
+- **Dependencies**: Native `tkinter` canvas via CustomTkinter plus numpy for efficient pixel operations.
 
 ### Color Palette (`src/core/color_palette.py`)
-- **Purpose**: Manages color palettes and selection
+- **Purpose**: Manages palette discovery, loading, and selection.
 - **Key Features**:
-  - 6 preset SNES-inspired palettes including Curse of Aros style
-  - Custom palette creation and management
-  - Primary/secondary color selection with UI integration
-  - Palette persistence (JSON format)
-  - 8-16 color limitation for authentic retro feel
+  - Auto-discovers all JSON palettes in `assets/palettes/` at startup.
+  - Default fallback SNES Classic palette when no JSON files exist.
+  - Primary/secondary color selection with UI integration.
+  - Palette persistence (JSON format) with primary/secondary indexes.
+  - Duplicate-name handling ensures unique dropdown entries (`Name (2)`).
 
 ### Custom Colors Manager (`src/core/custom_colors.py`)
 - **Purpose**: User-specific persistent color library with local storage
@@ -89,7 +87,7 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - Cross-platform file handling
 
 ## Tool System (`src/tools/`)
-Complete modular tool architecture with 9 implemented tools, all fully integrated with layer system:
+Complete modular tool architecture with fully integrated drawing, transformation, and utility tools:
 
 ### Tool Interface
 ```python
@@ -102,16 +100,19 @@ class Tool:
 
 **Enhanced Integration**: All tools now work seamlessly with both Canvas and Layer objects through unified interface compatibility.
 
-### Available Tools (All Implemented)
-- **Brush** (`brush.py`): Single pixel placement with mouse drag support
-- **Eraser** (`eraser.py`): Pixel removal tool
-- **Fill** (`fill.py`): Bucket fill with flood algorithm
-- **Eyedropper** (`eyedropper.py`): Smart color sampling with palette/color wheel integration
-- **Selection** (`selection.py`): Rectangle selection and move tool
-- **Move** (`move.py`): Move selected pixels
-- **Line** (`line.py`): Pixel-perfect line drawing (Bresenham's algorithm)
-- **Rectangle** (`rectangle.py`): Rectangle and square drawing (hollow/filled)
-- **Circle** (`circle.py`): Circle drawing with midpoint algorithm
+- **Brush** (`brush.py`): Multi-size brush strokes via `ToolSizeManager`.
+- **Eraser** (`eraser.py`): Multi-size erasing with undo support.
+- **Spray** (`spray.py`): Radius/density-controlled spray paint with live preview.
+- **Fill** (`fill.py`): Bucket fill with flood algorithm.
+- **Eyedropper** (`eyedropper.py`): Smart color sampling with palette/color wheel integration.
+- **Selection** (`selection.py`): Rectangle selection and move staging.
+- **Move** (`move.py`): Non-destructive move with background restoration.
+- **Line** (`line.py`): Pixel-perfect line drawing (Bresenham's algorithm).
+- **Rectangle** (`rectangle.py`): Rectangle and square drawing (hollow/filled).
+- **Circle** (`circle.py`): Circle drawing with midpoint algorithm.
+- **Texture** (`texture.py`): Pattern stamping with configurable libraries.
+- **Pan** (`pan.py`): Canvas navigation while maintaining zoom.
+- **Edge** (`edge.py`): Sub-pixel edge outlining with thickness controls.
 
 ## Animation System (`src/animation/`)
 
@@ -136,6 +137,7 @@ class Tool:
 - **Selection Manager** (`selection_manager.py`): Mirror, rotate, copy, scale transformations
 - **Tool Size Manager** (`tool_size_manager.py`): Brush/eraser size management
 - **Canvas Zoom Manager** (`canvas_zoom_manager.py`): Canvas resize and zoom controls
+- **Canvas Scrollbar** (`canvas_scrollbar.py`): Themed on-canvas zoom scrollbar with drag + button controls
 - **Grid Control Manager** (`grid_control_manager.py`): Grid visibility and overlay toggles
 - **Theme Dialog Manager** (`theme_dialog_manager.py`): Theme selection and management
 - **UI Builder** (`ui_builder.py`): Toolbar and UI component construction
@@ -154,8 +156,8 @@ class Tool:
 
 ### Toolbar Components
 - **File Menu**: New, Open, Save, Export options
-- **Size Dropdown**: Canvas size selection (16x16 to 64x64)
-- **Zoom Dropdown**: Zoom level control (1x to 32x)
+- **Size Dropdown**: Canvas size selection (8×8 to 64×64 plus custom)
+- **Zoom Dropdown**: Zoom level control (0.25× to 64×) synchronized with on-canvas scrollbar
 - **Undo/Redo Buttons**: Arrow buttons (↶ ↷) with visual state feedback
 - **Theme Dropdown**: Switch between Basic Grey and Angelic themes
 - **Grid Button**: Toggle grid visibility (ON/OFF with color feedback)
@@ -300,7 +302,7 @@ class Tool:
 - **Professional Appearance**: Clean, modern interface with no visual artifacts
 
 ## Performance Achievements
-- **60fps rendering** achieved at 32x zoom
+- **60fps rendering** achieved at 64× zoom
 - **Efficient pixel manipulation** using numpy arrays
 - **Minimal memory footprint** for undo system (50+ states)
 - **Optimized rendering pipeline** with Tkinter + PIL rendering (v1.30+)

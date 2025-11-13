@@ -121,35 +121,30 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## ✅ Complete Feature Set
 
-### 🎨 **Drawing Tools** (11 Complete Tools)
-- **Pixel Brush**: Multi-size brush (1x1, 2x2, 3x3) with right-click menu - perfect for both detail work and broad strokes
-- **Eraser**: Multi-size eraser (1x1, 2x2, 3x3) with right-click menu - fast cleanup with larger sizes
-- **Fill Bucket**: Flood fill with customizable tolerance
-- **Eyedropper**: Color sampling from canvas (left-click primary, right-click secondary)
-- **Selection Tool**: Rectangle selection and move
-- **Line Tool**: Pixel-perfect line drawing (Bresenham's algorithm)
-- **Rectangle Tool**: Rectangle and square drawing (hollow/filled)
-- **Circle Tool**: Circle drawing with midpoint algorithm
-- **Move Tool**: Move selected pixels around canvas
-- **Pan Tool**: Drag canvas view for navigation on large canvases
-- **Texture Tool** 🌿NEW: Apply 8x8 grass texture with live preview - paint repeating patterns instantly!
+### 🎨 **Drawing Tools** (13 Complete Tools)
+- **Pixel Brush**: Multi-size brush (1×1, 2×2, 3×3) with right-click size menu.
+- **Eraser**: Multi-size eraser (1×1, 2×2, 3×3) for quick cleanup.
+- **Spray Paint** ✒️NEW: Adjustable radius + density spray can with live preview.
+- **Fill Bucket**: Flood fill with customizable tolerance.
+- **Eyedropper**: Color sampling from canvas (left = primary, right = secondary).
+- **Selection Tool**: Rectangle selection and move staging.
+- **Move Tool**: Non-destructive background-preserving moves.
+- **Line Tool**: Pixel-perfect line drawing (Bresenham's algorithm).
+- **Rectangle Tool**: Rectangle and square drawing (hollow/filled).
+- **Circle Tool**: Circle drawing with midpoint algorithm.
+- **Texture Tool** 🌿: Apply repeating textures with live preview.
+- **Edge Tool**: Sub-pixel edge outlining with thickness presets.
+- **Pan Tool**: Drag canvas view for navigation on large canvases.
 
 ### 🖼️ **Canvas System**
-- **Preset Sizes**: 16x16, 32x32, 16x32, 32x64, 64x64 pixels
-- **Zoom Levels**: 1x to 32x with **visible pixel grid**
+- **Preset Sizes**: 8×8, 16×16, 32×32, 16×32, 32×64, 64×64 pixels + custom
+- **Zoom Levels**: 0.25× to 64× with **visible pixel grid**
 - **Grid Overlay**: Toggleable grid for precise alignment
 - **Custom Backgrounds**: Checkerboard transparency pattern
 - **Mouse Integration**: Click and drag to draw pixels
 
-### 🎨 **Color Management** (7 Complete Palettes + 5 View Modes + Custom & Saved Colors)
-- **7 Game-Inspired Palettes**:
-- **SNES Classic**: 16 colors matching original SNES palette
-- **Old School RuneScape**: Classic OSRS color palette for authentic retro MMORPG sprites
-- **Curse of Aros**: Muted, earthy tones matching the game aesthetic
-- **Heartwood Online**: Forest-themed palette
-- **Definya**: Bright, vibrant colors
-- **Kakele Online**: Warm, golden palette
-- **Rucoy Online**: Grayscale palette with earth tones
+### 🎨 **Color Management** (JSON Palettes + 5 View Modes + Custom & Saved Colors)
+- **Auto-Loaded Palettes**: Drop any 16-color JSON file into `assets/palettes/` and it appears automatically (ships with SNES Classic plus Curse of Aros, OSRS, Heartwood, Definya, Kakele, Rucoy, Grass, and more).
 - **5 Palette View Modes**:
   - **Grid View**: Full palette in 4-column grid (auto-switches when changing palettes)
   - **Primary Colors**: 8 main colors + 24 variations per color
@@ -177,7 +172,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - **Mirror**: Flip selected pixels horizontally
 - **Rotate**: Rotate selected pixels 90° clockwise
 - **Copy**: Copy and paste selected pixels anywhere on canvas
-- **Scale**: Interactive scaling with corner/edge handles (scipy or numpy fallback)
+- **Scale**: Interactive scaling with corner/edge handles (numpy-powered resampling)
 
 ### 📚 **Layer System**
 - **Multiple Layers**: Up to 10 layers per project
@@ -269,8 +264,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 Built with modern Python technologies and packaged as a standalone executable:
 - **Language**: Python 3.13.6
-- **Graphics**: Pygame 2.6.1 (SDL 2.28.4)
-- **UI**: CustomTkinter 5.2.0+ with Tkinter Canvas integration
+- **UI & Rendering**: CustomTkinter 5.2.0+ on native Tkinter canvas
 - **Image Processing**: Pillow 10.0.0+
 - **Numerical Computing**: NumPy 1.24.0+
 - **Platform**: Windows 11 (Primary), cross-platform compatible
@@ -312,14 +306,19 @@ Pixel Perfect/
 │   │   ├── layer_manager.py  # Layer system
 │   │   ├── project.py     # Project save/load
 │   │   └── undo_manager.py   # Undo/redo system
-│   ├── tools/             # Drawing tools (9 complete tools)
+│   ├── tools/             # Drawing tools (brush, eraser, spray, fill, eyedropper, selection, move, pan, shapes, texture, edge)
 │   │   ├── base_tool.py   # Abstract base class
 │   │   ├── brush.py       # Brush tool
 │   │   ├── eraser.py      # Eraser tool
+│   │   ├── spray.py       # Spray paint tool
 │   │   ├── fill.py        # Fill bucket tool
 │   │   ├── eyedropper.py  # Color picker tool
 │   │   ├── selection.py   # Selection tool
-│   │   └── shapes.py      # Line, rectangle, circle tools
+│   │   ├── move.py        # Non-destructive move
+│   │   ├── pan.py         # Canvas panning
+│   │   ├── shapes.py      # Line, rectangle, circle tools
+│   │   ├── texture.py     # Texture painting tool
+│   │   └── edge.py        # Edge outlining tool
 │   ├── ui/                # User interface components
 │   │   ├── main_window.py # Main application window
 │   │   ├── color_wheel.py # HSV color wheel (v1.07+)

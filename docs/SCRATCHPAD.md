@@ -1,3 +1,28 @@
+## Version 2.6.0 - Spray Tool & Palette Overhaul (November 13, 2025)
+**Status**: ✅ COMPLETE - Added spray paint workflow, zoom scrollbar, and JSON palette pipeline
+
+### ✒️ Spray Tool Implementation
+- **ToolSizeManager** got `spray_radius` + `spray_density` with right-click menu options (4→24 radius, Low→Ultra density).
+- EventDispatcher handles drag loops so droplets stream continuously while button held.
+- CanvasRenderer draws spray cursor preview so artists see coverage before committing.
+
+### 🧭 Canvas Zoom Scrollbar
+- New `CanvasScrollbar` overlay renders +/− buttons and draggable handle on the canvas edge.
+- Scroll wheel events feed through the scrollbar to keep dropdown, wheel, and handle synchronized.
+- Theme-aware colors so Basic Grey and Angelic stay consistent.
+
+### 🎨 Palette Loader Refactor
+- `ColorPalette` now auto-scans `assets/palettes/*.json`, caches name→path, and loads via `load_by_name`.
+- UIBuilder populates palette dropdown directly from discovered JSON names; SNES Classic remains fallback.
+- Added `assets/palettes/grass.json` (16 earthy greens) as reference palette.
+
+### Docs & Follow-Up
+- Updated CHANGELOG, SUMMARY, ARCHITECTURE, SBOM, README overview to reflect new systems.
+- `My_Thoughts` captures reasoning for spray + palette changes.
+- Potential future idea: hot-reload palettes without restart once file watching is hooked up.
+
+---
+
 ## Version 2.5.15 - Ghost Pixels FINAL FIX (October 18, 2025)
 **Status**: ✅ COMPLETE - Fixed the real root cause of ghost pixels after mirror/rotate operations
 

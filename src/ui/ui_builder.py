@@ -185,6 +185,7 @@ class UIBuilder:
         tools = [
             ("brush", "Brush", "Draw pixels (B) | Right-click for size"),
             ("eraser", "Eraser", "Erase pixels (E) | Right-click for size"),
+            ("spray", "Spray", "Spray paint (Y) | Right-click for radius/density"),
             ("fill", "Fill", "Fill areas with color (F)"),
             ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
             ("selection", "Select", "Select rectangular areas (S)"),
@@ -217,6 +218,10 @@ class UIBuilder:
             # Add right-click menu for eraser size
             if tool_id == "eraser":
                 btn.bind("<Button-3>", callbacks['show_eraser_size_menu'])
+
+            # Add right-click menu for spray radius/density
+            if tool_id == "spray":
+                btn.bind("<Button-3>", callbacks['show_spray_size_menu'])
             
             # Add right-click menu for edge thickness
             if tool_id == "edge":
@@ -235,7 +240,8 @@ class UIBuilder:
             height=28,
             command=callbacks['open_texture_panel']
         )
-        texture_btn.grid(row=3, column=1, padx=2, pady=2)  # Removed columnspan=2
+        # Place Texture on a new row to avoid overlapping Pan
+        texture_btn.grid(row=4, column=1, padx=2, pady=2)
         tool_buttons["texture"] = texture_btn  # Add to tool buttons for highlighting
         create_tooltip(texture_btn, "Open texture panel (T)", delay=1000)
         
@@ -247,7 +253,8 @@ class UIBuilder:
             height=28,
             command=lambda: callbacks['select_tool']('edge')
         )
-        edge_btn.grid(row=3, column=2, padx=2, pady=2)
+        # Place Edge on the new row as well
+        edge_btn.grid(row=4, column=2, padx=2, pady=2)
         tool_buttons["edge"] = edge_btn
         create_tooltip(edge_btn, "Draw edges around pixel shapes (G) | Right-click for thickness", delay=1000)
         # Bind right-click on Edge button to open thickness menu (parity with brush/eraser)
@@ -340,11 +347,13 @@ class UIBuilder:
         palette_label.pack(pady=(15, 3), padx=10)
         
         # Palette selector
-        palette_var = ctk.StringVar(value="SNES Classic")
+        available_names = palette.get_available_palette_names()
+        default_palette_name = available_names[0] if available_names else palette.palette_name
+        palette_var = ctk.StringVar(value=default_palette_name)
         palette_menu = ctk.CTkOptionMenu(
             palette_frame,
             variable=palette_var,
-            values=list(palette.get_preset_palettes().keys()),
+            values=available_names,
             command=callbacks['on_palette_change']
         )
         palette_menu.pack(pady=3, padx=10)

@@ -131,6 +131,8 @@ class EventDispatcher:
                         self.main_window.canvas_renderer.draw_brush_preview(canvas_x_coord, canvas_y_coord)
                     elif self.main_window.current_tool == "eraser":
                         self.main_window.canvas_renderer.draw_eraser_preview(canvas_x_coord, canvas_y_coord)
+                    elif self.main_window.current_tool == "spray":
+                        self.main_window.canvas_renderer.draw_spray_preview(canvas_x_coord, canvas_y_coord)
                     elif self.main_window.current_tool == "texture":
                         texture_tool = self.main_window.tools.get("texture")
                         if texture_tool:
@@ -139,12 +141,14 @@ class EventDispatcher:
                     # Mouse is outside canvas bounds, clear previews
                     self.main_window.drawing_canvas.delete("brush_preview")
                     self.main_window.drawing_canvas.delete("eraser_preview")
+                    self.main_window.drawing_canvas.delete("spray_preview")
                     self.main_window.drawing_canvas.delete("texture_preview")
                     self.main_window.drawing_canvas.delete("edge_preview")
             else:
                 # Mouse is outside canvas, clear previews
                 self.main_window.drawing_canvas.delete("brush_preview")
                 self.main_window.drawing_canvas.delete("eraser_preview")
+                self.main_window.drawing_canvas.delete("spray_preview")
                 self.main_window.drawing_canvas.delete("texture_preview")
                 self.main_window.drawing_canvas.delete("edge_preview")
                 
@@ -217,6 +221,7 @@ class EventDispatcher:
             tool_map = {
                 'b': 'brush',
                 'e': 'eraser',
+                'y': 'spray',
                 'f': 'fill',
                 'd': 'eyedropper',
                 's': 'selection',
@@ -245,6 +250,7 @@ class EventDispatcher:
         # Clear any tool previews when starting to draw
         self.main_window.drawing_canvas.delete("brush_preview")
         self.main_window.drawing_canvas.delete("eraser_preview")
+        self.main_window.drawing_canvas.delete("spray_preview")
         self.main_window.drawing_canvas.delete("texture_preview")
         self.main_window.drawing_canvas.delete("edge_preview")
         
@@ -281,6 +287,10 @@ class EventDispatcher:
                 if handle:
                     # Start scaling from this handle
                     self.main_window.selection_mgr.scale_handle = handle
+                    # Reset baseline to the CURRENT rect so each drag uses latest bounds
+                    self.main_window.selection_mgr.scale_original_rect = selection_tool.selection_rect
+                    self.main_window.selection_mgr.scale_true_original_rect = selection_tool.selection_rect
+                    self.main_window.selection_mgr.scale_is_dragging = True
                     return
                 else:
                     # Click outside handles - cancel scaling mode
@@ -294,7 +304,7 @@ class EventDispatcher:
             return
         
         # Save undo state before any drawing operation
-        if self.main_window.current_tool in ["brush", "eraser", "fill", "texture", "line", "rectangle", "circle"]:
+        if self.main_window.current_tool in ["brush", "eraser", "spray", "fill", "texture", "line", "rectangle", "circle"]:
             active_layer = self.main_window.layer_manager.get_active_layer()
             if active_layer:
                 self.main_window.undo_manager.save_state(active_layer.pixels.copy(), self.main_window.layer_manager.active_layer_index)
@@ -335,6 +345,14 @@ class EventDispatcher:
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
                 tool.is_erasing = True  # Set erasing state
+        elif self.main_window.current_tool == "spray":
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer:
+                self.main_window.tool_size_mgr.spray_at(draw_layer, canvas_x, canvas_y, current_color)
+                self.main_window._update_canvas_from_layers()
+                self.main_window.canvas_renderer.update_pixel_display()
+            if hasattr(tool, 'is_spraying'):
+                tool.is_spraying = True
         elif self.main_window.current_tool == "edge":
             # Handle edge tool with float precision coordinates
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
@@ -375,6 +393,7 @@ class EventDispatcher:
             if selection_tool and selection_tool.selection_rect:
                 self.main_window.selection_mgr.apply_scale(selection_tool.selection_rect)
             self.main_window.selection_mgr.scale_handle = None
+            self.main_window.selection_mgr.scale_is_dragging = False
             self.main_window.canvas_renderer.update_pixel_display()
             return
         
@@ -401,6 +420,10 @@ class EventDispatcher:
             if draw_layer:
                 tool.on_mouse_up(draw_layer, canvas_x, canvas_y, 1, current_color)
                 self.main_window._update_canvas_from_layers()
+        elif self.main_window.current_tool == "spray":
+            # Stop spraying without calling tool.on_mouse_up (parity with brush/eraser)
+            if hasattr(tool, 'is_spraying'):
+                tool.is_spraying = False
         else:
             # Call tool's on_mouse_up method (standard interface)
             tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
@@ -490,6 +513,15 @@ class EventDispatcher:
             self.last_canvas_x = canvas_x
             self.last_canvas_y = canvas_y
             return
+        elif self.main_window.current_tool == "spray":
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer and hasattr(tool, 'is_spraying') and tool.is_spraying:
+                self.main_window.tool_size_mgr.spray_at(draw_layer, canvas_x, canvas_y, current_color)
+                self.main_window._update_canvas_from_layers()
+                self.main_window.canvas_renderer.update_pixel_display()
+            self.last_canvas_x = canvas_x
+            self.last_canvas_y = canvas_y
+            return
         
         # Call tool's on_mouse_move method for drag
         # Handle edge tool with float precision coordinates
@@ -527,6 +559,11 @@ class EventDispatcher:
             self.main_window.drawing_canvas.delete("eraser_preview")
             self.main_window.drawing_canvas.delete("texture_preview")
             self.main_window.drawing_canvas.delete("edge_preview")
+            # Reset cursor when leaving canvas bounds
+            try:
+                self.main_window.drawing_canvas.configure(cursor="arrow")
+            except Exception:
+                pass
             if hasattr(self.main_window, 'selection_mgr'):
                 self.main_window.selection_mgr.copy_preview_pos = None  # Clear copy preview position
             return
@@ -536,12 +573,29 @@ class EventDispatcher:
             self.main_window.selection_mgr.copy_preview_pos = (canvas_x, canvas_y)
             self.main_window.canvas_renderer.update_pixel_display()
             return
+
+        # Cursor feedback for scaling handles on hover
+        if hasattr(self.main_window, 'selection_mgr') and self.main_window.selection_mgr.is_scaling:
+            selection_tool = self.main_window.tools.get("selection")
+            if selection_tool and selection_tool.selection_rect:
+                left, top, width, height = selection_tool.selection_rect
+                handle = self.main_window.selection_mgr.get_scale_handle(canvas_x, canvas_y, left, top, width, height)
+                try:
+                    if handle:
+                        # Show grab hand when over a grab-able scale handle/edge
+                        self.main_window.drawing_canvas.configure(cursor="hand2")
+                    else:
+                        self.main_window.drawing_canvas.configure(cursor="arrow")
+                except Exception:
+                    pass
         
         # Show tool preview using canvas_renderer
         if self.main_window.current_tool == "brush":
             self.main_window.canvas_renderer.draw_brush_preview(canvas_x, canvas_y)
         elif self.main_window.current_tool == "eraser":
             self.main_window.canvas_renderer.draw_eraser_preview(canvas_x, canvas_y)
+        elif self.main_window.current_tool == "spray":
+            self.main_window.canvas_renderer.draw_spray_preview(canvas_x, canvas_y)
         elif self.main_window.current_tool == "edge":
             # Edge tool has its own preview system - call its on_mouse_move method
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
@@ -562,6 +616,7 @@ class EventDispatcher:
             # Clear previews for other tools
             self.main_window.drawing_canvas.delete("brush_preview")
             self.main_window.drawing_canvas.delete("eraser_preview")
+            self.main_window.drawing_canvas.delete("spray_preview")
             self.main_window.drawing_canvas.delete("texture_preview")
             self.main_window.drawing_canvas.delete("edge_preview")
             self.main_window.drawing_canvas.delete("shape_preview")

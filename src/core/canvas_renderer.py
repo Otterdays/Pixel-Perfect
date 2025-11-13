@@ -589,6 +589,42 @@ class CanvasRenderer:
                 tags="eraser_preview"
             )
 
+    def draw_spray_preview(self, canvas_x: int, canvas_y: int):
+        """Draw circular preview for Spray tool at the cursor position."""
+        self.app.drawing_canvas.delete("spray_preview")
+        canvas_width = self.app.drawing_canvas.winfo_width()
+        canvas_height = self.app.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
+        canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
+
+        # Bounds check: only draw if circle intersects canvas
+        radius = max(1, int(self.app.tool_size_mgr.spray_radius))
+        min_x = canvas_x - radius
+        max_x = canvas_x + radius
+        min_y = canvas_y - radius
+        max_y = canvas_y + radius
+        if max_x > 0 and min_x < self.app.canvas.width and max_y > 0 and min_y < self.app.canvas.height:
+            # Convert to screen coordinates
+            screen_cx = x_offset + (canvas_x * self.app.canvas.zoom) + (self.app.canvas.zoom // 2)
+            screen_cy = y_offset + (canvas_y * self.app.canvas.zoom) + (self.app.canvas.zoom // 2)
+            r_screen = radius * self.app.canvas.zoom
+            x1 = screen_cx - r_screen
+            y1 = screen_cy - r_screen
+            x2 = screen_cx + r_screen
+            y2 = screen_cy + r_screen
+            # Outline uses current color for clarity
+            r, g, b, a = self.app.get_current_color()
+            color_hex = f"#{r:02x}{g:02x}{b:02x}"
+            self.app.drawing_canvas.create_oval(
+                x1, y1, x2, y2,
+                outline=color_hex,
+                width=2,
+                dash=(4, 4),
+                tags="spray_preview"
+            )
+
     def draw_texture_preview(self, tool, canvas_x: int, canvas_y: int):
         """Draw live preview of texture tool on tkinter canvas"""
         self.app.drawing_canvas.delete("texture_preview")

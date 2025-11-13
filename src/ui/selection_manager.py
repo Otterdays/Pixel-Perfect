@@ -402,16 +402,20 @@ class SelectionManager:
                 move_tool.finalize_move(draw_layer)
             print("[SCALE] Finalized move operation to prevent copy-behind bug")
         
-        # Use the TRUE original rect (from when we entered scale mode)
-        old_left, old_top, old_width, old_height = self.scale_true_original_rect
+        # Determine current source dimensions from selected_pixels to avoid stale baselines
         new_left, new_top, new_width, new_height = new_rect
+        old_height, old_width = selection_tool.selected_pixels.shape[0], selection_tool.selected_pixels.shape[1]
         
         # Ensure minimum size
         if new_width < 1 or new_height < 1:
             return
         
-        # Scale the pixels using nearest neighbor
+        # Scale the pixels using nearest neighbor, mapping from current content size
         self._simple_scale(selection_tool, old_width, old_height, new_width, new_height, new_left, new_top)
+
+        # Update baseline rects for subsequent drags within scaling mode
+        self.scale_original_rect = (new_left, new_top, new_width, new_height)
+        self.scale_true_original_rect = (new_left, new_top, new_width, new_height)
     
     def place_copy_at(self, canvas_x: int, canvas_y: int):
         """Place the copied pixels at the specified position"""

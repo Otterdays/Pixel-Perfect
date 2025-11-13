@@ -1,13 +1,13 @@
 # Software Bill of Materials (SBOM)
 
-**Last Updated**: December 2024  
-**Project Version**: 2.0.0 - Pixel Perfect
+**Last Updated**: November 13, 2025  
+**Project Version**: 2.6.0 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 2.0.0 (Critical UI Bug Fix 🐛)
+- **Version**: 2.6.0 (Spray Tool & Palette Overhaul)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: December 2024 (UI Bug Fix + Notes Panel + Move Tool Fixes + Component Refactoring)
+- **Last Updated**: November 13, 2025 (Spray tool, zoom scrollbar, dynamic palette loader)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
 - **Status**: Production Ready - Optimized Distribution (29MB exe, modular architecture, bug-free UI)
 
@@ -20,74 +20,46 @@
 
 ## Core Dependencies
 
-### Graphics and Rendering
-- **pygame**: ❌ REMOVED (v1.30 - Build Optimization)
-  - **Reason**: Optimized out to reduce exe size (saved ~60MB)
-  - **Replacement**: Pure Tkinter + PIL for all rendering
-  - **Impact**: Zero functionality lost, 91% smaller build
+### User Interface
+- **customtkinter** (>=5.2.0)  
+  - **Purpose**: Modern themed widgets on top of `tkinter` for every view and dialog.  
+  - **License**: MIT  
+  - **Usage**: Main window, toolbars, panels, dialogs, theme system.  
+  - **Status**: ✅ Fully integrated.
 
 ### Image Processing
-- **Pillow (PIL)**: >=10.0.0
-  - **Purpose**: Image export, format conversion, sprite sheet generation
-  - **License**: HPND (Historical Permission Notice and Disclaimer)
-  - **Security**: Regular security updates available
-  - **Installation Date**: Project Start
-  - **Usage**: PNG/GIF export, image format conversion, sprite sheet creation
-  - **Status**: ✅ Fully integrated and tested
-
-### User Interface
-- **customtkinter**: >=5.2.0
-  - **Purpose**: Modern UI components, styling, and layout management
-  - **License**: MIT
-  - **Security**: No known vulnerabilities
-  - **Installation Date**: Project Start
-  - **Usage**: Main application window, tool panels, dialog boxes
-  - **Status**: ✅ Fully integrated with complete UI system
+- **Pillow (PIL)** (>=10.0.0)  
+  - **Purpose**: PNG/GIF export, sprite sheet generation, icon handling.  
+  - **License**: HPND  
+  - **Status**: ✅ Production critical.
 
 ### Numerical Computing
-- **numpy**: >=1.24.0
-  - **Purpose**: Efficient pixel array manipulation and mathematical operations
-  - **License**: BSD-3-Clause
-  - **Security**: Regular security updates available
-  - **Installation Date**: Project Start
-  - **Usage**: Pixel data storage, array operations, coordinate calculations
-  - **Status**: ✅ Core dependency for all pixel operations
-
-- **scipy**: >=1.11.0
-  - **Purpose**: Advanced image scaling with nearest-neighbor interpolation
-  - **License**: BSD-3-Clause
-  - **Security**: Regular security updates available
-  - **Installation Date**: October 13, 2025 (Version 1.19)
-  - **Usage**: High-quality pixel scaling for selection tool (ndimage.zoom)
-  - **Status**: ✅ Enhanced scaling operations for pixel art
+- **numpy** (>=1.24.0)  
+  - **Purpose**: Core pixel buffer storage, selection transforms, spray math.  
+  - **License**: BSD-3-Clause  
+  - **Status**: ✅ Production critical.
 
 ## Installation and Verification
 
 ### Installation Commands
 ```bash
-pip install pygame>=2.5.0
 pip install Pillow>=10.0.0
 pip install customtkinter>=5.2.0
 pip install numpy>=1.24.0
-pip install scipy>=1.11.0
 ```
 
 ### Verification Commands
 ```bash
-python -c "import pygame; print(f'Pygame: {pygame.version.ver}')"`
 python -c "import PIL; print(f'Pillow: {PIL.__version__}')"`
 python -c "import customtkinter; print('CustomTkinter: OK')"`
 python -c "import numpy; print(f'NumPy: {numpy.__version__}')"`
-python -c "import scipy; print(f'SciPy: {scipy.__version__}')"`
 ```
 
 ### Installed Versions (Verified)
 - **Python**: 3.13.6 ✅
-- **pygame**: 2.6.1 ✅ (SDL 2.28.4)
 - **Pillow**: 10.0.0+ ✅
 - **customtkinter**: 5.2.0+ ✅
 - **numpy**: 1.24.0+ ✅
-- **scipy**: 1.11.0+ ✅ (Added v1.19)
 
 ## Security Considerations
 
@@ -107,11 +79,9 @@ python -c "import scipy; print(f'SciPy: {scipy.__version__}')"`
 ## License Compliance
 
 ### Dependency Licenses
-- **pygame**: LGPL - Compatible with commercial use (linking exception)
 - **Pillow**: HPND - Permissive license, no restrictions
 - **customtkinter**: MIT - Fully permissive for any use
 - **numpy**: BSD-3-Clause - Permissive, commercial-friendly
-- **scipy**: BSD-3-Clause - Permissive, commercial-friendly
 
 ### Project License Compatibility
 - All dependencies compatible with intended project license
@@ -130,8 +100,8 @@ python -c "import scipy; print(f'SciPy: {scipy.__version__}')"`
 ### Platform Compatibility
 - **Windows 11**: Primary platform (fully tested)
 - **Windows 10**: Compatible (Tkinter-based UI)
-- **macOS**: Compatible (pygame + tkinter support)
-- **Linux**: Compatible (pygame + tkinter support)
+- **macOS**: Compatible (Tkinter/CustomTkinter support)
+- **Linux**: Compatible (Tkinter/CustomTkinter support)
 
 ## Update Schedule
 

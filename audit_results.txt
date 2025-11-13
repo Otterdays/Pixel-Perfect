@@ -1,0 +1,169 @@
+File: C:\Users\Ry\Desktop\Pixel-Perfect\main.py
+Non-blank, non-comment lines: 4
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\animation\timeline.py
+Non-blank, non-comment lines: 80
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\canvas.py
+Non-blank, non-comment lines: 53
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\canvas_renderer.py
+Non-blank, non-comment lines: 279
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\color_palette.py
+Non-blank, non-comment lines: 91
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\custom_colors.py
+Non-blank, non-comment lines: 38
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\event_dispatcher.py
+Non-blank, non-comment lines: 193
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\layer_manager.py
+Non-blank, non-comment lines: 116
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\project.py
+Non-blank, non-comment lines: 124
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\saved_colors.py
+Non-blank, non-comment lines: 46
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\undo_manager.py
+Non-blank, non-comment lines: 28
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\core\window_state_manager.py
+Non-blank, non-comment lines: 124
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\base_tool.py
+Non-blank, non-comment lines: 9
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\brush.py
+Non-blank, non-comment lines: 14
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\edge.py
+Non-blank, non-comment lines: 125
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\eraser.py
+Non-blank, non-comment lines: 9
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\eyedropper.py
+Non-blank, non-comment lines: 6
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\fill.py
+Non-blank, non-comment lines: 10
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\pan.py
+Non-blank, non-comment lines: 20
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\selection.py
+Non-blank, non-comment lines: 176
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\shapes.py
+Non-blank, non-comment lines: 48
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\spray.py
+Non-blank, non-comment lines: 7
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\tools\texture.py
+Non-blank, non-comment lines: 32
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\background_control_manager.py
+Non-blank, non-comment lines: 21
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\canvas_operations_manager.py
+Non-blank, non-comment lines: 69
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\canvas_scrollbar.py
+Non-blank, non-comment lines: 119
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\canvas_zoom_manager.py
+Non-blank, non-comment lines: 79
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\color_view_manager.py
+Non-blank, non-comment lines: 30
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\color_wheel.py
+Non-blank, non-comment lines: 254
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\dialog_manager.py
+Non-blank, non-comment lines: 141
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\file_operations_manager.py
+Non-blank, non-comment lines: 177
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\grid_control_manager.py
+Non-blank, non-comment lines: 27
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\import_png_dialog.py
+Non-blank, non-comment lines: 221
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\layer_animation_manager.py
+Non-blank, non-comment lines: 45
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\layer_panel.py
+Non-blank, non-comment lines: 83
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\loading_screen.py
+Non-blank, non-comment lines: 97
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\main_window.py
+Non-blank, non-comment lines: 281
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\notes_panel.py
+Non-blank, non-comment lines: 36
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\selection_manager.py
+Non-blank, non-comment lines: 201
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\theme_dialog_manager.py
+Non-blank, non-comment lines: 145
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\theme_manager.py
+Non-blank, non-comment lines: 76
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\timeline_panel.py
+Non-blank, non-comment lines: 150
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\tooltip.py
+Non-blank, non-comment lines: 41
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\tool_size_manager.py
+Non-blank, non-comment lines: 75
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\ui_builder.py
+Non-blank, non-comment lines: 237
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\__init__.py
+Non-blank, non-comment lines: 0
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\palette_views\constants_view.py
+Non-blank, non-comment lines: 74
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\palette_views\grid_view.py
+Non-blank, non-comment lines: 57
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\palette_views\primary_view.py
+Non-blank, non-comment lines: 122
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\palette_views\saved_view.py
+Non-blank, non-comment lines: 177
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\ui\palette_views\__init__.py
+Non-blank, non-comment lines: 5
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\utils\export.py
+Non-blank, non-comment lines: 80
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\utils\file_association.py
+Non-blank, non-comment lines: 25
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\utils\import_png.py
+Non-blank, non-comment lines: 32
+
+File: C:\Users\Ry\Desktop\Pixel-Perfect\src\utils\presets.py
+Non-blank, non-comment lines: 131
+
+=== Audit Summary ===
+Total Python files processed: 55
+Total non-blank, non-comment lines: 4940
+Audit completed at: 2025-11-11 20:18:46

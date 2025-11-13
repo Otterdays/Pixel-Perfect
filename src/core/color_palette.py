@@ -11,12 +11,6 @@ from enum import Enum
 class PaletteType(Enum):
     """Types of color palettes"""
     SNES_CLASSIC = "snes_classic"
-    CURSE_OF_AROS = "curse_of_aros"
-    HEARTWOOD = "heartwood"
-    DEFINYA = "definya"
-    KAKELE = "kakele"
-    RUCOY = "rucoy"
-    OLD_SCHOOL_RUNESCAPE = "old_school_runescape"
     CUSTOM = "custom"
 
 class ColorPalette:
@@ -28,9 +22,13 @@ class ColorPalette:
         self.secondary_color = 1  # Index of secondary color
         self.palette_name = "Default"
         self.palette_type = PaletteType.CUSTOM
+        # External JSON palettes discovered at runtime: name -> file path
+        self._external_palettes: Dict[str, str] = {}
         
         # Load default palette
         self._load_default_palette()
+        # Discover external JSON palettes (non-blocking, safe)
+        self._scan_external_palettes()
     
     def _load_default_palette(self):
         """Load default SNES-inspired palette"""
@@ -55,171 +53,69 @@ class ColorPalette:
         self.palette_name = "SNES Classic"
         self.palette_type = PaletteType.SNES_CLASSIC
     
-    def get_preset_palettes(self) -> Dict[str, List[Tuple[int, int, int, int]]]:
-        """Get all preset palettes"""
-        return {
-            "SNES Classic": [
-                (0, 0, 0, 255),        # Black
-                (255, 255, 255, 255),  # White
-                (128, 128, 128, 255),  # Gray
-                (255, 0, 0, 255),      # Red
-                (0, 255, 0, 255),      # Green
-                (0, 0, 255, 255),      # Blue
-                (255, 255, 0, 255),    # Yellow
-                (255, 0, 255, 255),    # Magenta
-                (0, 255, 255, 255),    # Cyan
-                (128, 64, 0, 255),     # Brown
-                (255, 128, 0, 255),    # Orange
-                (128, 0, 128, 255),    # Purple
-                (0, 128, 0, 255),      # Dark Green
-                (0, 0, 128, 255),      # Dark Blue
-                (128, 128, 0, 255),    # Olive
-                (192, 192, 192, 255),  # Light Gray
-            ],
-            
-            "Curse of Aros": [
-                (45, 45, 45, 255),     # Dark Gray
-                (89, 89, 89, 255),     # Medium Gray
-                (134, 134, 134, 255),  # Light Gray
-                (101, 67, 33, 255),    # Brown
-                (139, 90, 43, 255),    # Light Brown
-                (67, 101, 33, 255),    # Dark Green
-                (90, 139, 43, 255),    # Green
-                (33, 67, 101, 255),    # Dark Blue
-                (43, 90, 139, 255),    # Blue
-                (101, 33, 67, 255),    # Dark Red
-                (139, 43, 90, 255),    # Red
-                (67, 101, 67, 255),    # Olive
-                (90, 139, 90, 255),    # Light Olive
-                (33, 33, 33, 255),     # Very Dark
-                (200, 200, 200, 255),  # Very Light
-                (255, 255, 255, 255),  # White
-            ],
-            
-            "Heartwood Online": [
-                (34, 51, 34, 255),     # Dark Forest
-                (68, 85, 68, 255),     # Forest
-                (102, 119, 102, 255),  # Light Forest
-                (51, 68, 34, 255),    # Dark Green
-                (85, 102, 68, 255),    # Green
-                (119, 136, 102, 255),  # Light Green
-                (68, 51, 34, 255),     # Brown
-                (102, 85, 68, 255),    # Light Brown
-                (136, 119, 102, 255),  # Tan
-                (51, 51, 34, 255),     # Dark Olive
-                (85, 85, 68, 255),     # Olive
-                (119, 119, 102, 255),  # Light Olive
-                (34, 34, 34, 255),     # Dark
-                (68, 68, 68, 255),     # Medium
-                (102, 102, 102, 255),  # Light
-                (136, 136, 136, 255),  # Very Light
-            ],
-            
-            "Definya": [
-                (0, 0, 0, 255),        # Black
-                (255, 255, 255, 255),  # White
-                (255, 0, 0, 255),      # Bright Red
-                (0, 255, 0, 255),      # Bright Green
-                (0, 0, 255, 255),      # Bright Blue
-                (255, 255, 0, 255),    # Yellow
-                (255, 0, 255, 255),    # Magenta
-                (0, 255, 255, 255),    # Cyan
-                (128, 0, 0, 255),      # Dark Red
-                (0, 128, 0, 255),      # Dark Green
-                (0, 0, 128, 255),      # Dark Blue
-                (128, 128, 0, 255),    # Dark Yellow
-                (128, 0, 128, 255),    # Dark Magenta
-                (0, 128, 128, 255),    # Dark Cyan
-                (64, 64, 64, 255),     # Dark Gray
-                (192, 192, 192, 255),  # Light Gray
-            ],
-            
-            "Kakele Online": [
-                (255, 255, 0, 255),    # Bright Yellow
-                (255, 128, 0, 255),    # Orange
-                (255, 0, 0, 255),      # Red
-                (255, 0, 128, 255),    # Pink
-                (128, 0, 255, 255),    # Purple
-                (0, 0, 255, 255),      # Blue
-                (0, 128, 255, 255),    # Light Blue
-                (0, 255, 255, 255),    # Cyan
-                (0, 255, 128, 255),    # Light Green
-                (0, 255, 0, 255),      # Green
-                (128, 255, 0, 255),    # Lime
-                (255, 255, 128, 255),  # Light Yellow
-                (128, 128, 128, 255),  # Gray
-                (64, 64, 64, 255),     # Dark Gray
-                (192, 192, 192, 255),  # Light Gray
-                (255, 255, 255, 255),  # White
-            ],
-            
-            "Rucoy Online": [
-                (0, 0, 0, 255),        # Black
-                (32, 32, 32, 255),     # Very Dark Gray
-                (64, 64, 64, 255),     # Dark Gray
-                (96, 96, 96, 255),     # Medium Gray
-                (128, 128, 128, 255),  # Gray
-                (160, 160, 160, 255), # Light Gray
-                (192, 192, 192, 255), # Very Light Gray
-                (224, 224, 224, 255), # Almost White
-                (255, 255, 255, 255), # White
-                (64, 32, 0, 255),     # Dark Brown
-                (128, 64, 0, 255),    # Brown
-                (192, 96, 0, 255),    # Light Brown
-                (0, 64, 0, 255),      # Dark Green
-                (0, 128, 0, 255),     # Green
-                (0, 192, 0, 255),     # Light Green
-                (0, 0, 64, 255),      # Dark Blue
-            ],
-            
-            "Old School RuneScape": [
-                (0, 0, 0, 255),        # Black
-                (255, 255, 255, 255),  # White
-                (139, 69, 19, 255),    # Saddle Brown
-                (36, 97, 49, 255),     # Dark Green
-                (125, 102, 48, 255),   # Earthy Brown
-                (255, 215, 0, 255),    # Gold
-                (128, 0, 0, 255),      # Maroon
-                (1, 111, 189, 255),    # Deep Blue
-                (246, 103, 57, 255),   # Vibrant Orange
-                (225, 158, 37, 255),   # Goldenrod
-                (112, 128, 144, 255),  # Slate Gray
-                (101, 67, 33, 255),    # Dark Brown
-                (192, 192, 192, 255),  # Silver
-                (76, 105, 38, 255),    # Grass Green
-                (70, 70, 70, 255),     # Dark Gray
-                (160, 82, 45, 255),    # Sienna
-            ]
-        }
+    # Removed hardcoded presets. Palettes are now provided exclusively via JSON files.
+
+    def _get_palettes_dir(self) -> str:
+        """Return absolute path to the assets/palettes directory."""
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        return os.path.join(base_dir, "assets", "palettes")
+
+    def _scan_external_palettes(self):
+        """Scan assets/palettes for JSON files and index them by name.
+
+        Safely reads the "name" field from each JSON. If missing, uses the stem.
+        Ensures names are unique across all discovered JSON files by suffixing " (2)", " (3)", etc.
+        """
+        try:
+            palettes_dir = self._get_palettes_dir()
+            if not os.path.isdir(palettes_dir):
+                return
+            seen_names: set = set()
+            for fname in os.listdir(palettes_dir):
+                if not fname.lower().endswith(".json"):
+                    continue
+                fpath = os.path.join(palettes_dir, fname)
+                name = os.path.splitext(fname)[0]
+                try:
+                    with open(fpath, "r") as f:
+                        data = json.load(f)
+                        file_name = str(data.get("name", name))
+                        name = file_name.strip() or name
+                except Exception:
+                    # Skip malformed files silently to avoid breaking startup
+                    continue
+                # Ensure unique name across already-seen externals
+                final_name = name
+                if final_name in seen_names:
+                    i = 2
+                    while f"{name} ({i})" in seen_names:
+                        i += 1
+                    final_name = f"{name} ({i})"
+                self._external_palettes[final_name] = fpath
+                seen_names.add(final_name)
+        except Exception:
+            # Do not crash app if filesystem scanning fails
+            self._external_palettes = {}
+
+    def get_available_palette_names(self) -> List[str]:
+        """Return discovered external JSON palette names only, sorted alphabetically."""
+        return sorted(self._external_palettes.keys())
     
-    def load_preset(self, palette_name: str):
-        """Load a preset palette"""
-        presets = self.get_preset_palettes()
-        if palette_name in presets:
-            self.colors = presets[palette_name].copy()
-            self.palette_name = palette_name
-            
-            # Set appropriate palette type
-            if palette_name == "SNES Classic":
-                self.palette_type = PaletteType.SNES_CLASSIC
-            elif palette_name == "Curse of Aros":
-                self.palette_type = PaletteType.CURSE_OF_AROS
-            elif palette_name == "Heartwood Online":
-                self.palette_type = PaletteType.HEARTWOOD
-            elif palette_name == "Definya":
-                self.palette_type = PaletteType.DEFINYA
-            elif palette_name == "Kakele Online":
-                self.palette_type = PaletteType.KAKELE
-            elif palette_name == "Rucoy Online":
-                self.palette_type = PaletteType.RUCOY
-            elif palette_name == "Old School RuneScape":
-                self.palette_type = PaletteType.OLD_SCHOOL_RUNESCAPE
-            
-            # Ensure we have valid primary/secondary colors
+    # Removed load_preset – palettes are loaded from JSON by name.
+
+    def load_by_name(self, palette_name: str):
+        """Load a palette by name from external JSON files."""
+        json_path = self._external_palettes.get(palette_name)
+        if json_path:
+            self.load_palette(json_path)
+            # Ensure valid primary/secondary indices
             if self.primary_color >= len(self.colors):
                 self.primary_color = 0
             if self.secondary_color >= len(self.colors):
                 self.secondary_color = min(1, len(self.colors) - 1)
+            return
+        # Unknown name; keep current palette but print debug
+        print(f"Palette '{palette_name}' not found among JSON palettes.")
     
     def add_color(self, color: Tuple[int, int, int, int]):
         """Add a new color to the palette"""
@@ -281,17 +177,22 @@ class ColorPalette:
         self.primary_color, self.secondary_color = self.secondary_color, self.primary_color
     
     def find_color_in_presets(self, rgb_color: Tuple[int, int, int, int]) -> Optional[Tuple[str, int]]:
-        """Search for a color across all preset palettes
-        
+        """Search for a color across all discovered JSON palettes.
+
         Returns:
-            Tuple of (palette_name, color_index) if found, None otherwise
+            Tuple of (palette_name, color_index) if found, None otherwise.
         """
-        presets = self.get_preset_palettes()
-        for palette_name, colors in presets.items():
-            for i, color in enumerate(colors):
-                # Compare RGB values (ignore alpha)
-                if color[:3] == rgb_color[:3]:
-                    return (palette_name, i)
+        for palette_name, json_path in self._external_palettes.items():
+            try:
+                with open(json_path, "r") as f:
+                    data = json.load(f)
+                colors = [tuple(c) for c in data.get("colors", [])]
+                for i, color in enumerate(colors):
+                    if tuple(color[:3]) == tuple(rgb_color[:3]):
+                        return (palette_name, i)
+            except Exception:
+                # Skip malformed palettes during search
+                continue
         return None
     
     def save_palette(self, filename: str):

@@ -1,5 +1,30 @@
 # Pixel Perfect - Changelog
 
+## Version 2.6.0 - Spray Tool & Palette Overhaul
+**Date**: November 13, 2025  
+**Type**: Feature Release
+
+### ✒️ Spray Paint Tool
+- **✅ New Tool**: Added `SprayTool` with radius/density controls and live cursor preview.
+- **✅ Layer-Aware**: Integrates with `ToolSizeManager.spray_at()` so droplets respect active layer bounds.
+- **✅ Shortcut Ready**: Bound to the `Y` hotkey and right-click size menu just like brush/eraser.
+- **✅ Continuous Flow**: Dragging keeps spraying while mouse button is held for natural coverage.
+
+### 🧭 Canvas Zoom Scrollbar
+- **✅ Visual Zoom Control**: Custom scrollbar with +/− buttons and draggable handle rendered on the canvas edge.
+- **✅ Wheel Sync**: Scroll wheel, dropdown, and scrollbar stay in sync via `CanvasScrollbar.update_zoom_index()`.
+- **✅ Theme Aware**: Colors follow the active theme for dark/light parity.
+
+### 🎨 Dynamic JSON Palette Loader
+- **✅ JSON Auto-Discovery**: Palettes in `assets/palettes/*.json` are scanned at startup and listed in the Palette dropdown.
+- **✅ Safe Naming**: Duplicate names get suffixes like `Palette (2)` so nothing collides silently.
+- **✅ Default + Extensible**: Ships with SNES Classic fallback plus JSON palettes (including new `grass.json` 16-tone set).
+
+**Technical Details**:
+- **UI**: `src/ui/ui_builder.py` menu pulls from `ColorPalette.get_available_palette_names()`.
+- **Core**: `src/core/color_palette.py` now indexes external JSON palettes and loads them through `load_by_name()`.
+- **Input**: `src/core/event_dispatcher.py` routes spray events and zoom bindings to the new systems.
+
 ## Version 2.5.11 - Primary Color Variations Highlighting Fix
 **Date**: January 2025  
 **Type**: Visual Bug Fix

@@ -1,3 +1,35 @@
+# Spray Tool & Palette Loader - November 13, 2025 ✒️🎨
+
+## Why add spray + JSON palettes now?
+
+**Problem we solved**: The app still felt brush/eraser centric and palette additions required code changes. Artists wanted softer shading and easier palette drops.
+
+**Key Decisions**:
+1. **Spray Tool Implementation**  
+   - Keep actual droplet placement inside `ToolSizeManager.spray_at()` so undo + layer operations remain identical to brush workflows.  
+   - Simple state flag (`is_spraying`) in `SprayTool` -> EventDispatcher handles drag loops just like brush/eraser.  
+   - Cursor preview uses CanvasRenderer with same infrastructure as brush for consistency.
+
+2. **Zoom Scrollbar Overlay**  
+   - Chose overlay on the canvas versus separate widget to avoid layout negotiations with paned windows.  
+   - Bound mouse wheel to scrollbar so dropdown, wheel, and scrollbar stay perfectly in sync (one source of truth = `CanvasScrollbar.current_zoom_index`).
+
+3. **Palette Auto-Discovery**  
+   - Removed hardcoded preset map; now we scan `assets/palettes/` once at startup and cache names → path.  
+   - Guaranteed unique names by suffixing `(2)`, `(3)`, etc., so artists can drop files without manual renaming.  
+   - Added `grass.json` example to prove the workflow.
+
+**Testing Outline**:
+- Hold `Y` and drag to ensure spray respects canvas bounds and undo states.  
+- Change zoom via scrollbar, wheel, dropdown in succession to confirm synchronization.  
+- Drop new palette JSON, restart, verify appears and loads with correct primary/secondary indices.
+
+**Next Thoughts**:
+- Maybe let users pick spray randomness seed for consistent patterns?  
+- Palette scanning could watch directory for live reload later (low priority).
+
+---
+
 # Selection Move Tool Pixel Duplication Bug Fix - October 16, 2025 🐛
 
 ## New Bug After First Fix - Pixel Duplication
