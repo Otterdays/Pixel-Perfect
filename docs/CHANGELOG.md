@@ -1,5 +1,30 @@
 # Pixel Perfect - Changelog
 
+## Version 2.6.1 - Code Cleanup & Refactor
+**Date**: December 3, 2025  
+**Type**: Maintenance Release
+
+### 🧹 Code Cleanup
+- **✅ Dead Code Removal**: Removed ~100 lines of unused fallback code from `main_window.py`
+  - `_initialize_all_views()` fallback after manager delegation
+  - `_show_view()` fallback after manager delegation
+- **✅ Debug Print Cleanup**: Removed ~150+ debug print statements from production code
+  - `loading_screen.py`: 75 prints removed
+  - `main_window.py`: 41 prints removed
+  - `window_state_manager.py`: 23 prints removed
+  - `selection.py`: 12 prints removed
+- **✅ Unused Import Cleanup**: Removed `CanvasSize`, `UndoState`, `Optional` unused imports
+- **✅ Documentation Compaction**: Reduced `SCRATCHPAD.md` from 6,058 to ~400 lines (per project rules)
+
+**Files Modified**:
+- `src/ui/main_window.py` - Dead code and print cleanup
+- `src/ui/loading_screen.py` - Print cleanup and unused import
+- `src/core/window_state_manager.py` - Print cleanup
+- `src/tools/selection.py` - Print cleanup
+- `docs/SCRATCHPAD.md` - Compacted per project rules
+
+---
+
 ## Version 2.6.0 - Spray Tool & Palette Overhaul
 **Date**: November 13, 2025  
 **Type**: Feature Release

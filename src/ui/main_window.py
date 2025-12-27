@@ -17,7 +17,7 @@ from PIL import Image
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from core.canvas import Canvas, CanvasSize
+from core.canvas import Canvas
 from core.event_dispatcher import EventDispatcher
 from core.canvas_renderer import CanvasRenderer
 from core.window_state_manager import WindowStateManager
@@ -33,7 +33,7 @@ from tools.shapes import LineTool, RectangleTool, CircleTool
 from tools.pan import PanTool
 from tools.texture import TextureTool, TextureLibrary
 from core.layer_manager import LayerManager
-from core.undo_manager import UndoManager, UndoState
+from core.undo_manager import UndoManager
 from .layer_panel import LayerPanel
 from animation.timeline import AnimationTimeline
 from .timeline_panel import TimelinePanel
@@ -85,12 +85,10 @@ class MainWindow:
         y = (screen_height - window_height) // 2 - 30  # Slightly above center to account for taskbar
         
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-        print(f"[Window] Initialized at {window_width}x{window_height} (screen: {screen_width}x{screen_height})")
         
         # HIDE the window completely until loading finishes
         # This prevents any UI elements from showing before loading screen is ready
         self.root.withdraw()
-        print("[Window] Window withdrawn (hidden) until loading completes")
         
         # Set window icon BEFORE showing anything
         try:
@@ -121,7 +119,6 @@ class MainWindow:
                     except:
                         pass
                 
-                print(f"[OK] Icon loaded: {icon_path}")
             else:
                 # Fallback to PNG
                 png_path = os.path.join(base_path, "assets", "icons", "app_icon.png")
@@ -129,27 +126,19 @@ class MainWindow:
                 if os.path.exists(png_path):
                     icon_photo = tk.PhotoImage(file=png_path)
                     self.root.iconphoto(True, icon_photo)
-                    print(f"[OK] Icon loaded (PNG): {png_path}")
-                else:
-                    print(f"[WARN] Icon not found at: {icon_path} or {png_path}")
-        except Exception as e:
-            print(f"[WARN] Could not load icon: {e}")
+        except Exception:
+            pass  # Icon loading is non-critical
         
         # Initialize loading screen manager NOW - after icon but before any UI
-        print("[Main Window] Initializing loading manager...")
         self.loading_manager = LoadingManager(self.root)
-        print("[Main Window] Loading manager initialized")
         
         # NOW show the window FIRST so geometry is correct
         self.root.deiconify()
-        print("[Main Window] Window shown (deiconified) with loading screen")
         self.root.update()
-        self.root.update_idletasks()  # Ensure all rendering is complete
-        print("[Main Window] Window fully rendered")
+        self.root.update_idletasks()
         
         # THEN start the loading screen with correct geometry
         self.loading_manager.start_loading()
-        print("[Main Window] Loading screen started with correct geometry")
         
         # Initialize core systems
         self.loading_manager.update_loading("Initializing core systems...", 15)
@@ -161,10 +150,8 @@ class MainWindow:
         self.timeline = AnimationTimeline(32, 32)
         
         # Initialize responsive panel sizing
-        # ALWAYS use 510px panel widths for consistent UI
         temp_canvas_ops = CanvasOperationsManager(self.root, self.canvas, None)
         self.left_panel_width, self.right_panel_width = temp_canvas_ops.calculate_optimal_panel_widths()
-        print(f"[Main Window] Using panel widths: {self.left_panel_width}x{self.right_panel_width}")
         
         # Initialize custom colors manager
         self.loading_manager.update_loading("Loading color systems...", 25)
@@ -306,71 +293,51 @@ class MainWindow:
         self.theme_manager.on_theme_changed = self.theme_dialog_manager.apply_theme
         
         # Create UI
-        print("[Main Window] Creating UI...")
         self.loading_manager.update_loading("Building user interface...", 50)
         self._create_ui()
-        print("[Main Window] UI created")
         
         # Apply initial theme (Basic Grey) to all UI elements IMMEDIATELY after UI creation
-        print("[Main Window] Applying theme...")
         self.loading_manager.update_loading("Applying theme...", 60)
         self.theme_dialog_manager.apply_theme(self.theme_manager.get_current_theme())
-        print("[Main Window] Theme applied")
 
         # Initialize canvas operations manager (after UI creation)
-        print("[Main Window] Initializing canvas operations manager...")
         self.loading_manager.update_loading("Initializing canvas...", 70)
         self.canvas_ops_mgr = CanvasOperationsManager(self.root, self.canvas, self.drawing_canvas)
         self.canvas_ops_mgr.left_container = self.left_container
         self.canvas_ops_mgr.right_container = self.right_container
         self.canvas_ops_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
-        print("[Main Window] Canvas operations manager initialized")
         
         # Initialize canvas scrollbar (zoom control on right side of canvas)
-        print("[Main Window] Initializing canvas scrollbar...")
         self.canvas_scrollbar = CanvasScrollbar(
             self.drawing_canvas,
             self.theme_manager,
             self._on_scrollbar_zoom_change
         )
-        print("[Main Window] Canvas scrollbar initialized")
         
         # Update tool selection to highlight brush
-        print("[Main Window] Updating tool selection...")
         self.loading_manager.update_loading("Configuring tools...", 80)
         self._update_tool_selection()
-        print("[Main Window] Tool selection updated")
         
         # Initialize palette views and show grid (only once)
-        print("[Main Window] Initializing palette views...")
         self.loading_manager.update_loading("Setting up palette views...", 85)
         self._initialize_all_views()
-        print("[Main Window] Palette views initialized")
-        print("[Main Window] Showing grid view...")
         self._show_view("grid")
-        print("[Main Window] Grid view shown")
         
         # Initialize canvas integration
-        print("[Main Window] Syncing canvas with layers...")
         self.loading_manager.update_loading("Finalizing...", 95)
         self._sync_canvas_with_layers()
-        print("[Main Window] Canvas synced with layers")
 
         # Complete loading after everything is initialized
-        print("[Main Window] Completing loading...")
         # Delay completion until after window is fully rendered and visible
         self.root.after(100, self._finish_loading)
 
     def _finish_loading(self):
         """Finish the loading process after window is fully rendered"""
-        print("[Main Window] Finishing loading process...")
         self.loading_manager.finish_loading()
-        print("[Main Window] Loading completed")
         
         # Force a final update to ensure everything is visible
         self.root.update_idletasks()
-        # Final update to render the window after loading screen is hidden
-        self.root.after(100, lambda: [self.root.update(), print("[Main Window] Window fully rendered and visible")])
+        self.root.after(100, lambda: self.root.update())
 
     
     def _create_ui(self):
@@ -623,7 +590,6 @@ class MainWindow:
         
         # DON'T restore window state during loading - it interferes with panel sizing
         # Window state will be restored after loading completes
-        print("[Main Window] Skipping window state restoration during loading")
         
         # Initialize color view manager
         self.color_view_mgr = ColorViewManager(
@@ -875,7 +841,6 @@ class MainWindow:
                 draw_layer = self._get_drawing_layer()
                 if draw_layer:
                     move_tool.finalize_move(draw_layer)
-                    print("[TOOL SWITCH] Finalized pending move operation")
             
             selection_tool = self.tools.get("selection")
             move_tool = self.tools.get("move")
@@ -885,7 +850,6 @@ class MainWindow:
                 if move_tool:
                     move_tool.reset_state()
                 self.canvas_renderer.update_pixel_display()
-                print("[TOOL SWITCH] Selection cleared and move tool reset - switched to different tool")
         
         self.current_tool = tool_id
         
@@ -951,89 +915,11 @@ class MainWindow:
         """Initialize all palette views once at startup - delegates to color view manager"""
         if hasattr(self, 'color_view_mgr'):
             self.color_view_mgr.initialize_all_views()
-            return
-        
-        # Fallback if manager not ready yet (OLD IMPLEMENTATION)"""
-        # Initialize grid view
-        if hasattr(self, 'grid_view') and self.grid_view:
-            self.grid_view.create()
-        
-        # Initialize primary view
-        if hasattr(self, 'primary_view') and self.primary_view:
-            self.primary_view.create()
-        
-        # Initialize wheel view (ColorWheel creates UI in __init__, no create() method needed)
-        # Color wheel is already created during initialization
-        
-        # Initialize saved view
-        if hasattr(self, 'saved_view') and self.saved_view:
-            self.saved_view.create()
-        
-        # Initialize constants view
-        if hasattr(self, 'constants_view') and self.constants_view:
-            self.constants_view.create()
-        
-        # Note: color_display_frame should remain as the palette container, not left_panel
     
     def _show_view(self, mode: str):
         """Show specific view - delegates to color view manager"""
         if hasattr(self, 'color_view_mgr'):
             self.color_view_mgr.show_view(mode)
-            return
-        
-        # Fallback if manager not ready yet (OLD IMPLEMENTATION)"""
-        # Hide all view frames first
-        for frame_name in ['grid_view_frame', 'primary_view_frame', 'wheel_view_frame', 
-                          'constants_view_frame', 'saved_view_frame']:
-            if hasattr(self, frame_name):
-                frame = getattr(self, frame_name)
-                if frame:
-                    frame.pack_forget()
-        
-        # Clear palette_content_frame for views that use it
-        if hasattr(self, 'palette_content_frame') and self.palette_content_frame:
-            for widget in self.palette_content_frame.winfo_children():
-                widget.destroy()
-            # Hide the palette_content_frame itself (it's the empty box!)
-            self.palette_content_frame.pack_forget()
-        
-        # Show requested view
-        if mode == "grid" and hasattr(self, 'grid_view') and self.grid_view:
-            # Pack palette_content_frame before color_display_container (maintains order)
-            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0, 
-                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
-            self.grid_view.create()
-        elif mode == "primary" and hasattr(self, 'primary_view') and self.primary_view:
-            # Pack palette_content_frame before color_display_container (maintains order)
-            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
-                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
-            self.primary_view.create()
-        elif mode == "wheel":
-            # Pack palette_content_frame before color_display_container (maintains order)
-            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
-                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
-            # Recreate color wheel since it was destroyed when clearing the frame
-            from src.ui.color_wheel import ColorWheel
-            self.color_wheel = ColorWheel(self.palette_content_frame, theme=self.theme_manager.current_theme)
-            self.color_wheel.on_color_changed = self._on_color_wheel_changed
-            self.color_wheel.on_save_custom_color = self._save_custom_color
-            self.color_wheel.on_remove_custom_color = self._remove_custom_color
-        elif mode == "constants" and hasattr(self, 'constants_view') and self.constants_view:
-            # Pack palette_content_frame before color_display_container (maintains order)
-            self.palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0,
-                                           before=self.color_display_frame if hasattr(self, 'color_display_frame') else None)
-            self.constants_view.create()
-        elif mode == "saved" and hasattr(self, 'saved_view') and self.saved_view:
-            # Pack saved view frame to fill the container (removes blank space)
-            self.saved_view_frame.pack(fill="both", expand=True, pady=(0, 0), before=None)
-            self.saved_view.create()
-            # Update button states in case colors changed
-            if hasattr(self, '_saved_view_created') and self._saved_view_created:
-                self._update_saved_color_buttons()
-            
-            # Force scroll to absolute top
-            self.left_panel._parent_canvas.yview_moveto(0)
-            self.root.after(10, lambda: self.left_panel._parent_canvas.yview_moveto(0))
     
     def _on_view_mode_change(self):
         """Handle view mode change - delegates to color view manager"""
@@ -1092,7 +978,6 @@ class MainWindow:
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""
         self.theme_manager.set_theme(theme_name)
-        print(f"[OK] Theme changed to: {theme_name}")
     
     def _show_file_menu(self):
         """Show file menu options"""
@@ -1158,7 +1043,6 @@ class MainWindow:
             )
             dialog.show()
         except Exception as e:
-            print(f"[ERROR] Failed to show import dialog: {e}")
             self.dialog_mgr.show_error("Dialog Error", f"Failed to open import dialog:\n{e}")
     
     def _handle_png_import(self, file_path: str, scale_factor: int):
@@ -1203,8 +1087,6 @@ class MainWindow:
                 # Force immediate display update
                 self.root.update_idletasks()
                 self.root.update()
-                
-                print(f"[IMPORT] {message}")
             else:
                 import tkinter.messagebox as msgbox
                 msgbox.showerror("Import Failed", "Failed to load imported project")
@@ -1393,8 +1275,6 @@ class MainWindow:
                 self.view_mode_var.set("grid")
                 self._show_view("grid")
                 self._update_color_grid_selection()
-                
-                print(f"[EYEDROPPER] Found color in palette '{preset_name}', switched to it")
             else:
                 # Color not found in any preset, switch to color wheel view
                 self.view_mode_var.set("wheel")
@@ -1407,8 +1287,6 @@ class MainWindow:
                     except (AttributeError, tk.TclError):
                         # Color wheel might not be fully initialized yet, skip update
                         pass
-                
-                print(f"[EYEDROPPER] Color not found in any preset, switched to wheel")
     
     def _undo(self):
         """Undo last action"""
@@ -1499,7 +1377,6 @@ class MainWindow:
     
     def _on_window_close(self):
         """Handle window close event - save state before closing"""
-        print("[Window State] Application closing, saving window state...")
         self._save_window_state()
         self.root.destroy()
     

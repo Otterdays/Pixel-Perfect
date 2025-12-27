@@ -212,11 +212,9 @@ class MoveTool(Tool):
         # Reset last edge line placement tracking used for cleanup between moves
         if hasattr(self, '_last_edge_lines_position'):
             self._last_edge_lines_position = None
-        print("[MOVE] State reset - ready for new selection")
     
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Start moving selection"""
-        print(f"[MOVE DEBUG] Mouse down at ({x}, {y}) - selection tool has selection: {self.selection_tool.has_active_selection() if self.selection_tool else False}")
         if (button == 1 and self.selection_tool and 
             self.selection_tool.has_active_selection()):
             
@@ -262,8 +260,6 @@ class MoveTool(Tool):
                         
                         # Clear selected edge lines from original position
                         self._clear_selected_edge_lines_from_original_position(left, top)
-                        
-                        print("[MOVE] First pickup - cleared selected pixels and edge lines")
                     
                     # SUBSEQUENT PICKUPS: Restore saved background (from last drop)
                     elif self.saved_background and self.last_drawn_position:
@@ -275,12 +271,9 @@ class MoveTool(Tool):
                                 canvas_y = restore_top + py
                                 if 0 <= canvas_x < canvas.width and 0 <= canvas_y < canvas.height:
                                     canvas.set_pixel(canvas_x, canvas_y, bg_pixel)
-                        print("[MOVE] Adjustment pickup - restored background from last drop")
                     
                     # Clear saved background for new move
                     self.saved_background = None
-                    
-                    print("[MOVE] Picked up selection")
     
     def on_mouse_up(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """End moving selection"""
@@ -327,7 +320,6 @@ class MoveTool(Tool):
                         orig_left, orig_top, orig_width, orig_height = self.original_selection
                         if left != orig_left or top != orig_top:
                             self.has_been_moved = True
-                            print(f"[MOVE] Pixels drawn (background saved for non-destructive adjustment)")
                             
                             # Only finalize on the FIRST move to clear original position
                             # Subsequent moves don't need finalization since original is already cleared
@@ -371,7 +363,6 @@ class MoveTool(Tool):
                 # CRITICAL FIX: Refresh original pixels from layer before clearing
                 # This ensures we clear the ACTUAL pixels that were at the original position,
                 # not the transformed pixels that might be in selected_pixels
-                print("[MOVE] Refreshing original pixels from layer before clearing...")
                 import numpy as _np
                 original_pixels = _np.zeros((orig_height, orig_width, 4), dtype=_np.uint8)
                 for py in range(orig_height):
@@ -394,8 +385,6 @@ class MoveTool(Tool):
                                 layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
                                 cleared_count += 1
                 
-                print(f"[MOVE] Cleared {cleared_count} original pixels from original position")
-                
                 # Step 2: Place pixels at new position on layer
                 for py in range(min(height, self.selection_tool.selected_pixels.shape[0])):
                     for px in range(min(width, self.selection_tool.selected_pixels.shape[1])):
@@ -406,12 +395,9 @@ class MoveTool(Tool):
                             if 0 <= canvas_x < layer.width and 0 <= canvas_y < layer.height:
                                 layer.set_pixel(canvas_x, canvas_y, pixel_color)
                 
-                print(f"[MOVE] Finalized move - cleared {cleared_count} original pixels, placed at new position (LAYER DATA UPDATED)")
-                
                 # Sync canvas with updated layer data to remove original pixels from display
                 if self.selection_tool and self.selection_tool.main_window:
                     self.selection_tool.main_window._update_canvas_from_layers()
-                    print("[MOVE] Canvas synchronized with layer data")
                 
                 # Reset state - but KEEP original_selection so subsequent pickups
                 # know this isn't a first-time pickup and won't clear pixels underneath
@@ -443,8 +429,6 @@ class MoveTool(Tool):
         # Redraw edge lines to update display
         if hasattr(edge_tool, 'redraw_all_edges'):
             edge_tool.redraw_all_edges(force=True)
-        
-        print(f"[MOVE] Cleared {len(self.selection_tool.selected_edge_lines)} edge lines from original position")
     
     def _draw_selected_edge_lines_at_position(self, left: int, top: int):
         """Draw selected edge lines at new position"""
@@ -495,5 +479,3 @@ class MoveTool(Tool):
         # Redraw edge lines to update display
         if hasattr(edge_tool, 'redraw_all_edges'):
             edge_tool.redraw_all_edges(force=True)
-        
-        print(f"[MOVE] Drew {len(self.selection_tool.selected_edge_lines)} edge lines at new position")

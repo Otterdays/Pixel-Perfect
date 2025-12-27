@@ -1,10 +1,18 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.6.0  
-**Last Updated**: November 13, 2025 - Spray Tool & Palette Overhaul
+**Version**: 2.6.1  
+**Last Updated**: December 3, 2025 - Code Cleanup & Refactor
 
-## Latest Updates (v2.6.0)
+## Latest Updates (v2.6.1)
+
+### 🧹 Code Cleanup & Refactor
+- **✅ Dead Code Removal** - Removed ~100 lines of unused fallback code from main_window.py
+- **✅ Debug Print Cleanup** - Removed ~150+ debug print statements from 4 key files
+- **✅ Documentation Compaction** - Reduced SCRATCHPAD.md from 6,058 to ~400 lines (per project rules)
+- **✅ Unused Import Cleanup** - Removed unused imports (CanvasSize, UndoState, Optional)
+
+## Previous Updates (v2.6.0)
 
 ### ✒️ Spray Paint Tool
 - **✅ Natural Coverage** - Drag to spray continuous droplets with adjustable radius/density.
