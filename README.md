@@ -191,6 +191,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ### 📚 **Layer System**
 - **Multiple Layers**: Up to 10 layers per project
 - **Layer Controls**: Visibility, opacity, reordering with UI buttons
+- **Instant Feedback**: Layer toggles update canvas immediately
 - **Layer Management**: Naming, merging, duplication
 - **Layer Effects**: Alpha blending for smooth composition
 - **Layer Panel**: Complete UI for layer management
