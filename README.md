@@ -135,9 +135,11 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## ✅ Complete Feature Set
 
-### 🎨 **Drawing Tools** (13 Complete Tools)
+### 🎨 **Drawing Tools** (14 Complete Tools)
 - **Pixel Brush**: Multi-size brush (1×1, 2×2, 3×3) with right-click size menu.
+- **Dither Tool** 🏁NEW: Checkerboard pattern brush for retro shading (left=draw, right=erase).
 - **Eraser**: Multi-size eraser (1×1, 2×2, 3×3) for quick cleanup.
+- **Symmetry Tools**: X/Y axis mirroring toggle for all drawing tools.
 - **Spray Paint** ✒️NEW: Adjustable radius + density spray can with live preview.
 - **Fill Bucket**: Flood fill with customizable tolerance.
 - **Eyedropper**: Color sampling from canvas (left = primary, right = secondary).
