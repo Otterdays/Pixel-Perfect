@@ -68,6 +68,20 @@
 
 ---
 
+## 🆕 Latest Updates
+
+### Version 2.7.1 - Dither Tool & Recent Colors
+- **🏁 Dither Tool**: New checkerboard pattern brush for retro shading (draws pixels in `(x+y)%2` pattern).
+- **🎨 Recent Colors**: New palette view that tracks your last 16 used colors automatically.
+- **🔧 Undo System Refinements**: Critical fixes for transparent pixel restoration and edge tool support.
+
+### Version 2.7.0 - Performance & Features
+- **🧠 Delta-Based Undo**: 95% memory reduction for undo history (stores only changed pixels).
+- **⚡ Scanline Flood Fill**: 5-20x faster fill operations using optimized algorithms.
+- **⚡ Event Throttling**: Smoother mouse interactions and reduced CPU usage.
+
+---
+
 ## 📝 About
 
 A **fully functional** desktop pixel art editor designed for creating 2D MMORPG game assets, inspired by classic SNES-era games like Curse of Aros. **Production ready with standalone executable** - no Python installation required!
@@ -310,6 +324,7 @@ Pixel Perfect/
 │   ├── tools/             # Drawing tools (brush, eraser, spray, fill, eyedropper, selection, move, pan, shapes, texture, edge)
 │   │   ├── base_tool.py   # Abstract base class
 │   │   ├── brush.py       # Brush tool
+│   │   ├── dither.py      # Dither pattern tool
 │   │   ├── eraser.py      # Eraser tool
 │   │   ├── spray.py       # Spray paint tool
 │   │   ├── fill.py        # Fill bucket tool
@@ -323,6 +338,7 @@ Pixel Perfect/
 │   ├── ui/                # User interface components
 │   │   ├── main_window.py # Main application window
 │   │   ├── color_wheel.py # HSV color wheel (v1.07+)
+│   │   ├── palette_views/ # Modular palette view system
 │   │   ├── layer_panel.py # Layer management UI
 │   │   └── timeline_panel.py  # Animation timeline UI
 │   ├── utils/             # Utilities
