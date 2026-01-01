@@ -191,10 +191,11 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 ### ↩️ **Undo/Redo System**
 - **50+ State Management**: Comprehensive undo/redo history
 - **Smart State Saving**: Saves state at the beginning of drawing operations
+- **Edge Line Support**: Tracks both pixel data and vector edge lines
 - **Visual Feedback**: Stylized arrow buttons (↶ ↷) with blue/gray states
 - **Keyboard Shortcuts**: Ctrl+Z (undo), Ctrl+Y or Ctrl+Shift+Z (redo)
 - **Layer Integration**: Full support for layer operations
-- **Memory Efficient**: Optimized state storage for large projects
+- **Memory Efficient**: Optimized delta-based storage for large projects
 
 ### 💾 **Export & Project Management**
 - **PNG Export**: Single frames with transparency (1x-8x scaling)

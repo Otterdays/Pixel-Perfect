@@ -91,4 +91,33 @@ Need to verify .gitignore contains all necessary exclusions while preserving bui
 
 ---
 
+## Issue #4: Move Tool Preview Visual Glitches
+**Date**: January 1, 2026  
+**Status**: 🟡 **OPEN** - Minor  
+**Priority**: Low  
+
+### Problem Description
+When using the Selection tool to move pixels, there are minor visual glitches during the move preview:
+1. Ghost pixels remain visible at the original position during the drag
+2. Pixels underneath the selection box briefly disappear then reappear
+
+### Visual Symptoms
+- During drag: Old pixels stay visible at original position
+- During drag: Pixels under the moving selection flicker
+
+### Root Cause Analysis
+These are visual preview timing issues related to how the move preview is rendered vs. when the layer data is updated. The move tool's preview system likely needs refactoring to:
+1. Clear the original position in the preview layer
+2. Properly composite the preview with existing pixels
+
+### Workaround
+The final result is correct - this is purely a visual preview issue during the move operation.
+
+### User Impact
+- Minor visual distraction during move operations
+- Does not affect final result or data integrity
+- Core functionality remains intact
+
+---
+
 *This document will be updated as issues are resolved.*

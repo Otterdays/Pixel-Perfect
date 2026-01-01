@@ -102,17 +102,20 @@ class SelectionManager:
         # Update the selection with mirrored pixels
         selection_tool.selected_pixels = mirrored_pixels
         
-        # Update the layer data with mirrored pixels
+        # Update the layer data with mirrored pixels - only non-transparent pixels
         draw_layer = self._get_drawing_layer()
         if draw_layer:
-            for py in range(height):
-                for px in range(width):
-                    if py < mirrored_pixels.shape[0] and px < mirrored_pixels.shape[1]:
-                        pixel_color = tuple(mirrored_pixels[py, px])
-                        canvas_x = left + px
-                        canvas_y = top + py
-                        if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            # Find non-transparent pixels using NumPy
+            non_transparent = mirrored_pixels[:, :, 3] > 0
+            y_coords, x_coords = np.where(non_transparent)
+            
+            for i in range(len(y_coords)):
+                py, px = y_coords[i], x_coords[i]
+                pixel_color = tuple(mirrored_pixels[py, px])
+                canvas_x = left + px
+                canvas_y = top + py
+                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
             
             # Update canvas from layers (this will show the mirrored pixels)
             if self.update_canvas_callback:
@@ -204,30 +207,32 @@ class SelectionManager:
             else:
                 # No prior drop to restore; clear original area where needed
                 orig_left, orig_top, orig_width, orig_height = self.original_rect_backup
-                for py in range(orig_height):
-                    for px in range(orig_width):
-                        if py < self.original_pixels_backup.shape[0] and px < self.original_pixels_backup.shape[1]:
-                            original_pixel = tuple(self.original_pixels_backup[py, px])
-                            if original_pixel[3] > 0:  # Was non-transparent
-                                canvas_x = orig_left + px
-                                canvas_y = orig_top + py
-                                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                                    draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
+                # Find non-transparent pixels in original backup
+                non_transparent_orig = self.original_pixels_backup[:, :, 3] > 0
+                y_coords, x_coords = np.where(non_transparent_orig)
+                
+                for i in range(len(y_coords)):
+                    py, px = y_coords[i], x_coords[i]
+                    canvas_x = orig_left + px
+                    canvas_y = orig_top + py
+                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
             
-            # Draw rotated pixels from preview
+            # Draw rotated pixels from preview - only non-transparent
             rotated_pixels = self.rotated_pixels_preview
             new_width = rotated_pixels.shape[1]
             new_height = rotated_pixels.shape[0]
             
-            for py in range(new_height):
-                for px in range(new_width):
-                    if py < rotated_pixels.shape[0] and px < rotated_pixels.shape[1]:
-                        pixel_color = tuple(rotated_pixels[py, px])
-                        if pixel_color[3] > 0:  # Non-transparent
-                            canvas_x = left + px
-                            canvas_y = top + py
-                            if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                                draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            non_transparent = rotated_pixels[:, :, 3] > 0
+            y_coords, x_coords = np.where(non_transparent)
+            
+            for i in range(len(y_coords)):
+                py, px = y_coords[i], x_coords[i]
+                pixel_color = tuple(rotated_pixels[py, px])
+                canvas_x = left + px
+                canvas_y = top + py
+                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
             
             # Now update the selection with the rotated pixels
             selection_tool.selected_pixels = rotated_pixels
@@ -394,13 +399,12 @@ class SelectionManager:
         if not selection_tool or selection_tool.selected_pixels is None:
             return
         
-        # CRITICAL FIX: Finalize move operation to prevent background restoration
+        # Finalize move operation to prevent background restoration
         move_tool = self.tools.get("move")
         if move_tool:
             draw_layer = self._get_drawing_layer()
             if draw_layer:
                 move_tool.finalize_move(draw_layer)
-            print("[SCALE] Finalized move operation to prevent copy-behind bug")
         
         # Determine current source dimensions from selected_pixels to avoid stale baselines
         new_left, new_top, new_width, new_height = new_rect
@@ -493,38 +497,45 @@ class SelectionManager:
     
     def preview_scaled_pixels(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
         """Show a live preview of scaled pixels during drag (doesn't modify stored data)"""
-        # Quick nearest-neighbor scaling for preview
-        preview_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
+        # Quick nearest-neighbor scaling for preview using NumPy vectorization
+        # Create coordinate grids for the new size
+        ny_coords = np.arange(new_height)
+        nx_coords = np.arange(new_width)
         
-        for ny in range(new_height):
-            for nx in range(new_width):
-                # Map to original coordinates
-                ox = int(nx * old_width / new_width)
-                oy = int(ny * old_height / new_height)
-                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
-                    preview_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
+        # Map to original coordinates
+        oy_coords = (ny_coords * old_height // new_height).clip(0, selection_tool.selected_pixels.shape[0] - 1)
+        ox_coords = (nx_coords * old_width // new_width).clip(0, selection_tool.selected_pixels.shape[1] - 1)
+        
+        # Use NumPy fancy indexing for fast scaling
+        preview_pixels = selection_tool.selected_pixels[oy_coords[:, np.newaxis], ox_coords]
         
         # Temporarily draw the preview on canvas
         draw_layer = self._get_drawing_layer()
         if draw_layer:
-            # Clear the TRUE original area (where pixels actually were)
+            # Clear the TRUE original area using NumPy slicing where possible
             true_orig_left, true_orig_top, true_orig_width, true_orig_height = self.scale_true_original_rect
-            for py in range(true_orig_height):
-                for px in range(true_orig_width):
-                    canvas_x = true_orig_left + px
-                    canvas_y = true_orig_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        draw_layer.set_pixel(canvas_x, canvas_y, (0, 0, 0, 0))
             
-            # Draw the scaled preview
-            for py in range(new_height):
-                for px in range(new_width):
-                    pixel_color = tuple(preview_pixels[py, px])
-                    canvas_x = new_left + px
-                    canvas_y = new_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        if pixel_color[3] > 0:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            # Bounds-safe clearing
+            clear_y_start = max(0, true_orig_top)
+            clear_y_end = min(self.canvas.height, true_orig_top + true_orig_height)
+            clear_x_start = max(0, true_orig_left)
+            clear_x_end = min(self.canvas.width, true_orig_left + true_orig_width)
+            
+            for py in range(clear_y_start, clear_y_end):
+                for px in range(clear_x_start, clear_x_end):
+                    draw_layer.set_pixel(px, py, (0, 0, 0, 0))
+            
+            # Draw the scaled preview - only non-transparent pixels
+            non_transparent = preview_pixels[:, :, 3] > 0
+            y_coords, x_coords = np.where(non_transparent)
+            
+            for i in range(len(y_coords)):
+                py, px = y_coords[i], x_coords[i]
+                pixel_color = tuple(preview_pixels[py, px])
+                canvas_x = new_left + px
+                canvas_y = new_top + py
+                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
             
             if self.update_canvas_callback:
                 self.update_canvas_callback()
@@ -532,31 +543,34 @@ class SelectionManager:
                 self.update_display_callback()
     
     def _simple_scale(self, selection_tool, old_width, old_height, new_width, new_height, new_left, new_top):
-        """Simple scaling without scipy"""
-        scaled_pixels = np.zeros((new_height, new_width, 4), dtype=np.uint8)
+        """Simple scaling without scipy - uses NumPy for efficiency"""
+        # Use NumPy vectorization for fast nearest-neighbor scaling
+        ny_coords = np.arange(new_height)
+        nx_coords = np.arange(new_width)
         
-        for ny in range(new_height):
-            for nx in range(new_width):
-                # Map to original coordinates
-                ox = int(nx * old_width / new_width)
-                oy = int(ny * old_height / new_height)
-                if oy < selection_tool.selected_pixels.shape[0] and ox < selection_tool.selected_pixels.shape[1]:
-                    scaled_pixels[ny, nx] = selection_tool.selected_pixels[oy, ox]
+        # Map to original coordinates
+        oy_coords = (ny_coords * old_height // new_height).clip(0, selection_tool.selected_pixels.shape[0] - 1)
+        ox_coords = (nx_coords * old_width // new_width).clip(0, selection_tool.selected_pixels.shape[1] - 1)
+        
+        # Use NumPy fancy indexing for fast scaling
+        scaled_pixels = selection_tool.selected_pixels[oy_coords[:, np.newaxis], ox_coords]
         
         selection_tool.selected_pixels = scaled_pixels
         selection_tool.selection_rect = (new_left, new_top, new_width, new_height)
         
-        # Redraw
+        # Redraw - only non-transparent pixels
         draw_layer = self._get_drawing_layer()
         if draw_layer:
-            for py in range(new_height):
-                for px in range(new_width):
-                    pixel_color = tuple(scaled_pixels[py, px])
-                    canvas_x = new_left + px
-                    canvas_y = new_top + py
-                    if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
-                        if pixel_color[3] > 0:
-                            draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
+            non_transparent = scaled_pixels[:, :, 3] > 0
+            y_coords, x_coords = np.where(non_transparent)
+            
+            for i in range(len(y_coords)):
+                py, px = y_coords[i], x_coords[i]
+                pixel_color = tuple(scaled_pixels[py, px])
+                canvas_x = new_left + px
+                canvas_y = new_top + py
+                if 0 <= canvas_x < self.canvas.width and 0 <= canvas_y < self.canvas.height:
+                    draw_layer.set_pixel(canvas_x, canvas_y, pixel_color)
             
             if self.update_canvas_callback:
                 self.update_canvas_callback()

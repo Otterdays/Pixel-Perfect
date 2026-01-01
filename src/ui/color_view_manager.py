@@ -33,6 +33,7 @@ class ColorViewManager:
         self.palette_content_frame = None
         self.color_display_frame = None
         self.saved_view_frame = None
+        self.recent_view_frame = None  # Recent colors view frame
         self.view_mode_var = None
         self.color_wheel = None
         
@@ -70,7 +71,7 @@ class ColorViewManager:
         """Show specific view by toggling visibility (INSTANT)"""
         # Hide all view frames first
         for frame_name in ['grid_view_frame', 'primary_view_frame', 'wheel_view_frame', 
-                          'constants_view_frame', 'saved_view_frame']:
+                          'constants_view_frame', 'saved_view_frame', 'recent_view_frame']:
             frame = getattr(self, frame_name, None)
             if frame:
                 frame.pack_forget()
@@ -126,6 +127,9 @@ class ColorViewManager:
             # Force scroll to absolute top
             self.left_panel._parent_canvas.yview_moveto(0)
             self.root.after(10, lambda: self.left_panel._parent_canvas.yview_moveto(0))
+        elif mode == "recent":
+            # Show recent colors view
+            self._show_recent_colors_view()
     
     def on_view_mode_change(self):
         """Handle view mode change - now instant!"""
@@ -195,4 +199,111 @@ class ColorViewManager:
         if hasattr(self, 'color_wheel') and self.color_wheel:
             # Color wheel has its own method to update custom colors grid
             pass  # Color wheel updates itself via callbacks
+    
+    def _show_recent_colors_view(self):
+        """Show the recent colors view"""
+        import customtkinter as ctk
+        
+        # Get recent_view_frame
+        recent_frame = getattr(self, 'recent_view_frame', None)
+        
+        # Fallback to main_window if not set locally
+        if not recent_frame and hasattr(self, 'main_window') and self.main_window:
+            recent_frame = getattr(self.main_window, 'recent_view_frame', None)
+            # Cache it for future use (important for hiding!)
+            if recent_frame:
+                self.recent_view_frame = recent_frame
+        
+        if not recent_frame:
+            return
+        
+        # Clear existing content
+        for widget in recent_frame.winfo_children():
+            widget.destroy()
+        
+        # Pack the frame
+        recent_frame.pack(fill="both", expand=True, pady=(0, 0))
+        
+        # Title
+        title = ctk.CTkLabel(
+            recent_frame,
+            text="Recent Colors",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        title.pack(pady=(10, 5))
+        
+        # Get recent colors from main_window
+        recent_colors = []
+        if hasattr(self, 'main_window') and self.main_window:
+            if hasattr(self.main_window, 'recent_colors') and self.main_window.recent_colors:
+                recent_colors = self.main_window.recent_colors.get_colors()
+        
+        if not recent_colors:
+            # Show empty message
+            empty_label = ctk.CTkLabel(
+                recent_frame,
+                text="No recent colors yet.\nDraw something to see your\nrecently used colors here!",
+                text_color="gray",
+                font=ctk.CTkFont(size=11)
+            )
+            empty_label.pack(pady=20)
+            return
+        
+        # Create color grid (4 columns, up to 4 rows = 16 colors)
+        grid_frame = ctk.CTkFrame(recent_frame, fg_color="transparent")
+        grid_frame.pack(pady=5, padx=10)
+        
+        for idx, color in enumerate(recent_colors):
+            row = idx // 4
+            col = idx % 4
+            
+            # Convert RGBA to hex for button color
+            hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+            
+            btn = ctk.CTkButton(
+                grid_frame,
+                text="",
+                width=40,
+                height=40,
+                fg_color=hex_color,
+                hover_color=hex_color,
+                border_width=2,
+                border_color="gray50",
+                corner_radius=4,
+                command=lambda c=color: self._select_recent_color(c)
+            )
+            btn.grid(row=row, column=col, padx=3, pady=3)
+        
+        # Clear button
+        clear_btn = ctk.CTkButton(
+            recent_frame,
+            text="Clear Recent Colors",
+            width=160,
+            height=28,
+            command=self._clear_recent_colors
+        )
+        clear_btn.pack(pady=10)
+    
+    def _select_recent_color(self, color):
+        """Handle selecting a recent color"""
+        # Set the color in primary view for drawing
+        if hasattr(self, 'primary_view') and self.primary_view:
+            if hasattr(self.primary_view, 'selected_color'):
+                self.primary_view.selected_color = color
+        
+        # Update canvas
+        if self.update_canvas_callback:
+            self.update_canvas_callback()
+        
+        # Switch to brush tool for immediate drawing
+        if self.select_tool_callback:
+            self.select_tool_callback("brush")
+    
+    def _clear_recent_colors(self):
+        """Clear all recent colors"""
+        if hasattr(self, 'main_window') and self.main_window:
+            if hasattr(self.main_window, 'recent_colors') and self.main_window.recent_colors:
+                self.main_window.recent_colors.clear()
+                # Refresh the view
+                self._show_recent_colors_view()
 

@@ -162,6 +162,16 @@ class MainWindow:
         from src.core.saved_colors import SavedColorsManager
         self.saved_colors = SavedColorsManager(max_colors=24)
         
+        # Initialize recent colors manager (tracks last 16 colors used)
+        from src.core.recent_colors import RecentColorsManager
+        # Get save path for recent colors
+        if os.name == 'nt':  # Windows
+            app_data = os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))
+            recent_colors_path = os.path.join(app_data, 'PixelPerfect', 'recent_colors.json')
+        else:  # macOS/Linux
+            recent_colors_path = os.path.expanduser('~/.pixelperfect/recent_colors.json')
+        self.recent_colors = RecentColorsManager(save_path=recent_colors_path)
+        
         # Initialize project and export managers
         from src.core.project import ProjectManager
         from src.utils.export import ExportManager
@@ -175,8 +185,10 @@ class MainWindow:
         # Initialize tools
         self.loading_manager.update_loading("Setting up drawing tools...", 35)
         from src.tools.edge import EdgeTool
+        from src.tools.dither import DitherTool
         self.tools = {
             "brush": BrushTool(),
+            "dither": DitherTool(),
             "eraser": EraserTool(),
             "spray": SprayTool(),
             "fill": FillTool(),
@@ -464,6 +476,8 @@ class MainWindow:
         self.rotate_btn = selection_buttons['rotate_btn']
         self.copy_btn = selection_buttons['copy_btn']
         self.scale_btn = selection_buttons['scale_btn']
+        self.sym_x_btn = selection_buttons['sym_x_btn']
+        self.sym_y_btn = selection_buttons['sym_y_btn']
         
         # Update tool button text to show sizes
         # Set tool size manager references and callbacks
@@ -514,6 +528,7 @@ class MainWindow:
         self.wheel_view_frame = palette_widgets['wheel_view_frame']
         self.constants_view_frame = palette_widgets['constants_view_frame']
         self.saved_view_frame = palette_widgets['saved_view_frame']
+        self.recent_view_frame = palette_widgets.get('recent_view_frame')  # Recent colors frame
         self.view_mode_var = palette_widgets['view_mode_var']
         self.palette_var = palette_widgets['palette_var']
         self.palette_menu = palette_widgets['palette_menu']
@@ -600,6 +615,7 @@ class MainWindow:
         self.color_view_mgr.palette_content_frame = self.palette_content_frame
         self.color_view_mgr.color_display_frame = self.color_display_frame
         self.color_view_mgr.saved_view_frame = self.saved_view_frame
+        self.color_view_mgr.recent_view_frame = self.recent_view_frame
         self.color_view_mgr.view_mode_var = self.view_mode_var
         # Set callbacks
         self.color_view_mgr.update_canvas_callback = self.canvas_renderer.update_pixel_display
@@ -702,11 +718,39 @@ class MainWindow:
             'rotate_selection': self.selection_mgr.rotate_selection,
             'copy_selection': self.selection_mgr.copy_selection,
             'scale_selection': self.selection_mgr.scale_selection,
+            'toggle_symmetry_x': self._toggle_symmetry_x,
+            'toggle_symmetry_y': self._toggle_symmetry_y,
             'on_palette_change': self._on_palette_change,
             'on_view_mode_change': self._on_view_mode_change,
             'initialize_all_views': self._initialize_all_views,
             'show_view': self._show_view,
         }
+
+    def _toggle_symmetry_x(self):
+        """Toggle horizontal symmetry"""
+        self.canvas.toggle_symmetry_x()
+        self._update_symmetry_buttons()
+
+    def _toggle_symmetry_y(self):
+        """Toggle vertical symmetry"""
+        self.canvas.toggle_symmetry_y()
+        self._update_symmetry_buttons()
+
+    def _update_symmetry_buttons(self):
+        """Update symmetry button appearance"""
+        theme = self.theme_manager.get_current_theme()
+        
+        if hasattr(self, 'sym_x_btn'):
+            if self.canvas.symmetry_x:
+                self.sym_x_btn.configure(fg_color=theme.tool_selected, text_color=theme.text_primary)
+            else:
+                self.sym_x_btn.configure(fg_color=theme.button_normal, text_color=theme.text_primary)
+                
+        if hasattr(self, 'sym_y_btn'):
+            if self.canvas.symmetry_y:
+                self.sym_y_btn.configure(fg_color=theme.tool_selected, text_color=theme.text_primary)
+            else:
+                self.sym_y_btn.configure(fg_color=theme.button_normal, text_color=theme.text_primary)
 
     def _purge_canvas_overlays(self):
         """Delete all transient canvas overlays and clear edge tool previews/lines.
@@ -1295,17 +1339,28 @@ class MainWindow:
         current_pixels = active_layer.pixels.copy() if active_layer else None
         current_layer_index = self.layer_manager.active_layer_index
         
-        state = self.undo_manager.undo(current_pixels, current_layer_index)
+        # Get current edge lines
+        edge_tool = self.tools.get("edge")
+        current_edge_lines = edge_tool.edge_lines if edge_tool else None
+        
+        state = self.undo_manager.undo(current_pixels, current_layer_index, current_edge_lines)
         if state:
             # Restore layer state
-            layer = self.layer_manager.get_layer(state.layer_index)
-            if layer:
-                layer.pixels = state.pixels
-                self._on_layer_changed()
-                # Force immediate tkinter canvas update for instant visual feedback
-                self.canvas_renderer.force_canvas_update()
-                # Force immediate GUI refresh for instant response
-                self.root.update_idletasks()
+            if state.pixels is not None:
+                layer = self.layer_manager.get_layer(state.layer_index)
+                if layer:
+                    layer.pixels = state.pixels
+                    self._on_layer_changed()
+            
+            # Restore edge lines
+            if state.edge_lines is not None and edge_tool:
+                edge_tool.edge_lines = state.edge_lines
+                edge_tool.redraw_all_edges()
+
+            # Force immediate tkinter canvas update for instant visual feedback
+            self.canvas_renderer.force_canvas_update()
+            # Force immediate GUI refresh for instant response
+            self.root.update_idletasks()
     
     def _redo(self):
         """Redo last undone action"""
@@ -1314,17 +1369,28 @@ class MainWindow:
         current_pixels = active_layer.pixels.copy() if active_layer else None
         current_layer_index = self.layer_manager.active_layer_index
         
-        state = self.undo_manager.redo(current_pixels, current_layer_index)
+        # Get current edge lines
+        edge_tool = self.tools.get("edge")
+        current_edge_lines = edge_tool.edge_lines if edge_tool else None
+        
+        state = self.undo_manager.redo(current_pixels, current_layer_index, current_edge_lines)
         if state:
             # Restore layer state
-            layer = self.layer_manager.get_layer(state.layer_index)
-            if layer:
-                layer.pixels = state.pixels
-                self._on_layer_changed()
-                # Force immediate tkinter canvas update for instant visual feedback
-                self.canvas_renderer.force_canvas_update()
-                # Force immediate GUI refresh for instant response
-                self.root.update_idletasks()
+            if state.pixels is not None:
+                layer = self.layer_manager.get_layer(state.layer_index)
+                if layer:
+                    layer.pixels = state.pixels
+                    self._on_layer_changed()
+            
+            # Restore edge lines
+            if state.edge_lines is not None and edge_tool:
+                edge_tool.edge_lines = state.edge_lines
+                edge_tool.redraw_all_edges()
+
+            # Force immediate tkinter canvas update for instant visual feedback
+            self.canvas_renderer.force_canvas_update()
+            # Force immediate GUI refresh for instant response
+            self.root.update_idletasks()
     
     def _add_layer(self):
         """Add a new layer - delegates to layer animation manager"""

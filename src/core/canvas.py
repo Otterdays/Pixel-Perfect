@@ -32,6 +32,11 @@ class Canvas:
         self.grid_color = (100, 100, 100, 180)  # More visible gray with higher opacity
         self.grid_mode = "auto"  # "auto", "dark", "light", "paper"
         
+        # Symmetry settings
+        self.symmetry_x = False
+        self.symmetry_y = False
+        self.symmetry_center_x = True 
+        
         # Paper texture settings
         self.paper_texture_intensity = 0.3  # 0.0 to 1.0
         self.paper_base_color = "#f5f5dc"  # Cream/beige base
@@ -76,10 +81,38 @@ class Canvas:
         pass
     
     def set_pixel(self, x: int, y: int, color: Tuple[int, int, int, int]):
-        """Set pixel at given coordinates"""
+        """Set pixel at given coordinates, handling symmetry"""
         if 0 <= x < self.width and 0 <= y < self.height:
             self.pixels[y, x] = color
+            
+            # Handle symmetry
+            if self.symmetry_x:
+                sym_x = self.width - 1 - x
+                if 0 <= sym_x < self.width:
+                    self.pixels[y, sym_x] = color
+            
+            if self.symmetry_y:
+                sym_y = self.height - 1 - y
+                if 0 <= sym_y < self.height:
+                    self.pixels[sym_y, x] = color
+                    
+                    # If both symmetries are active, we need the diagonal mirror too
+                    if self.symmetry_x:
+                        sym_x = self.width - 1 - x
+                        if 0 <= sym_x < self.width:
+                            self.pixels[sym_y, sym_x] = color
+                            
             self._redraw_surface()
+    
+    def toggle_symmetry_x(self):
+        """Toggle horizontal symmetry"""
+        self.symmetry_x = not self.symmetry_x
+        self._redraw_surface()
+        
+    def toggle_symmetry_y(self):
+        """Toggle vertical symmetry"""
+        self.symmetry_y = not self.symmetry_y
+        self._redraw_surface()
     
     def get_pixel(self, x: int, y: int) -> Tuple[int, int, int, int]:
         """Get pixel color at given coordinates"""
@@ -142,3 +175,41 @@ class Canvas:
     def set_preset_size(self, size: CanvasSize):
         """Set canvas to preset size"""
         self.resize(size.value[0], size.value[1])
+
+class SymmetryWrapper:
+    """
+    Wraps a Layer or Canvas object to transparently handle symmetry.
+    This allows tools to work with symmetry without modification.
+    """
+    def __init__(self, target, symmetry_provider):
+        self.target = target
+        self.symmetry_provider = symmetry_provider
+        
+    def __getattr__(self, name):
+        """Delegate attribute access to target"""
+        return getattr(self.target, name)
+        
+    def set_pixel(self, x: int, y: int, color: Tuple[int, int, int, int]):
+        """Set pixel with symmetry mirroring"""
+        # Set original pixel
+        self.target.set_pixel(x, y, color)
+        
+        # Handle symmetry
+        width = self.target.width
+        height = self.target.height
+        
+        if self.symmetry_provider.symmetry_x:
+            sym_x = width - 1 - x
+            if 0 <= sym_x < width:
+                self.target.set_pixel(sym_x, y, color)
+        
+        if self.symmetry_provider.symmetry_y:
+            sym_y = height - 1 - y
+            if 0 <= sym_y < height:
+                self.target.set_pixel(x, sym_y, color)
+                
+                # If both symmetries are active, we need the diagonal mirror too
+                if self.symmetry_provider.symmetry_x:
+                    sym_x = width - 1 - x
+                    if 0 <= sym_x < width:
+                        self.target.set_pixel(sym_x, sym_y, color)

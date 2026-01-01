@@ -1,10 +1,30 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.6.1  
-**Last Updated**: December 3, 2025 - Code Cleanup & Refactor
+**Version**: 2.6.2  
+**Last Updated**: January 1, 2026 - Performance Optimizations Complete
 
-## Latest Updates (v2.6.1)
+## Latest Updates (v2.7.1)
+
+### 🏁 Dither Tool
+- **✅ Checkerboard Brush** - New tool for classic pixel art shading and texturing.
+- **✅ Pattern Logic** - Automatically draws pixels in a `(x+y)%2` checkerboard pattern.
+- **✅ Dual Function** - Left-click to draw pattern, Right-click to erase.
+
+### 🔧 Undo System Refinements
+- **✅ Transparent Pixel Restoration** - Fixed critical bug where undoing brush strokes didn't clear pixels back to transparency.
+- **✅ Edge Tool Support** - Undo/Redo now correctly tracks and restores Edge Tool lines.
+- **✅ Snapshot Logic** - Improved `UndoManager` to handle full state snapshots correctly.
+
+## Previous Updates (v2.6.2)
+
+### 🚀 Performance Optimizations
+- **✅ Rendering Optimizations** - NumPy vectorization for `draw_all_pixels_on_tkinter()` and `flatten_layers()` (10-50× faster)
+- **✅ Selection/Transform Optimizations** - Vectorized scaling, mirroring, and rotation operations
+- **✅ Event Handling Optimizations** - Early-exit caching for mouse move events to skip redundant preview draws
+- **✅ Code Cleanup** - Removed remaining debug prints from brush.py and selection_manager.py
+
+## Previous Updates (v2.6.1)
 
 ### 🧹 Code Cleanup & Refactor
 - **✅ Dead Code Removal** - Removed ~100 lines of unused fallback code from main_window.py
@@ -734,17 +754,20 @@
 
 ## Complete Feature Set
 
-### 🎨 Core Tools (10 Complete)
+### 🎨 Core Tools (13 Complete)
 1. **Multi-Size Brush** (1x1, 2x2, 3x3) - Right-click for size menu
-2. **Eraser** - Clean pixel removal
-3. **Fill Bucket** - Flood fill with tolerance
-4. **Eyedropper** - Color sampling (L/R click for primary/secondary)
-5. **Selection Tool** - Rectangle selection
-6. **Move Tool** - Move selected pixels
-7. **Line Tool** - Bresenham's algorithm with live preview
-8. **Rectangle Tool** - Hollow/filled with live preview
-9. **Circle Tool** - Midpoint algorithm with live preview
-10. **Pan Tool** - Canvas navigation
+2. **Multi-Size Eraser** (1x1, 2x2, 3x3) - Right-click for size menu
+3. **Spray Paint** ✒️ - Adjustable radius/density with live preview
+4. **Fill Bucket** - Flood fill with tolerance
+5. **Eyedropper** - Color sampling (L/R click for primary/secondary)
+6. **Selection Tool** - Rectangle selection
+7. **Move Tool** - Non-destructive move with background preservation
+8. **Line Tool** - Bresenham's algorithm with live preview
+9. **Rectangle Tool** - Hollow/filled with live preview
+10. **Circle Tool** - Midpoint algorithm with live preview
+11. **Texture Tool** 🌿 - Pattern stamping with texture library
+12. **Edge Tool** - Sub-pixel edge outlining with variable thickness
+13. **Pan Tool** - Canvas navigation
 
 ### 🖼️ Canvas System
 - Preset sizes: 16×16, 32×32, 16×32, 32×64, 64×64

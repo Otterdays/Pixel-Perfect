@@ -181,7 +181,7 @@ class LoadingScreen:
             # Version info
             version_label = ctk.CTkLabel(
                 main_container,
-                text="Version 2.6.0",
+                text="Version 2.6.2",
                 font=("Arial", 10),
                 text_color="#888888"
             )
@@ -197,20 +197,17 @@ class LoadingScreen:
         if not self.is_visible:
             try:
                 if self.loading_frame and self.loading_frame.winfo_exists():
+                    # Single update call instead of multiple
                     self.root.update()
-                    self.root.update_idletasks()
-
+                    
                     x, y, width, height = self._get_main_window_bounds()
                     self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
-                    self.loading_frame.update_idletasks()
-                    self.loading_frame.update()
                     
                     self.loading_frame.deiconify()
                     self.loading_frame.lift()
                     self.loading_frame.focus_force()
+                    self.loading_frame.update()
                 self.is_visible = True
-                if self.root and self.root.winfo_exists():
-                    self.root.update_idletasks()
             except Exception:
                 pass
     
@@ -247,13 +244,10 @@ class LoadingScreen:
                 
                 if frame_exists:
                     self.loading_frame.lift()
-                    self.loading_frame.focus_force()
                     x, y, width, height = self._get_main_window_bounds()
                     self.loading_frame.geometry(f"{width}x{height}+{x}+{y}")
+                    # Single update call at the end instead of multiple
                     self.loading_frame.update_idletasks()
-                
-                if self.root and self.root.winfo_exists():
-                    self.root.update_idletasks()
             except Exception:
                 pass
     

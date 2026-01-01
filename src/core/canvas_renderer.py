@@ -60,6 +60,9 @@ class CanvasRenderer:
                 # Draw grid if enabled
                 if self.app.canvas.show_grid:
                     self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                
+                # Draw symmetry axes
+                self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
                 # Draw a border around the canvas area with theme color
                 theme = self.app.theme_manager.get_current_theme()
@@ -79,6 +82,32 @@ class CanvasRenderer:
             print(f"Error in initial draw: {e}")
             import traceback
             traceback.print_exc()
+
+    def draw_symmetry_axes(self, x_offset, y_offset, canvas_pixel_width, canvas_pixel_height):
+        """Draw symmetry axes if enabled"""
+        zoom = self.app.canvas.zoom
+        width = self.app.canvas.width
+        height = self.app.canvas.height
+        
+        # Horizontal Symmetry Axis (Vertical line at center X)
+        if hasattr(self.app.canvas, 'symmetry_x') and self.app.canvas.symmetry_x:
+            center_x = width / 2
+            screen_x = x_offset + (center_x * zoom)
+            self.app.drawing_canvas.create_line(
+                screen_x, y_offset,
+                screen_x, y_offset + canvas_pixel_height,
+                fill="#00FFFF", width=2, dash=(4, 4), tags="symmetry_axis"
+            )
+
+        # Vertical Symmetry Axis (Horizontal line at center Y)
+        if hasattr(self.app.canvas, 'symmetry_y') and self.app.canvas.symmetry_y:
+            center_y = height / 2
+            screen_y = y_offset + (center_y * zoom)
+            self.app.drawing_canvas.create_line(
+                x_offset, screen_y,
+                x_offset + canvas_pixel_width, screen_y,
+                fill="#00FFFF", width=2, dash=(4, 4), tags="symmetry_axis"
+            )
 
     def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
         """Draw grid lines on tkinter canvas with mode support"""
@@ -282,6 +311,9 @@ class CanvasRenderer:
                 if self.app.canvas.show_grid:
                     self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
+                # Draw symmetry axes
+                self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+
                 theme = self.app.theme_manager.get_current_theme()
                 self.app.drawing_canvas.create_rectangle(
                     x_offset, y_offset,
@@ -317,6 +349,11 @@ class CanvasRenderer:
                 # Edge lines: during a move, preview the selected edges at the drag position
                 move_tool = self.app.tools.get("move")
                 sel_tool = self.app.tools.get("selection")
+                
+                # ALWAYS redraw all edge lines first (so non-selected edges remain visible)
+                self._redraw_edge_lines_using_tool()
+                
+                # During a move, also draw the selected edge lines at their new position
                 if (move_tool and getattr(move_tool, "is_moving", False)
                     and sel_tool and getattr(sel_tool, "selected_edge_lines", None)):
                     zoom = self.app.canvas.zoom
@@ -329,7 +366,7 @@ class CanvasRenderer:
                     else:
                         off_x = 0
                         off_y = 0
-                    # Draw each edge line as a preview
+                    # Draw each edge line as a preview at the moved position
                     for edge_data in sel_tool.selected_edge_lines:
                         px = edge_data.get('pixel_x', 0) + off_x
                         py = edge_data.get('pixel_y', 0) + off_y
@@ -359,10 +396,6 @@ class CanvasRenderer:
                             sy1 = y_offset + (py * zoom)
                             sy2 = y_offset + ((py + 1) * zoom)
                             self.app.drawing_canvas.create_line(sx, sy1, sx, sy2, fill=color_hex, width=line_width, tags="edge_preview")
-                else:
-                    # Normal path: redraw stored edge lines
-                    # Redraw edge lines BEFORE selection box so selection appears on top
-                    self._redraw_edge_lines_using_tool()
                 
                 self.draw_selection_on_tkinter(x_offset, y_offset)
                 
@@ -743,6 +776,7 @@ class CanvasRenderer:
 
     def draw_all_pixels_on_tkinter(self, x_offset: int, y_offset: int):
         """Draw all pixels from the canvas onto the tkinter canvas"""
+        import numpy as np
         zoom = self.app.canvas.zoom
         
         # During live move or rotate preview, hide the source area so pixels don't appear doubled.
@@ -769,29 +803,43 @@ class CanvasRenderer:
             skip_last = True
             last_left, last_top, last_width, last_height = selection_tool.selection_rect
         
-        # Draw all visible layers combined
-        for y in range(self.app.canvas.height):
-            for x in range(self.app.canvas.width):
-                # Skip pixels in original/last areas during move (visual cleanliness)
-                if skip_orig and (orig_left <= x < orig_left + orig_width and 
-                                  orig_top <= y < orig_top + orig_height):
-                    continue
-                if skip_last and (last_left <= x < last_left + last_width and 
-                                  last_top <= y < last_top + last_height):
-                    continue
-                
-                color = self.app.canvas.get_pixel(x, y)
-                if color and color[3] > 0:  # Only draw non-transparent pixels
-                    screen_x = x_offset + (x * zoom)
-                    screen_y = y_offset + (y * zoom)
-                    
-                    hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
-                    
-                    self.app.drawing_canvas.create_rectangle(
-                        screen_x, screen_y,
-                        screen_x + zoom, screen_y + zoom,
-                        fill=hex_color, outline="", tags="pixel"
-                    )
+        # Get canvas pixels as numpy array for efficient processing
+        canvas_pixels = self.app.canvas.pixels
+        
+        # Find all non-transparent pixels using NumPy (much faster than nested loops)
+        non_transparent_mask = canvas_pixels[:, :, 3] > 0
+        
+        # Apply exclusion masks for move/rotate operations
+        if skip_orig:
+            for y in range(orig_top, min(orig_top + orig_height, self.app.canvas.height)):
+                for x in range(orig_left, min(orig_left + orig_width, self.app.canvas.width)):
+                    if 0 <= y < self.app.canvas.height and 0 <= x < self.app.canvas.width:
+                        non_transparent_mask[y, x] = False
+        
+        if skip_last:
+            for y in range(last_top, min(last_top + last_height, self.app.canvas.height)):
+                for x in range(last_left, min(last_left + last_width, self.app.canvas.width)):
+                    if 0 <= y < self.app.canvas.height and 0 <= x < self.app.canvas.width:
+                        non_transparent_mask[y, x] = False
+        
+        # Get coordinates of non-transparent pixels
+        y_coords, x_coords = np.where(non_transparent_mask)
+        
+        # Draw only the non-transparent pixels (much more efficient for sparse canvases)
+        for i in range(len(y_coords)):
+            y = y_coords[i]
+            x = x_coords[i]
+            color = tuple(canvas_pixels[y, x])
+            screen_x = x_offset + (x * zoom)
+            screen_y = y_offset + (y * zoom)
+            
+            hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+            
+            self.app.drawing_canvas.create_rectangle(
+                screen_x, screen_y,
+                screen_x + zoom, screen_y + zoom,
+                fill=hex_color, outline="", tags="pixel"
+            )
 
     def update_single_pixel(self, canvas_x: int, canvas_y: int, old_color):
         """Update only a single pixel for better performance"""

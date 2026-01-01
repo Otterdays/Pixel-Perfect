@@ -184,6 +184,7 @@ class UIBuilder:
         tool_buttons = {}
         tools = [
             ("brush", "Brush", "Draw pixels (B) | Right-click for size"),
+            ("dither", "Dither", "Checkerboard pattern brush"),
             ("eraser", "Eraser", "Erase pixels (E) | Right-click for size"),
             ("spray", "Spray", "Spray paint (Y) | Right-click for radius/density"),
             ("fill", "Fill", "Fill areas with color (F)"),
@@ -328,6 +329,35 @@ class UIBuilder:
         # Configure grid columns
         for col in range(3):
             selection_ops_grid.grid_columnconfigure(col, weight=0)
+            
+        # Symmetry section
+        symmetry_label = ctk.CTkLabel(tool_frame, text="Symmetry", font=ctk.CTkFont(size=14, weight="bold"))
+        symmetry_label.pack(pady=(10, 3))
+        
+        symmetry_grid = ctk.CTkFrame(tool_frame, fg_color="transparent")
+        symmetry_grid.pack(pady=(0, 5), padx=5)
+        
+        # Horizontal Symmetry Button
+        sym_x_btn = ctk.CTkButton(
+            symmetry_grid,
+            text="Sym X",
+            width=85,
+            height=28,
+            command=callbacks['toggle_symmetry_x']
+        )
+        sym_x_btn.grid(row=0, column=0, padx=2, pady=2)
+        create_tooltip(sym_x_btn, "Toggle Horizontal Symmetry", delay=1000)
+        
+        # Vertical Symmetry Button
+        sym_y_btn = ctk.CTkButton(
+            symmetry_grid,
+            text="Sym Y",
+            width=85,
+            height=28,
+            command=callbacks['toggle_symmetry_y']
+        )
+        sym_y_btn.grid(row=0, column=1, padx=2, pady=2)
+        create_tooltip(sym_y_btn, "Toggle Vertical Symmetry", delay=1000)
         
         # Store references for main window
         tool_buttons_ref.update(tool_buttons)
@@ -336,6 +366,8 @@ class UIBuilder:
             'rotate_btn': rotate_btn,
             'copy_btn': copy_btn,
             'scale_btn': scale_btn,
+            'sym_x_btn': sym_x_btn,
+            'sym_y_btn': sym_y_btn,
             'tool_frame': tool_frame
         }
     
@@ -413,6 +445,16 @@ class UIBuilder:
         )
         saved_view_btn.grid(row=2, column=0, padx=5, pady=2)
         
+        # Recent colors view button
+        recent_view_btn = ctk.CTkRadioButton(
+            view_mode_frame,
+            text="Recent",
+            variable=view_mode_var,
+            value="recent",
+            command=callbacks['on_view_mode_change']
+        )
+        recent_view_btn.grid(row=2, column=1, padx=5, pady=2)
+        
         # Create a container frame for palette views (after radio buttons)
         palette_content_frame = ctk.CTkFrame(palette_frame, fg_color="transparent")
         palette_content_frame.pack(fill="x", expand=False, padx=10, pady=0)
@@ -427,6 +469,7 @@ class UIBuilder:
         wheel_view_frame = ctk.CTkFrame(color_display_container)
         constants_view_frame = ctk.CTkFrame(color_display_container)
         saved_view_frame = ctk.CTkFrame(color_display_container)
+        recent_view_frame = ctk.CTkFrame(color_display_container)  # New frame for recent colors
         
         # Keep reference to old color_display_frame for compatibility
         color_display_frame = grid_view_frame
@@ -451,12 +494,14 @@ class UIBuilder:
             'wheel_view_btn': wheel_view_btn,
             'constants_view_btn': constants_view_btn,
             'saved_view_btn': saved_view_btn,
+            'recent_view_btn': recent_view_btn,  # Add new button reference
             'color_display_container': color_display_container,
             'grid_view_frame': grid_view_frame,
             'primary_view_frame': primary_view_frame,
             'wheel_view_frame': wheel_view_frame,
             'constants_view_frame': constants_view_frame,
             'saved_view_frame': saved_view_frame,
+            'recent_view_frame': recent_view_frame,  # Add new frame reference
             'color_display_frame': color_display_frame,
             'primary_colors_mode': primary_colors_mode,
             'selected_primary_color': selected_primary_color,

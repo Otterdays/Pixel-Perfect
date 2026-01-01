@@ -16,11 +16,9 @@ class BrushTool(Tool):
     def on_mouse_down(self, canvas, x: int, y: int, button: int, color: Tuple[int, int, int, int]):
         """Start drawing"""
         if button == 1:  # Left mouse button
-            print(f"[BRUSH DEBUG] Mouse down at ({x}, {y}) - starting to draw")
             self.is_drawing = True
             canvas.set_pixel(x, y, color)
         elif button == 3:  # Right mouse button (eraser)
-            print(f"[BRUSH DEBUG] Right mouse down at ({x}, {y}) - erasing")
             self.is_drawing = True
             canvas.set_pixel(x, y, (0, 0, 0, 0))  # Transparent
     

@@ -1,10 +1,15 @@
 """
 Event Dispatcher for Pixel Perfect
 Handles all keyboard, mouse, and window events
+
+OPTIMIZATION: Uses CanvasEventOptimizer for throttled mouse event handling
 """
 
 from typing import Callable, Dict, Any, Optional, Tuple
 import tkinter as tk
+from src.core.canvas import Canvas, SymmetryWrapper
+from src.core.layer_manager import Layer
+from .event_throttle import CanvasEventOptimizer
 
 
 class EventDispatcher:
@@ -23,6 +28,10 @@ class EventDispatcher:
         self.is_dragging = False
         self.last_canvas_x = None
         self.last_canvas_y = None
+        
+        # Initialize event throttling for smooth mouse handling
+        # 8ms = ~120 FPS target for responsive cursor preview updates
+        self.canvas_optimizer = CanvasEventOptimizer(throttle_ms=8.0)
         
     def bind_all_events(self):
         """Bind all keyboard, mouse, and window events"""
@@ -304,10 +313,16 @@ class EventDispatcher:
             return
         
         # Save undo state before any drawing operation
-        if self.main_window.current_tool in ["brush", "eraser", "spray", "fill", "texture", "line", "rectangle", "circle"]:
+        if self.main_window.current_tool in ["brush", "eraser", "spray", "fill", "texture", "line", "rectangle", "circle", "edge", "dither"]:
             active_layer = self.main_window.layer_manager.get_active_layer()
             if active_layer:
-                self.main_window.undo_manager.save_state(active_layer.pixels.copy(), self.main_window.layer_manager.active_layer_index)
+                # ALWAYS save edge lines state so undo preserves them regardless of current tool
+                edge_lines = None
+                edge_tool = self.main_window.tools.get("edge")
+                if edge_tool and hasattr(edge_tool, 'edge_lines'):
+                    edge_lines = edge_tool.edge_lines
+                
+                self.main_window.undo_manager.save_state(active_layer.pixels.copy(), self.main_window.layer_manager.active_layer_index, edge_lines)
         
         # Set dragging state
         self.is_dragging = True
@@ -327,11 +342,17 @@ class EventDispatcher:
         # Get current drawing color (from palette or color wheel based on view mode)
         current_color = self.main_window.get_current_color()
         
+        # Track color usage for recent colors palette
+        if hasattr(self.main_window, 'recent_colors') and self.main_window.recent_colors:
+            self.main_window.recent_colors.add_color(current_color)
+        
         # Handle all brush sizes consistently
         if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window.tool_size_mgr.draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.draw_brush_at(target_layer, canvas_x, canvas_y, current_color)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels were modified
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_drawing'):
@@ -340,7 +361,9 @@ class EventDispatcher:
         elif self.main_window.current_tool == "eraser":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window.tool_size_mgr.erase_at(draw_layer, canvas_x, canvas_y)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.erase_at(target_layer, canvas_x, canvas_y)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels were modified
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_erasing'):
@@ -348,7 +371,9 @@ class EventDispatcher:
         elif self.main_window.current_tool == "spray":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                self.main_window.tool_size_mgr.spray_at(draw_layer, canvas_x, canvas_y, current_color)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.spray_at(target_layer, canvas_x, canvas_y, current_color)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels were modified
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             if hasattr(tool, 'is_spraying'):
@@ -362,9 +387,15 @@ class EventDispatcher:
             # Handle fill, texture, shape, move, and selection tools with layer-based approach
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                tool.on_mouse_down(draw_layer, canvas_x, canvas_y, 1, current_color)
+                # Apply symmetry wrapper only for drawing tools
+                target_layer = draw_layer
+                if self.main_window.current_tool in ["line", "rectangle", "circle", "texture"]:
+                    target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                
+                tool.on_mouse_down(target_layer, canvas_x, canvas_y, 1, current_color)
                 if self.main_window.current_tool in ["fill", "texture"]:
                     # Fill and texture tools update immediately
+                    self.main_window.layer_manager.invalidate_cache()  # Pixels were modified
                     self.main_window._update_canvas_from_layers()
                     self.main_window.canvas_renderer.update_pixel_display()
                 # Shape tools and move/selection tools don't update on mouse down
@@ -418,7 +449,13 @@ class EventDispatcher:
         if self.main_window.current_tool in ["line", "rectangle", "circle", "move", "selection"]:
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer:
-                tool.on_mouse_up(draw_layer, canvas_x, canvas_y, 1, current_color)
+                # Apply symmetry wrapper only for drawing tools
+                target_layer = draw_layer
+                if self.main_window.current_tool in ["line", "rectangle", "circle"]:
+                    target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                    
+                tool.on_mouse_up(target_layer, canvas_x, canvas_y, 1, current_color)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels finalized to layer
                 self.main_window._update_canvas_from_layers()
         elif self.main_window.current_tool == "spray":
             # Stop spraying without calling tool.on_mouse_up (parity with brush/eraser)
@@ -497,7 +534,9 @@ class EventDispatcher:
         if self.main_window.current_tool == "brush":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_drawing') and tool.is_drawing:
-                self.main_window.tool_size_mgr.draw_brush_at(draw_layer, canvas_x, canvas_y, current_color)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.draw_brush_at(target_layer, canvas_x, canvas_y, current_color)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels modified during drag
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
@@ -507,7 +546,9 @@ class EventDispatcher:
             # Handle eraser during drag
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_erasing') and tool.is_erasing:
-                self.main_window.tool_size_mgr.erase_at(draw_layer, canvas_x, canvas_y)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.erase_at(target_layer, canvas_x, canvas_y)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels modified during drag
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
@@ -516,7 +557,20 @@ class EventDispatcher:
         elif self.main_window.current_tool == "spray":
             draw_layer = self.main_window._get_drawing_layer()
             if draw_layer and hasattr(tool, 'is_spraying') and tool.is_spraying:
-                self.main_window.tool_size_mgr.spray_at(draw_layer, canvas_x, canvas_y, current_color)
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                self.main_window.tool_size_mgr.spray_at(target_layer, canvas_x, canvas_y, current_color)
+                self.main_window.layer_manager.invalidate_cache()  # Pixels modified during drag
+                self.main_window._update_canvas_from_layers()
+                self.main_window.canvas_renderer.update_pixel_display()
+            self.last_canvas_x = canvas_x
+            self.last_canvas_y = canvas_y
+            return
+        elif self.main_window.current_tool == "dither":
+            draw_layer = self.main_window._get_drawing_layer()
+            if draw_layer and hasattr(tool, 'is_drawing') and tool.is_drawing:
+                target_layer = SymmetryWrapper(draw_layer, self.main_window.canvas)
+                tool.on_mouse_move(target_layer, canvas_x, canvas_y, current_color)
+                self.main_window.layer_manager.invalidate_cache()
                 self.main_window._update_canvas_from_layers()
                 self.main_window.canvas_renderer.update_pixel_display()
             self.last_canvas_x = canvas_x
@@ -566,6 +620,13 @@ class EventDispatcher:
                 pass
             if hasattr(self.main_window, 'selection_mgr'):
                 self.main_window.selection_mgr.copy_preview_pos = None  # Clear copy preview position
+            # Reset throttler position tracking when leaving bounds
+            self.canvas_optimizer.reset_position()
+            return
+        
+        # Early exit using throttled position checking
+        # This significantly reduces draw overhead for high-DPI displays or fast mouse movement
+        if not self.canvas_optimizer.should_process_move(canvas_x, canvas_y):
             return
         
         # Update copy preview position if in placement mode

@@ -58,14 +58,39 @@ class LayerManager:
         self.active_layer_index = 0
         self.max_layers = 10
         
+        # Layer compositor cache for performance optimization
+        # Stores the flattened result so we don't recompute unnecessarily
+        self._cached_composite: Optional[np.ndarray] = None
+        self._cache_valid: bool = False
+        self._dirty_regions: List[Tuple[int, int, int, int]] = []  # (x, y, w, h) regions that need update
+        
         # Create default layer
         self._create_default_layer()
+    
+    def invalidate_cache(self, region: Optional[Tuple[int, int, int, int]] = None):
+        """
+        Mark the compositor cache as invalid.
+        
+        Args:
+            region: Optional (x, y, width, height) tuple to mark specific region dirty.
+                    If None, entire cache is invalidated.
+        """
+        if region is None:
+            # Full invalidation
+            self._cache_valid = False
+            self._dirty_regions.clear()
+        else:
+            # Track dirty region for potential incremental update
+            self._dirty_regions.append(region)
+            # For now, just invalidate entire cache (incremental update is future optimization)
+            self._cache_valid = False
     
     def _create_default_layer(self):
         """Create the default background layer"""
         pixels = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         layer = Layer("Background", pixels)
         self.layers.append(layer)
+        self.invalidate_cache()
     
     def add_layer(self, name: str = None) -> bool:
         """Add a new layer"""
@@ -82,6 +107,7 @@ class LayerManager:
         insert_index = self.active_layer_index + 1
         self.layers.insert(insert_index, layer)
         self.active_layer_index = insert_index
+        self.invalidate_cache()
         
         return True
     
@@ -92,6 +118,7 @@ class LayerManager:
         
         if 0 <= index < len(self.layers):
             self.layers.pop(index)
+            self.invalidate_cache()
             
             # Adjust active layer index
             if self.active_layer_index >= len(self.layers):
@@ -123,6 +150,7 @@ class LayerManager:
             insert_index = index + 1
             self.layers.insert(insert_index, new_layer)
             self.active_layer_index = insert_index
+            self.invalidate_cache()
             
             return True
         
@@ -131,6 +159,7 @@ class LayerManager:
     def clear_layers(self):
         """Clear all layers and add a default background layer"""
         self.layers.clear()
+        self.invalidate_cache()
         self.add_layer("Background")
         self.active_layer_index = 0
     
@@ -178,6 +207,7 @@ class LayerManager:
         """Set layer visibility"""
         if 0 <= index < len(self.layers):
             self.layers[index].visible = visible
+            self.invalidate_cache()
             return True
         return False
     
@@ -185,6 +215,7 @@ class LayerManager:
         """Set layer opacity (0.0 to 1.0)"""
         if 0 <= index < len(self.layers):
             self.layers[index].opacity = max(0.0, min(1.0, opacity))
+            self.invalidate_cache()
             return True
         return False
     
@@ -236,24 +267,58 @@ class LayerManager:
         return False
     
     def flatten_layers(self) -> np.ndarray:
-        """Flatten all visible layers into a single image"""
+        """
+        Flatten all visible layers into a single image.
+        
+        NOTE: Caching disabled - many code paths modify layer.pixels directly
+        without going through tracked methods. Proper caching requires a 
+        comprehensive change tracking system.
+        """
+        # DISABLED: Caching causes issues with selection tool and undo
+        # Return cached composite if valid
+        # if self._cache_valid and self._cached_composite is not None:
+        #     return self._cached_composite
+        
         result = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         
         for layer in self.layers:
             if layer.visible:
-                for y in range(self.height):
-                    for x in range(self.width):
-                        layer_pixel = layer.pixels[y, x]
-                        alpha = layer_pixel[3] * layer.opacity
-                        
-                        if alpha > 0:
-                            blend_factor = alpha / 255.0
-                            result[y, x] = (
-                                int(result[y, x][0] * (1 - blend_factor) + layer_pixel[0] * blend_factor),
-                                int(result[y, x][1] * (1 - blend_factor) + layer_pixel[1] * blend_factor),
-                                int(result[y, x][2] * (1 - blend_factor) + layer_pixel[2] * blend_factor),
-                                max(result[y, x][3], int(alpha))
-                            )
+                # Vectorized alpha blending using NumPy operations
+                layer_alpha = layer.pixels[:, :, 3].astype(np.float32) * layer.opacity
+                
+                # Create mask for non-transparent pixels
+                mask = layer_alpha > 0
+                if not np.any(mask):
+                    continue
+                
+                # Calculate blend factor (0-1 range)
+                blend_factor = layer_alpha / 255.0
+                
+                # Expand blend_factor for RGB channels broadcasting
+                blend_rgb = blend_factor[:, :, np.newaxis]
+                
+                # Blend RGB channels where mask is True
+                # result_rgb = result_rgb * (1 - blend) + layer_rgb * blend
+                result_rgb = result[:, :, :3].astype(np.float32)
+                layer_rgb = layer.pixels[:, :, :3].astype(np.float32)
+                
+                # Apply blending only where mask is True
+                blended = result_rgb * (1 - blend_rgb) + layer_rgb * blend_rgb
+                
+                # Update result where we have visible pixels
+                result[:, :, :3] = np.where(
+                    mask[:, :, np.newaxis],
+                    blended.astype(np.uint8),
+                    result[:, :, :3]
+                )
+                
+                # Update alpha channel (max of existing and new)
+                result[:, :, 3] = np.maximum(result[:, :, 3], layer_alpha.astype(np.uint8))
+        
+        # DISABLED: Caching
+        # self._cached_composite = result
+        # self._cache_valid = True
+        # self._dirty_regions.clear()
         
         return result
     

@@ -208,7 +208,7 @@ class ThemeDialogManager:
                     text_color=theme.text_primary
                 )
         
-        # Update operation buttons (Mirror, Rotate, Copy, Scale)
+        # Update operation buttons (Mirror, Rotate, Copy, Scale, Symmetry)
         if hasattr(self.main_window, 'mirror_btn'):
             for btn in [self.main_window.mirror_btn, self.main_window.rotate_btn, 
                        self.main_window.copy_btn, self.main_window.scale_btn]:
@@ -217,6 +217,10 @@ class ThemeDialogManager:
                     hover_color=theme.button_hover,
                     text_color=theme.text_primary
                 )
+        
+        # Update symmetry buttons based on state
+        if hasattr(self.main_window, 'sym_x_btn') and hasattr(self.main_window, 'sym_y_btn'):
+            self.main_window._update_symmetry_buttons()
         
         # Update grid button
         if self.main_window.canvas.show_grid:

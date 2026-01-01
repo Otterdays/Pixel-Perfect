@@ -1,13 +1,13 @@
 # Software Bill of Materials (SBOM)
 
-**Last Updated**: December 3, 2025  
-**Project Version**: 2.6.1 - Pixel Perfect
+**Last Updated**: January 1, 2026  
+**Project Version**: 2.6.2 - Pixel Perfect
 
 ## Project Information
 - **Project Name**: Pixel Perfect - Retro Pixel Art Editor
-- **Version**: 2.6.1 (Code Cleanup & Refactor)
+- **Version**: 2.6.2 (Performance Optimizations)
 - **Creation Date**: October 8, 2024
-- **Last Updated**: December 3, 2025 (Dead code removal, debug print cleanup, documentation compaction)
+- **Last Updated**: January 1, 2026 (NumPy vectorization, rendering optimizations, event handling improvements)
 - **Platform**: Windows 11 (Primary), Cross-platform capable
 - **Status**: Production Ready - Optimized Distribution (29MB exe, modular architecture, clean codebase)
 
