@@ -1,8 +1,19 @@
 # Pixel Perfect - Development Scratchpad
 
-**Last Updated**: January 1, 2026  
-**Current Version**: 2.7.0  
-**Status**: Production Ready - Major New Features & Optimizations + Critical Bug Fixes
+**Last Updated**: January 22, 2026  
+**Current Version**: 2.7.3  
+**Status**: Production Ready - Theme, Tools & UI Polish
+
+---
+
+## Version 2.7.3 - Theme, Tools & UI Polish (January 22, 2026)
+**Status**: ✅ COMPLETE
+
+- **Claude theme**: Bright Anthropic-inspired theme (warm cream, coral accents).
+- **Dither preview**: Canvas checkerboard preview at cursor; spray preview unchanged.
+- **Eraser right-click**: Delete edge lines (click or drag); uses Edge tool storage.
+- **Panel buttons**: Minimalistic ‹/› chevrons, transparent + hover; restore buttons minimal, centered.
+- **Canvas recenter fix**: Redraw on panel *expand* (not just collapse) so grid stays centered.
 
 ---
 
@@ -61,11 +72,17 @@
 - **Integration**: EventDispatcher uses throttled position tracking for preview updates
 - **Result**: Reduced CPU usage during rapid mouse movements
 
-### 🗄️ Layer Compositor Caching
+### 🗄️ Layer Compositor Caching (v2.7.4 - Re-enabled with Smart Detection)
 - **`LayerManager` caching**: Stores flattened composite, avoids redundant blending
-- **`invalidate_cache()`**: Called automatically when layers are modified
-- **Smart invalidation**: Visibility, opacity, add, remove, clear all trigger cache refresh
-- **Dirty region tracking**: Foundation for future incremental updates
+- **Smart change detection**: Multi-factor validation system:
+  - Version counters track explicit modifications (`set_pixel()`, `clear()`, `mark_modified()`)
+  - Pixel hashes detect direct array modifications (`layer.pixels[y, x] = color`)
+  - Visibility/opacity state tracking
+  - Layer count monitoring
+- **`invalidate_cache()`**: Called automatically when layers are modified through tracked methods
+- **`_is_cache_valid()`**: Comprehensive validation that catches all change paths
+- **Automatic invalidation**: Works even when tools modify pixels directly without going through tracked methods
+- **Dirty region tracking**: Foundation for future incremental updates (currently full invalidation)
 
 ### 📁 New Files Created
 - `src/core/recent_colors.py` - RecentColorsManager class
@@ -331,3 +348,26 @@ Fixed `primary_view.py` to pass color indices instead of color tuples to callbac
 - **CHANGELOG.md** - Version history
 - **SBOM.md** - Dependencies and security
 - **REFACTOR.md** - Refactoring guide and lessons learned
+
+---
+
+## Active Tasks
+- [x] Build roadmap checklist in `ROADMAP.md`
+- [x] Implement zoom-to-cursor + fit/100%
+- [x] Implement recent colors selection handling
+- [x] Implement export presets + quick export
+- [x] Update documentation for new QoL features
+- [x] Update docs for v2.7.3 (theme, tools, UI, bugfix)
+
+## Blocked Items
+- None
+
+## Recent Context (last 5 actions)
+1. 2026-01-22: Claude theme, dither/spray preview, eraser edge delete, panel button redesign
+2. 2026-01-22: Canvas grid off-center fix (redraw on panel expand)
+3. 2026-01-22: Documentation update (CHANGELOG, SCRATCHPAD, SUMMARY, THEME_SYSTEM, EDGE_TOOL)
+4. 2026-01-18: Zoom-to-cursor + fit/100%, export presets, quick export
+5. 2026-01-18: Recent colors selection handling
+
+## Compacted History
+See entries above for detailed historical context.

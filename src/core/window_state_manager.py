@@ -266,37 +266,40 @@ class WindowStateManager:
                     pass
             
             self.paned_window.paneconfigure(self.left_container, hide=False)
-            self.left_collapse_btn.configure(text="◀")
+            self.left_collapse_btn.configure(text="‹")
             self.left_panel_collapsed = False
+            
+            # Redraw canvas to recenter after panel size change
+            self.root.after(50, self.redraw_callback)
             
             if finish_toggle_callback:
                 self.root.after(100, lambda: finish_toggle_callback("left"))
         else:
             self.paned_window.paneconfigure(self.left_container, hide=True)
-            self.left_collapse_btn.configure(text="▶")
+            self.left_collapse_btn.configure(text="›")
             self.left_panel_collapsed = True
             
             if not self.left_restore_btn:
                 self.left_restore_btn = tk.Button(
                     self.paned_window,
-                    text="▶",
-                    font=("Arial", 18, "bold"),
-                    fg="white",
-                    bg="#1f538d",
-                    activebackground="#2a6bb3",
-                    activeforeground="white",
+                    text="›",
+                    font=("Arial", 14),
+                    fg="#888888",
+                    bg="#2b2b2b",
+                    activebackground="#3a3a3a",
+                    activeforeground="#ffffff",
                     relief=tk.FLAT,
                     borderwidth=0,
                     highlightthickness=0,
-                    width=3,
-                    height=4,
+                    width=2,
+                    height=2,
                     cursor="hand2",
                     command=lambda: self.toggle_left_panel(show_loading_callback, finish_toggle_callback)
                 )
-                self.left_restore_btn.bind("<Enter>", lambda e: self.left_restore_btn.configure(bg="#2a6bb3"))
-                self.left_restore_btn.bind("<Leave>", lambda e: self.left_restore_btn.configure(bg="#1f538d"))
+                self.left_restore_btn.bind("<Enter>", lambda e: self.left_restore_btn.configure(fg="#ffffff"))
+                self.left_restore_btn.bind("<Leave>", lambda e: self.left_restore_btn.configure(fg="#888888"))
             
-            self.left_restore_btn.place(x=5, y=100)
+            self.left_restore_btn.place(x=5, rely=0.5, anchor='w')
             self.root.after(1, self.redraw_callback)
     
     def toggle_right_panel(self, show_loading_callback=None, finish_toggle_callback=None):
@@ -312,35 +315,38 @@ class WindowStateManager:
                     pass
             
             self.paned_window.paneconfigure(self.right_container, hide=False)
-            self.right_collapse_btn.configure(text="▶")
+            self.right_collapse_btn.configure(text="›")
             self.right_panel_collapsed = False
+            
+            # Redraw canvas to recenter after panel size change
+            self.root.after(50, self.redraw_callback)
             
             if finish_toggle_callback:
                 self.root.after(100, lambda: finish_toggle_callback("right"))
         else:
             self.paned_window.paneconfigure(self.right_container, hide=True)
-            self.right_collapse_btn.configure(text="◀")
+            self.right_collapse_btn.configure(text="‹")
             self.right_panel_collapsed = True
             
             if not self.right_restore_btn:
                 self.right_restore_btn = tk.Button(
                     self.paned_window,
-                    text="◀",
-                    font=("Arial", 18, "bold"),
-                    fg="white",
-                    bg="#1f538d",
-                    activebackground="#2a6bb3",
-                    activeforeground="white",
+                    text="‹",
+                    font=("Arial", 14),
+                    fg="#888888",
+                    bg="#2b2b2b",
+                    activebackground="#3a3a3a",
+                    activeforeground="#ffffff",
                     relief=tk.FLAT,
                     borderwidth=0,
                     highlightthickness=0,
-                    width=3,
-                    height=4,
+                    width=2,
+                    height=2,
                     cursor="hand2",
                     command=lambda: self.toggle_right_panel(show_loading_callback, finish_toggle_callback)
                 )
-                self.right_restore_btn.bind("<Enter>", lambda e: self.right_restore_btn.configure(bg="#2a6bb3"))
-                self.right_restore_btn.bind("<Leave>", lambda e: self.right_restore_btn.configure(bg="#1f538d"))
+                self.right_restore_btn.bind("<Enter>", lambda e: self.right_restore_btn.configure(fg="#ffffff"))
+                self.right_restore_btn.bind("<Leave>", lambda e: self.right_restore_btn.configure(fg="#888888"))
             
-            self.right_restore_btn.place(relx=1.0, x=-5, y=100, anchor='ne')
+            self.right_restore_btn.place(relx=1.0, x=-5, rely=0.5, anchor='e')
             self.root.after(1, self.redraw_callback)

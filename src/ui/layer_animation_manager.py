@@ -199,4 +199,13 @@ class LayerAnimationManager:
             return self.layer_manager.layers[0]
         
         return None
+    
+    def save_canvas_to_current_frame(self):
+        """Save current layer composite to the current animation frame"""
+        current_frame = self.timeline.get_current_frame()
+        if current_frame is not None:
+            # Get flattened layer composite
+            composite = self.layer_manager.flatten_layers()
+            # Copy to frame pixels
+            current_frame.pixels = composite.copy()
 

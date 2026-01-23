@@ -1,5 +1,112 @@
 # Pixel Perfect - Changelog
 
+## Version 2.7.4 - Smart Layer Caching System
+**Date**: January 22, 2026  
+**Type**: Performance Enhancement Release
+
+### ⚡ Smart Layer Compositor Caching
+- **Re-enabled layer caching** with intelligent change detection system
+- **Version tracking**: Each layer tracks a version counter that increments on pixel changes
+- **Hash-based validation**: Fast pixel hash computation detects direct array modifications
+- **Multi-factor validation**: Cache validity checked via:
+  - Layer version counters (catches `set_pixel()`, `clear()`, `mark_modified()`)
+  - Pixel data hashes (catches direct `layer.pixels[y, x] = color` modifications)
+  - Visibility and opacity state tracking
+  - Layer count changes
+- **Automatic invalidation**: Cache automatically invalidates when layers are modified through any code path
+- **Performance impact**: Eliminates redundant layer blending operations, significantly faster multi-layer rendering
+
+### 🔧 Implementation Details
+- **`Layer.mark_modified()`**: New method for explicit cache invalidation after direct pixel access
+- **`Layer.compute_pixel_hash()`**: Fast hash based on shape + sample pixels + alpha sum
+- **`LayerManager._is_cache_valid()`**: Comprehensive cache validation checking all change factors
+- **Undo/redo integration**: Added `mark_modified()` calls after undo/redo operations
+
+### 📁 Files Modified
+- `src/core/layer_manager.py` – Re-enabled caching with smart validation, added version tracking and hash computation
+- `src/ui/main_window.py` – Added `mark_modified()` calls in undo/redo handlers
+
+---
+
+## Version 2.7.3 - Theme, Tools & UI Polish
+**Date**: January 22, 2026  
+**Type**: Feature & Bug Fix Release
+
+### 🎨 Claude Theme (New)
+- **ClaudeTheme** in `theme_manager.py`: Bright, warm theme inspired by Anthropic Claude brand colors
+- Warm cream backgrounds (`#faf6f1`), coral/salmon accents (`#d97757`), clean white canvas
+- Available in theme dropdown as "Claude"
+
+### 🖌️ Tool Previews & Eraser Edge Delete
+- **Dither canvas preview**: Checkerboard pattern preview at cursor (brush-size area, `(x+y)%2` pattern)
+- **Spray canvas preview**: Existing circular dashed outline verified; no changes
+- **Eraser right-click**: Delete edge lines on canvas; right-click or right-drag to remove edges (reuses Edge tool storage)
+
+### 🧩 UI Polish
+- **Panel open/close buttons**: Redesigned as minimalistic centered chevrons (`‹` `›`), transparent + subtle hover, 14×40px in 16px strip
+- **Restore buttons** (when panels collapsed): Minimal grey chevrons, vertically centered, hover highlight
+- **Theme integration**: Collapse/restore buttons use `text_secondary`, `button_hover`; btn containers use `bg_primary`
+
+### 🐛 Bug Fixes
+- **Canvas grid off-center on panel toggle**: Redraw was only triggered when *collapsing* panels. Now `redraw_callback` runs when *expanding* left/right panels too (`after(50, redraw_callback)`), so canvas recenters immediately.
+
+### 📁 Files Modified
+- `src/ui/theme_manager.py` – ClaudeTheme, theme registry
+- `src/core/canvas_renderer.py` – `draw_dither_preview`, numpy import fix
+- `src/core/event_dispatcher.py` – Dither preview hooks, eraser right-click/right-drag, `canvas_x`/`canvas_y` fix
+- `src/tools/eraser.py` – Right-click edge delete, `on_right_drag`, `_erase_edge_at_position`, `set_main_window`
+- `src/ui/main_window.py` – Collapse button redesign (containers, minimal buttons)
+- `src/core/window_state_manager.py` – Redraw on expand, minimal restore buttons, chevron text
+- `src/ui/theme_dialog_manager.py` – Theme apply for btn containers, transparent collapse buttons
+
+---
+
+## Version 2.7.2 - Quality of Life Enhancements
+**Date**: January 18, 2026  
+**Type**: QoL Enhancement Release
+
+### 🔍 Zoom to Cursor + Fit/100% View
+- **Zoom to Cursor**: Ctrl+wheel now zooms while preserving cursor position in view
+  - Implemented `_zoom_at_cursor()` method in `main_window.py` for focus-preserving zoom
+  - Mouse wheel handler added to `event_dispatcher.py` for Ctrl+wheel detection
+  - Calculates zoom center based on cursor position relative to canvas
+- **Fit View Button**: New toolbar button automatically calculates optimal zoom to fit entire canvas
+  - `_zoom_fit()` method calculates zoom based on canvas size and viewport dimensions
+  - `_get_fit_zoom()` helper determines best fit zoom level
+- **100% View Button**: Quick reset to 100% zoom level
+  - `_zoom_100()` method sets zoom to exactly 1.0x
+- **Focus Preservation**: All zoom operations use `_apply_zoom_with_focus()` to maintain visual focus
+
+### 📦 Export Presets + Quick Export
+- **Export Settings Dialogs**: Configurable export options for all formats
+  - PNG: Scale factor and transparency toggle
+  - GIF: Scale factor and frame duration
+  - Sprite Sheet: Scale factor, layout (horizontal/vertical/grid), and spacing
+  - `_prompt_export_settings()` method creates CustomTkinter dialogs for each format
+- **Preset Persistence**: Export settings saved between sessions
+  - JSON storage in `~/.pixelperfect/export_presets.json` (or `AppData/PixelPerfect/` on Windows)
+  - `_load_export_presets()` and `_save_export_presets()` methods manage persistence
+  - Per-format settings with recent directories tracking
+- **Quick Export**: Ctrl+Shift+E uses last export settings for instant re-export
+  - `quick_export()` method loads last export type and settings
+  - File menu includes "Quick Export" option
+  - Keyboard shortcut: Ctrl+Shift+E
+
+### 🎨 Recent Colors Selection Improvements
+- **Reliable Selection**: Recent colors view now properly sets active brush color
+  - `_select_recent_color()` in `color_view_manager.py` stores selected color in `main_window.recent_selected_color`
+  - `get_current_color()` in `main_window.py` handles recent view mode correctly
+  - Fixed color selection not activating brush tool when clicking recent colors
+
+### 📁 Files Modified
+- `src/ui/main_window.py` - Added zoom utilities (`_zoom_fit`, `_zoom_100`, `_zoom_at_cursor`, `_apply_zoom_with_focus`, `_get_fit_zoom`)
+- `src/core/event_dispatcher.py` - Added mouse wheel handler for Ctrl+wheel zoom-to-cursor
+- `src/ui/file_operations_manager.py` - Added export presets system (`_prompt_export_settings`, `_load_export_presets`, `_save_export_presets`, `quick_export`)
+- `src/ui/ui_builder.py` - Added Fit and 100% buttons to toolbar
+- `src/ui/color_view_manager.py` - Improved recent colors selection handling
+
+---
+
 ## Version 2.7.0 - Advanced Features & Critical Bug Fixes
 **Date**: January 1, 2026  
 **Type**: Major Feature & Bug Fix Release

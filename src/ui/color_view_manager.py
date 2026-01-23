@@ -286,6 +286,10 @@ class ColorViewManager:
     
     def _select_recent_color(self, color):
         """Handle selecting a recent color"""
+        # Store selected recent color in main window for consistent retrieval
+        if hasattr(self, 'main_window') and self.main_window:
+            self.main_window.recent_selected_color = color
+
         # Set the color in primary view for drawing
         if hasattr(self, 'primary_view') and self.primary_view:
             if hasattr(self.primary_view, 'selected_color'):
@@ -304,6 +308,7 @@ class ColorViewManager:
         if hasattr(self, 'main_window') and self.main_window:
             if hasattr(self.main_window, 'recent_colors') and self.main_window.recent_colors:
                 self.main_window.recent_colors.clear()
+                self.main_window.recent_selected_color = None
                 # Refresh the view
                 self._show_recent_colors_view()
 

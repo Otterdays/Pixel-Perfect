@@ -70,6 +70,25 @@
 
 ## 🆕 Latest Updates
 
+### Version 2.7.4 - Smart Layer Caching
+- **⚡ Smart Layer Caching**: Intelligent layer compositor caching with multi-factor change detection
+- **Performance boost**: Eliminates redundant layer blending operations for faster multi-layer rendering
+- **Automatic detection**: Catches pixel changes through all code paths (version tracking + pixel hashing)
+
+### Version 2.7.3 - Theme, Tools & UI Polish
+- **🎨 Claude Theme**: New bright, warm theme (cream + coral) in theme dropdown.
+- **🖌️ Dither/Spray Previews**: Canvas checkerboard preview for Dither; spray circular outline.
+- **✏️ Eraser Right-Click**: Delete edge lines on canvas (right-click or right-drag).
+- **🧩 Minimalistic Panel Buttons**: Collapse/expand use small ‹/› chevrons; restore buttons centered.
+- **🐛 Canvas Recenter Fix**: Grid no longer stays off-center when opening panels after close.
+
+### Version 2.7.2 - Quality of Life Enhancements
+- **🔍 Zoom to Cursor**: Ctrl+wheel now zooms while keeping cursor position centered in view.
+- **📐 Fit/100% View**: New toolbar buttons for quick canvas fitting and 100% zoom reset.
+- **📦 Export Presets**: Saveable export settings (scale, transparency, duration, layout) with JSON persistence.
+- **⚡ Quick Export**: Ctrl+Shift+E uses last export settings for instant re-export.
+- **🎨 Recent Colors**: Improved color selection reliability from Recent palette view.
+
 ### Version 2.7.1 - Dither Tool & Recent Colors
 - **🏁 Dither Tool**: New checkerboard pattern brush for retro shading (draws pixels in `(x+y)%2` pattern).
 - **🎨 Recent Colors**: New palette view that tracks your last 16 used colors automatically.
@@ -267,6 +286,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - `Ctrl++` - Zoom in
 - `Ctrl+-` - Zoom out
 - `Ctrl+0` - Reset zoom
+- `Ctrl+Wheel` - Zoom to cursor (maintains cursor position in view)
 
 #### Edit Operations
 - `Ctrl+Z` - Undo
@@ -277,6 +297,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 - `Ctrl+O` - Open project
 - `Ctrl+S` - Save project
 - `Ctrl+E` - Export
+- `Ctrl+Shift+E` - Quick Export (uses last export settings)
 
 ## 🛠️ Technology Stack
 
@@ -380,6 +401,7 @@ Pixel Perfect/
 - **<16ms input latency** for responsive drawing with immediate pixel display
 - **<2 second startup time** on modern hardware
 - **Efficient memory usage** with optimized numpy arrays for large projects
+- **Smart layer caching** (v2.7.4): Intelligent compositor caching eliminates redundant blending operations
 - **Smooth animation playback** up to 60fps with accurate frame timing
 - **Zero crashes** - stable operation during comprehensive testing
 - **Auto-zoom optimization** for large canvases (64x64)

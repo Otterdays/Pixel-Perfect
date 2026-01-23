@@ -6,6 +6,7 @@ Frame management and playback controls
 import customtkinter as ctk
 from typing import Optional, Callable
 from animation.timeline import AnimationTimeline
+from PIL import Image
 
 class TimelinePanel:
     """Animation timeline UI panel"""
@@ -19,6 +20,8 @@ class TimelinePanel:
         self.timeline_frame = None
         self.frame_buttons = []
         self.playback_controls = None
+        self._playback_timer_id = None  # Tkinter after() timer ID
+        self._thumbnail_images = []  # Keep references to prevent garbage collection
         
         self._create_ui()
         self._update_display()
@@ -151,9 +154,78 @@ class TimelinePanel:
             text=f"Frame 1 of {self.timeline.get_frame_count()}"
         )
         self.frame_info_label.pack(pady=5, padx=10)
+        
+        # Onion skinning controls
+        onion_frame = ctk.CTkFrame(self.timeline_frame, fg_color="transparent")
+        onion_frame.pack(fill="x", padx=10, pady=(5, 10))
+        
+        # Onion skin toggle
+        self.onion_skin_var = ctk.BooleanVar(value=self.timeline.onion_skin_enabled)
+        onion_toggle = ctk.CTkCheckBox(
+            onion_frame,
+            text="Onion Skin",
+            variable=self.onion_skin_var,
+            command=self._toggle_onion_skin
+        )
+        onion_toggle.pack(side="left", padx=(0, 10))
+        
+        # Previous frame opacity
+        prev_label = ctk.CTkLabel(onion_frame, text="Prev:")
+        prev_label.pack(side="left", padx=(0, 5))
+        self.prev_opacity_var = ctk.DoubleVar(value=self.timeline.onion_skin_prev_opacity)
+        prev_slider = ctk.CTkSlider(
+            onion_frame,
+            from_=0.0,
+            to=1.0,
+            variable=self.prev_opacity_var,
+            width=80,
+            command=self._on_prev_opacity_change
+        )
+        prev_slider.pack(side="left", padx=(0, 10))
+        
+        # Next frame opacity
+        next_label = ctk.CTkLabel(onion_frame, text="Next:")
+        next_label.pack(side="left", padx=(0, 5))
+        self.next_opacity_var = ctk.DoubleVar(value=self.timeline.onion_skin_next_opacity)
+        next_slider = ctk.CTkSlider(
+            onion_frame,
+            from_=0.0,
+            to=1.0,
+            variable=self.next_opacity_var,
+            width=80,
+            command=self._on_next_opacity_change
+        )
+        next_slider.pack(side="left")
+    
+    def _toggle_onion_skin(self):
+        """Toggle onion skinning on/off"""
+        self.timeline.onion_skin_enabled = self.onion_skin_var.get()
+        # Trigger canvas update to show/hide onion skin
+        if self.on_frame_changed:
+            self.on_frame_changed()
+        # Also trigger pixel display update if available
+        if hasattr(self, 'update_pixel_display_callback') and self.update_pixel_display_callback:
+            self.update_pixel_display_callback()
+    
+    def _on_prev_opacity_change(self, value):
+        """Handle previous frame opacity change"""
+        self.timeline.onion_skin_prev_opacity = float(value)
+        # Trigger canvas update to show updated opacity
+        if hasattr(self, 'update_pixel_display_callback') and self.update_pixel_display_callback:
+            self.update_pixel_display_callback()
+    
+    def _on_next_opacity_change(self, value):
+        """Handle next frame opacity change"""
+        self.timeline.onion_skin_next_opacity = float(value)
+        # Trigger canvas update to show updated opacity
+        if hasattr(self, 'update_pixel_display_callback') and self.update_pixel_display_callback:
+            self.update_pixel_display_callback()
     
     def _update_display(self):
         """Update the timeline display"""
+        # Clear thumbnail cache
+        self._thumbnail_images.clear()  # Clear old thumbnails
+        
         # Clear existing frame buttons (optimized - only destroy if needed)
         for widget in self.frame_list_frame.winfo_children():
             widget.destroy()
@@ -177,27 +249,69 @@ class TimelinePanel:
             self.play_btn.configure(text="⏸")
         else:
             self.play_btn.configure(text="▶")
+        
+        # Update onion skin controls
+        if hasattr(self, 'onion_skin_var'):
+            self.onion_skin_var.set(self.timeline.onion_skin_enabled)
+        if hasattr(self, 'prev_opacity_var'):
+            self.prev_opacity_var.set(self.timeline.onion_skin_prev_opacity)
+        if hasattr(self, 'next_opacity_var'):
+            self.next_opacity_var.set(self.timeline.onion_skin_next_opacity)
     
     def _create_frame_button(self, index: int, frame):
-        """Create a button for a specific frame"""
-        frame_btn = ctk.CTkButton(
-            self.frame_list_frame,
+        """Create a button with thumbnail for a specific frame"""
+        # Create container for thumbnail + label
+        frame_container = ctk.CTkFrame(self.frame_list_frame, fg_color="transparent")
+        frame_container.pack(side="left", padx=2)
+        
+        # Generate thumbnail (32x32 preview)
+        thumb_size = 32
+        try:
+            # Convert numpy array to PIL Image
+            img = Image.fromarray(frame.pixels, 'RGBA')
+            img.thumbnail((thumb_size, thumb_size), Image.Resampling.NEAREST)
+            
+            # Create background for transparency
+            bg = Image.new('RGBA', (thumb_size, thumb_size), (60, 60, 60, 255))
+            # Center the thumbnail
+            offset = ((thumb_size - img.width) // 2, (thumb_size - img.height) // 2)
+            bg.paste(img, offset, img)
+            
+            # Use CTkImage for proper HighDPI support
+            ctk_image = ctk.CTkImage(light_image=bg, dark_image=bg, size=(thumb_size, thumb_size))
+            self._thumbnail_images.append(ctk_image)  # Keep reference
+            
+            thumb_label = ctk.CTkLabel(
+                frame_container,
+                image=ctk_image,
+                text="",
+                width=thumb_size,
+                height=thumb_size
+            )
+            thumb_label.pack()
+            thumb_label.bind("<Button-1>", lambda e, i=index: self._select_frame(i))
+        except Exception:
+            # Fallback to text if thumbnail fails
+            pass
+        
+        # Frame number label
+        is_current = index == self.timeline.current_frame
+        frame_label = ctk.CTkLabel(
+            frame_container,
             text=f"F{index + 1}",
-            width=50,
-            height=30,
-            command=lambda: self._select_frame(index)
+            font=ctk.CTkFont(size=10, weight="bold" if is_current else "normal"),
+            text_color="#4a9eff" if is_current else "#888888"
         )
-        frame_btn.pack(side="left", padx=2)
+        frame_label.pack()
+        frame_label.bind("<Button-1>", lambda e, i=index: self._select_frame(i))
         
         # Highlight current frame
-        if index == self.timeline.current_frame:
-            frame_btn.configure(fg_color="blue")
-        else:
-            frame_btn.configure(fg_color="gray")
+        if is_current:
+            frame_container.configure(fg_color="#2a4a6a")
         
-        # Store button reference
+        # Store reference
         self.frame_buttons.append({
-            'button': frame_btn,
+            'container': frame_container,
             'index': index
         })
     
@@ -265,13 +379,41 @@ class TimelinePanel:
         """Toggle animation playback"""
         if self.timeline.is_playing:
             self.timeline.pause()
+            # Cancel any pending timer
+            if self._playback_timer_id:
+                self.timeline_frame.after_cancel(self._playback_timer_id)
+                self._playback_timer_id = None
         else:
             self.timeline.play()
+            # Start playback loop
+            self._advance_frame()
         
         self._update_display()
     
+    def _advance_frame(self):
+        """Advance to next frame during playback"""
+        if not self.timeline.is_playing:
+            self._playback_timer_id = None
+            return
+        
+        # Advance frame
+        self.timeline.next_frame()
+        self._update_display()
+        
+        if self.on_frame_changed:
+            self.on_frame_changed()
+        
+        # Schedule next frame based on FPS
+        delay_ms = int(1000 / self.timeline.fps)
+        self._playback_timer_id = self.timeline_frame.after(delay_ms, self._advance_frame)
+    
     def _stop_animation(self):
         """Stop animation"""
+        # Cancel any pending timer
+        if self._playback_timer_id:
+            self.timeline_frame.after_cancel(self._playback_timer_id)
+            self._playback_timer_id = None
+        
         self.timeline.stop()
         self._update_display()
         

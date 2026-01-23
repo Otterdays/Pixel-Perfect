@@ -28,6 +28,13 @@ class AnimationTimeline:
         self.fps = 12  # Default FPS for pixel art animation
         self.loop = True
         
+        # Onion skinning settings
+        self.onion_skin_enabled = False
+        self.onion_skin_prev_opacity = 0.5  # 0.0 to 1.0
+        self.onion_skin_next_opacity = 0.5  # 0.0 to 1.0
+        self.onion_skin_prev_frames = 1  # Number of previous frames to show
+        self.onion_skin_next_frames = 1  # Number of next frames to show
+        
         # Callbacks
         self.on_frame_changed: Optional[Callable] = None
         self.on_playback_changed: Optional[Callable] = None
@@ -86,7 +93,7 @@ class AnimationTimeline:
         """Clear all frames and add a default frame"""
         self.frames.clear()
         self.add_frame()
-        self.current_frame_index = 0
+        self.current_frame = 0
     
     def duplicate_frame(self, frame_index: int) -> bool:
         """Duplicate a frame"""
@@ -143,6 +150,24 @@ class AnimationTimeline:
         if 0 <= self.current_frame < len(self.frames):
             return self.frames[self.current_frame]
         return None
+    
+    def get_previous_frames(self, count: int = 1) -> List[AnimationFrame]:
+        """Get previous frames for onion skinning"""
+        frames = []
+        for i in range(1, count + 1):
+            idx = self.current_frame - i
+            if idx >= 0:
+                frames.append(self.frames[idx])
+        return frames
+    
+    def get_next_frames(self, count: int = 1) -> List[AnimationFrame]:
+        """Get next frames for onion skinning"""
+        frames = []
+        for i in range(1, count + 1):
+            idx = self.current_frame + i
+            if idx < len(self.frames):
+                frames.append(self.frames[idx])
+        return frames
     
     def get_frame(self, index: int) -> Optional[AnimationFrame]:
         """Get frame at given index"""

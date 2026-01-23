@@ -23,11 +23,16 @@ class Layer:
         else:
             self.width = 0
             self.height = 0
+        # Version counter for cache invalidation - incremented when pixels change
+        self._version: int = 0
+        # Hash of pixel data for detecting external modifications
+        self._pixel_hash: Optional[int] = None
     
     def set_pixel(self, x: int, y: int, color):
         """Set pixel at given coordinates"""
         if 0 <= x < self.width and 0 <= y < self.height:
             self.pixels[y, x] = color
+            self._version += 1
     
     def get_pixel(self, x: int, y: int):
         """Get pixel color at given coordinates"""
@@ -38,6 +43,23 @@ class Layer:
     def clear(self):
         """Clear all pixels"""
         self.pixels.fill(0)
+        self._version += 1
+    
+    def mark_modified(self):
+        """Explicitly mark this layer as modified (for direct pixel array access)"""
+        self._version += 1
+    
+    def compute_pixel_hash(self) -> int:
+        """Compute a fast hash of pixel data for change detection"""
+        # Use a fast hash based on a sample of pixels + shape
+        # This catches most changes without being too expensive
+        return hash((
+            self.pixels.shape,
+            self.pixels[0, 0].tobytes() if self.pixels.size > 0 else b'',
+            self.pixels[-1, -1].tobytes() if self.pixels.size > 0 else b'',
+            self.pixels[self.height//2, self.width//2].tobytes() if self.pixels.size > 0 else b'',
+            np.sum(self.pixels[:, :, 3])  # Sum of alpha channel - catches most changes
+        ))
     
     @property
     def zoom(self):
@@ -64,6 +86,12 @@ class LayerManager:
         self._cache_valid: bool = False
         self._dirty_regions: List[Tuple[int, int, int, int]] = []  # (x, y, w, h) regions that need update
         
+        # Cache validation: store layer versions and hashes when cache was computed
+        self._cached_layer_versions: List[int] = []
+        self._cached_layer_hashes: List[int] = []
+        self._cached_layer_visibility: List[bool] = []
+        self._cached_layer_opacity: List[float] = []
+        
         # Create default layer
         self._create_default_layer()
     
@@ -84,6 +112,44 @@ class LayerManager:
             self._dirty_regions.append(region)
             # For now, just invalidate entire cache (incremental update is future optimization)
             self._cache_valid = False
+    
+    def _is_cache_valid(self) -> bool:
+        """
+        Check if the cache is still valid by comparing layer states.
+        This catches direct pixel modifications that bypass invalidate_cache().
+        """
+        if not self._cache_valid or self._cached_composite is None:
+            return False
+        
+        # Check if layer count changed
+        if len(self.layers) != len(self._cached_layer_versions):
+            return False
+        
+        # Check each layer for changes
+        for i, layer in enumerate(self.layers):
+            # Check version (catches set_pixel, clear, mark_modified)
+            if layer._version != self._cached_layer_versions[i]:
+                return False
+            
+            # Check visibility and opacity
+            if layer.visible != self._cached_layer_visibility[i]:
+                return False
+            if layer.opacity != self._cached_layer_opacity[i]:
+                return False
+            
+            # Check pixel hash (catches direct array modifications)
+            current_hash = layer.compute_pixel_hash()
+            if current_hash != self._cached_layer_hashes[i]:
+                return False
+        
+        return True
+    
+    def _update_cache_metadata(self):
+        """Store current layer states for cache validation"""
+        self._cached_layer_versions = [layer._version for layer in self.layers]
+        self._cached_layer_hashes = [layer.compute_pixel_hash() for layer in self.layers]
+        self._cached_layer_visibility = [layer.visible for layer in self.layers]
+        self._cached_layer_opacity = [layer.opacity for layer in self.layers]
     
     def _create_default_layer(self):
         """Create the default background layer"""
@@ -270,14 +336,12 @@ class LayerManager:
         """
         Flatten all visible layers into a single image.
         
-        NOTE: Caching disabled - many code paths modify layer.pixels directly
-        without going through tracked methods. Proper caching requires a 
-        comprehensive change tracking system.
+        Uses smart caching with change detection to avoid recomputing
+        when layers haven't changed.
         """
-        # DISABLED: Caching causes issues with selection tool and undo
-        # Return cached composite if valid
-        # if self._cache_valid and self._cached_composite is not None:
-        #     return self._cached_composite
+        # Check if cache is valid (including detecting direct pixel modifications)
+        if self._is_cache_valid():
+            return self._cached_composite
         
         result = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         
@@ -315,10 +379,11 @@ class LayerManager:
                 # Update alpha channel (max of existing and new)
                 result[:, :, 3] = np.maximum(result[:, :, 3], layer_alpha.astype(np.uint8))
         
-        # DISABLED: Caching
-        # self._cached_composite = result
-        # self._cache_valid = True
-        # self._dirty_regions.clear()
+        # Update cache
+        self._cached_composite = result
+        self._cache_valid = True
+        self._dirty_regions.clear()
+        self._update_cache_metadata()
         
         return result
     
@@ -339,6 +404,9 @@ class LayerManager:
             # CRITICAL: Update layer's cached width/height after resizing pixels
             layer.width = new_width
             layer.height = new_height
+            layer._version += 1  # Mark as modified
+        
+        self.invalidate_cache()
     
     def get_layer_count(self) -> int:
         """Get number of layers"""

@@ -203,6 +203,50 @@ class GeminiTheme(Theme):
         self.scrollbar_button_hover_color = "#4a5159"  # Slightly lighter
         self.scrollbar_track_color = "#2d3239"  # Toned down track
 
+class ClaudeTheme(Theme):
+    """Bright, vibrant theme inspired by Anthropic Claude's brand colors.
+    Features warm coral/salmon accents with clean, modern aesthetics."""
+    def __init__(self):
+        super().__init__("Claude")
+        # Main window colors - warm cream/beige background
+        self.bg_primary = "#faf6f1"       # Warm cream (Claude's background)
+        self.bg_secondary = "#ffffff"     # Pure white panels
+        self.bg_tertiary = "#f0ebe4"      # Soft warm grey
+        
+        # Text colors - warm dark tones
+        self.text_primary = "#1a1612"     # Warm black
+        self.text_secondary = "#5c534a"   # Warm grey
+        self.text_disabled = "#a89f94"    # Light warm grey
+        
+        # Button colors - Claude's signature coral/salmon
+        self.button_normal = "#fff5f0"    # Very light coral tint
+        self.button_hover = "#ffe8df"     # Light coral hover
+        self.button_active = "#d97757"    # Claude's coral/salmon (main brand color)
+        
+        # Border colors
+        self.border_normal = "#e8e0d8"    # Warm light border
+        self.border_focus = "#d97757"     # Coral focus
+        
+        # Canvas colors - clean and bright
+        self.canvas_bg = "#ffffff"        # Pure white canvas
+        self.canvas_border = "#d4ccc4"    # Warm grey border
+        self.grid_color = "#f0ebe4"       # Subtle warm grid
+        
+        # Tool colors - coral theme
+        self.tool_selected = "#d97757"    # Claude coral for selected
+        self.tool_unselected = "#fff5f0"  # Light coral tint for unselected
+        
+        # Selection colors - vibrant and visible
+        self.selection_outline = "#c45a3b" # Deeper coral outline
+        self.selection_handle = "#f5b041"  # Warm golden yellow
+        self.selection_edge = "#d97757"    # Coral edge
+        
+        # Scrollbar colors - warm theme
+        self.scrollbar_button_color = "#ffe8df"      # Light coral
+        self.scrollbar_button_hover_color = "#ffd4c4" # Medium coral
+        self.scrollbar_track_color = "#faf6f1"       # Warm cream
+
+
 class ThemeManager:
     """Manages application themes"""
     
@@ -211,7 +255,8 @@ class ThemeManager:
             "Basic Grey": BasicGreyTheme(),
             "Gemini": GeminiTheme(),
             "Angelic": AngelicTheme(),
-            "American": AmericanTheme()
+            "American": AmericanTheme(),
+            "Claude": ClaudeTheme()
         }
         self.current_theme = self.themes["Basic Grey"]
         self.on_theme_changed = None  # Callback when theme changes

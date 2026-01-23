@@ -28,6 +28,7 @@ class GridControlManager:
         self.grid_button = None
         self.grid_overlay_button = None
         self.grid_mode_button = None
+        self.tile_seam_button = None
     
     def toggle_grid(self):
         """Toggle grid visibility"""
@@ -116,4 +117,21 @@ class GridControlManager:
                 self.grid_mode_button.configure(fg_color=theme.button_active)
             else:
                 self.grid_mode_button.configure(fg_color=theme.button_normal)
+    
+    def toggle_tile_seam_preview(self):
+        """Toggle tile seam preview (shows edge mismatches for tiling)"""
+        self.canvas.show_tile_seam_preview = not self.canvas.show_tile_seam_preview
+        self.update_tile_seam_button_text()
+        if self.force_canvas_update_callback:
+            self.force_canvas_update_callback()
+    
+    def update_tile_seam_button_text(self):
+        """Update tile seam preview button text to show current state"""
+        if self.tile_seam_button:
+            if self.canvas.show_tile_seam_preview:
+                self.tile_seam_button.configure(text="Seam: ON")
+                self.tile_seam_button.configure(fg_color="#ff6600")  # Orange for visibility
+            else:
+                self.tile_seam_button.configure(text="Seam: OFF")
+                self.tile_seam_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
 

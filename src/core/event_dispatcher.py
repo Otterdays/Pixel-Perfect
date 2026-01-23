@@ -64,6 +64,10 @@ class EventDispatcher:
             self.main_window.drawing_canvas.bind("<B3-Motion>", self.on_tkinter_canvas_right_drag)
             self.main_window.drawing_canvas.bind("<ButtonRelease-3>", self.on_tkinter_canvas_right_up)
             self.main_window.drawing_canvas.bind("<Motion>", self.on_tkinter_canvas_mouse_move)
+            # Mouse wheel zoom (Ctrl + wheel)
+            self.main_window.drawing_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.main_window.drawing_canvas.bind("<Button-4>", self.on_mouse_wheel)
+            self.main_window.drawing_canvas.bind("<Button-5>", self.on_mouse_wheel)
     
     # ==================== Window & Panel Events ====================
     
@@ -142,6 +146,8 @@ class EventDispatcher:
                         self.main_window.canvas_renderer.draw_eraser_preview(canvas_x_coord, canvas_y_coord)
                     elif self.main_window.current_tool == "spray":
                         self.main_window.canvas_renderer.draw_spray_preview(canvas_x_coord, canvas_y_coord)
+                    elif self.main_window.current_tool == "dither":
+                        self.main_window.canvas_renderer.draw_dither_preview(canvas_x_coord, canvas_y_coord)
                     elif self.main_window.current_tool == "texture":
                         texture_tool = self.main_window.tools.get("texture")
                         if texture_tool:
@@ -151,6 +157,7 @@ class EventDispatcher:
                     self.main_window.drawing_canvas.delete("brush_preview")
                     self.main_window.drawing_canvas.delete("eraser_preview")
                     self.main_window.drawing_canvas.delete("spray_preview")
+                    self.main_window.drawing_canvas.delete("dither_preview")
                     self.main_window.drawing_canvas.delete("texture_preview")
                     self.main_window.drawing_canvas.delete("edge_preview")
             else:
@@ -219,9 +226,17 @@ class EventDispatcher:
                     self.main_window.selection_mgr.cancel_rotation()
                     return
         
-        # Ctrl+E for export
+        # Ctrl+E for export PNG
         if event.state & 0x4 and event.keysym.lower() == 'e':
-            self.main_window.export_png()
+            if not (event.state & 0x1):  # Not Shift (Ctrl+E, not Ctrl+Shift+E)
+                if hasattr(self.main_window, 'file_ops'):
+                    self.main_window.file_ops.export_png()
+                return
+        
+        # Ctrl+Shift+E for quick export
+        if event.state & 0x4 and event.state & 0x1 and event.keysym.lower() == 'e':
+            if hasattr(self.main_window, 'file_ops'):
+                self.main_window.file_ops.quick_export()
             return
         
         # Tool shortcuts (B, E, F, D, S, L, Q, C, P, M, R, T, X)
@@ -234,6 +249,7 @@ class EventDispatcher:
                 'f': 'fill',
                 'd': 'eyedropper',
                 's': 'selection',
+                'w': 'magic_wand',
                 'l': 'line',
                 'q': 'square',
                 'c': 'circle',
@@ -251,6 +267,27 @@ class EventDispatcher:
             if key == 'x':
                 self.main_window.swap_colors()
                 return
+
+    def on_mouse_wheel(self, event):
+        """Handle mouse wheel zoom with Ctrl modifier"""
+        # Require Ctrl for zoom to avoid accidental scroll zoom
+        if not (event.state & 0x4):
+            return
+
+        direction = 0
+        if hasattr(event, 'delta') and event.delta != 0:
+            direction = 1 if event.delta > 0 else -1
+        elif hasattr(event, 'num'):
+            if event.num == 4:
+                direction = 1
+            elif event.num == 5:
+                direction = -1
+
+        if direction == 0:
+            return
+
+        if hasattr(self.main_window, '_zoom_at_cursor'):
+            self.main_window._zoom_at_cursor(direction, event.x, event.y)
     
     # ==================== Mouse Events (Canvas) ====================
     
@@ -383,6 +420,11 @@ class EventDispatcher:
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
             tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 1, current_color)
             self.main_window.canvas_renderer.update_pixel_display()
+        elif self.main_window.current_tool == "magic_wand":
+            # Magic wand works with flattened canvas (all layers combined)
+            # Use canvas directly since it shows flattened layers
+            tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 1, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
         elif self.main_window.current_tool in ["fill", "texture", "line", "rectangle", "circle", "move", "selection"]:
             # Handle fill, texture, shape, move, and selection tools with layer-based approach
             draw_layer = self.main_window._get_drawing_layer()
@@ -467,6 +509,10 @@ class EventDispatcher:
         
         self.main_window.canvas_renderer.update_pixel_display()
         
+        # Save drawing to current animation frame
+        if hasattr(self.main_window, 'layer_anim_mgr'):
+            self.main_window.layer_anim_mgr.save_canvas_to_current_frame()
+        
         # Clear dragging state
         self.is_dragging = False
         self.last_canvas_x = None
@@ -474,7 +520,7 @@ class EventDispatcher:
     
     def on_tkinter_canvas_right_click(self, event):
         """Handle right mouse click on tkinter canvas"""
-        # Only handle right-click for edge tool
+        # Handle right-click for edge tool
         if self.main_window.current_tool == "edge":
             # Convert tkinter screen coordinates to canvas coordinates with float precision
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
@@ -484,6 +530,15 @@ class EventDispatcher:
             if tool:
                 current_color = self.main_window.get_current_color()
                 tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
+                self.main_window.canvas_renderer.update_pixel_display()
+        
+        # Handle right-click for eraser tool (delete edge lines)
+        elif self.main_window.current_tool == "eraser":
+            canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
+            tool = self.main_window.tools.get("eraser")
+            if tool:
+                current_color = self.main_window.get_current_color()
+                tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
                 self.main_window.canvas_renderer.update_pixel_display()
     
     def on_tkinter_canvas_mouse_drag(self, event):
@@ -629,6 +684,10 @@ class EventDispatcher:
         if not self.canvas_optimizer.should_process_move(canvas_x, canvas_y):
             return
         
+        # Update status bar cursor position
+        if hasattr(self.main_window, '_update_status_bar'):
+            self.main_window._update_status_bar(canvas_x, canvas_y)
+        
         # Update copy preview position if in placement mode
         if hasattr(self.main_window, 'selection_mgr') and self.main_window.selection_mgr.is_placing_copy:
             self.main_window.selection_mgr.copy_preview_pos = (canvas_x, canvas_y)
@@ -657,6 +716,8 @@ class EventDispatcher:
             self.main_window.canvas_renderer.draw_eraser_preview(canvas_x, canvas_y)
         elif self.main_window.current_tool == "spray":
             self.main_window.canvas_renderer.draw_spray_preview(canvas_x, canvas_y)
+        elif self.main_window.current_tool == "dither":
+            self.main_window.canvas_renderer.draw_dither_preview(canvas_x, canvas_y)
         elif self.main_window.current_tool == "edge":
             # Edge tool has its own preview system - call its on_mouse_move method
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
@@ -683,31 +744,55 @@ class EventDispatcher:
             self.main_window.drawing_canvas.delete("shape_preview")
     
     def on_tkinter_canvas_right_drag(self, event):
-        """Handle right-button drag on canvas (used for edge-tool erase)."""
-        if self.main_window.current_tool != "edge":
-            return
-        tool = self.main_window.tools.get("edge")
-        if not tool:
-            return
-        # Float precision for edge tool
-        canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
-        # Erase continuously with button=3
-        current_color = self.main_window.get_current_color()
-        tool.on_mouse_move(self.main_window.canvas, canvas_x_float, canvas_y_float, current_color)
-        tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
-        self.main_window.canvas_renderer.update_pixel_display()
+        """Handle right-button drag on canvas (used for edge-tool and eraser erase)."""
+        if self.main_window.current_tool == "edge":
+            tool = self.main_window.tools.get("edge")
+            if not tool:
+                return
+            # Float precision for edge tool
+            canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
+            # Erase continuously with button=3
+            current_color = self.main_window.get_current_color()
+            tool.on_mouse_move(self.main_window.canvas, canvas_x_float, canvas_y_float, current_color)
+            tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
+        
+        elif self.main_window.current_tool == "eraser":
+            tool = self.main_window.tools.get("eraser")
+            if not tool:
+                return
+            canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
+            current_color = self.main_window.get_current_color()
+            tool.on_right_drag(self.main_window.canvas, canvas_x, canvas_y, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
 
     def on_tkinter_canvas_right_up(self, event):
-        """Handle right-button release on canvas (end edge-tool erase)."""
-        if self.main_window.current_tool != "edge":
-            return
-        tool = self.main_window.tools.get("edge")
-        if not tool:
-            return
-        canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
-        current_color = self.main_window.get_current_color()
-        tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
-        self.main_window.canvas_renderer.update_pixel_display()
+        """Handle right-button release on canvas (end edge-tool or eraser erase)."""
+        if self.main_window.current_tool == "edge":
+            tool = self.main_window.tools.get("edge")
+            if not tool:
+                return
+            canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
+            current_color = self.main_window.get_current_color()
+            tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
+            
+            # Save drawing to current animation frame
+            if hasattr(self.main_window, 'layer_anim_mgr'):
+                self.main_window.layer_anim_mgr.save_canvas_to_current_frame()
+        
+        elif self.main_window.current_tool == "eraser":
+            tool = self.main_window.tools.get("eraser")
+            if not tool:
+                return
+            canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
+            current_color = self.main_window.get_current_color()
+            tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
+            self.main_window.canvas_renderer.update_pixel_display()
+            
+            # Save drawing to current animation frame
+            if hasattr(self.main_window, 'layer_anim_mgr'):
+                self.main_window.layer_anim_mgr.save_canvas_to_current_frame()
     
     # ==================== UI Callback Events ====================
     

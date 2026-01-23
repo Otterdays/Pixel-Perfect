@@ -60,6 +60,25 @@ class UIBuilder:
             command=self.callbacks['on_zoom_change']
         )
         self.widgets['zoom_menu'].pack(side="left", padx=5)
+
+        # Zoom utility buttons
+        self.widgets['zoom_fit_button'] = ctk.CTkButton(
+            self.widgets['toolbar'],
+            text="Fit",
+            width=50,
+            command=self.callbacks['zoom_fit']
+        )
+        self.widgets['zoom_fit_button'].pack(side="left", padx=(8, 2))
+        create_tooltip(self.widgets['zoom_fit_button'], "Fit canvas to view", delay=500)
+
+        self.widgets['zoom_100_button'] = ctk.CTkButton(
+            self.widgets['toolbar'],
+            text="100%",
+            width=60,
+            command=self.callbacks['zoom_100']
+        )
+        self.widgets['zoom_100_button'].pack(side="left", padx=2)
+        create_tooltip(self.widgets['zoom_100_button'], "Set zoom to 100%", delay=500)
         
         # Undo/Redo buttons
         self.create_undo_redo_buttons()
@@ -141,6 +160,9 @@ class UIBuilder:
         
         self.widgets['grid_overlay_button'] = ctk.CTkButton(self.widgets['toolbar'], text="Grid Overlay", width=90, command=self.callbacks['toggle_grid_overlay'])
         self.widgets['grid_overlay_button'].pack(side="right", padx=5)
+        
+        self.widgets['tile_seam_button'] = ctk.CTkButton(self.widgets['toolbar'], text="Seam", width=70, command=self.callbacks.get('toggle_tile_seam', lambda: None))
+        self.widgets['tile_seam_button'].pack(side="right", padx=5)
 
     def create_undo_redo_buttons(self):
         """Create undo/redo buttons in the toolbar"""
@@ -190,6 +212,7 @@ class UIBuilder:
             ("fill", "Fill", "Fill areas with color (F)"),
             ("eyedropper", "Eyedropper", "Sample colors from canvas (I)"),
             ("selection", "Select", "Select rectangular areas (S)"),
+            ("magic_wand", "Wand", "Select by color similarity (W)"),
             ("move", "Move", "Move selected pixels (M)"),
             ("line", "Line", "Draw straight lines (L)"),
             ("rectangle", "Square", "Draw rectangles and squares (R)"),

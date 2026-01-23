@@ -12,6 +12,19 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">Pixel Perfect</a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#shortcuts">Shortcuts</a>
+                <a href="#faq">FAQ</a>
+                <a href="https://github.com/AfyKirby1/Pixel-Perfect" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-container">
@@ -27,7 +40,7 @@
                     <a href="https://github.com/AfyKirby1/Pixel-Perfect/releases" class="download-btn" target="_blank" rel="noopener noreferrer">
                         <span class="download-icon">⬇</span>
                         <span class="download-text">Download Now</span>
-                        <span class="download-badge">v2.6.2</span>
+                        <span class="download-badge">v2.7.4</span>
                     </a>
                     <div class="download-info">
                         <span class="file-size">29MB</span>
@@ -42,63 +55,314 @@
         </div>
     </section>
 
+    <!-- What's New Section -->
+    <section class="whats-new">
+        <div class="container">
+            <h2 class="section-title">What's New in 2.7</h2>
+            <div class="updates-grid">
+                <div class="update-card highlight">
+                    <div class="update-icon">⚡</div>
+                    <div class="update-content">
+                        <h3>Smart Layer Caching</h3>
+                        <p>Intelligent change detection eliminates redundant blending operations for faster multi-layer rendering</p>
+                    </div>
+                </div>
+                <div class="update-card">
+                    <div class="update-icon">🎨</div>
+                    <div class="update-content">
+                        <h3>Claude Theme</h3>
+                        <p>Warm cream backgrounds with coral accents inspired by Anthropic's design language</p>
+                    </div>
+                </div>
+                <div class="update-card">
+                    <div class="update-icon">🏁</div>
+                    <div class="update-content">
+                        <h3>Dither Tool</h3>
+                        <p>Checkerboard pattern brush for authentic retro shading and dithering effects</p>
+                    </div>
+                </div>
+                <div class="update-card">
+                    <div class="update-icon">🔍</div>
+                    <div class="update-content">
+                        <h3>Zoom to Cursor</h3>
+                        <p>Ctrl+wheel zooms while keeping your cursor position centered in view</p>
+                    </div>
+                </div>
+                <div class="update-card">
+                    <div class="update-icon">💾</div>
+                    <div class="update-content">
+                        <h3>Export Presets</h3>
+                        <p>Save your export settings and quick export with Ctrl+Shift+E</p>
+                    </div>
+                </div>
+                <div class="update-card">
+                    <div class="update-icon">🧠</div>
+                    <div class="update-content">
+                        <h3>95% Less Memory</h3>
+                        <p>Delta-based undo system stores only changed pixels</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Screenshots Section -->
     <section class="screenshots">
         <div class="container">
-            <h2 class="section-title">Two Beautiful Themes</h2>
+            <h2 class="section-title">Beautiful Themes</h2>
+            <p class="section-subtitle">Choose from 5 carefully crafted themes for your perfect workspace</p>
             <div class="screenshots-grid">
                 <div class="screenshot-card">
                     <div class="screenshot-wrapper">
                         <img src="assets/header.png" alt="Pixel Perfect - Dark Theme" class="screenshot-img">
                     </div>
-                    <h3 class="screenshot-title">Dark "Basic Grey" Theme</h3>
+                    <h3 class="screenshot-title">Dark "Basic Grey"</h3>
                     <p class="screenshot-desc">Professional workspace with dark color palette</p>
                 </div>
                 <div class="screenshot-card">
                     <div class="screenshot-wrapper">
                         <img src="assets/header_light.png" alt="Pixel Perfect - Light Theme" class="screenshot-img">
                     </div>
-                    <h3 class="screenshot-title">Light "Angelic" Theme</h3>
+                    <h3 class="screenshot-title">Light "Angelic"</h3>
                     <p class="screenshot-desc">Elegant light interface for comfortable daytime use</p>
+                </div>
+            </div>
+            <div class="themes-list">
+                <span class="theme-tag">Basic Grey</span>
+                <span class="theme-tag">Angelic</span>
+                <span class="theme-tag highlight">Claude</span>
+                <span class="theme-tag">Monokai</span>
+                <span class="theme-tag">Solarized</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Perfect For Section -->
+    <section class="perfect-for">
+        <div class="container">
+            <h2 class="section-title">Perfect For</h2>
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <div class="audience-icon">🎮</div>
+                    <h3>Game Developers</h3>
+                    <p>SNES-era sprites & tile-based games</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">🎨</div>
+                    <h3>Pixel Artists</h3>
+                    <p>Professional tools & workflow efficiency</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">🚀</div>
+                    <h3>Indie Creators</h3>
+                    <p>Fast asset creation & budget-friendly</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">💖</div>
+                    <h3>Retro Enthusiasts</h3>
+                    <p>Authentic experience & classic aesthetics</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section class="features">
+    <section class="features" id="features">
         <div class="container">
             <h2 class="section-title">Powerful Features</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🖌️</div>
-                    <h3 class="feature-title">13 Drawing Tools</h3>
-                    <p class="feature-desc">Multi-size brush, eraser, spray paint, fill bucket, and more. Everything you need for pixel art creation.</p>
+                    <h3 class="feature-title">14 Drawing Tools</h3>
+                    <p class="feature-desc">Brush, Eraser, Dither, Spray, Fill, Eyedropper, Line, Rectangle, Circle, Texture, Edge, Selection, Move & Pan.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title">7 Game Palettes</h3>
-                    <p class="feature-desc">SNES Classic, Curse of Aros, Old School RuneScape, and more. Auto-loads JSON palettes from assets folder.</p>
+                    <h3 class="feature-title">Game Palettes</h3>
+                    <p class="feature-desc">SNES Classic, Curse of Aros, OSRS, Heartwood, Definya, Kakele, Rucoy & more. Drop your own JSON palettes!</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📚</div>
-                    <h3 class="feature-title">Unlimited Layers</h3>
-                    <p class="feature-desc">Full layer system with visibility toggles, opacity controls, and alpha blending for complex compositions.</p>
+                    <h3 class="feature-title">Layer System</h3>
+                    <p class="feature-desc">Up to 10 layers with visibility, opacity, reordering, merging, and smart alpha blending.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎬</div>
                     <h3 class="feature-title">Animation Timeline</h3>
-                    <p class="feature-desc">Frame-by-frame animation with playback controls, adjustable FPS, and sprite sheet export.</p>
+                    <p class="feature-desc">4-8 frame animations with playback controls, adjustable FPS, onion skinning & sprite sheet export.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✂️</div>
+                    <h3 class="feature-title">Selection Tools</h3>
+                    <p class="feature-desc">Rectangle select, mirror, rotate 90°, copy, scale with handles. Non-destructive move system.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 class="feature-title">Symmetry Drawing</h3>
+                    <p class="feature-desc">X/Y axis mirroring for all drawing tools. Perfect for characters and symmetrical designs.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💾</div>
                     <h3 class="feature-title">Export Formats</h3>
-                    <p class="feature-desc">PNG, GIF, and sprite sheets with JSON metadata. Custom .pixpf project format for full project saving.</p>
+                    <p class="feature-desc">PNG (1-8× scale), GIF animations, sprite sheets with JSON metadata. Custom .pixpf project format.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
                     <h3 class="feature-title">Lightning Fast</h3>
-                    <p class="feature-desc">Optimized rendering with NumPy vectorization. 60fps at 64× zoom. Instant palette switching.</p>
+                    <p class="feature-desc">NumPy vectorization, smart caching, 60fps at 64× zoom. Instant palette switching.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Keyboard Shortcuts Section -->
+    <section class="shortcuts" id="shortcuts">
+        <div class="container">
+            <h2 class="section-title">Keyboard Shortcuts</h2>
+            <p class="section-subtitle">Work faster with intuitive shortcuts</p>
+            <div class="shortcuts-grid">
+                <div class="shortcut-group">
+                    <h3>File</h3>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>O</kbd> Open</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>E</kbd> Export</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> Quick Export</div>
+                </div>
+                <div class="shortcut-group">
+                    <h3>Edit</h3>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>Y</kbd> Redo</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>C</kbd> Copy</div>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>V</kbd> Paste</div>
+                </div>
+                <div class="shortcut-group">
+                    <h3>View</h3>
+                    <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>Wheel</kbd> Zoom to Cursor</div>
+                    <div class="shortcut"><kbd>+</kbd>/<kbd>-</kbd> Zoom In/Out</div>
+                    <div class="shortcut"><kbd>G</kbd> Toggle Grid</div>
+                </div>
+                <div class="shortcut-group">
+                    <h3>Tools</h3>
+                    <div class="shortcut"><kbd>B</kbd> Brush</div>
+                    <div class="shortcut"><kbd>E</kbd> Eraser</div>
+                    <div class="shortcut"><kbd>F</kbd> Fill</div>
+                    <div class="shortcut"><kbd>I</kbd> Eyedropper</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">14</span>
+                    <span class="stat-label">Drawing Tools</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">10</span>
+                    <span class="stat-label">Palettes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Themes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">60</span>
+                    <span class="stat-label">FPS Rendering</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">29</span>
+                    <span class="stat-label">MB Download</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="quick-start">
+        <div class="container">
+            <h2 class="section-title">Get Started in Seconds</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Download</h3>
+                    <p>Get the 29MB standalone executable from GitHub releases</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Extract</h3>
+                    <p>Unzip the folder (includes EXE + assets + palettes)</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Create</h3>
+                    <p>Double-click PixelPerfect.exe and start drawing!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- System Requirements Section -->
+    <section class="requirements">
+        <div class="container">
+            <h2 class="section-title">System Requirements</h2>
+            <div class="requirements-grid">
+                <div class="requirement-card">
+                    <div class="requirement-icon">💻</div>
+                    <h3>Operating System</h3>
+                    <p>Windows 10 or Windows 11 (64-bit)</p>
+                </div>
+                <div class="requirement-card">
+                    <div class="requirement-icon">🧠</div>
+                    <h3>Memory</h3>
+                    <p>2GB RAM minimum (4GB recommended)</p>
+                </div>
+                <div class="requirement-card">
+                    <div class="requirement-icon">💾</div>
+                    <h3>Storage</h3>
+                    <p>50MB free disk space</p>
+                </div>
+                <div class="requirement-card">
+                    <div class="requirement-icon">🖥️</div>
+                    <h3>Display</h3>
+                    <p>1280×720 minimum resolution</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3 class="faq-question">Is Pixel Perfect free?</h3>
+                    <p class="faq-answer">The source code is available on GitHub. Download the standalone executable and use it for your projects.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Do I need to install Python?</h3>
+                    <p class="faq-answer">No! The standalone .exe includes everything needed. Just download, extract, and run.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Can I use my own color palettes?</h3>
+                    <p class="faq-answer">Yes! Drop any 16-color JSON palette file into the assets/palettes folder and it appears automatically.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What file formats are supported?</h3>
+                    <p class="faq-answer">Import/export PNG, export GIF animations and sprite sheets. Save projects as .pixpf files.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What canvas sizes are available?</h3>
+                    <p class="faq-answer">Presets: 8×8, 16×16, 32×32, 16×32, 32×64, 64×64 pixels. Custom sizes also supported.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Is there Mac or Linux support?</h3>
+                    <p class="faq-answer">Currently Windows only. Mac/Linux users can run from source with Python 3.13+.</p>
                 </div>
             </div>
         </div>
@@ -113,7 +377,7 @@
                 <a href="https://github.com/AfyKirby1/Pixel-Perfect/releases" class="download-btn large" target="_blank" rel="noopener noreferrer">
                     <span class="download-icon">⬇</span>
                     <span class="download-text">Download Pixel Perfect</span>
-                    <span class="download-badge">v2.6.2</span>
+                    <span class="download-badge">v2.7.4</span>
                 </a>
                 <div class="cta-features">
                     <div class="cta-feature">
@@ -144,12 +408,13 @@
                 <div class="footer-brand">
                     <img src="assets/dcs.png" alt="Diamond Clad Studios" class="footer-logo">
                     <div class="footer-text-wrapper">
-                        <p class="footer-text">© 2024-2025 Diamond Clad Studios</p>
+                        <p class="footer-text">© 2024-2026 Diamond Clad Studios</p>
                         <p class="footer-text">All Rights Reserved</p>
                     </div>
                 </div>
                 <div class="footer-links">
                     <a href="https://github.com/AfyKirby1/Pixel-Perfect" class="footer-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    <a href="https://github.com/AfyKirby1/Pixel-Perfect/releases" class="footer-link" target="_blank" rel="noopener noreferrer">Releases</a>
                     <a href="https://github.com/AfyKirby1/Pixel-Perfect/issues" class="footer-link" target="_blank" rel="noopener noreferrer">Issues</a>
                     <a href="https://github.com/AfyKirby1/Pixel-Perfect/discussions" class="footer-link" target="_blank" rel="noopener noreferrer">Discussions</a>
                 </div>

@@ -4,15 +4,16 @@
 Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive features including animation, layers, custom colors, palette management, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 2.6.2  
-**Status**: All Core Systems Complete - Production Ready with Performance Optimizations
+**Version**: 2.7.2  
+**Status**: All Core Systems Complete - Production Ready with QoL Enhancements
 
 ### Latest Updates
+- **v2.7.2**: QoL enhancements - Zoom to cursor, Fit/100% view buttons, export presets, quick export, recent colors improvements.
+- **v2.7.1**: Dither tool and undo system refinements.
+- **v2.7.0**: Delta-based undo system, scanline flood fill, recent colors palette, event throttling.
 - **v2.6.2**: Performance optimizations - NumPy vectorization for rendering, selection transforms, and event handling.
 - **v2.6.1**: Code cleanup - removed dead code, debug prints, and compacted documentation.
 - **v2.6.0**: Added Spray tool, canvas zoom scrollbar, and JSON palette auto-loader.
-- **v2.5.x**: Palette UX hardening (highlighting, saved color behavior, edge tool fixes).
-- **v2.0.x**: Build size optimization, panel refactors, background/grid texture modes.
 
 ## Core Components
 
@@ -65,6 +66,7 @@ Pixel Perfect is a fully functional desktop pixel art editor built with Python, 
   - Mouse event routing to tools
   - Tool preview coordination
   - UI callback delegation
+  - **Mouse Wheel Zoom** (v2.7.2): Ctrl+wheel zoom-to-cursor functionality with focus preservation
 
 ### Layer Manager (`src/core/layer_manager.py`)
 - **Purpose**: Handles multiple drawing layers with full UI integration and immediate visual updates
@@ -144,17 +146,24 @@ class Tool:
 - **UIBuilder** (`ui_builder.py`): Toolbar and UI component construction
 - **EventDispatcher** (`event_dispatcher.py` - core): All mouse/keyboard event routing
 - **File Operations Manager** (`file_operations_manager.py`): New, Open, Save, Import, Export operations
+  - **Export Presets** (v2.7.2): Configurable export settings with JSON persistence
+  - **Quick Export** (v2.7.2): Ctrl+Shift+E for instant re-export using last settings
+  - **Settings Dialogs**: Per-format export configuration (PNG, GIF, Sprite Sheet)
 - **Dialog Manager** (`dialog_manager.py`): Custom dialogs (size, downsize warning, texture panel)
 - **Selection Manager** (`selection_manager.py`): Mirror, rotate, copy, scale transformations
 - **Canvas Renderer** (`canvas_renderer.py` - core): All rendering operations (grid, pixels, previews)
 - **Tool Size Manager** (`tool_size_manager.py`): Brush/eraser/spray size management
 - **Canvas Zoom Manager** (`canvas_zoom_manager.py`): Canvas resize and zoom controls
+  - **Zoom Utilities** (v2.7.2): Fit view (`_zoom_fit()`), 100% view (`_zoom_100()`), zoom-to-cursor (`_zoom_at_cursor()`)
+  - **Focus Preservation**: All zoom operations maintain cursor position in view
 - **Canvas Scrollbar** (`canvas_scrollbar.py`): Themed on-canvas zoom scrollbar with drag + button controls
 - **Grid Control Manager** (`grid_control_manager.py`): Grid visibility and overlay toggles
 - **Background Control Manager** (`background_control_manager.py`): Background mode toggles (Auto/Dark/Light/Paper)
 - **Canvas Operations Manager** (`canvas_operations_manager.py`): Coordinate conversion, panel sizing, window state
 - **Layer Animation Manager** (`layer_animation_manager.py`): Layer operations and animation timeline coordination
 - **Color View Manager** (`color_view_manager.py`): Color view switching, color wheel management
+  - **Recent Colors Selection** (v2.7.2): Improved color selection handling from Recent view
+  - **View Integration**: Seamless color activation across all palette views
 - **Theme Manager** (`theme_manager.py`): Theme system with real-time switching
 - **Theme Dialog Manager** (`theme_dialog_manager.py`): Theme selection dialog
 - **Loading Manager** (`loading_screen.py`): Application startup loading screen
@@ -172,6 +181,8 @@ class Tool:
 - **Responsive Panel Sizing** (v1.52): Automatic panel width calculation based on screen resolution with state persistence
 - **Modular Refactoring** (v1.62-2.6.2): Extracted 16 managers for cleaner architecture
 - **Performance Optimizations** (v2.6.2): NumPy vectorization for rendering and selection operations
+- **Zoom Enhancements** (v2.7.2): Zoom-to-cursor, Fit/100% view buttons in toolbar
+- **Export Workflow** (v2.7.2): Export presets and quick export for faster workflow
 
 ### Toolbar Components
 - **File Menu**: New, Open, Save, Export options
@@ -337,6 +348,7 @@ class Tool:
 - **Instant palette view switching** (<10ms, 50-100× faster with pre-rendering)
 - **NumPy Vectorization** (v2.6.2): Vectorized rendering, selection transforms, and event handling for 10-50× speed improvements
 - **Early-exit caching** (v2.6.2): Mouse move event optimization to skip redundant preview draws
+- **Smart Layer Caching** (v2.7.4): Intelligent layer compositor caching with multi-factor change detection (version tracking + pixel hashing) eliminates redundant blending operations
 
 ## Security and Maintenance
 - All dependencies tracked in SBOM.md

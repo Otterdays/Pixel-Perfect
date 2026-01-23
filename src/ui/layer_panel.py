@@ -18,6 +18,8 @@ class LayerPanel:
         # UI components
         self.layer_frame = None
         self.layer_buttons = {}
+        self._drag_start_index = None
+        self._drag_indicator = None
         
         self._create_ui()
         self._update_display()
@@ -145,16 +147,61 @@ class LayerPanel:
         )
         layer_btn.pack(side="left", fill="x", expand=True, padx=(5, 5))
         
+        # Enable double-click to rename
+        layer_btn.bind("<Double-Button-1>", lambda e, idx=index: self._start_rename(idx))
+        
+        # Enable drag-and-drop reorder
+        layer_btn.bind("<Button-1>", lambda e, idx=index: self._on_drag_start(e, idx))
+        layer_btn.bind("<B1-Motion>", lambda e, idx=index: self._on_drag_motion(e, idx))
+        layer_btn.bind("<ButtonRelease-1>", lambda e, idx=index: self._on_drag_end(e, idx))
+        
         # Active indicator
         if index == self.layer_manager.active_layer_index:
             layer_btn.configure(fg_color="blue")
         else:
             layer_btn.configure(fg_color="transparent")
         
-        # Lock indicator
-        if layer.locked:
-            lock_label = ctk.CTkLabel(layer_row, text="🔒", width=20)
-            lock_label.pack(side="right", padx=(0, 5))
+        # Opacity slider (only show for active layer)
+        if index == self.layer_manager.active_layer_index:
+            opacity_frame = ctk.CTkFrame(layer_row, fg_color="transparent")
+            opacity_frame.pack(side="right", padx=(0, 5))
+            
+            opacity_label = ctk.CTkLabel(opacity_frame, text="Op:", width=25)
+            opacity_label.pack(side="left")
+            
+            opacity_var = ctk.DoubleVar(value=layer.opacity)
+            
+            def on_opacity_change(value, idx=index):
+                self._set_layer_opacity(idx, float(value))
+            
+            opacity_slider = ctk.CTkSlider(
+                opacity_frame,
+                from_=0.0,
+                to=1.0,
+                variable=opacity_var,
+                width=60,
+                height=16,
+                command=on_opacity_change
+            )
+            opacity_slider.pack(side="left")
+        
+        # Lock toggle button
+        lock_var = ctk.BooleanVar(value=layer.locked)
+
+        def on_lock_toggle(idx=index):
+            new_state = not self.layer_manager.layers[idx].locked
+            self._toggle_layer_lock(idx, new_state)
+
+        lock_btn = ctk.CTkButton(
+            layer_row,
+            text="🔒" if layer.locked else "🔓",
+            width=28,
+            height=28,
+            fg_color="transparent" if not layer.locked else "#3a3a3a",
+            hover_color="#4a4a4a",
+            command=on_lock_toggle
+        )
+        lock_btn.pack(side="right", padx=(0, 5))
         
         # Store button reference
         self.layer_buttons[index] = layer_row
@@ -185,6 +232,82 @@ class LayerPanel:
         
         if self.on_layer_changed:
             self.on_layer_changed()
+    
+    def _set_layer_opacity(self, index: int, opacity: float):
+        """Set layer opacity"""
+        self.layer_manager.set_layer_opacity(index, opacity)
+        
+        if self.on_layer_changed:
+            self.on_layer_changed()
+    
+    def _toggle_layer_lock(self, index: int, locked: bool):
+        """Toggle layer lock state"""
+        self.layer_manager.set_layer_locked(index, locked)
+        self._update_display()
+    
+    def _start_rename(self, index: int):
+        """Start renaming a layer"""
+        layer = self.layer_manager.layers[index]
+        
+        # Create rename dialog
+        dialog = ctk.CTkInputDialog(
+            text=f"Enter new name for '{layer.name}':",
+            title="Rename Layer"
+        )
+        new_name = dialog.get_input()
+        
+        if new_name and new_name.strip():
+            self.layer_manager.set_layer_name(index, new_name.strip())
+            self._update_display()
+    
+    def _on_drag_start(self, event, index: int):
+        """Start dragging a layer"""
+        self._drag_start_index = index
+        # Store initial position to detect if it's a drag or just a click
+        self._drag_start_y = event.y_root
+
+    def _on_drag_motion(self, event, index: int):
+        """Handle drag motion"""
+        # Visual feedback could be added here
+        pass
+
+    def _on_drag_end(self, event, index: int):
+        """End drag and reorder if needed"""
+        if self._drag_start_index is None:
+            return
+        
+        # Check if this was actually a drag (moved more than a few pixels)
+        drag_threshold = 5
+        if hasattr(self, '_drag_start_y'):
+            if abs(event.y_root - self._drag_start_y) < drag_threshold:
+                # It was just a click, select the layer
+                self._select_layer(index)
+                self._drag_start_index = None
+                return
+        
+        # Calculate drop target based on y position
+        widget = event.widget
+        y = event.y_root
+        
+        # Find which layer row we're over
+        target_index = None
+        for idx, layer_row in self.layer_buttons.items():
+            if layer_row and layer_row.winfo_exists():
+                row_y = layer_row.winfo_rooty()
+                row_height = layer_row.winfo_height()
+                if row_y <= y <= row_y + row_height:
+                    target_index = idx
+                    break
+        
+        # Perform move if target is different
+        if target_index is not None and target_index != self._drag_start_index:
+            # Note: layer indices are reversed in display (top=highest index)
+            if self.layer_manager.move_layer(self._drag_start_index, target_index):
+                self._update_display()
+                if self.on_layer_changed:
+                    self.on_layer_changed()
+        
+        self._drag_start_index = None
     
     def _add_layer(self):
         """Add a new layer"""

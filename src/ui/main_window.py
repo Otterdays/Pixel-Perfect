@@ -32,6 +32,7 @@ from tools.selection import SelectionTool, MoveTool
 from tools.shapes import LineTool, RectangleTool, CircleTool
 from tools.pan import PanTool
 from tools.texture import TextureTool, TextureLibrary
+from tools.magic_wand import MagicWandTool
 from core.layer_manager import LayerManager
 from core.undo_manager import UndoManager
 from .layer_panel import LayerPanel
@@ -55,6 +56,7 @@ from .layer_animation_manager import LayerAnimationManager
 from .color_view_manager import ColorViewManager
 from .loading_screen import LoadingManager
 from .canvas_scrollbar import CanvasScrollbar
+from .status_bar import StatusBar, CanvasHUD
 
 class MainWindow:
     """Main application window"""
@@ -194,6 +196,7 @@ class MainWindow:
             "fill": FillTool(),
             "eyedropper": EyedropperTool(),
             "selection": SelectionTool(),
+            "magic_wand": MagicWandTool(),
             "move": MoveTool(),
             "line": LineTool(),
             "rectangle": RectangleTool(),
@@ -245,6 +248,8 @@ class MainWindow:
         # Pan state
         self.pan_offset_x = 0
         self.pan_offset_y = 0
+        self.recent_selected_color = None
+        self.zoom_levels = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]
         
         # Initialize theme manager
         self.theme_manager = ThemeManager()
@@ -371,6 +376,8 @@ class MainWindow:
         self.zoom_label = self.ui_builder.widgets['zoom_label']
         self.zoom_var = self.ui_builder.widgets['zoom_var']
         self.zoom_menu = self.ui_builder.widgets['zoom_menu']
+        self.zoom_fit_button = self.ui_builder.widgets.get('zoom_fit_button')
+        self.zoom_100_button = self.ui_builder.widgets.get('zoom_100_button')
         self.undo_button = self.ui_builder.widgets['undo_button']
         self.redo_button = self.ui_builder.widgets['redo_button']
         self.theme_label = self.ui_builder.widgets['theme_label']
@@ -403,19 +410,27 @@ class MainWindow:
         self.left_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
         self.paned_window.add(self.left_container, minsize=200, width=self.left_panel_width, stretch="never")
         
-        # Left collapse button (visible when expanded)
+        # Left collapse button container (for centering)
+        left_btn_container = tk.Frame(self.left_container, bg=self.theme_manager.get_current_theme().bg_primary, width=16)
+        left_btn_container.pack(side="right", fill="y", padx=0, pady=0)
+        left_btn_container.pack_propagate(False)
+        
+        # Left collapse button (minimalistic centered button)
         left_collapse_btn = ctk.CTkButton(
-            self.left_container,
-            text="◀",
-            width=25,
-            font=("Arial", 14, "bold"),
-            fg_color=self.theme_manager.get_current_theme().button_active,
+            left_btn_container,
+            text="‹",
+            width=14,
+            height=40,
+            font=("Arial", 16),
+            fg_color="transparent",
             hover_color=self.theme_manager.get_current_theme().button_hover,
-            corner_radius=8,
+            text_color=self.theme_manager.get_current_theme().text_secondary,
+            corner_radius=4,
             command=self._toggle_left_panel
         )
-        left_collapse_btn.pack(side="right", fill="y", padx=0, pady=0)
+        left_collapse_btn.place(relx=0.5, rely=0.5, anchor="center")
         self.left_collapse_btn = left_collapse_btn
+        self.left_btn_container = left_btn_container
         
         # Left panel (tools and palette) - with scrollbar (optimized for smooth resize)
         self.left_panel = ctk.CTkScrollableFrame(
@@ -443,19 +458,27 @@ class MainWindow:
         self.right_container = tk.Frame(self.paned_window, bg="#1a1a1a")
         self.paned_window.add(self.right_container, minsize=200, width=self.right_panel_width, stretch="never")
         
-        # Right collapse button (visible when expanded)
+        # Right collapse button container (for centering)
+        right_btn_container = tk.Frame(self.right_container, bg=self.theme_manager.get_current_theme().bg_primary, width=16)
+        right_btn_container.pack(side="left", fill="y", padx=0, pady=0)
+        right_btn_container.pack_propagate(False)
+        
+        # Right collapse button (minimalistic centered button)
         right_collapse_btn = ctk.CTkButton(
-            self.right_container,
-            text="▶",
-            width=25,
-            font=("Arial", 14, "bold"),
-            fg_color=self.theme_manager.get_current_theme().button_active,
+            right_btn_container,
+            text="›",
+            width=14,
+            height=40,
+            font=("Arial", 16),
+            fg_color="transparent",
             hover_color=self.theme_manager.get_current_theme().button_hover,
-            corner_radius=8,
+            text_color=self.theme_manager.get_current_theme().text_secondary,
+            corner_radius=4,
             command=self._toggle_right_panel
         )
-        right_collapse_btn.pack(side="left", fill="y", padx=0, pady=0)
+        right_collapse_btn.place(relx=0.5, rely=0.5, anchor="center")
         self.right_collapse_btn = right_collapse_btn
+        self.right_btn_container = right_btn_container
         
         # Right panel (layers, etc.) - with scrollbar (optimized for smooth resize)
         self.right_panel = ctk.CTkScrollableFrame(
@@ -505,6 +528,7 @@ class MainWindow:
         self.grid_control_mgr.grid_button = self.grid_button
         self.grid_control_mgr.grid_overlay_button = self.grid_overlay_button
         self.grid_control_mgr.grid_mode_button = self.ui_builder.widgets['grid_mode_button']
+        self.grid_control_mgr.tile_seam_button = self.ui_builder.widgets.get('tile_seam_button')
         self.grid_control_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         
         # Set background control manager references and callbacks
@@ -515,6 +539,8 @@ class MainWindow:
         self.grid_control_mgr.update_grid_button_text()
         self.grid_control_mgr.update_grid_overlay_button_text()
         self.grid_control_mgr.update_grid_mode_button()
+        if self.grid_control_mgr.tile_seam_button:
+            self.grid_control_mgr.update_tile_seam_button_text()
         
         # Initialize background mode button state
         self.background_control_mgr.update_background_mode_button()
@@ -558,6 +584,9 @@ class MainWindow:
         self.layer_anim_mgr.update_canvas_callback = self._update_canvas_from_layers
         self.layer_anim_mgr.clear_selection_callback = self._clear_selection_and_reset_tools
         self.layer_anim_mgr.update_pixel_display_callback = self.canvas_renderer.update_pixel_display
+        # Wire timeline panel onion skin callbacks
+        if self.timeline_panel:
+            self.timeline_panel.update_pixel_display_callback = self.canvas_renderer.update_pixel_display
         
         # Initialize file operations manager
         self.file_ops = FileOperationsManager(
@@ -674,6 +703,13 @@ class MainWindow:
         # Track last active view for proper color saving
         self.last_active_view = "grid"  # Default to grid
         
+        # Create status bar (after all UI is created)
+        self.status_bar = StatusBar(self.main_frame, self.theme_manager)
+        self.canvas_hud = CanvasHUD(self.drawing_canvas, self.theme_manager)
+        
+        # Initialize status bar with current values
+        self._update_status_bar()
+        
         # Bind all events (after UI creation so widgets exist)
         self.event_dispatcher.bind_all_events()
     
@@ -698,6 +734,8 @@ class MainWindow:
             'show_file_menu': self._show_file_menu,
             'on_size_change': self.canvas_zoom_mgr.on_size_change,
             'on_zoom_change': self.canvas_zoom_mgr.on_zoom_change,
+            'zoom_fit': self._zoom_fit,
+            'zoom_100': self._zoom_100,
             'undo': self._undo,
             'redo': self._redo,
             'on_theme_selected': self._on_theme_selected,
@@ -705,6 +743,7 @@ class MainWindow:
             'toggle_grid': self.grid_control_mgr.toggle_grid,
             'toggle_grid_overlay': self.grid_control_mgr.toggle_grid_overlay,
             'toggle_grid_mode': self.grid_control_mgr.toggle_grid_mode,
+            'toggle_tile_seam': self.grid_control_mgr.toggle_tile_seam_preview,
             'toggle_background_mode': self.background_control_mgr.toggle_background_mode,
             'toggle_notes': self._toggle_notes,
             'select_tool': self._select_tool,
@@ -904,6 +943,10 @@ class MainWindow:
         if hasattr(self, 'selection_mgr') and self.selection_mgr.scale_btn and not self.selection_mgr.is_scaling:
             self.selection_mgr.scale_btn.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
         
+        # Update status bar
+        if hasattr(self, 'status_bar'):
+            self._update_status_bar()
+        
         # Update canvas cursor based on selected tool
         if hasattr(self, 'drawing_canvas') and tool_id in self.tools:
             tool = self.tools[tool_id]
@@ -1018,6 +1061,98 @@ class MainWindow:
         """Sync scrollbar position when zoom changes from dropdown or other source"""
         if hasattr(self, 'canvas_scrollbar') and hasattr(self, 'canvas'):
             self.canvas_scrollbar.update_zoom_index(self.canvas.zoom)
+
+    def _format_zoom_str(self, zoom_value: float) -> str:
+        """Return zoom dropdown string for a zoom value."""
+        if zoom_value >= 1:
+            return f"{int(zoom_value)}x"
+        return f"{zoom_value}x"
+
+    def _apply_zoom_with_focus(self, zoom_value: float, focus_x: int, focus_y: int, reset_pan: bool = False):
+        """Apply zoom and keep the focus point stable in screen space."""
+        if not hasattr(self, 'drawing_canvas') or not self.drawing_canvas:
+            return
+        if zoom_value == self.canvas.zoom:
+            return
+
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        if canvas_width <= 1 or canvas_height <= 1:
+            return
+
+        # Compute canvas coords under focus before zoom change
+        canvas_x, canvas_y = self._tkinter_screen_to_canvas_coords_float(focus_x, focus_y)
+
+        # Apply zoom
+        self.canvas.set_zoom(zoom_value)
+
+        if reset_pan:
+            self.pan_offset_x = 0
+            self.pan_offset_y = 0
+        else:
+            # Recalculate pan offsets to keep the focus point stable
+            canvas_pixel_width = self.canvas.width * zoom_value
+            canvas_pixel_height = self.canvas.height * zoom_value
+            x_offset = (canvas_width - canvas_pixel_width) / 2
+            y_offset = (canvas_height - canvas_pixel_height) / 2
+            self.pan_offset_x = (focus_x - x_offset - canvas_x * zoom_value) / zoom_value
+            self.pan_offset_y = (focus_y - y_offset - canvas_y * zoom_value) / zoom_value
+
+        # Update zoom dropdown
+        if hasattr(self, 'zoom_var'):
+            self.zoom_var.set(self._format_zoom_str(zoom_value))
+
+        # Force redraw and sync scrollbar
+        if hasattr(self, 'canvas_renderer'):
+            self.canvas_renderer.force_canvas_update()
+        self._sync_scrollbar_with_zoom()
+
+    def _get_fit_zoom(self) -> float:
+        """Return the largest zoom level that fits the canvas in the view."""
+        if not hasattr(self, 'drawing_canvas') or not self.drawing_canvas:
+            return 1
+
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        if canvas_width <= 1 or canvas_height <= 1:
+            return 1
+
+        fit_zoom = min(canvas_width / self.canvas.width, canvas_height / self.canvas.height)
+        # Pick the largest allowed zoom <= fit_zoom
+        candidates = [z for z in self.zoom_levels if z <= fit_zoom]
+        return max(candidates) if candidates else min(self.zoom_levels)
+
+    def _zoom_fit(self):
+        """Zoom to fit the entire canvas in the view."""
+        if not hasattr(self, 'drawing_canvas'):
+            return
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        zoom_value = self._get_fit_zoom()
+        self._apply_zoom_with_focus(zoom_value, canvas_width // 2, canvas_height // 2, reset_pan=True)
+
+    def _zoom_100(self):
+        """Set zoom to 100% and center the canvas."""
+        if not hasattr(self, 'drawing_canvas'):
+            return
+        canvas_width = self.drawing_canvas.winfo_width()
+        canvas_height = self.drawing_canvas.winfo_height()
+        self._apply_zoom_with_focus(1, canvas_width // 2, canvas_height // 2, reset_pan=True)
+
+    def _zoom_at_cursor(self, direction: int, cursor_x: int, cursor_y: int):
+        """Zoom in/out around the cursor position."""
+        if not self.zoom_levels:
+            return
+        current_zoom = self.canvas.zoom
+        try:
+            current_index = self.zoom_levels.index(current_zoom)
+        except ValueError:
+            current_index = min(range(len(self.zoom_levels)), key=lambda i: abs(self.zoom_levels[i] - current_zoom))
+
+        next_index = current_index + (1 if direction > 0 else -1)
+        next_index = max(0, min(next_index, len(self.zoom_levels) - 1))
+        next_zoom = self.zoom_levels[next_index]
+        self._apply_zoom_with_focus(next_zoom, cursor_x, cursor_y)
     
     def _on_theme_selected(self, theme_name: str):
         """Handle theme selection from dropdown"""
@@ -1060,10 +1195,16 @@ class MainWindow:
         export_png_btn.pack(pady=5, padx=10, fill="x")
         
         export_gif_btn = ctk.CTkButton(file_menu, text="Export as GIF", command=lambda: [self.file_ops.export_gif(), file_menu.destroy()])
+        
+        quick_export_btn = ctk.CTkButton(file_menu, text="Quick Export (Ctrl+Shift+E)", command=lambda: [self.file_ops.quick_export(), file_menu.destroy()])
+        quick_export_btn.pack(pady=5, padx=10, fill="x")
         export_gif_btn.pack(pady=5, padx=10, fill="x")
         
         export_spritesheet_btn = ctk.CTkButton(file_menu, text="Export Sprite Sheet", command=lambda: [self.file_ops.export_spritesheet(), file_menu.destroy()])
         export_spritesheet_btn.pack(pady=5, padx=10, fill="x")
+
+        quick_export_btn = ctk.CTkButton(file_menu, text="Quick Export", command=lambda: [self.file_ops.quick_export(), file_menu.destroy()])
+        quick_export_btn.pack(pady=5, padx=10, fill="x")
         
         # Separator
         sep2 = ctk.CTkFrame(file_menu, height=2)
@@ -1151,6 +1292,9 @@ class MainWindow:
     
     def _update_canvas_from_layers(self):
         """Update canvas to show all visible layers combined"""
+        # Update status bar when layers change
+        if hasattr(self, 'status_bar'):
+            self._update_status_bar()
         # Always show all visible layers combined
         flattened_pixels = self.layer_manager.flatten_layers()
         
@@ -1205,6 +1349,14 @@ class MainWindow:
             else:
                 # Fallback to palette if no Saved color selected
                 return self.palette.get_primary_color()
+        elif (hasattr(self, 'view_mode_var') and self.view_mode_var.get() == "recent" and
+              hasattr(self, 'recent_colors') and self.recent_colors):
+            if self.recent_selected_color:
+                return self.recent_selected_color
+            recent_colors = self.recent_colors.get_colors()
+            if recent_colors:
+                return recent_colors[0]
+            return self.palette.get_primary_color()
         else:
             return self.palette.get_primary_color()
     
@@ -1350,6 +1502,7 @@ class MainWindow:
                 layer = self.layer_manager.get_layer(state.layer_index)
                 if layer:
                     layer.pixels = state.pixels
+                    layer.mark_modified()  # Mark layer as modified for cache invalidation
                     self._on_layer_changed()
             
             # Restore edge lines
@@ -1380,6 +1533,7 @@ class MainWindow:
                 layer = self.layer_manager.get_layer(state.layer_index)
                 if layer:
                     layer.pixels = state.pixels
+                    layer.mark_modified()  # Mark layer as modified for cache invalidation
                     self._on_layer_changed()
             
             # Restore edge lines
@@ -1440,6 +1594,69 @@ class MainWindow:
             self.notes_panel.frame.pack(fill="both", expand=False, side="right", padx=(5, 0))
             self.notes_panel.frame.configure(width=300)
             self.notes_visible = True
+    
+    def _update_status_bar(self, cursor_x=None, cursor_y=None):
+        """Update status bar with current application state"""
+        if not hasattr(self, 'status_bar'):
+            return
+        
+        # Update cursor position if provided
+        if cursor_x is not None and cursor_y is not None:
+            self.status_bar.update_cursor(cursor_x, cursor_y)
+            if hasattr(self, 'canvas_hud'):
+                self.canvas_hud.update_cursor(cursor_x, cursor_y)
+        
+        # Update tool
+        tool_name = self.current_tool if hasattr(self, 'current_tool') else "--"
+        self.status_bar.update_tool(tool_name)
+        if hasattr(self, 'canvas_hud'):
+            self.canvas_hud.update_tool(tool_name)
+        
+        # Update tool size
+        size_str = "--"
+        if hasattr(self, 'tool_size_mgr'):
+            if self.current_tool == "brush":
+                size = self.tool_size_mgr.brush_size
+                size_str = f"{size}x{size}"
+            elif self.current_tool == "eraser":
+                size = self.tool_size_mgr.eraser_size
+                size_str = f"{size}x{size}"
+            elif self.current_tool == "spray":
+                radius = self.tool_size_mgr.spray_radius
+                size_str = f"R{radius}"
+            elif self.current_tool == "edge":
+                thickness = self.tool_size_mgr.edge_thickness
+                size_str = f"{thickness}P"
+        self.status_bar.update_size(size_str)
+        if hasattr(self, 'canvas_hud'):
+            self.canvas_hud.update_size(size_str)
+        
+        # Update zoom
+        zoom = self.canvas.zoom if hasattr(self, 'canvas') else 1.0
+        self.status_bar.update_zoom(zoom)
+        if hasattr(self, 'canvas_hud'):
+            self.canvas_hud.update_zoom(zoom)
+        
+        # Update layer
+        if hasattr(self, 'layer_manager'):
+            active_layer = self.layer_manager.get_active_layer()
+            if active_layer:
+                layer_index = self.layer_manager.layers.index(active_layer)
+                self.status_bar.update_layer(active_layer.name, layer_index)
+                if hasattr(self, 'canvas_hud'):
+                    self.canvas_hud.update_layer(f"{active_layer.name} ({layer_index + 1})")
+            else:
+                self.status_bar.update_layer("None")
+                if hasattr(self, 'canvas_hud'):
+                    self.canvas_hud.update_layer("None")
+        
+        # Update frame
+        if hasattr(self, 'timeline'):
+            current_frame = self.timeline.current_frame
+            total_frames = len(self.timeline.frames)
+            self.status_bar.update_frame(current_frame, total_frames)
+            if hasattr(self, 'canvas_hud'):
+                self.canvas_hud.update_frame(f"{current_frame + 1}/{total_frames}")
     
     def _on_window_close(self):
         """Handle window close event - save state before closing"""

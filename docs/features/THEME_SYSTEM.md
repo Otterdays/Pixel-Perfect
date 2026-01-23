@@ -33,6 +33,18 @@ The Theme System provides centralized color scheme management for Pixel Perfect,
 - Buttons: `#e0e7ff` normal, `#818cf8` active
 - Canvas: `#fafafa` background, `#cbd5e1` border
 
+#### 3. Claude (v2.7.3+)
+**Description**: Bright, warm theme inspired by Anthropic Claude brand colors
+- Warm cream/beige backgrounds, coral/salmon accents
+- Clean white canvas, minimal visual weight
+- Ideal for light-mode workflows
+
+**Color Palette**:
+- Background: `#faf6f1` (warm cream), `#ffffff`, `#f0ebe4`
+- Text: `#1a1612`, `#5c534a`, `#a89f94`
+- Buttons: `#fff5f0` normal, `#d97757` active (coral)
+- Canvas: `#ffffff` background, `#d4ccc4` border
+
 ### Theme Switcher UI
 - **Location**: Toolbar, right side (before Grid toggle)
 - **Icon**: 🎨 palette emoji with tooltip
@@ -79,6 +91,8 @@ src/ui/theme_manager.py
 │   └── Dark theme colors
 ├── AngelicTheme (Implementation)
 │   └── Light theme colors
+├── ClaudeTheme (Implementation, v2.7.3+)
+│   └── Bright warm theme, coral accents
 └── ThemeManager
     ├── Theme registry
     ├── Active theme tracking

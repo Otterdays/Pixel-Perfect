@@ -76,6 +76,10 @@ def _detect_edges(self, canvas, shape_pixels):
 4. **Right-click** to cycle through edge modes
 5. **Drag** for continuous edge drawing
 
+### Deleting Edges
+- **Edge tool**: Right-click (or right-drag) on an edge to erase it. Uses `_erase_edge_at_position` and canonical edge matching.
+- **Eraser tool** (v2.7.3+): With Eraser selected, **right-click** or **right-drag** on the canvas to delete edge lines at the cursor. Uses the same edge storage as the Edge tool; no need to switch tools to remove edges.
+
 ### Visual Feedback
 - **Tool Selection**: Edge button highlights blue when active
 - **Edge Preview**: Real-time edge detection as you hover

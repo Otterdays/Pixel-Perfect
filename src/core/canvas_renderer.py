@@ -6,6 +6,8 @@ This includes drawing the pixel grid, rendering the image data,
 displaying selection overlays, and other visual elements.
 '''
 
+import numpy as np
+
 class CanvasRenderer:
     def __init__(self, app_instance):
         """
@@ -321,7 +323,15 @@ class CanvasRenderer:
                     outline=theme.canvas_border, width=2, tags="border"
                 )
 
+                # Draw onion skin frames first (behind current frame)
+                if hasattr(self.app, 'timeline') and self.app.timeline.onion_skin_enabled:
+                    self.draw_onion_skin(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                
                 self.draw_all_pixels_on_tkinter(x_offset, y_offset)
+                
+                # Draw tile seam preview if enabled
+                if self.app.canvas.show_tile_seam_preview:
+                    self.draw_tile_seam_preview(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
                 # Live move preview: draw selected pixels at current drag position (non-destructive)
                 move_tool = self.app.tools.get("move")
@@ -622,6 +632,59 @@ class CanvasRenderer:
                 tags="eraser_preview"
             )
 
+    def draw_dither_preview(self, canvas_x: int, canvas_y: int):
+        """Draw checkerboard preview for Dither tool at the cursor position.
+        Shows which pixels will be drawn in the checkerboard pattern."""
+        self.app.drawing_canvas.delete("dither_preview")
+        canvas_width = self.app.drawing_canvas.winfo_width()
+        canvas_height = self.app.drawing_canvas.winfo_height()
+        canvas_pixel_width = self.app.canvas.width * self.app.canvas.zoom
+        canvas_pixel_height = self.app.canvas.height * self.app.canvas.zoom
+        x_offset = (canvas_width - canvas_pixel_width) // 2 + self.app.pan_offset_x * self.app.canvas.zoom
+        y_offset = (canvas_height - canvas_pixel_height) // 2 + self.app.pan_offset_y * self.app.canvas.zoom
+        
+        # Dither uses brush size for preview area
+        brush_size = self.app.tool_size_mgr.brush_size
+        offset = brush_size // 2
+        
+        # Check if any part of the dither area would be in bounds
+        min_x = canvas_x - offset
+        max_x = canvas_x - offset + brush_size
+        min_y = canvas_y - offset
+        max_y = canvas_y - offset + brush_size
+        
+        # Only draw preview if area intersects with canvas bounds
+        if max_x > 0 and min_x < self.app.canvas.width and max_y > 0 and min_y < self.app.canvas.height:
+            r, g, b, a = self.app.get_current_color()
+            color_hex = f"#{r:02x}{g:02x}{b:02x}"
+            
+            for dy in range(brush_size):
+                for dx in range(brush_size):
+                    px = canvas_x - offset + dx
+                    py = canvas_y - offset + dy
+                    if 0 <= px < self.app.canvas.width and 0 <= py < self.app.canvas.height:
+                        # Checkerboard pattern: only draw where (x + y) % 2 == 0
+                        if (px + py) % 2 == 0:
+                            screen_x = x_offset + (px * self.app.canvas.zoom)
+                            screen_y = y_offset + (py * self.app.canvas.zoom)
+                            self.app.drawing_canvas.create_rectangle(
+                                screen_x, screen_y,
+                                screen_x + self.app.canvas.zoom, screen_y + self.app.canvas.zoom,
+                                fill=color_hex, outline=color_hex, stipple="gray50",
+                                tags="dither_preview"
+                            )
+            
+            # Draw bounding box outline
+            screen_x1 = x_offset + ((canvas_x - offset) * self.app.canvas.zoom)
+            screen_y1 = y_offset + ((canvas_y - offset) * self.app.canvas.zoom)
+            screen_x2 = x_offset + ((canvas_x - offset + brush_size) * self.app.canvas.zoom)
+            screen_y2 = y_offset + ((canvas_y - offset + brush_size) * self.app.canvas.zoom)
+            self.app.drawing_canvas.create_rectangle(
+                screen_x1, screen_y1, screen_x2, screen_y2,
+                outline="#ffffff", width=2, dash=(4, 4),
+                tags="dither_preview"
+            )
+
     def draw_spray_preview(self, canvas_x: int, canvas_y: int):
         """Draw circular preview for Spray tool at the cursor position."""
         self.app.drawing_canvas.delete("spray_preview")
@@ -776,7 +839,6 @@ class CanvasRenderer:
 
     def draw_all_pixels_on_tkinter(self, x_offset: int, y_offset: int):
         """Draw all pixels from the canvas onto the tkinter canvas"""
-        import numpy as np
         zoom = self.app.canvas.zoom
         
         # During live move or rotate preview, hide the source area so pixels don't appear doubled.
@@ -847,6 +909,121 @@ class CanvasRenderer:
         # This prevents the disappearing pixel bug
         self.update_pixel_display()
 
+    def draw_onion_skin(self, x_offset: int, y_offset: int, canvas_pixel_width: int, canvas_pixel_height: int):
+        """Draw onion skin frames (previous and next frames with alpha blending)"""
+        zoom = self.app.canvas.zoom
+        timeline = self.app.timeline
+        
+        if not timeline.onion_skin_enabled:
+            return
+        
+        # Draw previous frames (behind current)
+        prev_frames = timeline.get_previous_frames(timeline.onion_skin_prev_frames)
+        for i, frame in enumerate(prev_frames):
+            opacity = timeline.onion_skin_prev_opacity * (1.0 - i * 0.2)  # Fade out older frames
+            opacity = max(0.1, opacity)  # Minimum visibility
+            self._draw_frame_with_opacity(frame.pixels, x_offset, y_offset, opacity, "#0000ff")  # Blue tint for previous
+        
+        # Draw next frames (behind current)
+        next_frames = timeline.get_next_frames(timeline.onion_skin_next_frames)
+        for i, frame in enumerate(next_frames):
+            opacity = timeline.onion_skin_next_opacity * (1.0 - i * 0.2)  # Fade out future frames
+            opacity = max(0.1, opacity)  # Minimum visibility
+            self._draw_frame_with_opacity(frame.pixels, x_offset, y_offset, opacity, "#ff0000")  # Red tint for next
+    
+    def _draw_frame_with_opacity(self, pixels: np.ndarray, x_offset: int, y_offset: int, opacity: float, tint_color: str = None):
+        """Draw a frame with alpha blending and optional color tint"""
+        zoom = self.app.canvas.zoom
+        
+        # Find non-transparent pixels
+        non_transparent_mask = pixels[:, :, 3] > 0
+        y_coords, x_coords = np.where(non_transparent_mask)
+        
+        # Parse tint color if provided
+        tint_r, tint_g, tint_b = 255, 255, 255
+        if tint_color:
+            tint_r = int(tint_color[1:3], 16)
+            tint_g = int(tint_color[3:5], 16)
+            tint_b = int(tint_color[5:7], 16)
+        
+        # Draw pixels with opacity
+        for i in range(len(y_coords)):
+            y = y_coords[i]
+            x = x_coords[i]
+            rgba = tuple(pixels[y, x])
+            
+            # Apply tint and opacity
+            r = int(rgba[0] * (1 - 0.3) + tint_r * 0.3)  # 30% tint blend
+            g = int(rgba[1] * (1 - 0.3) + tint_g * 0.3)
+            b = int(rgba[2] * (1 - 0.3) + tint_b * 0.3)
+            
+            # Create semi-transparent color (Tkinter doesn't support alpha directly, so we blend with background)
+            # For simplicity, we'll use a lighter/darker version based on opacity
+            alpha = rgba[3] / 255.0 * opacity
+            final_r = int(r * alpha + 128 * (1 - alpha))  # Blend with gray background
+            final_g = int(g * alpha + 128 * (1 - alpha))
+            final_b = int(b * alpha + 128 * (1 - alpha))
+            
+            hex_color = f"#{final_r:02x}{final_g:02x}{final_b:02x}"
+            
+            screen_x = x_offset + (x * zoom)
+            screen_y = y_offset + (y * zoom)
+            
+            self.app.drawing_canvas.create_rectangle(
+                screen_x, screen_y,
+                screen_x + zoom, screen_y + zoom,
+                fill=hex_color, outline="", tags="onion_skin"
+            )
+    
+    def draw_tile_seam_preview(self, x_offset: int, y_offset: int, canvas_pixel_width: int, canvas_pixel_height: int):
+        """Draw tile seam preview overlay showing edge mismatches"""
+        zoom = self.app.canvas.zoom
+        width = self.app.canvas.width
+        height = self.app.canvas.height
+        
+        # Get current pixel data
+        pixels = self.app.canvas.pixels
+        
+        # Check left vs right edges (vertical seams)
+        for y in range(height):
+            left_pixel = tuple(pixels[y, 0])
+            right_pixel = tuple(pixels[y, width - 1])
+            if left_pixel != right_pixel:
+                # Highlight mismatch with red indicator
+                screen_y = y_offset + (y * zoom)
+                # Draw vertical line on left edge
+                self.app.drawing_canvas.create_line(
+                    x_offset, screen_y,
+                    x_offset, screen_y + zoom,
+                    fill="#ff0000", width=2, tags="tile_seam"
+                )
+                # Draw vertical line on right edge
+                self.app.drawing_canvas.create_line(
+                    x_offset + canvas_pixel_width - 1, screen_y,
+                    x_offset + canvas_pixel_width - 1, screen_y + zoom,
+                    fill="#ff0000", width=2, tags="tile_seam"
+                )
+        
+        # Check top vs bottom edges (horizontal seams)
+        for x in range(width):
+            top_pixel = tuple(pixels[0, x])
+            bottom_pixel = tuple(pixels[height - 1, x])
+            if top_pixel != bottom_pixel:
+                # Highlight mismatch with red indicator
+                screen_x = x_offset + (x * zoom)
+                # Draw horizontal line on top edge
+                self.app.drawing_canvas.create_line(
+                    screen_x, y_offset,
+                    screen_x + zoom, y_offset,
+                    fill="#ff0000", width=2, tags="tile_seam"
+                )
+                # Draw horizontal line on bottom edge
+                self.app.drawing_canvas.create_line(
+                    screen_x, y_offset + canvas_pixel_height - 1,
+                    screen_x + zoom, y_offset + canvas_pixel_height - 1,
+                    fill="#ff0000", width=2, tags="tile_seam"
+                )
+    
     def force_canvas_update(self):
         """Force immediate tkinter canvas display update"""
         # Redraw the canvas surface (pixels + grid)

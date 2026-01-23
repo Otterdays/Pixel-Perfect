@@ -228,4 +228,7 @@ class CanvasZoomManager:
             # Sync scrollbar position
             if self.sync_scrollbar_callback:
                 self.sync_scrollbar_callback()
+            # Update status bar
+            if hasattr(self, 'main_window') and hasattr(self.main_window, '_update_status_bar'):
+                self.main_window._update_status_bar()
 

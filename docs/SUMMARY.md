@@ -1,10 +1,35 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.6.2  
-**Last Updated**: January 1, 2026 - Performance Optimizations Complete
+**Version**: 2.7.3  
+**Last Updated**: January 22, 2026 - Theme, Tools & UI Polish
 
-## Latest Updates (v2.7.1)
+## Latest Updates (v2.7.3)
+
+### 🎨 Claude Theme & UI Polish
+- **✅ Claude Theme** - New bright, warm theme (cream backgrounds, coral accents) in theme dropdown
+- **✅ Minimalistic Panel Buttons** - Collapse/expand use small ‹/› chevrons; restore buttons minimal, centered
+- **✅ Canvas Recenter Fix** - Grid no longer stays off-center when opening panels; redraw runs on expand too
+
+### 🖌️ Tool Previews & Eraser Edge Delete
+- **✅ Dither Canvas Preview** - Checkerboard pattern preview at cursor (matches brush size)
+- **✅ Spray Preview** - Circular outline at cursor (existing behavior)
+- **✅ Eraser Right-Click** - Delete edge lines on canvas; right-click or right-drag to remove edges
+
+## Previous Updates (v2.7.2)
+
+### 🔍 Zoom to Cursor + Fit/100% View
+- **✅ Zoom to Cursor** - Ctrl+wheel zooms while keeping cursor position in view
+- **✅ Fit / 100% Buttons** - Fit canvas to viewport; 100% zoom reset
+
+### 📦 Export Presets + Quick Export
+- **✅ Export Settings Dialogs** - Configurable PNG/GIF/Sprite Sheet options
+- **✅ Preset Persistence** - Settings saved between sessions; Quick Export (Ctrl+Shift+E)
+
+### 🎨 Recent Colors Selection
+- **✅ Reliable Selection** - Recent colors view correctly sets active brush color when clicked
+
+## Previous Updates (v2.7.1)
 
 ### 🏁 Dither Tool
 - **✅ Checkerboard Brush** - New tool for classic pixel art shading and texturing.

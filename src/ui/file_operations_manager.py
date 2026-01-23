@@ -7,8 +7,10 @@ All Rights Reserved - Proprietary Software
 """
 
 import os
+import json
 import numpy as np
 from tkinter import filedialog, messagebox
+import customtkinter as ctk
 from PIL import Image
 
 
@@ -50,6 +52,9 @@ class FileOperationsManager:
         self.update_canvas_from_layers_callback = None
         self.clear_selection_and_reset_tools_callback = None
         self.purge_canvas_overlays_callback = None
+
+        # Export presets and last export (loaded from disk)
+        self.export_presets = self._load_export_presets()
     
     def new_project(self):
         """Create a new project"""
@@ -276,39 +281,289 @@ class FileOperationsManager:
             import traceback
             traceback.print_exc()
     
+    def _get_export_presets_path(self) -> str:
+        """Return the file path for export presets."""
+        if os.name == 'nt':
+            base_dir = os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))
+            return os.path.join(base_dir, 'PixelPerfect', 'export_presets.json')
+        return os.path.expanduser('~/.pixelperfect/export_presets.json')
+
+    def _default_export_presets(self) -> dict:
+        """Return default export presets."""
+        return {
+            "PNG": {"scale": 8, "transparent": True},
+            "GIF": {"scale": 8, "duration": 100},
+            "Sprite Sheet": {"scale": 8, "layout": "horizontal", "spacing": 1},
+            "recent_directories": [],  # MRU list of export directories
+            "last_directory": None,  # Most recently used directory
+            "last_export": None
+        }
+
+    def _load_export_presets(self) -> dict:
+        """Load export presets from disk or return defaults."""
+        path = self._get_export_presets_path()
+        if not os.path.exists(path):
+            return self._default_export_presets()
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            defaults = self._default_export_presets()
+            defaults.update({k: v for k, v in data.items() if k in defaults})
+            defaults["last_export"] = data.get("last_export")
+            return defaults
+        except Exception:
+            return self._default_export_presets()
+
+    def _save_export_presets(self):
+        """Persist export presets to disk."""
+        path = self._get_export_presets_path()
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w') as f:
+                json.dump(self.export_presets, f, indent=2)
+        except Exception:
+            pass
+    
+    def _show_export_message(self, message: str, is_error: bool = False):
+        """Show export status message in status bar or print fallback."""
+        # Try to find main window via root
+        try:
+            # Get the main window (root might be CTk root)
+            main_window = self.root
+            if hasattr(main_window, 'status_bar'):
+                main_window.status_bar.show_message(message, 3000)
+                return
+            # Try to find via toplevel
+            if hasattr(main_window, 'winfo_toplevel'):
+                top = main_window.winfo_toplevel()
+                if hasattr(top, 'status_bar'):
+                    top.status_bar.show_message(message, 3000)
+                    return
+        except Exception:
+            pass
+        # Fallback to print
+        prefix = "[ERROR] " if is_error else "[OK] "
+        print(f"{prefix}{message}")
+
+    def _set_last_export(self, format_name: str, file_path: str, settings: dict):
+        """Record last export and save presets."""
+        self.export_presets[format_name] = settings
+        self.export_presets["last_export"] = {
+            "format": format_name,
+            "path": file_path,
+            "settings": settings
+        }
+        
+        # Track recent directories
+        import os
+        directory = os.path.dirname(file_path)
+        if directory:
+            # Update last directory
+            self.export_presets["last_directory"] = directory
+            
+            # Add to recent directories (MRU, max 10)
+            recent_dirs = self.export_presets.get("recent_directories", [])
+            if directory in recent_dirs:
+                recent_dirs.remove(directory)
+            recent_dirs.insert(0, directory)
+            self.export_presets["recent_directories"] = recent_dirs[:10]  # Keep max 10
+        
+        self._save_export_presets()
+
+    def _prompt_export_settings(self, format_name: str) -> dict:
+        """Show export settings dialog and return settings or None."""
+        preset = self.export_presets.get(format_name, {})
+        result = {}
+
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title(f"{format_name} Export Settings")
+        dialog.geometry("320x240")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        def close_dialog():
+            dialog.grab_release()
+            dialog.destroy()
+
+        frame = ctk.CTkFrame(dialog)
+        frame.pack(fill="both", expand=True, padx=15, pady=15)
+
+        # Scale
+        scale_label = ctk.CTkLabel(frame, text="Scale:")
+        scale_label.pack(anchor="w")
+        scale_values = [f"{s}x" for s in self.export_manager.get_scale_factors()]
+        scale_var = ctk.StringVar(value=f"{preset.get('scale', 8)}x")
+        scale_menu = ctk.CTkOptionMenu(frame, values=scale_values, variable=scale_var)
+        scale_menu.pack(fill="x", pady=(0, 10))
+
+        # Format-specific options
+        transparent_var = ctk.BooleanVar(value=preset.get("transparent", True))
+        duration_var = ctk.StringVar(value=str(preset.get("duration", 100)))
+        layout_var = ctk.StringVar(value=preset.get("layout", "horizontal"))
+        spacing_var = ctk.StringVar(value=str(preset.get("spacing", 1)))
+
+        if format_name == "PNG":
+            transparent_check = ctk.CTkCheckBox(frame, text="Transparent Background", variable=transparent_var)
+            transparent_check.pack(anchor="w", pady=(0, 10))
+        elif format_name == "GIF":
+            duration_label = ctk.CTkLabel(frame, text="Frame Duration (ms):")
+            duration_label.pack(anchor="w")
+            duration_entry = ctk.CTkEntry(frame, textvariable=duration_var)
+            duration_entry.pack(fill="x", pady=(0, 10))
+        elif format_name == "Sprite Sheet":
+            layout_label = ctk.CTkLabel(frame, text="Layout:")
+            layout_label.pack(anchor="w")
+            layout_menu = ctk.CTkOptionMenu(
+                frame,
+                values=["horizontal", "vertical", "grid"],
+                variable=layout_var
+            )
+            layout_menu.pack(fill="x", pady=(0, 10))
+
+            spacing_label = ctk.CTkLabel(frame, text="Spacing (px):")
+            spacing_label.pack(anchor="w")
+            spacing_entry = ctk.CTkEntry(frame, textvariable=spacing_var)
+            spacing_entry.pack(fill="x", pady=(0, 10))
+
+        # Buttons
+        button_row = ctk.CTkFrame(frame, fg_color="transparent")
+        button_row.pack(fill="x", pady=(10, 0))
+
+        def on_confirm():
+            try:
+                scale_value = int(scale_var.get().replace("x", ""))
+                if format_name == "PNG":
+                    result.update({"scale": scale_value, "transparent": bool(transparent_var.get())})
+                elif format_name == "GIF":
+                    result.update({
+                        "scale": scale_value,
+                        "duration": max(10, int(duration_var.get()))
+                    })
+                else:
+                    result.update({
+                        "scale": scale_value,
+                        "layout": layout_var.get(),
+                        "spacing": max(0, int(spacing_var.get()))
+                    })
+                close_dialog()
+            except Exception:
+                messagebox.showerror("Invalid Settings", "Please enter valid export settings.")
+
+        def on_cancel():
+            result.clear()
+            close_dialog()
+
+        confirm_btn = ctk.CTkButton(button_row, text="Export", command=on_confirm)
+        confirm_btn.pack(side="left", expand=True, fill="x", padx=(0, 5))
+        cancel_btn = ctk.CTkButton(button_row, text="Cancel", command=on_cancel)
+        cancel_btn.pack(side="left", expand=True, fill="x", padx=(5, 0))
+
+        dialog.wait_window()
+        return result if result else None
+
+    def quick_export(self):
+        """Quick export using last export settings and path."""
+        last_export = self.export_presets.get("last_export")
+        if not last_export:
+            messagebox.showinfo(
+                "Quick Export",
+                "No previous export found.\nUse File → Export first to set a preset."
+            )
+            return
+
+        format_name = last_export.get("format")
+        file_path = last_export.get("path")
+        settings = last_export.get("settings", {})
+
+        if not format_name or not file_path:
+            messagebox.showinfo(
+                "Quick Export",
+                "Last export settings are incomplete.\nUse File → Export to reset."
+            )
+            return
+
+        try:
+            if format_name == "PNG":
+                success = self.export_manager.export_png(
+                    self.canvas.pixels,
+                    file_path,
+                    scale=settings.get("scale", 8),
+                    transparent=settings.get("transparent", True)
+                )
+            elif format_name == "GIF":
+                frames = [frame.pixels for frame in self.timeline.frames]
+                success = self.export_manager.export_gif(
+                    frames,
+                    file_path,
+                    scale=settings.get("scale", 8),
+                    duration=settings.get("duration", 100)
+                )
+            else:
+                frames = [frame.pixels for frame in self.timeline.frames]
+                success = self.export_manager.export_sprite_sheet(
+                    frames,
+                    file_path,
+                    scale=settings.get("scale", 8),
+                    layout=settings.get("layout", "horizontal"),
+                    spacing=settings.get("spacing", 1)
+                )
+
+            if success:
+                self._show_export_message(f"Exported {format_name}: {os.path.basename(file_path)}")
+            else:
+                self._show_export_message(f"Export failed: {format_name}", is_error=True)
+        except Exception as e:
+            self._show_export_message(f"Export error: {str(e)[:50]}", is_error=True)
+
     def export_png(self):
         """Export canvas as PNG"""
         try:
+            settings = self._prompt_export_settings("PNG")
+            if not settings:
+                return
+
+            # Use last directory if available
+            initialdir = self.export_presets.get("last_directory")
             file_path = filedialog.asksaveasfilename(
                 parent=self.root,  # Set parent to keep dialog on top
                 title="Export as PNG",
                 defaultextension=".png",
-                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
+                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")],
+                initialdir=initialdir
             )
             
             if file_path:
-                # Export with high quality (8x scaling) and transparency
+                # Export using preset settings
                 success = self.export_manager.export_png(
                     self.canvas.pixels, 
                     file_path, 
-                    scale=8, 
-                    transparent=True
+                    scale=settings["scale"], 
+                    transparent=settings["transparent"]
                 )
                 if success:
-                    print(f"Exported high-quality PNG (8x scale): {file_path}")
+                    self._set_last_export("PNG", file_path, settings)
+                    # Show success in status bar
+                    self._show_export_message(f"Exported PNG ({settings['scale']}x): {os.path.basename(file_path)}")
                 else:
-                    print(f"Failed to export PNG: {file_path}")
+                    self._show_export_message("Failed to export PNG", is_error=True)
         except Exception as e:
             print(f"Error exporting PNG: {e}")
     
     def export_gif(self):
         """Export animation as GIF"""
         try:
+            settings = self._prompt_export_settings("GIF")
+            if not settings:
+                return
+
+            # Use last directory if available
+            initialdir = self.export_presets.get("last_directory")
             file_path = filedialog.asksaveasfilename(
                 parent=self.root,  # Set parent to keep dialog on top
                 title="Export as GIF",
                 defaultextension=".gif",
-                filetypes=[("GIF Files", "*.gif"), ("All Files", "*.*")]
+                filetypes=[("GIF Files", "*.gif"), ("All Files", "*.*")],
+                initialdir=initialdir
             )
             
             if file_path:
@@ -317,24 +572,32 @@ class FileOperationsManager:
                 success = self.export_manager.export_gif(
                     frames, 
                     file_path, 
-                    scale=8,
-                    duration=100  # 100ms per frame for smooth animation
+                    scale=settings["scale"],
+                    duration=settings["duration"]
                 )
                 if success:
-                    print(f"Exported high-quality animated GIF (8x scale): {file_path}")
+                    self._set_last_export("GIF", file_path, settings)
+                    self._show_export_message(f"Exported GIF ({settings['scale']}x): {os.path.basename(file_path)}")
                 else:
-                    print(f"Failed to export GIF: {file_path}")
+                    self._show_export_message("Failed to export GIF", is_error=True)
         except Exception as e:
             print(f"Error exporting GIF: {e}")
     
     def export_spritesheet(self):
         """Export as sprite sheet"""
         try:
+            settings = self._prompt_export_settings("Sprite Sheet")
+            if not settings:
+                return
+
+            # Use last directory if available
+            initialdir = self.export_presets.get("last_directory")
             file_path = filedialog.asksaveasfilename(
                 parent=self.root,  # Set parent to keep dialog on top
                 title="Export Sprite Sheet",
                 defaultextension=".png",
-                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")]
+                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")],
+                initialdir=initialdir
             )
             
             if file_path:
@@ -343,13 +606,15 @@ class FileOperationsManager:
                 success = self.export_manager.export_sprite_sheet(
                     frames, 
                     file_path, 
-                    scale=8,
-                    layout="horizontal"  # Default to horizontal layout
+                    scale=settings["scale"],
+                    layout=settings["layout"],
+                    spacing=settings["spacing"]
                 )
                 if success:
-                    print(f"Exported high-quality sprite sheet (8x scale): {file_path}")
+                    self._set_last_export("Sprite Sheet", file_path, settings)
+                    self._show_export_message(f"Exported Sprite Sheet ({settings['scale']}x): {os.path.basename(file_path)}")
                 else:
-                    print(f"Failed to export sprite sheet: {file_path}")
+                    self._show_export_message("Failed to export Sprite Sheet", is_error=True)
         except Exception as e:
             print(f"Error exporting sprite sheet: {e}")
     

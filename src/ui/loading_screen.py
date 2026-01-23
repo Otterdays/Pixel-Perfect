@@ -181,7 +181,7 @@ class LoadingScreen:
             # Version info
             version_label = ctk.CTkLabel(
                 main_container,
-                text="Version 2.6.2",
+                text="Version 2.7.2",
                 font=("Arial", 10),
                 text_color="#888888"
             )

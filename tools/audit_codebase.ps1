@@ -2,7 +2,7 @@
 Counts non-blank, non-comment lines across all Python files recursively
 Outputs summary report to audit_results.txt #>
 
-$projectRoot = 'c:\Users\Ry\Desktop\Pixel-Perfect'
+$projectRoot = 'c:\Users\motor\Desktop\AI\Pixel-Perfect'
 $outputFile = Join-Path $projectRoot 'audit_results.txt'
 $totalLines = 0
 $fileCount = 0

@@ -180,13 +180,19 @@ class ThemeDialogManager:
         # Update panel containers and buttons
         self.main_window.left_container.configure(bg=theme.bg_primary)
         self.main_window.right_container.configure(bg=theme.bg_primary)
+        if hasattr(self.main_window, 'left_btn_container'):
+            self.main_window.left_btn_container.configure(bg=theme.bg_primary)
+        if hasattr(self.main_window, 'right_btn_container'):
+            self.main_window.right_btn_container.configure(bg=theme.bg_primary)
         self.main_window.left_collapse_btn.configure(
-            fg_color=theme.button_active,
-            hover_color=theme.button_hover
+            fg_color="transparent",
+            hover_color=theme.button_hover,
+            text_color=theme.text_secondary
         )
         self.main_window.right_collapse_btn.configure(
-            fg_color=theme.button_active,
-            hover_color=theme.button_hover
+            fg_color="transparent",
+            hover_color=theme.button_hover,
+            text_color=theme.text_secondary
         )
         
         # Update scrollable panel backgrounds to match theme
@@ -375,6 +381,12 @@ class ThemeDialogManager:
         
         # Update canvas elements (grid, borders) without full redraw
         self._update_theme_canvas_elements(theme)
+        
+        # Update status bar and HUD theme
+        if hasattr(self.main_window, 'status_bar'):
+            self.main_window.status_bar.apply_theme(theme)
+        if hasattr(self.main_window, 'canvas_hud'):
+            self.main_window.canvas_hud.apply_theme(theme)
         
         print(f"[OK] Theme '{theme.name}' applied (instant mode)")
     

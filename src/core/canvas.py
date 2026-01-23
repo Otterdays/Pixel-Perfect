@@ -47,6 +47,9 @@ class Canvas:
         self.checkerboard = True
         self.background_mode = "auto"  # "auto", "dark", "light", "texture"
         
+        # Tile seam preview (for checking repeating edges)
+        self.show_tile_seam_preview = False
+        
         # Background texture settings
         self.background_texture_intensity = 0.4  # 0.0 to 1.0
         self.background_texture_base_color = "#f5f5dc"  # Same cream base as paper texture
