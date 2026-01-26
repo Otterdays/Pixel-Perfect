@@ -33,6 +33,9 @@ class EventDispatcher:
         # 8ms = ~120 FPS target for responsive cursor preview updates
         self.canvas_optimizer = CanvasEventOptimizer(throttle_ms=8.0)
         
+        # State tracking for middle mouse pan
+        self.is_middle_panning = False
+        
     def bind_all_events(self):
         """Bind all keyboard, mouse, and window events"""
         root = self.main_window.root
@@ -68,6 +71,11 @@ class EventDispatcher:
             self.main_window.drawing_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
             self.main_window.drawing_canvas.bind("<Button-4>", self.on_mouse_wheel)
             self.main_window.drawing_canvas.bind("<Button-5>", self.on_mouse_wheel)
+            
+            # Middle mouse pan (Button-2 on Windows/Linux)
+            self.main_window.drawing_canvas.bind("<Button-2>", self.on_middle_mouse_down)
+            self.main_window.drawing_canvas.bind("<B2-Motion>", self.on_middle_mouse_drag)
+            self.main_window.drawing_canvas.bind("<ButtonRelease-2>", self.on_middle_mouse_up)
     
     # ==================== Window & Panel Events ====================
     
@@ -185,6 +193,47 @@ class EventDispatcher:
     
     def on_key_press(self, event):
         """Handle keyboard events"""
+        # F11 for fullscreen toggle
+        if event.keysym == 'F11':
+            self.main_window._toggle_fullscreen()
+            return
+        
+        # Escape key - exit fullscreen first, then handle other escape actions
+        if event.keysym.lower() == 'escape':
+            # Exit fullscreen if active
+            if hasattr(self.main_window, 'is_fullscreen') and self.main_window.is_fullscreen:
+                self.main_window._exit_fullscreen()
+                return
+            # Otherwise handle rotation cancel
+            if hasattr(self.main_window, 'selection_mgr'):
+                if self.main_window.selection_mgr.is_rotating:
+                    self.main_window.selection_mgr.cancel_rotation()
+                    return
+        
+        # Tab key - toggle panels
+        if event.keysym == 'Tab':
+            if hasattr(self.main_window, 'window_state_manager'):
+                wsm = self.main_window.window_state_manager
+                
+                # Shift+Tab: Toggle left panel only
+                if event.state & 0x1:
+                    wsm.toggle_left_panel()
+                    return
+                
+                # Tab: Toggle both panels (Maximize Canvas mode)
+                # If either panel is visible, hide both. If both hidden, show both.
+                if not wsm.left_panel_collapsed or not wsm.right_panel_collapsed:
+                    # Hide both
+                    if not wsm.left_panel_collapsed:
+                        wsm.toggle_left_panel()
+                    if not wsm.right_panel_collapsed:
+                        wsm.toggle_right_panel()
+                else:
+                    # Show both
+                    wsm.toggle_left_panel()
+                    wsm.toggle_right_panel()
+            return
+        
         # Ctrl+Z for undo
         if event.state & 0x4 and event.keysym.lower() == 'z':
             if event.state & 0x1:  # Shift is also pressed (Ctrl+Shift+Z)
@@ -215,15 +264,11 @@ class EventDispatcher:
                 self.main_window.file_ops.new_project()
             return
         
-        # Handle rotation preview mode
+        # Handle rotation preview mode (Enter key)
         if hasattr(self.main_window, 'selection_mgr'):
             if event.keysym.lower() == 'return':  # Enter key - apply rotation
                 if self.main_window.selection_mgr.is_rotating:
                     self.main_window.selection_mgr.apply_rotation()
-                    return
-            elif event.keysym.lower() == 'escape':  # Escape key - cancel rotation
-                if self.main_window.selection_mgr.is_rotating:
-                    self.main_window.selection_mgr.cancel_rotation()
                     return
         
         # Ctrl+E for export PNG
@@ -237,6 +282,36 @@ class EventDispatcher:
         if event.state & 0x4 and event.state & 0x1 and event.keysym.lower() == 'e':
             if hasattr(self.main_window, 'file_ops'):
                 self.main_window.file_ops.quick_export()
+            return
+        
+        # Ctrl+C for copy (only if there's a selection)
+        if event.state & 0x4 and event.keysym.lower() == 'c':
+            selection_tool = self.main_window.tools.get("selection")
+            if selection_tool and selection_tool.has_active_selection():
+                if hasattr(self.main_window, 'context_menu_mgr'):
+                    self.main_window.context_menu_mgr._copy_selection()
+            return
+        
+        # Ctrl+V for paste (only if there's something to paste)
+        if event.state & 0x4 and event.keysym.lower() == 'v':
+            if (hasattr(self.main_window, 'selection_mgr') and 
+                self.main_window.selection_mgr.copy_buffer is not None):
+                if hasattr(self.main_window, 'context_menu_mgr'):
+                    self.main_window.context_menu_mgr._paste_selection()
+            return
+        
+        # Ctrl+X for cut (only if there's a selection)
+        if event.state & 0x4 and event.keysym.lower() == 'x':
+            selection_tool = self.main_window.tools.get("selection")
+            if selection_tool and selection_tool.has_active_selection():
+                if hasattr(self.main_window, 'context_menu_mgr'):
+                    self.main_window.context_menu_mgr._cut_selection()
+                    return
+        
+        # Delete key for delete selection
+        if event.keysym == 'Delete' or event.keysym == 'BackSpace':
+            if hasattr(self.main_window, 'context_menu_mgr'):
+                self.main_window.context_menu_mgr._delete_selection()
             return
         
         # Tool shortcuts (B, E, F, D, S, L, Q, C, P, M, R, T, X)
@@ -291,6 +366,58 @@ class EventDispatcher:
     
     # ==================== Mouse Events (Canvas) ====================
     
+    def on_middle_mouse_down(self, event):
+        """Handle middle mouse down for panning"""
+        if "pan" in self.main_window.tools:
+            tool = self.main_window.tools["pan"]
+            tool.start_pan(event.x, event.y, self.main_window.pan_offset_x, self.main_window.pan_offset_y)
+            self.is_middle_panning = True
+            
+            # Change cursor to hand
+            try:
+                self.main_window.drawing_canvas.configure(cursor="fleur")
+            except Exception:
+                pass
+
+    def on_middle_mouse_drag(self, event):
+        """Handle middle mouse drag for panning"""
+        if not self.is_middle_panning or "pan" not in self.main_window.tools:
+             return
+             
+        tool = self.main_window.tools["pan"]
+        result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)
+        if result is not None:
+             temp_offset_x, temp_offset_y = result
+             # Temporarily update display with new pan offset
+             old_offset_x = self.main_window.pan_offset_x
+             old_offset_y = self.main_window.pan_offset_y
+             self.main_window.pan_offset_x = temp_offset_x
+             self.main_window.pan_offset_y = temp_offset_y
+             self.main_window.canvas_renderer.update_pixel_display()
+             # Restore original offset (will be set permanently on mouse up)
+             self.main_window.pan_offset_x = old_offset_x
+             self.main_window.pan_offset_y = old_offset_y
+
+    def on_middle_mouse_up(self, event):
+        """Handle middle mouse up"""
+        if not self.is_middle_panning or "pan" not in self.main_window.tools:
+             return
+             
+        tool = self.main_window.tools["pan"]
+        result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)
+        if result is not None:
+             self.main_window.pan_offset_x, self.main_window.pan_offset_y = result
+        
+        tool.end_pan()
+        self.main_window.canvas_renderer.update_pixel_display()
+        self.is_middle_panning = False
+        
+        # Restore cursor
+        try:
+            self.main_window.drawing_canvas.configure(cursor="arrow")
+        except Exception:
+            pass
+    
     def on_tkinter_canvas_mouse_down(self, event):
         """Handle mouse down on tkinter canvas"""
         # Clear any tool previews when starting to draw
@@ -312,6 +439,20 @@ class EventDispatcher:
         # Handle copy placement mode
         if self.main_window.selection_mgr.is_placing_copy and self.main_window.selection_mgr.copy_buffer is not None:
             if 0 <= canvas_x < self.main_window.canvas.width and 0 <= canvas_y < self.main_window.canvas.height:
+                # Save undo state before placing paste
+                active_layer = self.main_window.layer_manager.get_active_layer()
+                if active_layer:
+                    edge_lines = None
+                    edge_tool = self.main_window.tools.get("edge")
+                    if edge_tool and hasattr(edge_tool, 'edge_lines'):
+                        edge_lines = edge_tool.edge_lines
+                    
+                    self.main_window.undo_manager.save_state(
+                        active_layer.pixels.copy(),
+                        self.main_window.layer_manager.active_layer_index,
+                        edge_lines
+                    )
+                
                 self.main_window.selection_mgr.place_copy_at(canvas_x, canvas_y)
             return
         
@@ -531,6 +672,7 @@ class EventDispatcher:
                 current_color = self.main_window.get_current_color()
                 tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
                 self.main_window.canvas_renderer.update_pixel_display()
+            return  # Don't show context menu for edge tool
         
         # Handle right-click for eraser tool (delete edge lines)
         elif self.main_window.current_tool == "eraser":
@@ -540,6 +682,11 @@ class EventDispatcher:
                 current_color = self.main_window.get_current_color()
                 tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
                 self.main_window.canvas_renderer.update_pixel_display()
+            return  # Don't show context menu for eraser tool
+        
+        # Show context menu for all other tools
+        if hasattr(self.main_window, 'context_menu_mgr'):
+            self.main_window.context_menu_mgr.show_canvas_context_menu(event)
     
     def on_tkinter_canvas_mouse_drag(self, event):
         """Handle mouse drag on tkinter canvas"""

@@ -42,6 +42,8 @@ from .tooltip import create_tooltip
 from .theme_manager import ThemeManager
 from .ui_builder import UIBuilder
 from .theme_dialog_manager import ThemeDialogManager
+from .theme_customizer import ThemeCustomizer
+from .context_menu_manager import ContextMenuManager
 from .file_operations_manager import FileOperationsManager
 from .dialog_manager import DialogManager
 from .selection_manager import SelectionManager
@@ -79,7 +81,8 @@ class MainWindow:
         available_height = screen_height - 60
         
         # Set reasonable window size that fits above taskbar
-        window_width = min(1400, screen_width - 40)  # Leave some margin on sides
+        # Increased width to 1600px to accommodate all toolbar buttons (including Tile button)
+        window_width = min(1600, screen_width - 40)  # Leave some margin on sides
         window_height = min(800, available_height)   # Increased by 150px from 650, still above taskbar
         
         # Center the window on screen
@@ -238,6 +241,9 @@ class MainWindow:
         self.last_mouse_pos = (0, 0)
         self._last_drawn_pixel = None  # Track last drawn pixel for efficient updates
         self._updating_display = False  # Flag to prevent recursion
+        self.is_fullscreen = False  # Track fullscreen state
+        self._windowed_geometry = None  # Store window geometry before fullscreen
+        self._windowed_overrideredirect = False  # Store overrideredirect state before fullscreen
         
         # Copy preview position (EventDispatcher needs this)
         self.copy_preview_pos = None  # Mouse position for copy preview
@@ -255,6 +261,15 @@ class MainWindow:
         self.theme_manager = ThemeManager()
         # Initialize theme dialog manager
         self.theme_dialog_manager = ThemeDialogManager(self)
+        # Initialize theme customizer
+        self.theme_customizer = ThemeCustomizer(self, self.theme_manager)
+        # Load custom themes from storage
+        self.theme_customizer.load_custom_themes()
+        # Wire customizer to dialog manager
+        self.theme_dialog_manager.set_theme_customizer(self.theme_customizer)
+        
+        # Initialize context menu manager
+        self.context_menu_mgr = ContextMenuManager(self)
         
         # Initialize grid control manager (after theme manager)
         self.grid_control_mgr = GridControlManager(self.canvas, self.theme_manager)
@@ -339,6 +354,10 @@ class MainWindow:
         self.loading_manager.update_loading("Setting up palette views...", 85)
         self._initialize_all_views()
         self._show_view("grid")
+        
+        # Update theme dropdown with custom themes (after UI creation)
+        if hasattr(self, 'theme_menu'):
+            self.theme_menu.configure(values=self.theme_manager.get_theme_names())
         
         # Initialize canvas integration
         self.loading_manager.update_loading("Finalizing...", 95)
@@ -529,6 +548,7 @@ class MainWindow:
         self.grid_control_mgr.grid_overlay_button = self.grid_overlay_button
         self.grid_control_mgr.grid_mode_button = self.ui_builder.widgets['grid_mode_button']
         self.grid_control_mgr.tile_seam_button = self.ui_builder.widgets.get('tile_seam_button')
+        self.grid_control_mgr.tile_preview_button = self.ui_builder.widgets.get('tile_preview_button')
         self.grid_control_mgr.force_canvas_update_callback = self.canvas_renderer.force_canvas_update
         
         # Set background control manager references and callbacks
@@ -541,6 +561,8 @@ class MainWindow:
         self.grid_control_mgr.update_grid_mode_button()
         if self.grid_control_mgr.tile_seam_button:
             self.grid_control_mgr.update_tile_seam_button_text()
+        if self.grid_control_mgr.tile_preview_button:
+            self.grid_control_mgr.update_tile_preview_button_text()
         
         # Initialize background mode button state
         self.background_control_mgr.update_background_mode_button()
@@ -744,6 +766,7 @@ class MainWindow:
             'toggle_grid_overlay': self.grid_control_mgr.toggle_grid_overlay,
             'toggle_grid_mode': self.grid_control_mgr.toggle_grid_mode,
             'toggle_tile_seam': self.grid_control_mgr.toggle_tile_seam_preview,
+            'toggle_tile_preview': self.grid_control_mgr.toggle_tile_preview,
             'toggle_background_mode': self.background_control_mgr.toggle_background_mode,
             'toggle_notes': self._toggle_notes,
             'select_tool': self._select_tool,
@@ -1594,6 +1617,76 @@ class MainWindow:
             self.notes_panel.frame.pack(fill="both", expand=False, side="right", padx=(5, 0))
             self.notes_panel.frame.configure(width=300)
             self.notes_visible = True
+    
+    def _toggle_fullscreen(self):
+        """Toggle fullscreen mode (F11)"""
+        if not self.is_fullscreen:
+            # Entering fullscreen - save current window geometry and state
+            self._windowed_geometry = self.root.geometry()
+            self._windowed_overrideredirect = self.root.overrideredirect()
+            self.is_fullscreen = True
+            
+            # Ensure window is visible and updated before fullscreen
+            self.root.deiconify()
+            self.root.update_idletasks()
+            
+            # Get screen dimensions
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            
+            # On Windows, use overrideredirect + geometry for true fullscreen
+            # This avoids CustomTkinter's fullscreen attribute issues
+            import sys
+            if sys.platform == 'win32':
+                # Remove window decorations for true fullscreen
+                self.root.overrideredirect(True)
+                # Set geometry to full screen
+                self.root.geometry(f"{screen_width}x{screen_height}+0+0")
+                self.root.update_idletasks()
+            else:
+                # On Linux/Mac, use standard fullscreen attribute
+                self.root.attributes('-fullscreen', True)
+                self.root.update_idletasks()
+        else:
+            # Exiting fullscreen - restore previous window state
+            self.is_fullscreen = False
+            
+            # Restore window decorations if we removed them
+            if hasattr(self, '_windowed_overrideredirect'):
+                self.root.overrideredirect(self._windowed_overrideredirect)
+            
+            # Remove fullscreen attribute
+            self.root.attributes('-fullscreen', False)
+            self.root.update_idletasks()
+            
+            # Restore window geometry if we saved it
+            if self._windowed_geometry:
+                self.root.after(50, lambda: self.root.geometry(self._windowed_geometry))
+        
+        # Force canvas redraw after fullscreen toggle
+        if hasattr(self, 'canvas_renderer'):
+            self.root.after(100, self.canvas_renderer.force_canvas_update)
+    
+    def _exit_fullscreen(self):
+        """Exit fullscreen mode if active"""
+        if self.is_fullscreen:
+            self.is_fullscreen = False
+            
+            # Restore window decorations if we removed them
+            if hasattr(self, '_windowed_overrideredirect'):
+                self.root.overrideredirect(self._windowed_overrideredirect)
+            
+            # Remove fullscreen attribute
+            self.root.attributes('-fullscreen', False)
+            self.root.update_idletasks()
+            
+            # Restore window geometry if we saved it
+            if self._windowed_geometry:
+                self.root.after(50, lambda: self.root.geometry(self._windowed_geometry))
+            
+            # Force canvas redraw after exiting fullscreen
+            if hasattr(self, 'canvas_renderer'):
+                self.root.after(100, self.canvas_renderer.force_canvas_update)
     
     def _update_status_bar(self, cursor_x=None, cursor_y=None):
         """Update status bar with current application state"""

@@ -163,6 +163,16 @@ class UIBuilder:
         
         self.widgets['tile_seam_button'] = ctk.CTkButton(self.widgets['toolbar'], text="Seam", width=70, command=self.callbacks.get('toggle_tile_seam', lambda: None))
         self.widgets['tile_seam_button'].pack(side="right", padx=5)
+        
+        # Tile preview button (shows repeating pattern preview)
+        self.widgets['tile_preview_button'] = ctk.CTkButton(
+            self.widgets['toolbar'], 
+            text="Tile", 
+            width=60, 
+            command=self.callbacks.get('toggle_tile_preview', lambda: None)
+        )
+        self.widgets['tile_preview_button'].pack(side="right", padx=5)
+        create_tooltip(self.widgets['tile_preview_button'], "Tile Preview: Show canvas repeated for pattern visualization", delay=500)
 
     def create_undo_redo_buttons(self):
         """Create undo/redo buttons in the toolbar"""

@@ -1,8 +1,100 @@
 # Pixel Perfect - Development Scratchpad
 
-**Last Updated**: January 22, 2026  
-**Current Version**: 2.7.3  
-**Status**: Production Ready - Theme, Tools & UI Polish
+**Last Updated**: January 25, 2026  
+**Current Version**: 2.7.8  
+**Status**: Production Ready - QoL Improvements
+
+---
+
+## Version 2.7.8 - Workflow Enhancements (January 25, 2026)
+**Status**: ✅ COMPLETE
+
+### ⚡ QoL Improvements
+- **Middle Mouse Pan**: Pan the canvas by holding the middle mouse button (wheel click).
+- **Tab Panel Toggle**: Press `Tab` to toggle all panels (Maximize Canvas), `Shift+Tab` to toggle left panel only.
+- **Roadmap Expansion**: Added 50+ new features to `polish_next_up.md` to guide future development.
+
+### 📁 Files Modified
+- `src/core/event_dispatcher.py` – Added Tab key handler and Middle Mouse event handlers.
+- `polish_next_up.md` – Major expansion of feature roadmap.
+
+---
+
+## Version 2.7.7 - Right-Click Context Menu & Copy/Paste Shortcuts (January 25, 2026)
+**Status**: ✅ COMPLETE
+
+### 🖱️ Right-Click Context Menu (New Feature!)
+- **Context-Aware Menu**: Right-click on canvas shows relevant actions based on current tool and state
+- **Selection Operations**: Copy, Cut, Delete, Mirror, Rotate, Scale (when selection exists)
+- **Paste Support**: Paste option appears when copy buffer has content
+- **Tool-Specific Actions**: Fill Here, Eyedropper, tool switching
+- **Canvas Operations**: Zoom Fit, Zoom 100%, Toggle Grid, Toggle Tile Preview
+- **Smart Filtering**: Menu only shows relevant options (no empty sections)
+- **Edge/Eraser Exclusion**: Context menu doesn't interfere with edge/eraser right-click functionality
+
+### ⌨️ Copy/Paste Keyboard Shortcuts (New Feature!)
+- **Ctrl+C**: Copy selection
+- **Ctrl+V**: Paste copied selection (enters placement mode)
+- **Ctrl+X**: Cut selection (copy + delete)
+- **Delete/Backspace**: Delete selection
+- **Undo Support**: All operations properly save undo state
+- **Visual Feedback**: Paste uses existing copy preview system
+
+### 📁 Files Created
+- `src/ui/context_menu_manager.py` – Context menu system (260+ lines)
+
+### 📁 Files Modified
+- `src/core/event_dispatcher.py` – Added context menu trigger, keyboard shortcuts (Ctrl+C/V/X, Del)
+- `src/ui/main_window.py` – Integrated context menu manager
+
+---
+
+## Version 2.7.6 - Theme Customization System (January 25, 2026)
+**Status**: ✅ COMPLETE
+
+### 🎨 Theme Customization Screen (New Feature!)
+- **Full Color Customization**: Customize all 20+ theme color properties with visual color pickers
+- **Live Preview**: See changes in real-time as you adjust colors
+- **Save Custom Themes**: Save your custom themes with custom names
+- **Export/Import**: Export themes to JSON files and import from other users
+- **Persistent Storage**: Custom themes saved to user storage (AppData/PixelPerfect/themes/)
+- **Theme Integration**: Custom themes automatically appear in theme dropdown
+- **Reset Functionality**: Reset to original theme at any time
+- **Organized UI**: Color properties grouped by category (Background, Text, Buttons, Canvas, etc.)
+
+### 📁 Files Created
+- `src/ui/theme_customizer.py` – Complete theme customization system (600+ lines)
+
+### 📁 Files Modified
+- `src/ui/theme_dialog_manager.py` – Added "Customize Theme" button to settings dialog
+- `src/ui/main_window.py` – Integrated theme customizer, loads custom themes on startup
+
+---
+
+## Version 2.7.5 - Tile Preview & Fullscreen Mode (January 25, 2026)
+**Status**: ✅ COMPLETE
+
+### 🖼️ Tile Preview Mode (New Feature!)
+- **3x3 Repeating Grid**: Canvas repeated around itself for pattern/tile visualization
+- **Ghost tiles**: Surrounding tiles drawn at 50% opacity with stipple effect
+- **Performance optimized**: Only draws tiles visible in viewport, uses NumPy for efficient pixel lookup
+- **Toolbar button**: "Tile" button toggles ON/OFF with green highlight when active
+- **Cyan border**: Center tile (your canvas) highlighted with dashed cyan border
+- **Use case**: Perfect for game tiles, textures, repeating patterns, and building pieces
+
+### ⛶ Fullscreen Mode (New Feature!)
+- **F11 toggle**: Press F11 to enter/exit true fullscreen mode
+- **Escape to exit**: Press Escape to exit fullscreen (before other escape actions)
+- **Auto-redraw**: Canvas automatically redraws after fullscreen toggle
+- **Distraction-free**: Full screen coverage for focused pixel art work
+
+### 📁 Files Modified
+- `src/core/canvas.py` – Added `show_tile_preview` state
+- `src/core/canvas_renderer.py` – Added `draw_tile_preview()` method
+- `src/ui/grid_control_manager.py` – Added tile preview toggle and button management
+- `src/ui/ui_builder.py` – Added "Tile" button to toolbar
+- `src/ui/main_window.py` – Wired up tile preview callback and button reference, added fullscreen toggle
+- `src/core/event_dispatcher.py` – Added F11 and Escape keybinds for fullscreen
 
 ---
 

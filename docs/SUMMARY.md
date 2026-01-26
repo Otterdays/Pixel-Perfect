@@ -1,10 +1,46 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.7.3  
-**Last Updated**: January 22, 2026 - Theme, Tools & UI Polish
+**Version**: 2.7.7  
+**Last Updated**: January 25, 2026 - Context Menu & Keyboard Shortcuts
 
-## Latest Updates (v2.7.3)
+## Latest Updates (v2.7.7)
+
+### 🖱️ Right-Click Context Menu
+- **✅ Context-Aware Menu** - Right-click shows relevant actions based on tool/state
+- **✅ Selection Operations** - Copy, Cut, Delete, Mirror, Rotate, Scale
+- **✅ Paste Support** - Paste when copy buffer exists
+- **✅ Tool Switching** - Quick access to common tools
+- **✅ Canvas Controls** - Zoom, Grid, Tile Preview toggles
+
+### ⌨️ Copy/Paste Keyboard Shortcuts
+- **✅ Ctrl+C/V/X** - Copy, Paste, Cut selection
+- **✅ Delete Key** - Delete selection
+- **✅ Undo Support** - All operations save undo state
+
+## Previous Updates (v2.7.6)
+
+### 🎨 Theme Customization System
+- **✅ Complete Color Control** - Customize all 20+ theme color properties with visual pickers
+- **✅ Live Preview** - See changes in real-time as you adjust colors
+- **✅ Save Custom Themes** - Save themes with custom names, auto-added to dropdown
+- **✅ Export/Import** - Export themes to JSON files, import from other users
+- **✅ Persistent Storage** - Custom themes saved to user storage directory
+
+## Previous Updates (v2.7.5)
+
+### 🖼️ Tile Preview Mode
+- **✅ 3x3 Repeating Grid** - Canvas repeated around itself for pattern/tile visualization
+- **✅ Ghost Tiles** - Surrounding tiles at 50% opacity with stipple transparency effect
+- **✅ Performance Optimized** - Only draws visible tiles, uses NumPy for efficient rendering
+- **✅ Toolbar Button** - "Tile" button toggles ON/OFF with green highlight
+
+### ⛶ Fullscreen Mode
+- **✅ F11 Toggle** - Press F11 to enter/exit true fullscreen mode
+- **✅ Escape to Exit** - Press Escape to exit fullscreen
+- **✅ Distraction-Free** - Full screen coverage for focused pixel art work
+
+## Previous Updates (v2.7.3)
 
 ### 🎨 Claude Theme & UI Polish
 - **✅ Claude Theme** - New bright, warm theme (cream backgrounds, coral accents) in theme dropdown

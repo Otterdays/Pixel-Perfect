@@ -323,6 +323,10 @@ class CanvasRenderer:
                     outline=theme.canvas_border, width=2, tags="border"
                 )
 
+                # Draw tile preview FIRST (behind everything, shows repeating pattern)
+                if self.app.canvas.show_tile_preview:
+                    self.draw_tile_preview(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                
                 # Draw onion skin frames first (behind current frame)
                 if hasattr(self.app, 'timeline') and self.app.timeline.onion_skin_enabled:
                     self.draw_onion_skin(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
@@ -1023,6 +1027,83 @@ class CanvasRenderer:
                     screen_x + zoom, y_offset + canvas_pixel_height - 1,
                     fill="#ff0000", width=2, tags="tile_seam"
                 )
+    
+    def draw_tile_preview(self, x_offset: int, y_offset: int, canvas_pixel_width: int, canvas_pixel_height: int):
+        """Draw repeating tile preview - shows canvas repeated in 3x3 grid for pattern visualization.
+        
+        This is optimized for performance:
+        - Uses NumPy to find non-transparent pixels efficiently
+        - Draws ghost tiles with stipple pattern for transparency effect
+        - Only draws 8 surrounding tiles (not the center which is the main canvas)
+        """
+        zoom = self.app.canvas.zoom
+        canvas_pixels = self.app.canvas.pixels
+        
+        # Find all non-transparent pixels using NumPy (much faster than nested loops)
+        non_transparent_mask = canvas_pixels[:, :, 3] > 0
+        y_coords, x_coords = np.where(non_transparent_mask)
+        
+        # If no pixels to draw, skip
+        if len(y_coords) == 0:
+            return
+        
+        # Define tile offsets for 3x3 grid (excluding center [0,0] which is main canvas)
+        tile_offsets = [
+            (-1, -1), (0, -1), (1, -1),  # Top row
+            (-1,  0),          (1,  0),  # Middle row (no center)
+            (-1,  1), (0,  1), (1,  1),  # Bottom row
+        ]
+        
+        # Get view bounds to only draw tiles that are visible
+        view_width = self.app.drawing_canvas.winfo_width()
+        view_height = self.app.drawing_canvas.winfo_height()
+        
+        # Draw each surrounding tile
+        for tile_dx, tile_dy in tile_offsets:
+            # Calculate tile offset in screen coordinates
+            tile_x_offset = x_offset + (tile_dx * canvas_pixel_width)
+            tile_y_offset = y_offset + (tile_dy * canvas_pixel_height)
+            
+            # Skip tiles that are completely outside the view (performance optimization)
+            if (tile_x_offset + canvas_pixel_width < 0 or tile_x_offset > view_width or
+                tile_y_offset + canvas_pixel_height < 0 or tile_y_offset > view_height):
+                continue
+            
+            # Draw non-transparent pixels for this tile with ghost effect
+            for i in range(len(y_coords)):
+                y = y_coords[i]
+                x = x_coords[i]
+                color = tuple(canvas_pixels[y, x])
+                
+                screen_x = tile_x_offset + (x * zoom)
+                screen_y = tile_y_offset + (y * zoom)
+                
+                # Skip pixels outside view bounds
+                if (screen_x + zoom < 0 or screen_x > view_width or
+                    screen_y + zoom < 0 or screen_y > view_height):
+                    continue
+                
+                # Use dimmed color for ghost tiles (50% brightness)
+                ghost_r = color[0] // 2
+                ghost_g = color[1] // 2
+                ghost_b = color[2] // 2
+                hex_color = f"#{ghost_r:02x}{ghost_g:02x}{ghost_b:02x}"
+                
+                self.app.drawing_canvas.create_rectangle(
+                    screen_x, screen_y,
+                    screen_x + zoom, screen_y + zoom,
+                    fill=hex_color, outline="", 
+                    stipple="gray50",  # Add transparency effect
+                    tags="tile_preview"
+                )
+        
+        # Draw subtle border around center tile to distinguish it
+        self.app.drawing_canvas.create_rectangle(
+            x_offset - 1, y_offset - 1,
+            x_offset + canvas_pixel_width + 1, y_offset + canvas_pixel_height + 1,
+            outline="#00ffff", width=2, dash=(6, 3),
+            tags="tile_preview"
+        )
     
     def force_canvas_update(self):
         """Force immediate tkinter canvas display update"""

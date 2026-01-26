@@ -19,6 +19,7 @@ class ThemeDialogManager:
     def __init__(self, main_window: 'MainWindow'):
         self.main_window = main_window
         self.settings_dialog: Optional[ctk.CTkToplevel] = None
+        self.theme_customizer = None  # Will be set after theme_customizer is initialized
         
         # Create settings dialog at startup for instant display
         self._create_settings_dialog()
@@ -51,32 +52,56 @@ class ThemeDialogManager:
         )
         title_label.pack()
         
-        # Coming soon message
-        message_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        message_frame.pack(pady=(5, 15), padx=20, fill="both", expand=True)
+        # Settings options
+        options_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        options_frame.pack(pady=(5, 15), padx=20, fill="both", expand=True)
         
+        # Theme Customizer button (main feature)
+        theme_customizer_btn = ctk.CTkButton(
+            options_frame,
+            text="🎨 Customize Theme",
+            width=300,
+            height=50,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color="#1f6aa5",
+            hover_color="#1557b0",
+            command=self._open_theme_customizer
+        )
+        theme_customizer_btn.pack(pady=15)
+        
+        theme_desc = ctk.CTkLabel(
+            options_frame,
+            text="Customize colors, save themes, and export/import theme files",
+            font=ctk.CTkFont(size=12),
+            text_color="#b0b0b0"
+        )
+        theme_desc.pack(pady=(0, 20))
+        
+        # Separator
+        separator = ctk.CTkFrame(options_frame, height=2, fg_color="#404040")
+        separator.pack(fill="x", pady=10)
+        
+        # Coming soon message for other settings
         message_label = ctk.CTkLabel(
-            message_frame,
-            text="Settings System Coming Soon!",
-            font=ctk.CTkFont(size=18, weight="bold"),
+            options_frame,
+            text="More Settings Coming Soon!",
+            font=ctk.CTkFont(size=16, weight="bold"),
             text_color="#e0e0e0"
         )
-        message_label.pack(pady=(10, 20))
+        message_label.pack(pady=(10, 10))
         
-        info_text = "A comprehensive settings panel is in development.\n\n"
-        info_text += "Planned features:\n"
+        info_text = "Additional settings are in development:\n"
         info_text += "• Canvas & Grid preferences\n"
         info_text += "• Tool defaults & behavior\n"
-        info_text += "• Color & Palette options\n"
-        info_text += "• UI customization\n"
+        info_text += "• UI scale & DPI controls\n"
         info_text += "• Keyboard shortcuts\n"
         info_text += "• And much more!\n\n"
         info_text += "See MAX_SETTINGS.md for the full list of 127 planned settings."
         
         info_label = ctk.CTkLabel(
-            message_frame,
+            options_frame,
             text=info_text,
-            font=ctk.CTkFont(size=13),
+            font=ctk.CTkFont(size=12),
             text_color="#b0b0b0",
             justify="left"
         )
@@ -162,6 +187,19 @@ class ThemeDialogManager:
     def hide_settings_dialog(self):
         """Public method to hide settings dialog"""
         self._hide_settings_dialog()
+    
+    def _open_theme_customizer(self):
+        """Open theme customizer dialog"""
+        if self.theme_customizer:
+            self.theme_customizer.show_customizer()
+        else:
+            # Fallback if customizer not initialized
+            import tkinter.messagebox as msgbox
+            msgbox.showinfo("Theme Customizer", "Theme customizer is being initialized...")
+    
+    def set_theme_customizer(self, customizer):
+        """Set the theme customizer instance"""
+        self.theme_customizer = customizer
     
     def apply_theme(self, theme):
         """Apply theme colors to all UI elements - optimized for instant switching"""

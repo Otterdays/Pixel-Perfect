@@ -29,6 +29,7 @@ class GridControlManager:
         self.grid_overlay_button = None
         self.grid_mode_button = None
         self.tile_seam_button = None
+        self.tile_preview_button = None
     
     def toggle_grid(self):
         """Toggle grid visibility"""
@@ -134,4 +135,21 @@ class GridControlManager:
             else:
                 self.tile_seam_button.configure(text="Seam: OFF")
                 self.tile_seam_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
+    
+    def toggle_tile_preview(self):
+        """Toggle tile preview (shows canvas repeated in 3x3 grid for pattern visualization)"""
+        self.canvas.show_tile_preview = not self.canvas.show_tile_preview
+        self.update_tile_preview_button_text()
+        if self.force_canvas_update_callback:
+            self.force_canvas_update_callback()
+    
+    def update_tile_preview_button_text(self):
+        """Update tile preview button text to show current state"""
+        if self.tile_preview_button:
+            if self.canvas.show_tile_preview:
+                self.tile_preview_button.configure(text="Tile: ON")
+                self.tile_preview_button.configure(fg_color="#00cc66")  # Green for active
+            else:
+                self.tile_preview_button.configure(text="Tile: OFF")
+                self.tile_preview_button.configure(fg_color=self.theme_manager.get_current_theme().button_normal)
 
