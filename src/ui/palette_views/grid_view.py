@@ -1,6 +1,6 @@
 """
 Grid View for Pixel Perfect
-Displays the main color palette in a 4-column grid
+Displays the main color palette in an 8-column grid
 """
 
 import customtkinter as ctk
@@ -46,7 +46,7 @@ class GridView:
         self.color_buttons.clear()
         
         colors = self.palette.colors
-        cols = 4
+        cols = 8
         rows = (len(colors) + cols - 1) // cols
         
         for i, color in enumerate(colors):

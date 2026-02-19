@@ -119,7 +119,7 @@ class ColorPalette:
     
     def add_color(self, color: Tuple[int, int, int, int]):
         """Add a new color to the palette"""
-        if len(self.colors) < 16:  # Limit to 16 colors
+        if len(self.colors) < 32:  # Limit to 32 colors
             self.colors.append(color)
     
     def remove_color(self, index: int):

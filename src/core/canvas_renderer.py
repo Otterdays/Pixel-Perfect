@@ -26,6 +26,14 @@ class CanvasRenderer:
         self._PREVIEW_MAX_SIZE = 128  # Max width/height of preview image
         self._PREVIEW_PADDING = 12  # Distance from canvas edges
         self._PREVIEW_HEADER_HEIGHT = 18  # Title bar height
+        
+        # Preview interaction state
+        self._preview_custom_pos = None  # (x, y) anchor or None for default bottom-right
+        self._preview_bounds = None  # (x1, y1, x2, y2) screen bounds of entire preview
+        self._preview_header_bounds = None  # (x1, y1, x2, y2) screen bounds of title bar
+        self._preview_image_bounds = None  # (x1, y1, x2, y2) screen bounds of image area
+        self._preview_scale = 1.0  # canvas-pixel to preview-pixel scale
+        self._preview_image_offset = (0, 0)  # (x, y) top-left of image area in screen coords
 
     def init_drawing_surface(self):
         """Initialize the tkinter drawing surface"""
@@ -45,6 +53,34 @@ class CanvasRenderer:
         else:  # texture mode
             # Return base texture color for background texture mode
             return self.app.canvas.background_texture_base_color
+
+    # Checkerboard background: two light greys, 8x8 canvas-pixel tiles
+    _CHECKER_LIGHT = "#e8e8e8"
+    _CHECKER_DARK = "#d0d0d0"
+    _CHECKER_TILE = 8
+
+    def draw_checkerboard_background(self, x_offset, y_offset, widget_width, widget_height):
+        """Draw 8x8 checkerboard (two light greys) over the entire canvas widget.
+        Tiles from (x_offset, y_offset) so checkerboard aligns with grid lines."""
+        zoom = self.app.canvas.zoom
+        tile_screen = self._CHECKER_TILE * zoom
+        if tile_screen < 1:
+            tile_screen = 1
+        col_min = int((0 - x_offset) / tile_screen)
+        col_max = int((widget_width - x_offset) / tile_screen) + 2
+        row_min = int((0 - y_offset) / tile_screen)
+        row_max = int((widget_height - y_offset) / tile_screen) + 2
+        for row in range(row_min, row_max):
+            for col in range(col_min, col_max):
+                sx = x_offset + col * tile_screen
+                sy = y_offset + row * tile_screen
+                is_light = (row + col) % 2 == 0
+                fill = self._CHECKER_LIGHT if is_light else self._CHECKER_DARK
+                self.app.drawing_canvas.create_rectangle(
+                    sx, sy,
+                    sx + tile_screen + 1, sy + tile_screen + 1,
+                    fill=fill, outline="", tags="background"
+                )
 
     def initial_draw(self):
         """Do the initial drawing of the canvas"""
@@ -68,7 +104,7 @@ class CanvasRenderer:
 
                 # Draw grid if enabled
                 if self.app.canvas.show_grid:
-                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height, width, height)
                 
                 # Draw symmetry axes
                 self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
@@ -118,8 +154,8 @@ class CanvasRenderer:
                 fill="#00FFFF", width=2, dash=(4, 4), tags="symmetry_axis"
             )
 
-    def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
-        """Draw grid lines on tkinter canvas with mode support"""
+    def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height, widget_width=0, widget_height=0):
+        """Draw grid lines on tkinter canvas. Extends across full widget to avoid dead zones."""
         theme = self.app.theme_manager.get_current_theme()
         
         # Handle paper texture mode
@@ -137,19 +173,35 @@ class CanvasRenderer:
             # Force light grid (visible on dark backgrounds)
             grid_color = "#e0e0e0"  # Light grey
 
-        for x in range(0, self.app.canvas.width + 1):
-            screen_x = x_offset + (x * self.app.canvas.zoom)
+        zoom = self.app.canvas.zoom
+        # Extend grid across full widget; use widget size if provided, else pixel art bounds
+        if widget_width > 0 and widget_height > 0:
+            extent_left, extent_top = 0, 0
+            extent_right, extent_bottom = widget_width, widget_height
+            x_min = int((extent_left - x_offset) / zoom)
+            x_max = int((extent_right - x_offset) / zoom) + 1
+            y_min = int((extent_top - y_offset) / zoom)
+            y_max = int((extent_bottom - y_offset) / zoom) + 1
+        else:
+            extent_left, extent_top = x_offset, y_offset
+            extent_right = x_offset + canvas_width
+            extent_bottom = y_offset + canvas_height
+            x_min, x_max = 0, self.app.canvas.width + 1
+            y_min, y_max = 0, self.app.canvas.height + 1
+
+        for x in range(x_min, x_max):
+            screen_x = x_offset + (x * zoom)
             self.app.drawing_canvas.create_line(
-                screen_x, y_offset,
-                screen_x, y_offset + canvas_height,
+                screen_x, extent_top,
+                screen_x, extent_bottom,
                 fill=grid_color, width=1, tags="grid"
             )
 
-        for y in range(0, self.app.canvas.height + 1):
+        for y in range(y_min, y_max):
             screen_y = y_offset + (y * self.app.canvas.zoom)
             self.app.drawing_canvas.create_line(
-                x_offset, screen_y,
-                x_offset + canvas_width, screen_y,
+                extent_left, screen_y,
+                extent_right, screen_y,
                 fill=grid_color, width=1, tags="grid"
             )
 
@@ -316,12 +368,21 @@ class CanvasRenderer:
                 # Clear cached photo references from previous render cycle
                 self._onion_photos = []
 
-                # Draw background texture FIRST if in texture mode (so grid appears on top)
+                # Draw background FIRST (texture, checkerboard, or solid)
                 if self.app.canvas.background_mode == "texture":
                     self.draw_background_texture(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                elif getattr(self.app.canvas, "checkerboard", True):
+                    self.draw_checkerboard_background(x_offset, y_offset, width, height)
+                else:
+                    bg = self.get_background_color()
+                    self.app.drawing_canvas.create_rectangle(
+                        x_offset, y_offset,
+                        x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
+                        fill=bg, outline="", tags="background"
+                    )
 
                 if self.app.canvas.show_grid:
-                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
+                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height, width, height)
 
                 # Draw symmetry axes
                 self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
@@ -442,6 +503,31 @@ class CanvasRenderer:
         """Toggle the mini preview window visibility."""
         self.show_mini_preview = not self.show_mini_preview
         self.update_pixel_display()
+    
+    def preview_hit_test(self, sx, sy):
+        """Test if screen coords hit the preview. Returns 'header', 'image', or None."""
+        if not self.show_mini_preview or not self._preview_bounds:
+            return None
+        bx1, by1, bx2, by2 = self._preview_bounds
+        if not (bx1 <= sx <= bx2 and by1 <= sy <= by2):
+            return None
+        hx1, hy1, hx2, hy2 = self._preview_header_bounds
+        if hy1 <= sy <= hy2:
+            return "header"
+        return "image"
+    
+    def preview_screen_to_canvas_pixel(self, sx, sy):
+        """Convert a screen click inside the preview image to canvas pixel coords."""
+        if not self._preview_image_bounds or not self._preview_scale:
+            return None
+        ix1, iy1, ix2, iy2 = self._preview_image_bounds
+        sx = max(ix1, min(sx, ix2))
+        sy = max(iy1, min(sy, iy2))
+        cx = (sx - ix1) / self._preview_scale
+        cy = (sy - iy1) / self._preview_scale
+        cw = self.app.canvas.width
+        ch = self.app.canvas.height
+        return (max(0, min(cx, cw - 1)), max(0, min(cy, ch - 1)))
 
     def draw_mini_preview(self, canvas_widget_width, canvas_widget_height):
         """Draw an Aseprite-style mini preview overlay in the bottom-right corner.
@@ -565,9 +651,23 @@ class CanvasRenderer:
             # Draw white viewport rectangle
             frame_draw.rectangle([vr_x1, vr_y1, vr_x2, vr_y2], outline=(255, 255, 255, 200))
         
-        # --- Position in bottom-right of canvas widget ---
-        anchor_x = canvas_widget_width - pad
-        anchor_y = canvas_widget_height - pad
+        # --- Position: custom or default bottom-right ---
+        if self._preview_custom_pos is not None:
+            anchor_x, anchor_y = self._preview_custom_pos
+        else:
+            anchor_x = canvas_widget_width - pad
+            anchor_y = canvas_widget_height - pad
+        
+        # Compute screen bounds (anchor is SE corner)
+        screen_x1 = anchor_x - frame_w
+        screen_y1 = anchor_y - frame_h
+        self._preview_bounds = (screen_x1, screen_y1, anchor_x, anchor_y)
+        self._preview_header_bounds = (screen_x1, screen_y1, anchor_x, screen_y1 + header_h)
+        img_x1 = screen_x1 + border
+        img_y1 = screen_y1 + header_h
+        self._preview_image_bounds = (img_x1, img_y1, img_x1 + prev_w, img_y1 + prev_h)
+        self._preview_scale = scale
+        self._preview_image_offset = (img_x1, img_y1)
         
         # Convert to PhotoImage and display
         self._preview_photo = ImageTk.PhotoImage(frame_img)

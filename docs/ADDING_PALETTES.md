@@ -32,7 +32,7 @@ Create a JSON file in `assets/palettes/` with your palette colors. The app auto-
 
 **Notes:**
 - Each color is `[R, G, B, A]` format
-- Include exactly **16 colors**
+- Up to **32 colors** per palette (displayed in an 8-column grid)
 - Alpha should always be `255` (fully opaque)
 - If the JSON `name` matches a preset name, it appears as `Name (JSON)` to avoid collisions.
 - After adding a file, restart the app to rescan palettes.
@@ -42,7 +42,7 @@ Create a JSON file in `assets/palettes/` with your palette colors. The app auto-
 1. Run the application: `python main.py`
 2. Open the **Palette** dropdown in the left panel
 3. Select your palette by its `name`
-4. Verify all 16 colors display correctly
+4. Verify all colors display correctly
 
 ### 3. Example: Grass Palette
 
@@ -112,7 +112,7 @@ def get_preset_palettes(self) -> Dict[str, List[Tuple[int, int, int, int]]]:
 - The key ("Your Palette Name") is what appears in the UI dropdown
 - Format: `(R, G, B, A)` tuples
 - Add comments to describe each color
-- Include **exactly 16 colors**
+- Up to **32 colors** per palette
 
 ### C. Add to load_preset()
 
@@ -193,7 +193,7 @@ elif palette_name == "Old School RuneScape":
 1. Run the application: `python main.py`
 2. Open the **Palette** dropdown in the left panel
 3. Select your new palette from the list
-4. Verify all 16 colors display correctly
+4. Verify all colors display correctly
 
 ## Current Behavior
 
@@ -225,7 +225,7 @@ elif palette_name == "Old School RuneScape":
 **Colors look wrong?**
 - Verify RGB values are 0-255
 - Ensure alpha is 255
-- Check that you have exactly 16 colors
+- Check that you have up to 32 colors
 
 **Build issues?**
 - Ensure JSON files are in `assets/palettes/`

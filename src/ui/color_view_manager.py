@@ -249,7 +249,7 @@ class ColorViewManager:
             empty_label.pack(pady=20)
             return
         
-        # Create color grid (4 columns, up to 4 rows = 16 colors)
+        # Create color grid (4 columns for recent colors)
         grid_frame = ctk.CTkFrame(recent_frame, fg_color="transparent")
         grid_frame.pack(pady=5, padx=10)
         

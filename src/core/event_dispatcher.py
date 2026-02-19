@@ -43,6 +43,11 @@ class EventDispatcher:
         self._right_click_did_drag = False  # True once drag exceeds threshold
         self._RIGHT_CLICK_DRAG_THRESHOLD = 5  # pixels before it becomes a pan
         
+        # Mini preview drag state
+        self._preview_dragging = False
+        self._preview_drag_offset = (0, 0)  # offset from mouse to anchor
+        self._preview_panning = False  # clicking inside preview image to pan
+        
     def bind_all_events(self):
         """Bind all keyboard, mouse, and window events"""
         root = self.main_window.root
@@ -124,6 +129,30 @@ class EventDispatcher:
         # Refresh timeline panel if it exists
         if hasattr(self.main_window, 'timeline_panel') and self.main_window.timeline_panel:
             self.main_window.timeline_panel.refresh()
+    
+    def _center_viewport_on_preview_click(self, sx, sy):
+        """Pan the main canvas so the clicked point in the preview becomes the viewport center."""
+        renderer = self.main_window.canvas_renderer
+        result = renderer.preview_screen_to_canvas_pixel(sx, sy)
+        if result is None:
+            return
+        target_cx, target_cy = result
+        
+        canvas_widget_w = self.main_window.drawing_canvas.winfo_width()
+        canvas_widget_h = self.main_window.drawing_canvas.winfo_height()
+        zoom = self.main_window.canvas.zoom
+        cw = self.main_window.canvas.width
+        ch = self.main_window.canvas.height
+        
+        canvas_pixel_w = cw * zoom
+        canvas_pixel_h = ch * zoom
+        base_x_offset = (canvas_widget_w - canvas_pixel_w) / 2
+        base_y_offset = (canvas_widget_h - canvas_pixel_h) / 2
+        
+        self.main_window.pan_offset_x = (canvas_widget_w / 2 - base_x_offset - target_cx * zoom) / zoom
+        self.main_window.pan_offset_y = (canvas_widget_h / 2 - base_y_offset - target_cy * zoom) / zoom
+        
+        renderer.update_pixel_display()
     
     def _update_cursor_preview_after_resize(self):
         """Update cursor preview position after window resize"""
@@ -441,6 +470,19 @@ class EventDispatcher:
     
     def on_tkinter_canvas_mouse_down(self, event):
         """Handle mouse down on tkinter canvas"""
+        # --- Mini preview interaction ---
+        renderer = self.main_window.canvas_renderer
+        hit = renderer.preview_hit_test(event.x, event.y)
+        if hit == "header":
+            self._preview_dragging = True
+            bx1, by1, bx2, by2 = renderer._preview_bounds
+            self._preview_drag_offset = (bx2 - event.x, by2 - event.y)
+            return
+        if hit == "image":
+            self._preview_panning = True
+            self._center_viewport_on_preview_click(event.x, event.y)
+            return
+        
         # Clear any tool previews when starting to draw
         self.main_window.drawing_canvas.delete("brush_preview")
         self.main_window.drawing_canvas.delete("eraser_preview")
@@ -610,6 +652,14 @@ class EventDispatcher:
     
     def on_tkinter_canvas_mouse_up(self, event):
         """Handle mouse up on tkinter canvas"""
+        # --- End mini preview interactions ---
+        if self._preview_dragging:
+            self._preview_dragging = False
+            return
+        if self._preview_panning:
+            self._preview_panning = False
+            return
+        
         # Handle pan tool end
         if self.main_window.current_tool == "pan":
             tool = self.main_window.tools["pan"]
@@ -716,6 +766,18 @@ class EventDispatcher:
     
     def on_tkinter_canvas_mouse_drag(self, event):
         """Handle mouse drag on tkinter canvas"""
+        # --- Mini preview drag/pan ---
+        if self._preview_dragging:
+            renderer = self.main_window.canvas_renderer
+            new_anchor_x = event.x + self._preview_drag_offset[0]
+            new_anchor_y = event.y + self._preview_drag_offset[1]
+            renderer._preview_custom_pos = (new_anchor_x, new_anchor_y)
+            renderer.update_pixel_display()
+            return
+        if self._preview_panning:
+            self._center_viewport_on_preview_click(event.x, event.y)
+            return
+        
         # Handle pan tool drag (use raw screen coords!)
         if self.main_window.current_tool == "pan":
             tool = self.main_window.tools["pan"]
@@ -835,6 +897,17 @@ class EventDispatcher:
     
     def on_tkinter_canvas_mouse_move(self, event):
         """Handle mouse move on tkinter canvas (no button pressed)"""
+        # Show cursor feedback when hovering over the mini preview
+        renderer = self.main_window.canvas_renderer
+        preview_hit = renderer.preview_hit_test(event.x, event.y)
+        if preview_hit:
+            cursor = "fleur" if preview_hit == "header" else "hand2"
+            try:
+                self.main_window.drawing_canvas.configure(cursor=cursor)
+            except Exception:
+                pass
+            return
+        
         # Convert tkinter screen coordinates to canvas coordinates
         canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
         
