@@ -55,6 +55,13 @@ class WindowStateManager:
     
     def save_state(self):
         """Save current window and panel state to config file"""
+        # #region agent log
+        try:
+            import json, time, os
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:save_state","message":"Saving state to disk","data":{},"timestamp":int(time.time()*1000),"hypothesisId":"A"})+"\n")
+        except Exception: pass
+        # #endregion
         try:
             state = {
                 'window_geometry': self.root.geometry(),
@@ -236,6 +243,13 @@ class WindowStateManager:
     
     def on_window_resize(self, event):
         """Handle window resize events to maintain grid centering"""
+        # #region agent log
+        try:
+            import json, time, os
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:on_window_resize","message":"Resize handler","data":{"is_resizing_panels":self.is_resizing_panels,"widget_is_root":event.widget==self.root},"timestamp":int(time.time()*1000),"hypothesisId":"B"})+"\n")
+        except Exception: pass
+        # #endregion
         if self.is_resizing_panels:
             return
             
@@ -250,6 +264,13 @@ class WindowStateManager:
     
     def _delayed_redraw(self):
         """Delayed redraw callback"""
+        # #region agent log
+        try:
+            import json, time, os
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:_delayed_redraw","message":"Delayed redraw firing","data":{},"timestamp":int(time.time()*1000),"hypothesisId":"E"})+"\n")
+        except Exception: pass
+        # #endregion
         if self.redraw_callback:
             self.redraw_callback()
     

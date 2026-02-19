@@ -1,3 +1,22 @@
+# Godot Integration & Final Polish - February 19, 2026 🤖
+
+## The "Godot Export" Strategy
+The user asked for Godot compatibility. Instead of just dumping PNGs, I built a specialized `GodotExporter` that solves the main friction points:
+1. **Blurry Sprites**: Godot defaults to bilinear. I auto-generate a `README` instruction on import settings (Nearest filter).
+2. **Sprite Sheet Gaps**: Pixel Perfect defaults to 1px spacing. Godot needs 0px. The new exporter forces 0 spacing.
+3. **Manual Setup**: Manually slicing sprites in Godot is tedious. I generate native `.tres` resource files that pre-define every frame region. You just drag-and-drop.
+
+## What we accomplished this session:
+- **3D Token Preview**: Full software voxel engine (numpy+Pillow), interactive rotation, lighting, export.
+- **Reference Panel**: Load images, pan/zoom/opacity.
+- **Micro-features**: Mini preview window, Right-click pan.
+- **Godot Export**: Dedicated pipeline for game-ready assets.
+- **Docs**: Massive update to `ARCHITECTURE`, `CHANGELOG`, `SUMMARY`, and new features docs.
+
+The app is now much more powerful for game dev workflows.
+
+---
+
 # 3D Token Preview Implementation - February 19, 2026 🪙
 
 ## Key Architectural Decision: Software Rasterization

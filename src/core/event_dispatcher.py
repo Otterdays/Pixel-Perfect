@@ -92,6 +92,13 @@ class EventDispatcher:
     
     def on_sash_drag_end(self, event):
         """Called when user stops dragging panel divider"""
+        # #region agent log
+        try:
+            import json, time, os
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"event_dispatcher.py:on_sash_drag_end","message":"Sash drag ended","data":{"has_redraw":False},"timestamp":int(time.time()*1000),"hypothesisId":"B"})+"\n")
+        except Exception: pass
+        # #endregion
         self.main_window.window_state_manager.is_resizing_panels = False
         self.main_window.window_state_manager.save_state()
     
@@ -99,6 +106,13 @@ class EventDispatcher:
         """Handle window resize events"""
         # Only handle resize events for the root window
         if event.widget == self.main_window.root:
+            # #region agent log
+            try:
+                import json, time, os
+                p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+                open(p, "a").write(json.dumps({"sessionId":"00503f","location":"event_dispatcher.py:on_window_resize","message":"Root Configure","data":{"w":event.width,"h":event.height},"timestamp":int(time.time()*1000),"hypothesisId":"C"})+"\n")
+            except Exception: pass
+            # #endregion
             # Save window state after resize
             if hasattr(self.main_window, 'window_state_manager'):
                 self.main_window.window_state_manager.save_state()

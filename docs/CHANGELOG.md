@@ -50,14 +50,24 @@
 - **Collapsible panel**: Right sidebar, starts collapsed, `Shift+T` toggle
 - **Auto-updates**: Debounced sync with canvas pixel changes
 
+### 🤖 Godot Engine Export (New - Phase 1)
+- **Zero-Spacing Sheets**: Generates packed sprite sheets compatible with Godot `AnimatedSprite2D`
+- **.tres Resources**: Auto-generates native `SpriteFrames` resources with `AtlasTexture` regions
+- **.tscn Scenes**: Creates ready-to-use scene files
+- **Import Guide**: Auto-creates `GODOT_IMPORT_README.txt` with optimal settings (Nearest filter, etc.)
+- **Format**: New "Godot Sprite Sheet" option in export manager
+
 ### 📁 Files Created
 - `src/core/voxel_renderer.py` – Software 3D voxel engine (numpy + Pillow rasterization)
 - `src/ui/token_preview_panel.py` – Token preview panel UI with controls and export
 - `src/ui/reference_panel.py` – Reference Image Panel
+- `src/utils/godot_export.py` – Godot export generator module
+- `DOCS/features/GODOT_EXPORT.md` – Godot integration specification
 - `DOCS/features/AI_FEATURES.md` – AI features roadmap
 - `DOCS/features/3D_TOKEN_PREVIEW.md` – 3D token implementation plan
 
 ### 📁 Files Modified
+- `src/utils/export.py` – Added Godot export format and convenience methods
 - `src/core/canvas.py` – Added HUGE and MASSIVE enum values to CanvasSize
 - `src/core/canvas_renderer.py` – Pillow rendering, mini preview, token preview notification
 - `src/ui/ui_builder.py` – Added 128×128 and 256×256 to size dropdown

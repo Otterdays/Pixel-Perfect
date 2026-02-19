@@ -42,10 +42,17 @@
 - Phase 3: Auto-tiling, animation smoothness, text-to-sprite
 
 ### 🪙 3D Token Preview
-- See `DOCS/features/3D_TOKEN_PREVIEW.md` for implementation plan
-- Software rasterizer (Pillow) for zero new dependencies
-- Interactive rotation, materials, lighting controls
-- Export as PNG, GIF, OBJ
+- **✅ Software Voxel Renderer** - Zero dependencies (Pillow+numpy)
+- **✅ Interactive Controls** - Rotate, Zoom, Thickness, Light, Material
+- **✅ Export** - PNG render and GIF spin animation
+- **✅ Panel** - Collapsible right sidebar (Shift+T)
+
+### 🤖 Godot Engine Export
+- **✅ Godot-Ready Sheets** - Zero-spacing sprite sheets
+- **✅ .tres Resources** - Auto-generated SpriteFrames
+- **✅ .tscn Scenes** - Ready-to-use AnimatedSprite2D nodes
+- **✅ Import Guide** - Auto-generated instructions
+- **See `DOCS/features/GODOT_EXPORT.md`** for full details
 
 ## Previous Updates (v2.7.7)
 

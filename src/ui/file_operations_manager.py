@@ -294,6 +294,7 @@ class FileOperationsManager:
             "PNG": {"scale": 8, "transparent": True},
             "GIF": {"scale": 8, "duration": 100},
             "Sprite Sheet": {"scale": 8, "layout": "horizontal", "spacing": 1},
+            "Godot Sprite Sheet": {"scale": 4, "fps": 10, "loop": True},
             "recent_directories": [],  # MRU list of export directories
             "last_directory": None,  # Most recently used directory
             "last_export": None
@@ -420,10 +421,17 @@ class FileOperationsManager:
             )
             layout_menu.pack(fill="x", pady=(0, 10))
 
-            spacing_label = ctk.CTkLabel(frame, text="Spacing (px):")
-            spacing_label.pack(anchor="w")
             spacing_entry = ctk.CTkEntry(frame, textvariable=spacing_var)
             spacing_entry.pack(fill="x", pady=(0, 10))
+        elif format_name == "Godot Sprite Sheet":
+            fps_label = ctk.CTkLabel(frame, text="Animation FPS:")
+            fps_label.pack(anchor="w")
+            fps_entry = ctk.CTkEntry(frame, textvariable=ctk.StringVar(value=str(preset.get("fps", 10))))
+            fps_entry.pack(fill="x", pady=(0, 10))
+            
+            loop_var = ctk.BooleanVar(value=preset.get("loop", True))
+            loop_check = ctk.CTkCheckBox(frame, text="Loop Animation", variable=loop_var)
+            loop_check.pack(anchor="w", pady=(0, 10))
 
         # Buttons
         button_row = ctk.CTkFrame(frame, fg_color="transparent")
@@ -443,7 +451,14 @@ class FileOperationsManager:
                     result.update({
                         "scale": scale_value,
                         "layout": layout_var.get(),
+                        "layout": layout_var.get(),
                         "spacing": max(0, int(spacing_var.get()))
+                    })
+                elif format_name == "Godot Sprite Sheet":
+                    result.update({
+                        "scale": scale_value,
+                        "fps": float(fps_entry.get()),
+                        "loop": loop_var.get()
                     })
                 close_dialog()
             except Exception:
@@ -497,6 +512,16 @@ class FileOperationsManager:
                     file_path,
                     scale=settings.get("scale", 8),
                     duration=settings.get("duration", 100)
+                )
+                )
+            elif format_name == "Godot Sprite Sheet":
+                frames = [frame.pixels for frame in self.timeline.frames]
+                success = self.export_manager.export_godot_sheet(
+                    frames,
+                    file_path,
+                    scale=settings.get("scale", 4),
+                    fps=settings.get("fps", 10.0),
+                    loop=settings.get("loop", True)
                 )
             else:
                 frames = [frame.pixels for frame in self.timeline.frames]
@@ -582,6 +607,40 @@ class FileOperationsManager:
                     self._show_export_message("Failed to export GIF", is_error=True)
         except Exception as e:
             print(f"Error exporting GIF: {e}")
+    
+    def export_godot_sheet(self):
+        """Export as Godot-ready sprite sheet"""
+        try:
+            settings = self._prompt_export_settings("Godot Sprite Sheet")
+            if not settings:
+                return
+
+            # Use last directory if available
+            initialdir = self.export_presets.get("last_directory")
+            file_path = filedialog.asksaveasfilename(
+                parent=self.root,
+                title="Export for Godot",
+                defaultextension=".png",
+                filetypes=[("PNG Files", "*.png"), ("All Files", "*.*")],
+                initialdir=initialdir
+            )
+            
+            if file_path:
+                frames = [frame.pixels for frame in self.timeline.frames]
+                success = self.export_manager.export_godot_sheet(
+                    frames, 
+                    file_path, 
+                    scale=settings["scale"],
+                    fps=settings["fps"],
+                    loop=settings["loop"]
+                )
+                if success:
+                    self._set_last_export("Godot Sprite Sheet", file_path, settings)
+                    self._show_export_message(f"Exported to Godot ({settings['scale']}x): {os.path.basename(file_path)}")
+                else:
+                    self._show_export_message("Failed to export Godot Sheet", is_error=True)
+        except Exception as e:
+            print(f"Error exporting Godot sheet: {e}")
     
     def export_spritesheet(self):
         """Export as sprite sheet"""

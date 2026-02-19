@@ -12,7 +12,7 @@ class ExportManager:
     """Manages export functionality"""
     
     def __init__(self):
-        self.export_formats = ["PNG", "GIF", "Sprite Sheet"]
+        self.export_formats = ["PNG", "GIF", "Sprite Sheet", "Godot Sprite Sheet"]
         self.scale_factors = [1, 2, 4, 8]
     
     def export_png(self, pixels: np.ndarray, filename: str, scale: int = 1, transparent: bool = True) -> bool:
@@ -214,3 +214,30 @@ class ExportManager:
     def get_scale_factors(self) -> List[int]:
         """Get list of supported scale factors"""
         return self.scale_factors.copy()
+
+    def export_godot_sheet(self, frames: List[np.ndarray], filepath: str,
+                           scale: int = 1, animation_name: str = "default",
+                           fps: float = 10.0, loop: bool = True) -> bool:
+        """Export frames as a Godot-ready sprite sheet with .tres resource.
+
+        Convenience wrapper around GodotExporter.export_sprite_sheet().
+        Produces a zero-spacing sheet + .tres SpriteFrames that Godot can
+        load directly into an AnimatedSprite2D node.
+        """
+        try:
+            from src.utils.godot_export import GodotExporter
+            exporter = GodotExporter()
+            return exporter.export_sprite_sheet(
+                frames=frames,
+                filepath=filepath,
+                scale=scale,
+                animation_name=animation_name,
+                fps=fps,
+                loop=loop,
+                generate_tres=True,
+                generate_tscn=True,
+                generate_readme=True,
+            )
+        except Exception as e:
+            print(f"Error exporting Godot sheet: {e}")
+            return False

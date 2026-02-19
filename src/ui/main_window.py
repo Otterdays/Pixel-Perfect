@@ -1234,6 +1234,9 @@ class MainWindow:
         export_spritesheet_btn = ctk.CTkButton(file_menu, text="Export Sprite Sheet", command=lambda: [self.file_ops.export_spritesheet(), file_menu.destroy()])
         export_spritesheet_btn.pack(pady=5, padx=10, fill="x")
 
+        export_godot_btn = ctk.CTkButton(file_menu, text="Export for Godot", fg_color="#478cbf", hover_color="#36719b", command=lambda: [self.file_ops.export_godot_sheet(), file_menu.destroy()])
+        export_godot_btn.pack(pady=5, padx=10, fill="x")
+
         quick_export_btn = ctk.CTkButton(file_menu, text="Quick Export", command=lambda: [self.file_ops.quick_export(), file_menu.destroy()])
         quick_export_btn.pack(pady=5, padx=10, fill="x")
         

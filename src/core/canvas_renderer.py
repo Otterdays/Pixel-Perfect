@@ -286,6 +286,13 @@ class CanvasRenderer:
 
     def update_pixel_display(self):
         """Update tkinter display to show all pixel changes (full redraw)"""
+        # #region agent log
+        try:
+            import json, time, os
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
+            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"canvas_renderer.py:update_pixel_display","message":"Full redraw","data":{"skip":self.app._updating_display},"timestamp":int(time.time()*1000),"hypothesisId":"E"})+"\n")
+        except Exception: pass
+        # #endregion
         if self.app._updating_display:
             return
         self.app._updating_display = True

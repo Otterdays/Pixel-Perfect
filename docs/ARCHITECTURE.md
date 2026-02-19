@@ -222,13 +222,23 @@ class Tool:
 
 ## Utility Systems (`src/utils/`)
 
-### Export (`export.py`)
+### Export (`src/utils/export.py`)
 - **Status**: Complete implementation with multiple formats
 - PNG export with transparency support
 - GIF animation export with frame timing
 - Sprite sheet generation (horizontal/vertical/grid layouts)
 - Multiple scale factors (1x, 2x, 4x, 8x)
 - JSON metadata for sprite sheets
+- **Godot Export Integration**: Delegates to `GodotExporter` for specialized Godot formats.
+
+### Godot Export System (`src/utils/godot_export.py`)
+- **Purpose**: Specialized exporter for Godot Engine 4.x compatibility.
+- **Key Features**:
+  - **Zero-Spacing Sheets**: Generates tightly packed sprite sheets required by Godot.
+  - **.tres Generation**: Creates native Godot `SpriteFrames` resource files with `AtlasTexture` sub-resources.
+  - **.tscn Generation**: Creates ready-to-use `AnimatedSprite2D` scene files.
+  - **Import Instructions**: Auto-generates `GODOT_IMPORT_README.txt` with settings (Nearest filter, etc.).
+  - **No Dependencies**: Generates text-based Godot resources using standard file I/O.
 
 ### Presets (`presets.py`)
 - **Status**: Complete with 8 ready-to-use templates
