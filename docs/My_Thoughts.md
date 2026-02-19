@@ -1,4 +1,69 @@
-# Spray Tool & Palette Loader - November 13, 2025 ✒️🎨
+# 3D Token Preview Implementation - February 19, 2026 🪙
+
+## Key Architectural Decision: Software Rasterization
+
+**Why not OpenGL?** Pixel Perfect is a tkinter app. Embedding OpenGL in tkinter is fragile on Windows and adds heavy dependencies (moderngl, pyrr). Instead, I built a pure software voxel renderer using just numpy + Pillow — both already installed.
+
+**How it works**:
+1. Every opaque pixel is extruded into a column of voxels (depth = thickness setting)
+2. Only surface faces are emitted (faces adjacent to air) — interior faces culled during build
+3. Rotation is done by batch matrix multiplication with numpy (fast)
+4. Back-face culling: discard faces whose rotated normal points away from camera
+5. Painter's algorithm: sort remaining faces by depth, draw back-to-front
+6. Rasterize each quad face with `ImageDraw.polygon()` and Blinn-Phong lighting
+
+**Performance tradeoff**: For 16×16 sprites this is instant (<20ms). For 64×64 it's ~300ms (acceptable for interactive rotation). For 128×128+ the panel auto-downsamples to 48×48 before rendering. This keeps the panel responsive without blocking the main canvas.
+
+**Face caching**: The expensive face-building step only runs when pixels/thickness/backface change. Rotation just transforms cached faces — very fast.
+
+---
+
+# Canvas Expanded & Pillow Rendering - February 19, 2026 📐⚡🖼️
+
+## Why this matters
+
+**Problem we solved**: The old rendering pipeline created one tkinter `create_rectangle` per non-transparent pixel. At 64×64 (max 4,096 items) this was tolerable. At 128×128 (16,384 items) it lagged noticeably. At 256×256 (65,536 items) it was completely unusable — multi-second redraws.
+
+**Key Decisions**:
+1. **Pillow Image Pipeline**  
+   - Build a single `PIL.Image` from the numpy pixel array (which we already store)  
+   - Scale with `Image.Resampling.NEAREST` to preserve crisp pixel edges  
+   - Display as one `create_image` canvas item instead of thousands of rectangles  
+   - This drops tkinter's internal overhead from O(n²) item management to O(1)
+
+2. **Coverage: All rendering paths upgraded**  
+   - `draw_all_pixels_on_tkinter` — main pixel display  
+   - `_draw_frame_with_opacity` — onion skin frames (animation)  
+   - `draw_tile_preview` — 3×3 tile ghost copies  
+   - All three had the same O(n²) rectangle problem; all three now use Pillow
+
+3. **Move/Rotate Exclusion Masks**  
+   - During live move or rotate, source pixels need to be hidden  
+   - Instead of skipping individual pixels in a loop, we zero out the source rectangle in the numpy array before building the PIL Image  
+   - This is O(1) numpy slice vs O(selection_size) loop
+
+4. **Reference Image Panel**  
+   - Chose to put it in the right sidebar as a collapsible section (starts collapsed)  
+   - Used `Shift+R` since `R` is already mapped to rotate tool  
+   - Pillow handles all the image scaling/opacity in the panel, so it's fast even for large references  
+   - Pan/zoom via mouse drag and scroll, double-click resets view
+
+**Why not Shift+R for something else?**  
+- `R` = rotate tool (established convention)  
+- `Shift+R` = reference panel toggle (natural extension — same key, modified)  
+- No conflict with existing shortcuts
+
+**Testing checklist**:
+- Select 128×128 and 256×256 from dropdown — zoom auto-adjusts ✓  
+- Draw on 256×256 canvas — should be smooth, no lag ✓  
+- Onion skin at 128×128 — should render without delay ✓  
+- Tile preview at 256×256 — ghost tiles appear properly ✓  
+- Load reference image → opacity slider → pan/zoom → fit/fill toggle ✓  
+- `Shift+R` toggles reference panel visibility ✓
+
+---
+
+
 
 ## Why add spray + JSON palettes now?
 

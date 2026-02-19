@@ -58,6 +58,8 @@ from .layer_animation_manager import LayerAnimationManager
 from .color_view_manager import ColorViewManager
 from .loading_screen import LoadingManager
 from .canvas_scrollbar import CanvasScrollbar
+from .reference_panel import ReferencePanel
+from .token_preview_panel import TokenPreviewPanel
 from .status_bar import StatusBar, CanvasHUD
 
 class MainWindow:
@@ -609,6 +611,12 @@ class MainWindow:
         # Wire timeline panel onion skin callbacks
         if self.timeline_panel:
             self.timeline_panel.update_pixel_display_callback = self.canvas_renderer.update_pixel_display
+        
+        # Initialize Reference Image Panel (in right sidebar, below layers/timeline)
+        self.reference_panel = ReferencePanel(self.right_panel, self)
+        
+        # Initialize 3D Token Preview Panel (in right sidebar, below reference)
+        self.token_preview_panel = TokenPreviewPanel(self.right_panel, self)
         
         # Initialize file operations manager
         self.file_ops = FileOperationsManager(

@@ -36,6 +36,13 @@ class EventDispatcher:
         # State tracking for middle mouse pan
         self.is_middle_panning = False
         
+        # State tracking for right-click: pan-on-hold vs context-menu-on-release
+        self.is_right_panning = False
+        self._right_click_start_x = 0
+        self._right_click_start_y = 0
+        self._right_click_did_drag = False  # True once drag exceeds threshold
+        self._RIGHT_CLICK_DRAG_THRESHOLD = 5  # pixels before it becomes a pan
+        
     def bind_all_events(self):
         """Bind all keyboard, mouse, and window events"""
         root = self.main_window.root
@@ -333,6 +340,23 @@ class EventDispatcher:
                 'r': 'rotate',
                 't': 'texture'
             }
+            
+            # Shift+R to toggle reference panel (before tool_map so it takes priority)
+            if key == 'r' and (event.state & 0x1):
+                if hasattr(self.main_window, 'reference_panel'):
+                    self.main_window.reference_panel.toggle_visibility()
+                return
+            
+            # Shift+P to toggle mini preview window
+            if key == 'p' and (event.state & 0x1):
+                self.main_window.canvas_renderer.toggle_mini_preview()
+                return
+            
+            # Shift+T to toggle 3D token preview panel
+            if key == 't' and (event.state & 0x1):
+                if hasattr(self.main_window, 'token_preview_panel'):
+                    self.main_window.token_preview_panel.toggle_visibility()
+                return
             
             if key in tool_map:
                 self.main_window._select_tool(tool_map[key])
@@ -660,33 +684,38 @@ class EventDispatcher:
         self.last_canvas_y = None
     
     def on_tkinter_canvas_right_click(self, event):
-        """Handle right mouse click on tkinter canvas"""
-        # Handle right-click for edge tool
+        """Handle right mouse button down on tkinter canvas.
+        
+        Defers between context menu (quick click+release) and camera pan
+        (hold+drag). Edge tool and eraser have their own right-click 
+        behaviour and bypass the pan/menu logic.
+        """
+        # Edge tool: immediate right-click action (no pan)
         if self.main_window.current_tool == "edge":
-            # Convert tkinter screen coordinates to canvas coordinates with float precision
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
-            
-            # Get current tool and call its on_mouse_down with button=3 (right-click)
             tool = self.main_window.tools.get("edge")
             if tool:
                 current_color = self.main_window.get_current_color()
                 tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
                 self.main_window.canvas_renderer.update_pixel_display()
-            return  # Don't show context menu for edge tool
+            return
         
-        # Handle right-click for eraser tool (delete edge lines)
-        elif self.main_window.current_tool == "eraser":
+        # Eraser tool: immediate right-click action (no pan)
+        if self.main_window.current_tool == "eraser":
             canvas_x, canvas_y = self.main_window._tkinter_screen_to_canvas_coords(event.x, event.y)
             tool = self.main_window.tools.get("eraser")
             if tool:
                 current_color = self.main_window.get_current_color()
                 tool.on_mouse_down(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
                 self.main_window.canvas_renderer.update_pixel_display()
-            return  # Don't show context menu for eraser tool
+            return
         
-        # Show context menu for all other tools
-        if hasattr(self.main_window, 'context_menu_mgr'):
-            self.main_window.context_menu_mgr.show_canvas_context_menu(event)
+        # For all other tools: record start position; decide pan vs menu on release
+        self._right_click_start_x = event.x
+        self._right_click_start_y = event.y
+        self._right_click_did_drag = False
+        self.is_right_panning = False
+        self._right_click_event = event  # Save for potential context menu
     
     def on_tkinter_canvas_mouse_drag(self, event):
         """Handle mouse drag on tkinter canvas"""
@@ -891,20 +920,25 @@ class EventDispatcher:
             self.main_window.drawing_canvas.delete("shape_preview")
     
     def on_tkinter_canvas_right_drag(self, event):
-        """Handle right-button drag on canvas (used for edge-tool and eraser erase)."""
+        """Handle right-button drag on canvas.
+        
+        For edge/eraser tools: continuous erase action.
+        For all other tools: once drag exceeds threshold, start camera pan.
+        """
+        # Edge tool: continuous erase on right-drag
         if self.main_window.current_tool == "edge":
             tool = self.main_window.tools.get("edge")
             if not tool:
                 return
-            # Float precision for edge tool
             canvas_x_float, canvas_y_float = self.main_window._tkinter_screen_to_canvas_coords_float(event.x, event.y)
-            # Erase continuously with button=3
             current_color = self.main_window.get_current_color()
             tool.on_mouse_move(self.main_window.canvas, canvas_x_float, canvas_y_float, current_color)
             tool.on_mouse_down(self.main_window.canvas, canvas_x_float, canvas_y_float, 3, current_color)
             self.main_window.canvas_renderer.update_pixel_display()
+            return
         
-        elif self.main_window.current_tool == "eraser":
+        # Eraser tool: continuous erase on right-drag
+        if self.main_window.current_tool == "eraser":
             tool = self.main_window.tools.get("eraser")
             if not tool:
                 return
@@ -912,9 +946,47 @@ class EventDispatcher:
             current_color = self.main_window.get_current_color()
             tool.on_right_drag(self.main_window.canvas, canvas_x, canvas_y, current_color)
             self.main_window.canvas_renderer.update_pixel_display()
+            return
+        
+        # --- Right-click pan logic for all other tools ---
+        dx = event.x - self._right_click_start_x
+        dy = event.y - self._right_click_start_y
+        
+        # Check if drag exceeds threshold to begin panning
+        if not self._right_click_did_drag:
+            if abs(dx) > self._RIGHT_CLICK_DRAG_THRESHOLD or abs(dy) > self._RIGHT_CLICK_DRAG_THRESHOLD:
+                self._right_click_did_drag = True
+                self.is_right_panning = True
+                # Initialize pan tool with the starting position
+                if "pan" in self.main_window.tools:
+                    tool = self.main_window.tools["pan"]
+                    tool.start_pan(self._right_click_start_x, self._right_click_start_y,
+                                   self.main_window.pan_offset_x, self.main_window.pan_offset_y)
+                    try:
+                        self.main_window.drawing_canvas.configure(cursor="fleur")
+                    except Exception:
+                        pass
+        
+        # If panning, update the pan
+        if self.is_right_panning and "pan" in self.main_window.tools:
+            tool = self.main_window.tools["pan"]
+            result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)
+            if result is not None:
+                old_x = self.main_window.pan_offset_x
+                old_y = self.main_window.pan_offset_y
+                self.main_window.pan_offset_x, self.main_window.pan_offset_y = result
+                self.main_window.canvas_renderer.update_pixel_display()
+                self.main_window.pan_offset_x = old_x
+                self.main_window.pan_offset_y = old_y
 
     def on_tkinter_canvas_right_up(self, event):
-        """Handle right-button release on canvas (end edge-tool or eraser erase)."""
+        """Handle right-button release on canvas.
+        
+        For edge/eraser tools: finalize erase action.
+        For all other tools: if no drag occurred, show context menu.
+        If we were panning, finalize the pan.
+        """
+        # Edge tool: finalize erase
         if self.main_window.current_tool == "edge":
             tool = self.main_window.tools.get("edge")
             if not tool:
@@ -923,12 +995,12 @@ class EventDispatcher:
             current_color = self.main_window.get_current_color()
             tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
             self.main_window.canvas_renderer.update_pixel_display()
-            
-            # Save drawing to current animation frame
             if hasattr(self.main_window, 'layer_anim_mgr'):
                 self.main_window.layer_anim_mgr.save_canvas_to_current_frame()
+            return
         
-        elif self.main_window.current_tool == "eraser":
+        # Eraser tool: finalize erase
+        if self.main_window.current_tool == "eraser":
             tool = self.main_window.tools.get("eraser")
             if not tool:
                 return
@@ -936,10 +1008,34 @@ class EventDispatcher:
             current_color = self.main_window.get_current_color()
             tool.on_mouse_up(self.main_window.canvas, canvas_x, canvas_y, 3, current_color)
             self.main_window.canvas_renderer.update_pixel_display()
-            
-            # Save drawing to current animation frame
             if hasattr(self.main_window, 'layer_anim_mgr'):
                 self.main_window.layer_anim_mgr.save_canvas_to_current_frame()
+            return
+        
+        # --- Right-click pan/menu logic ---
+        if self.is_right_panning:
+            # Finalize the pan (permanently apply offset)
+            if "pan" in self.main_window.tools:
+                tool = self.main_window.tools["pan"]
+                result = tool.update_pan(event.x, event.y, self.main_window.canvas.zoom)
+                if result is not None:
+                    self.main_window.pan_offset_x, self.main_window.pan_offset_y = result
+                tool.end_pan()
+                self.main_window.canvas_renderer.update_pixel_display()
+            
+            # Restore cursor
+            try:
+                self.main_window.drawing_canvas.configure(cursor="arrow")
+            except Exception:
+                pass
+            
+            self.is_right_panning = False
+            self._right_click_did_drag = False
+        else:
+            # No drag occurred — show context menu
+            if hasattr(self.main_window, 'context_menu_mgr'):
+                self.main_window.context_menu_mgr.show_canvas_context_menu(event)
+            self._right_click_did_drag = False
     
     # ==================== UI Callback Events ====================
     

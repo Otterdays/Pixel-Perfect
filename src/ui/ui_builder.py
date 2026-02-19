@@ -43,7 +43,7 @@ class UIBuilder:
         self.widgets['size_menu'] = ctk.CTkOptionMenu(
             self.widgets['toolbar'], 
             variable=self.widgets['size_var'],
-            values=["8x8", "16x16", "32x32", "16x32", "32x64", "64x64", "Custom..."],
+            values=["8x8", "16x16", "32x32", "16x32", "32x64", "64x64", "128x128", "256x256", "Custom..."],
             command=self.callbacks['on_size_change']
         )
         self.widgets['size_menu'].pack(side="left", padx=5)

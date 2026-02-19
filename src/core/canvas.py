@@ -15,6 +15,8 @@ class CanvasSize(Enum):
     WIDE = (16, 32)       # Tall sprites
     LARGE = (32, 64)      # Large characters
     XLARGE = (64, 64)     # Extra large sprites/tiles
+    HUGE = (128, 128)     # Scene tiles, large sprites
+    MASSIVE = (256, 256)  # Full scenes, sprite sheets
 
 class Canvas:
     """Main drawing canvas with pixel-perfect grid"""

@@ -1,10 +1,53 @@
 # Pixel Perfect - Project Summary
 
 ## Project Status: PRODUCTION READY ✅
-**Version**: 2.7.7  
-**Last Updated**: January 25, 2026 - Context Menu & Keyboard Shortcuts
+**Version**: 2.9.0  
+**Last Updated**: February 19, 2026 - Canvas Expanded
 
-## Latest Updates (v2.7.7)
+## Latest Updates (v2.9.0)
+
+### 📐 Bigger Canvas Sizes
+- **✅ 128×128 (HUGE)** - Scene tiles, large sprites
+- **✅ 256×256 (MASSIVE)** - Full scenes, sprite sheets
+- **✅ Auto-Zoom** - Smart zoom adjustment for larger presets
+
+### ⚡ Pillow Image Rendering
+- **✅ Performance Overhaul** - Replaced per-pixel rectangles with Pillow compositing
+- **✅ Full Coverage** - Main pixels, onion skins, and tile preview all upgraded
+- **✅ Crisp Edges** - NEAREST resampling preserves pixel art sharpness
+
+### 🖼️ Reference Image Panel
+- **✅ Load Any Image** - PNG, JPG, BMP, GIF, WEBP via file dialog
+- **✅ Adjustable Opacity** - 10% to 100% slider
+- **✅ Pan & Zoom** - Drag, scroll, double-click to reset
+- **✅ Shift+R Toggle** - Quick show/hide keyboard shortcut
+
+### 🔍 Mini Preview Window
+- **✅ Aseprite-Style Overlay** - Bottom-right preview showing full canvas
+- **✅ Checkerboard Transparency** - Standard alpha background
+- **✅ Viewport Indicator** - White rect shows visible area when zoomed in
+- **✅ Shift+P Toggle** - Quick show/hide keyboard shortcut
+
+### 🖱️ Right-Click Camera Pan
+- **✅ Hold + Drag** - Right-click hold pans the camera (like middle mouse)
+- **✅ Click + Release** - Opens context menu as before
+- **✅ 5px Threshold** - Smart distinction between pan and click
+
+## Planned Features (v3.x)
+
+### 🤖 AI Features
+- See `DOCS/features/AI_FEATURES.md` for full roadmap
+- Phase 1: Auto-palette, color reduction, smart outline, shading suggestions (no external deps)
+- Phase 2: Auto-shade, smart resize, readability check
+- Phase 3: Auto-tiling, animation smoothness, text-to-sprite
+
+### 🪙 3D Token Preview
+- See `DOCS/features/3D_TOKEN_PREVIEW.md` for implementation plan
+- Software rasterizer (Pillow) for zero new dependencies
+- Interactive rotation, materials, lighting controls
+- Export as PNG, GIF, OBJ
+
+## Previous Updates (v2.7.7)
 
 ### 🖱️ Right-Click Context Menu
 - **✅ Context-Aware Menu** - Right-click shows relevant actions based on tool/state

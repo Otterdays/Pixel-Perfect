@@ -1,5 +1,73 @@
 # Pixel Perfect - Changelog
 
+## Version 2.9.0 - Canvas Expanded
+**Date**: February 19, 2026  
+**Type**: Major Feature & Performance Release
+
+### 📐 Bigger Canvas Sizes (New Presets)
+- **128×128 (HUGE)**: For scene tiles, large sprites, and tile sheets
+- **256×256 (MASSIVE)**: For full scenes, sprite sheets, and detailed work
+- **Smart Zoom Auto-Adjust**: Larger canvases automatically set zoom to fit (4x for 128, 2x for 256)
+- **Custom Size Dialog**: Already supports up to 512×512 via "Custom..." option
+
+### ⚡ Pillow Image Rendering (Performance Overhaul)
+- **Replaced per-pixel tkinter rectangles with Pillow Image compositing**
+- **Old method**: Created individual `create_rectangle` for each non-transparent pixel (~65,536 items at 256×256)
+- **New method**: Builds single PIL Image from numpy array → NEAREST resize → single `create_image` canvas item
+- **Coverage**: Main pixel rendering, onion skin frames, and tile preview all upgraded
+- **Technical**: Move/rotate exclusion masks now use numpy array slicing instead of nested loops
+- **Result**: 256×256 canvas now renders at interactive speeds instead of multi-second freezes
+
+### 🖼️ Reference Image Panel (New Feature)
+- **Load any image**: PNG, JPG, BMP, GIF, WEBP supported via file dialog
+- **Adjustable opacity**: Slider from 10% to 100%
+- **Fit / Fill modes**: Toggle between fitting or filling the preview area
+- **Pan & Zoom**: Drag to pan, scroll wheel to zoom, double-click to reset
+- **Collapsible section**: In right sidebar below layers/timeline (starts collapsed)
+- **Toggle shortcut**: `Shift+R` to show/hide the panel
+
+### 🔍 Mini Preview Window (Aseprite-Style)
+- **Bottom-right overlay**: Shows full canvas artwork fitted into a compact 128px preview
+- **Checkerboard transparency**: Standard alpha checkerboard pattern for transparent areas
+- **Dark frame with title bar**: "Preview" header bar with sleek dark aesthetic
+- **Viewport indicator**: White rectangle shows currently visible portion when zoomed in
+- **Toggle shortcut**: `Shift+P` to show/hide; starts visible by default
+
+### 🖱️ Right-Click Camera Pan
+- **Right-click + hold + drag**: Pan the camera view (same as middle mouse button)
+- **Right-click + release**: Opens context menu as before (no behavior change for quick clicks)
+- **5px drag threshold**: Distinguishes between pan gesture and click
+- **Tool-specific behavior preserved**: Edge tool and eraser right-click actions unchanged
+### 🪙 3D Token Preview (New Feature)
+- **Software voxel renderer**: Turns pixel art into an interactive 3D coin/medallion — zero new dependencies
+- **Interactive rotation**: Drag to rotate, scroll to zoom, double-click to reset
+- **Thickness control**: Adjustable coin depth (1-8 voxel layers)
+- **Directional lighting**: Adjustable light angle (0-360°) with Blinn-Phong shading
+- **Material presets**: Flat (pixel colors), Gold, Silver, Bronze metallic tints
+- **Back face modes**: Same, Mirrored, Embossed, Blank
+- **Auto-spin**: Toggle for continuous 30fps rotation
+- **Export**: PNG (512px) and GIF (360° rotation, 36 frames)
+- **Collapsible panel**: Right sidebar, starts collapsed, `Shift+T` toggle
+- **Auto-updates**: Debounced sync with canvas pixel changes
+
+### 📁 Files Created
+- `src/core/voxel_renderer.py` – Software 3D voxel engine (numpy + Pillow rasterization)
+- `src/ui/token_preview_panel.py` – Token preview panel UI with controls and export
+- `src/ui/reference_panel.py` – Reference Image Panel
+- `DOCS/features/AI_FEATURES.md` – AI features roadmap
+- `DOCS/features/3D_TOKEN_PREVIEW.md` – 3D token implementation plan
+
+### 📁 Files Modified
+- `src/core/canvas.py` – Added HUGE and MASSIVE enum values to CanvasSize
+- `src/core/canvas_renderer.py` – Pillow rendering, mini preview, token preview notification
+- `src/ui/ui_builder.py` – Added 128×128 and 256×256 to size dropdown
+- `src/ui/canvas_zoom_manager.py` – Updated size_map, zoom auto-adjustment for larger canvases
+- `src/ui/main_window.py` – Integrated ReferencePanel and TokenPreviewPanel
+- `src/core/event_dispatcher.py` – Shift+R, Shift+P, Shift+T shortcuts, right-click pan
+
+---
+
+
 ## Version 2.7.7 - Right-Click Context Menu & Copy/Paste Shortcuts
 **Date**: January 25, 2026  
 **Type**: QoL Enhancement Release

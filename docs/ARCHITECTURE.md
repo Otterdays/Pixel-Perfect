@@ -4,30 +4,35 @@
 Pixel Perfect is a fully functional desktop pixel art editor built with Python, designed for creating 2D MMORPG game assets. The architecture follows a modular design pattern with comprehensive features including animation, layers, custom colors, palette management, and export capabilities.
 
 ## Current Status: COMPLETE IMPLEMENTATION
-**Version**: 2.7.2  
-**Status**: All Core Systems Complete - Production Ready with QoL Enhancements
+**Version**: 2.9.0  
+**Status**: All Core Systems Complete - Production Ready with Performance Enhancements
 
 ### Latest Updates
+- **v2.9.0**: Larger canvas sizes (128×128, 256×256), Pillow image rendering, reference image panel, mini preview overlay, right-click camera pan.
+- **v2.7.7**: Right-click context menu, copy/paste keyboard shortcuts.
+- **v2.7.6**: Theme customization system with save/export/import.
+- **v2.7.5**: Tile preview mode, fullscreen mode.
 - **v2.7.2**: QoL enhancements - Zoom to cursor, Fit/100% view buttons, export presets, quick export, recent colors improvements.
-- **v2.7.1**: Dither tool and undo system refinements.
 - **v2.7.0**: Delta-based undo system, scanline flood fill, recent colors palette, event throttling.
 - **v2.6.2**: Performance optimizations - NumPy vectorization for rendering, selection transforms, and event handling.
-- **v2.6.1**: Code cleanup - removed dead code, debug prints, and compacted documentation.
-- **v2.6.0**: Added Spray tool, canvas zoom scrollbar, and JSON palette auto-loader.
 
 ## Core Components
 
-### Canvas System (`src/core/canvas.py`)
+### Canvas System (`src/core/canvas.py` + `src/core/canvas_renderer.py`)
 - **Purpose**: Main drawing surface with pixel-perfect grid rendering.
 - **Key Features**:
   - Zoom levels (0.25× to 64×) with visible grid overlay.
-  - Preset canvas sizes (8×8 through 64×64) plus custom sizing.
+  - Preset canvas sizes (8×8 through 256×256) plus custom sizing up to 512×512.
+  - Auto-zoom adjustment for larger canvases (4x for 128, 2x for 256).
+  - **Pillow image rendering**: Single PIL Image composited from numpy array, NEAREST resampled, displayed as one canvas item. Replaced per-pixel rectangles for massive performance gains.
   - Grid overlay with toggle and overlay mode to render on top of pixels.
   - Paper/background texture modes rendered directly in Tkinter.
+  - **Mini Preview Window**: Aseprite-style bottom-right overlay showing full canvas at fitted scale with viewport indicator.
+  - **Reference Image Panel**: Load external images for reference alongside canvas.
   - Mouse position tracking and coordinate conversion helpers.
   - Real-time pixel manipulation backed by numpy arrays.
-  - Pan tool for camera movement around canvas.
-- **Dependencies**: Native `tkinter` canvas via CustomTkinter plus numpy for efficient pixel operations.
+  - Pan tool for camera movement (left-click, middle-mouse, or right-click hold).
+- **Dependencies**: Native `tkinter` canvas via CustomTkinter, numpy, Pillow (PIL).
 
 ### Color Palette (`src/core/color_palette.py`)
 - **Purpose**: Manages palette discovery, loading, and selection.

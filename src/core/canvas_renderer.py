@@ -19,6 +19,13 @@ class CanvasRenderer:
         """
         self.app = app_instance
         self.canvas = app_instance.canvas
+        
+        # Mini preview state (Aseprite-style bottom-right overlay)
+        self.show_mini_preview = True
+        self._preview_photo = None  # Keep reference to prevent GC
+        self._PREVIEW_MAX_SIZE = 128  # Max width/height of preview image
+        self._PREVIEW_PADDING = 12  # Distance from canvas edges
+        self._PREVIEW_HEADER_HEIGHT = 18  # Title bar height
 
     def init_drawing_surface(self):
         """Initialize the tkinter drawing surface"""
@@ -305,6 +312,9 @@ class CanvasRenderer:
                 y_offset += self.app.pan_offset_y * self.app.canvas.zoom
 
                 self.app.drawing_canvas.delete("all")
+                
+                # Clear cached photo references from previous render cycle
+                self._onion_photos = []
 
                 # Draw background texture FIRST if in texture mode (so grid appears on top)
                 if self.app.canvas.background_mode == "texture":
@@ -415,8 +425,158 @@ class CanvasRenderer:
                 
                 if self.app.grid_control_mgr.grid_overlay and self.app.canvas.show_grid:
                     self.app.drawing_canvas.tag_raise("grid")
+                
+                # Draw mini preview overlay last (always on top)
+                if self.show_mini_preview:
+                    self.draw_mini_preview(width, height)
         finally:
             self.app._updating_display = False
+            # Notify token preview (debounced) if panel exists
+            if hasattr(self.app, 'token_preview_panel'):
+                try:
+                    self.app.token_preview_panel.notify_canvas_changed()
+                except Exception:
+                    pass
+
+    def toggle_mini_preview(self):
+        """Toggle the mini preview window visibility."""
+        self.show_mini_preview = not self.show_mini_preview
+        self.update_pixel_display()
+
+    def draw_mini_preview(self, canvas_widget_width, canvas_widget_height):
+        """Draw an Aseprite-style mini preview overlay in the bottom-right corner.
+        
+        Shows the full canvas artwork fitted into a small preview box with:
+        - Checkerboard transparency background
+        - Dark frame with 'Preview' header
+        - Viewport rectangle showing the currently visible area
+        """
+        from PIL import Image, ImageTk, ImageDraw
+        
+        pad = self._PREVIEW_PADDING
+        header_h = self._PREVIEW_HEADER_HEIGHT
+        max_size = self._PREVIEW_MAX_SIZE
+        
+        cw = self.app.canvas.width
+        ch = self.app.canvas.height
+        if cw <= 0 or ch <= 0:
+            return
+        
+        # --- Compute preview image size (fit canvas into max_size box) ---
+        scale = min(max_size / cw, max_size / ch)
+        # For small canvases make preview at least 2x to be useful
+        if scale > 4:
+            scale = 4
+        prev_w = max(16, int(cw * scale))
+        prev_h = max(16, int(ch * scale))
+        
+        # --- Build checkerboard transparency background ---
+        checker_size = max(2, int(scale * 2))  # Scale checkerboard cells with preview
+        checker = Image.new("RGB", (prev_w, prev_h), (200, 200, 200))
+        checker_draw = ImageDraw.Draw(checker)
+        dark_color = (160, 160, 160)
+        for cy in range(0, prev_h, checker_size):
+            for cx in range(0, prev_w, checker_size):
+                if (cx // checker_size + cy // checker_size) % 2 == 1:
+                    checker_draw.rectangle(
+                        [cx, cy, cx + checker_size - 1, cy + checker_size - 1],
+                        fill=dark_color
+                    )
+        checker = checker.convert("RGBA")
+        
+        # --- Build preview from canvas pixels ---
+        pil_img = Image.fromarray(self.app.canvas.pixels, mode="RGBA")
+        pil_img = pil_img.resize((prev_w, prev_h), Image.Resampling.NEAREST)
+        
+        # Composite artwork over checkerboard
+        preview_img = Image.alpha_composite(checker, pil_img)
+        
+        # --- Build the full preview frame (header + image + border) ---
+        border = 2
+        frame_w = prev_w + border * 2
+        frame_h = prev_h + header_h + border * 2
+        
+        # Dark semi-transparent frame background
+        frame_img = Image.new("RGBA", (frame_w, frame_h), (30, 30, 30, 220))
+        frame_draw = ImageDraw.Draw(frame_img)
+        
+        # Header bar (slightly lighter)
+        frame_draw.rectangle([0, 0, frame_w - 1, header_h - 1], fill=(50, 50, 50, 230))
+        
+        # 'Preview' title text (simple pixel text since we may not have fonts)
+        # Draw "Preview" as small block letters
+        title = "Preview"
+        # Use a small built-in font
+        try:
+            from PIL import ImageFont
+            font = ImageFont.truetype("arial.ttf", 11)
+        except Exception:
+            font = ImageFont.load_default()
+        
+        # Center title in header
+        try:
+            bbox = font.getbbox(title)
+            tw = bbox[2] - bbox[0]
+            th = bbox[3] - bbox[1]
+        except Exception:
+            tw, th = 40, 10
+        tx = (frame_w - tw) // 2
+        ty = (header_h - th) // 2
+        frame_draw.text((tx, ty), title, fill=(200, 200, 200, 255), font=font)
+        
+        # Subtle border highlight on top and left edges
+        frame_draw.line([(0, 0), (frame_w - 1, 0)], fill=(80, 80, 80, 255))
+        frame_draw.line([(0, 0), (0, frame_h - 1)], fill=(80, 80, 80, 255))
+        # Dark border on bottom and right
+        frame_draw.line([(frame_w - 1, 0), (frame_w - 1, frame_h - 1)], fill=(15, 15, 15, 255))
+        frame_draw.line([(0, frame_h - 1), (frame_w - 1, frame_h - 1)], fill=(15, 15, 15, 255))
+        
+        # Paste preview image into frame
+        frame_img.paste(preview_img, (border, header_h))
+        
+        # --- Draw viewport indicator (shows visible portion of canvas) ---
+        zoom = self.app.canvas.zoom
+        canvas_pixel_w = cw * zoom
+        canvas_pixel_h = ch * zoom
+        
+        # Compute which part of the canvas is visible on screen
+        cx_offset = (canvas_widget_width - canvas_pixel_w) / 2 + self.app.pan_offset_x * zoom
+        cy_offset = (canvas_widget_height - canvas_pixel_h) / 2 + self.app.pan_offset_y * zoom
+        
+        # Visible area in canvas pixel coordinates
+        vis_left = max(0, -cx_offset / zoom)
+        vis_top = max(0, -cy_offset / zoom)
+        vis_right = min(cw, (canvas_widget_width - cx_offset) / zoom)
+        vis_bottom = min(ch, (canvas_widget_height - cy_offset) / zoom)
+        
+        # Only draw viewport rect if we're zoomed in enough that not everything is visible
+        if vis_right - vis_left < cw - 0.5 or vis_bottom - vis_top < ch - 0.5:
+            vr_x1 = border + int(vis_left * scale)
+            vr_y1 = header_h + int(vis_top * scale)
+            vr_x2 = border + int(vis_right * scale) - 1
+            vr_y2 = header_h + int(vis_bottom * scale) - 1
+            
+            # Clamp to preview bounds
+            vr_x1 = max(border, min(vr_x1, border + prev_w - 1))
+            vr_y1 = max(header_h, min(vr_y1, header_h + prev_h - 1))
+            vr_x2 = max(border, min(vr_x2, border + prev_w - 1))
+            vr_y2 = max(header_h, min(vr_y2, header_h + prev_h - 1))
+            
+            # Draw white viewport rectangle
+            frame_draw.rectangle([vr_x1, vr_y1, vr_x2, vr_y2], outline=(255, 255, 255, 200))
+        
+        # --- Position in bottom-right of canvas widget ---
+        anchor_x = canvas_widget_width - pad
+        anchor_y = canvas_widget_height - pad
+        
+        # Convert to PhotoImage and display
+        self._preview_photo = ImageTk.PhotoImage(frame_img)
+        self.app.drawing_canvas.create_image(
+            anchor_x, anchor_y,
+            image=self._preview_photo,
+            anchor="se",
+            tags="mini_preview"
+        )
 
     def draw_selection_on_tkinter(self, x_offset: int, y_offset: int):
         """Draw selection rectangle on tkinter canvas"""
@@ -842,7 +1002,15 @@ class CanvasRenderer:
         )
 
     def draw_all_pixels_on_tkinter(self, x_offset: int, y_offset: int):
-        """Draw all pixels from the canvas onto the tkinter canvas"""
+        """Draw all pixels from the canvas onto the tkinter canvas using Pillow image rendering.
+        
+        Builds a PIL Image from the numpy pixel array, scales it to zoom level with
+        NEAREST resampling (preserving crisp pixel art edges), and displays as a single
+        canvas image item. This is dramatically faster than creating individual rectangles
+        per pixel, especially for larger canvases (128×128, 256×256).
+        """
+        from PIL import Image, ImageTk
+        
         zoom = self.app.canvas.zoom
         
         # During live move or rotate preview, hide the source area so pixels don't appear doubled.
@@ -850,8 +1018,6 @@ class CanvasRenderer:
         selection_tool = self.app.tools.get("selection")
         skip_orig = False
         orig_left, orig_top, orig_width, orig_height = 0, 0, 0, 0
-        # Also hide the last placed area while dragging (background is restored on pick-up,
-        # but the flattened canvas may lag until we resync layers).
         skip_last = False
         last_left, last_top, last_width, last_height = 0, 0, 0, 0
         rotating_preview = bool(getattr(self.app, 'selection_mgr', None) and self.app.selection_mgr.is_rotating)
@@ -865,46 +1031,46 @@ class CanvasRenderer:
                 last_left, last_top = move_tool.last_drawn_position
                 _, _, last_width, last_height = sel_tool.selection_rect
         elif rotating_preview and selection_tool and selection_tool.selection_rect:
-            # Hide the current selection area during rotate preview to avoid double-draw
             skip_last = True
             last_left, last_top, last_width, last_height = selection_tool.selection_rect
         
-        # Get canvas pixels as numpy array for efficient processing
-        canvas_pixels = self.app.canvas.pixels
+        # Get canvas pixels as numpy array
+        canvas_pixels = self.app.canvas.pixels.copy()
         
-        # Find all non-transparent pixels using NumPy (much faster than nested loops)
-        non_transparent_mask = canvas_pixels[:, :, 3] > 0
-        
-        # Apply exclusion masks for move/rotate operations
+        # Apply exclusion masks for move/rotate operations (zero out skipped areas)
         if skip_orig:
-            for y in range(orig_top, min(orig_top + orig_height, self.app.canvas.height)):
-                for x in range(orig_left, min(orig_left + orig_width, self.app.canvas.width)):
-                    if 0 <= y < self.app.canvas.height and 0 <= x < self.app.canvas.width:
-                        non_transparent_mask[y, x] = False
+            y_start = max(0, orig_top)
+            y_end = min(self.app.canvas.height, orig_top + orig_height)
+            x_start = max(0, orig_left)
+            x_end = min(self.app.canvas.width, orig_left + orig_width)
+            if y_start < y_end and x_start < x_end:
+                canvas_pixels[y_start:y_end, x_start:x_end] = 0
         
         if skip_last:
-            for y in range(last_top, min(last_top + last_height, self.app.canvas.height)):
-                for x in range(last_left, min(last_left + last_width, self.app.canvas.width)):
-                    if 0 <= y < self.app.canvas.height and 0 <= x < self.app.canvas.width:
-                        non_transparent_mask[y, x] = False
+            y_start = max(0, last_top)
+            y_end = min(self.app.canvas.height, last_top + last_height)
+            x_start = max(0, last_left)
+            x_end = min(self.app.canvas.width, last_left + last_width)
+            if y_start < y_end and x_start < x_end:
+                canvas_pixels[y_start:y_end, x_start:x_end] = 0
         
-        # Get coordinates of non-transparent pixels
-        y_coords, x_coords = np.where(non_transparent_mask)
+        # Build PIL Image from numpy RGBA array
+        pil_img = Image.fromarray(canvas_pixels, mode="RGBA")
         
-        # Draw only the non-transparent pixels (much more efficient for sparse canvases)
-        for i in range(len(y_coords)):
-            y = y_coords[i]
-            x = x_coords[i]
-            color = tuple(canvas_pixels[y, x])
-            screen_x = x_offset + (x * zoom)
-            screen_y = y_offset + (y * zoom)
+        # Scale up to zoom level using NEAREST for crisp pixel art
+        display_width = int(self.app.canvas.width * zoom)
+        display_height = int(self.app.canvas.height * zoom)
+        
+        if display_width > 0 and display_height > 0:
+            pil_img = pil_img.resize((display_width, display_height), Image.Resampling.NEAREST)
             
-            hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
-            
-            self.app.drawing_canvas.create_rectangle(
-                screen_x, screen_y,
-                screen_x + zoom, screen_y + zoom,
-                fill=hex_color, outline="", tags="pixel"
+            # Convert to PhotoImage and display as a single canvas image item
+            self._pixel_photo = ImageTk.PhotoImage(pil_img)
+            self.app.drawing_canvas.create_image(
+                x_offset, y_offset,
+                image=self._pixel_photo,
+                anchor="nw",
+                tags="pixel"
             )
 
     def update_single_pixel(self, canvas_x: int, canvas_y: int, old_color):
@@ -936,47 +1102,54 @@ class CanvasRenderer:
             self._draw_frame_with_opacity(frame.pixels, x_offset, y_offset, opacity, "#ff0000")  # Red tint for next
     
     def _draw_frame_with_opacity(self, pixels: np.ndarray, x_offset: int, y_offset: int, opacity: float, tint_color: str = None):
-        """Draw a frame with alpha blending and optional color tint"""
+        """Draw a frame with alpha blending and optional color tint using Pillow image rendering"""
+        from PIL import Image, ImageTk
+        
         zoom = self.app.canvas.zoom
         
-        # Find non-transparent pixels
-        non_transparent_mask = pixels[:, :, 3] > 0
-        y_coords, x_coords = np.where(non_transparent_mask)
-        
-        # Parse tint color if provided
+        # Parse tint color
         tint_r, tint_g, tint_b = 255, 255, 255
         if tint_color:
             tint_r = int(tint_color[1:3], 16)
             tint_g = int(tint_color[3:5], 16)
             tint_b = int(tint_color[5:7], 16)
         
-        # Draw pixels with opacity
-        for i in range(len(y_coords)):
-            y = y_coords[i]
-            x = x_coords[i]
-            rgba = tuple(pixels[y, x])
+        # Build tinted, opacity-adjusted image using numpy
+        frame_pixels = pixels.copy().astype(np.float32)
+        
+        # Apply tint (30% blend)
+        tint_blend = 0.3
+        frame_pixels[:, :, 0] = frame_pixels[:, :, 0] * (1 - tint_blend) + tint_r * tint_blend
+        frame_pixels[:, :, 1] = frame_pixels[:, :, 1] * (1 - tint_blend) + tint_g * tint_blend
+        frame_pixels[:, :, 2] = frame_pixels[:, :, 2] * (1 - tint_blend) + tint_b * tint_blend
+        
+        # Apply opacity to alpha channel
+        frame_pixels[:, :, 3] = frame_pixels[:, :, 3] * opacity
+        
+        # Clip and convert back to uint8
+        frame_pixels = np.clip(frame_pixels, 0, 255).astype(np.uint8)
+        
+        # Build PIL Image
+        pil_img = Image.fromarray(frame_pixels, mode="RGBA")
+        
+        # Scale up with NEAREST
+        display_width = int(self.app.canvas.width * zoom)
+        display_height = int(self.app.canvas.height * zoom)
+        
+        if display_width > 0 and display_height > 0:
+            pil_img = pil_img.resize((display_width, display_height), Image.Resampling.NEAREST)
             
-            # Apply tint and opacity
-            r = int(rgba[0] * (1 - 0.3) + tint_r * 0.3)  # 30% tint blend
-            g = int(rgba[1] * (1 - 0.3) + tint_g * 0.3)
-            b = int(rgba[2] * (1 - 0.3) + tint_b * 0.3)
+            # Store reference to prevent GC and display
+            if not hasattr(self, '_onion_photos'):
+                self._onion_photos = []
+            photo = ImageTk.PhotoImage(pil_img)
+            self._onion_photos.append(photo)
             
-            # Create semi-transparent color (Tkinter doesn't support alpha directly, so we blend with background)
-            # For simplicity, we'll use a lighter/darker version based on opacity
-            alpha = rgba[3] / 255.0 * opacity
-            final_r = int(r * alpha + 128 * (1 - alpha))  # Blend with gray background
-            final_g = int(g * alpha + 128 * (1 - alpha))
-            final_b = int(b * alpha + 128 * (1 - alpha))
-            
-            hex_color = f"#{final_r:02x}{final_g:02x}{final_b:02x}"
-            
-            screen_x = x_offset + (x * zoom)
-            screen_y = y_offset + (y * zoom)
-            
-            self.app.drawing_canvas.create_rectangle(
-                screen_x, screen_y,
-                screen_x + zoom, screen_y + zoom,
-                fill=hex_color, outline="", tags="onion_skin"
+            self.app.drawing_canvas.create_image(
+                x_offset, y_offset,
+                image=photo,
+                anchor="nw",
+                tags="onion_skin"
             )
     
     def draw_tile_seam_preview(self, x_offset: int, y_offset: int, canvas_pixel_width: int, canvas_pixel_height: int):
@@ -1029,75 +1202,73 @@ class CanvasRenderer:
                 )
     
     def draw_tile_preview(self, x_offset: int, y_offset: int, canvas_pixel_width: int, canvas_pixel_height: int):
-        """Draw repeating tile preview - shows canvas repeated in 3x3 grid for pattern visualization.
+        """Draw repeating tile preview - shows canvas repeated in 3x3 grid.
         
-        This is optimized for performance:
-        - Uses NumPy to find non-transparent pixels efficiently
-        - Draws ghost tiles with stipple pattern for transparency effect
-        - Only draws 8 surrounding tiles (not the center which is the main canvas)
+        Uses Pillow image rendering for performance - builds a dimmed ghost image
+        of the canvas and stamps it around the center tile.
         """
+        from PIL import Image, ImageTk
+        
         zoom = self.app.canvas.zoom
         canvas_pixels = self.app.canvas.pixels
         
-        # Find all non-transparent pixels using NumPy (much faster than nested loops)
-        non_transparent_mask = canvas_pixels[:, :, 3] > 0
-        y_coords, x_coords = np.where(non_transparent_mask)
-        
-        # If no pixels to draw, skip
-        if len(y_coords) == 0:
+        # Check if canvas has any content
+        if not np.any(canvas_pixels[:, :, 3] > 0):
             return
         
-        # Define tile offsets for 3x3 grid (excluding center [0,0] which is main canvas)
+        # Build ghost tile image: dimmed to 50% brightness with 60% opacity
+        ghost_pixels = canvas_pixels.copy().astype(np.float32)
+        ghost_pixels[:, :, 0:3] = ghost_pixels[:, :, 0:3] * 0.5  # 50% brightness
+        ghost_pixels[:, :, 3] = ghost_pixels[:, :, 3] * 0.6       # 60% opacity
+        ghost_pixels = np.clip(ghost_pixels, 0, 255).astype(np.uint8)
+        
+        pil_ghost = Image.fromarray(ghost_pixels, mode="RGBA")
+        
+        # Scale up
+        display_width = int(self.app.canvas.width * zoom)
+        display_height = int(self.app.canvas.height * zoom)
+        
+        if display_width <= 0 or display_height <= 0:
+            return
+        
+        pil_ghost = pil_ghost.resize((display_width, display_height), Image.Resampling.NEAREST)
+        
+        # Store photo references to prevent GC
+        if not hasattr(self, '_tile_photos'):
+            self._tile_photos = []
+        self._tile_photos = []
+        
+        # Define tile offsets for 3x3 grid (excluding center)
         tile_offsets = [
-            (-1, -1), (0, -1), (1, -1),  # Top row
-            (-1,  0),          (1,  0),  # Middle row (no center)
-            (-1,  1), (0,  1), (1,  1),  # Bottom row
+            (-1, -1), (0, -1), (1, -1),
+            (-1,  0),          (1,  0),
+            (-1,  1), (0,  1), (1,  1),
         ]
         
-        # Get view bounds to only draw tiles that are visible
+        # Get view bounds for culling
         view_width = self.app.drawing_canvas.winfo_width()
         view_height = self.app.drawing_canvas.winfo_height()
         
-        # Draw each surrounding tile
         for tile_dx, tile_dy in tile_offsets:
-            # Calculate tile offset in screen coordinates
-            tile_x_offset = x_offset + (tile_dx * canvas_pixel_width)
-            tile_y_offset = y_offset + (tile_dy * canvas_pixel_height)
+            tile_x = x_offset + (tile_dx * canvas_pixel_width)
+            tile_y = y_offset + (tile_dy * canvas_pixel_height)
             
-            # Skip tiles that are completely outside the view (performance optimization)
-            if (tile_x_offset + canvas_pixel_width < 0 or tile_x_offset > view_width or
-                tile_y_offset + canvas_pixel_height < 0 or tile_y_offset > view_height):
+            # Skip tiles outside the view
+            if (tile_x + canvas_pixel_width < 0 or tile_x > view_width or
+                tile_y + canvas_pixel_height < 0 or tile_y > view_height):
                 continue
             
-            # Draw non-transparent pixels for this tile with ghost effect
-            for i in range(len(y_coords)):
-                y = y_coords[i]
-                x = x_coords[i]
-                color = tuple(canvas_pixels[y, x])
-                
-                screen_x = tile_x_offset + (x * zoom)
-                screen_y = tile_y_offset + (y * zoom)
-                
-                # Skip pixels outside view bounds
-                if (screen_x + zoom < 0 or screen_x > view_width or
-                    screen_y + zoom < 0 or screen_y > view_height):
-                    continue
-                
-                # Use dimmed color for ghost tiles (50% brightness)
-                ghost_r = color[0] // 2
-                ghost_g = color[1] // 2
-                ghost_b = color[2] // 2
-                hex_color = f"#{ghost_r:02x}{ghost_g:02x}{ghost_b:02x}"
-                
-                self.app.drawing_canvas.create_rectangle(
-                    screen_x, screen_y,
-                    screen_x + zoom, screen_y + zoom,
-                    fill=hex_color, outline="", 
-                    stipple="gray50",  # Add transparency effect
-                    tags="tile_preview"
-                )
+            photo = ImageTk.PhotoImage(pil_ghost)
+            self._tile_photos.append(photo)
+            
+            self.app.drawing_canvas.create_image(
+                tile_x, tile_y,
+                image=photo,
+                anchor="nw",
+                tags="tile_preview"
+            )
         
-        # Draw subtle border around center tile to distinguish it
+        # Draw subtle border around center tile 
         self.app.drawing_canvas.create_rectangle(
             x_offset - 1, y_offset - 1,
             x_offset + canvas_pixel_width + 1, y_offset + canvas_pixel_height + 1,

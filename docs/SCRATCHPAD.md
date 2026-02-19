@@ -1,8 +1,77 @@
 # Pixel Perfect - Development Scratchpad
 
-**Last Updated**: January 25, 2026  
-**Current Version**: 2.7.8  
-**Status**: Production Ready - QoL Improvements
+**Last Updated**: February 19, 2026  
+**Current Version**: 2.9.0  
+**Status**: Production Ready - Canvas Expanded
+
+---
+
+## Version 2.9.0 - Canvas Expanded (February 19, 2026)
+**Status**: ✅ COMPLETE
+
+### 📐 Bigger Canvas Sizes
+- **128×128 (HUGE)**: For scene tiles and large sprites
+- **256×256 (MASSIVE)**: For full scenes and sprite sheets
+- Auto zoom adjustment (4x for 128, 2x for 256) on preset selection
+- Custom size dialog already supports up to 512×512
+
+### ⚡ Pillow Image Rendering (Performance Overhaul)
+- **Replaced per-pixel tkinter rectangles with Pillow Image compositing**
+- Old method: Created ~65,536 canvas items at 256×256 (unusable)
+- New method: Builds single PIL Image → NEAREST resize → single canvas item
+- **Also upgraded**: Onion skin rendering and tile preview use Pillow images
+- Transparent pixels preserved via RGBA mode
+- Move/rotate exclusion masks applied via numpy slicing (no loops)
+
+### 🖼️ Reference Image Panel (New Feature!)
+- **Load any image** (PNG, JPG, BMP, GIF, WEBP) as reference
+- **Adjustable opacity** (10% to 100% slider)
+- **Fit / Fill modes** for display scaling
+- **Drag to pan**, scroll wheel to zoom, double-click to reset
+- **Collapsible section** in right panel (starts collapsed)
+- **Keyboard shortcut**: `Shift+R` to toggle visibility
+- Located below layers/timeline in right sidebar
+
+### 🖱️ Right-Click Camera Pan
+- **Right-click + hold + drag** = pan the camera view (same as middle mouse)
+- **Right-click + release** (no drag) = open context menu as before
+- 5px drag threshold distinguishes pan from click
+- Edge tool / Eraser right-click behavior unchanged
+### 🔍 Mini Preview Window (Aseprite-Style)
+- **Bottom-right overlay** shows full canvas fitted into 128px preview
+- Checkerboard transparency background
+- Dark frame with "Preview" title bar
+- Viewport rectangle shows currently visible area when zoomed in
+- `Shift+P` toggles visibility
+- Starts visible by default
+
+### 🪙 3D Token Preview (NEW)
+- **Software voxel renderer** — zero new dependencies (Pillow + numpy only)
+- Interactive 3D coin/medallion of current pixel art
+- **Drag to rotate**, scroll to zoom, double-click to reset
+- **Thickness slider** (1-8 layers), **Light angle** (0-360°)
+- **Material presets**: Flat, Gold, Silver, Bronze
+- **Back face modes**: Same, Mirrored, Embossed, Blank
+- **Auto-spin toggle** with 30fps rotation
+- **Export**: PNG (512px) and GIF (360° animation, 36 frames)
+- `Shift+T` toggles panel visibility
+- Collapsible right-sidebar panel (starts collapsed)
+- Auto-updates when canvas pixels change (debounced)
+
+### 📁 Files Created
+- `src/core/voxel_renderer.py` – Software 3D voxel engine
+- `src/ui/token_preview_panel.py` – Token preview panel UI
+- `src/ui/reference_panel.py` – Reference Image Panel class
+- `DOCS/features/AI_FEATURES.md` – AI features roadmap
+- `DOCS/features/3D_TOKEN_PREVIEW.md` – 3D token implementation plan
+
+### 📁 Files Modified
+- `src/core/canvas.py` – Added HUGE (128×128) and MASSIVE (256×256) to CanvasSize enum
+- `src/core/canvas_renderer.py` – Pillow rendering, mini preview, token preview notification
+- `src/ui/ui_builder.py` – Added 128×128 and 256×256 to size dropdown
+- `src/ui/canvas_zoom_manager.py` – Size map, zoom auto-adjustment for larger canvases
+- `src/ui/main_window.py` – Integrated ReferencePanel and TokenPreviewPanel
+- `src/core/event_dispatcher.py` – Shift+R, Shift+P, Shift+T shortcuts, right-click pan
 
 ---
 

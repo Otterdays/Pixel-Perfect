@@ -58,7 +58,7 @@ class CanvasZoomManager:
                 else:
                     # Restore to current actual size
                     current_size = f"{self.canvas.width}x{self.canvas.height}"
-                    if current_size in ["8x8", "16x16", "32x32", "16x32", "32x64", "64x64"]:
+                    if current_size in ["8x8", "16x16", "32x32", "16x32", "32x64", "64x64", "128x128", "256x256"]:
                         self.size_var.set(current_size)
                     else:
                         self.size_var.set("32x32")
@@ -74,7 +74,9 @@ class CanvasZoomManager:
             "32x32": CanvasSize.MEDIUM,
             "16x32": CanvasSize.WIDE,
             "32x64": CanvasSize.LARGE,
-            "64x64": CanvasSize.XLARGE
+            "64x64": CanvasSize.XLARGE,
+            "128x128": CanvasSize.HUGE,
+            "256x256": CanvasSize.MASSIVE
         }
         
         # Clear custom size when switching to preset
@@ -125,6 +127,16 @@ class CanvasZoomManager:
                 if self.canvas.zoom > 8:
                     self.canvas.set_zoom(8)
                     self.zoom_var.set("8x")
+            elif size_str == "128x128":
+                # Huge canvas - reduce zoom to 4x
+                if self.canvas.zoom > 4:
+                    self.canvas.set_zoom(4)
+                    self.zoom_var.set("4x")
+            elif size_str == "256x256":
+                # Massive canvas - reduce zoom to 2x
+                if self.canvas.zoom > 2:
+                    self.canvas.set_zoom(2)
+                    self.zoom_var.set("2x")
             
             # Resize layer manager and timeline (both automatically preserve pixel data)
             # These methods copy existing pixels to the top-left of new size
@@ -188,6 +200,14 @@ class CanvasZoomManager:
             if self.canvas.zoom < 16:
                 self.canvas.set_zoom(16)
                 self.zoom_var.set("16x")
+        elif width >= 256 or height >= 256:
+            if self.canvas.zoom > 2:
+                    self.canvas.set_zoom(2)
+                    self.zoom_var.set("2x")
+        elif width >= 128 or height >= 128:
+            if self.canvas.zoom > 4:
+                    self.canvas.set_zoom(4)
+                    self.zoom_var.set("4x")
         elif width >= 64 or height >= 64:
             if self.canvas.zoom > 8:
                     self.canvas.set_zoom(8)
