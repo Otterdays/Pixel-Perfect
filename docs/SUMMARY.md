@@ -1024,7 +1024,7 @@ Pixel Perfect/
 │       ├── presets.py      # Template presets
 │       └── file_association.py # .pixpf registration
 ├── assets/
-│   ├── palettes/           # 7 JSON color palettes
+│   ├── palettes/           # 8 JSON color palettes
 │   └── icons/              # App icons
 ├── docs/                   # Documentation
 │   ├── SUMMARY.md          # This file

@@ -820,6 +820,10 @@ class EventDispatcher:
             tool.on_mouse_move(self.main_window.canvas, canvas_x, canvas_y, current_color)
         self.main_window.canvas_renderer.update_pixel_display()
         
+        # Update status bar during selection drag for live size display
+        if self.main_window.current_tool == "selection":
+            self.main_window._update_status_bar(canvas_x, canvas_y)
+        
         # Draw shape preview for shape tools during drag
         if self.main_window.current_tool in ["line", "rectangle", "circle"]:
             if hasattr(tool, 'is_drawing') and tool.is_drawing:

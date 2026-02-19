@@ -621,6 +621,24 @@ class CanvasRenderer:
             self.draw_scale_handle(mid_x, screen_y2, handle_size, "orange")
             self.draw_scale_handle(screen_x1, mid_y, handle_size, "orange")
             self.draw_scale_handle(screen_x2, mid_y, handle_size, "orange")
+            
+            # Floating size label near bottom-right of selection
+            if width > 0 or height > 0:
+                size_text = f"{width} x {height}"
+                label_x = screen_x2 + 6
+                label_y = screen_y2 + 6
+                self.app.drawing_canvas.create_text(
+                    label_x + 1, label_y + 1,
+                    text=size_text, anchor="nw",
+                    fill="black", font=("Consolas", 9, "bold"),
+                    tags="selection"
+                )
+                self.app.drawing_canvas.create_text(
+                    label_x, label_y,
+                    text=size_text, anchor="nw",
+                    fill="white", font=("Consolas", 9, "bold"),
+                    tags="selection"
+                )
         
         move_tool = self.app.tools.get("move")
         if (move_tool and move_tool.is_moving and selection_tool and 

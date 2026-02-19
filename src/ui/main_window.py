@@ -1707,11 +1707,11 @@ class MainWindow:
         if not hasattr(self, 'status_bar'):
             return
         
-        # Update cursor position if provided
+        # Update cursor position if provided (display as 1-based)
         if cursor_x is not None and cursor_y is not None:
-            self.status_bar.update_cursor(cursor_x, cursor_y)
+            self.status_bar.update_cursor(cursor_x + 1, cursor_y + 1)
             if hasattr(self, 'canvas_hud'):
-                self.canvas_hud.update_cursor(cursor_x, cursor_y)
+                self.canvas_hud.update_cursor(cursor_x + 1, cursor_y + 1)
         
         # Update tool
         tool_name = self.current_tool if hasattr(self, 'current_tool') else "--"
@@ -1719,9 +1719,15 @@ class MainWindow:
         if hasattr(self, 'canvas_hud'):
             self.canvas_hud.update_tool(tool_name)
         
-        # Update tool size
+        # Update tool size (or selection size for select/move tools)
         size_str = "--"
-        if hasattr(self, 'tool_size_mgr'):
+        if self.current_tool in ("selection", "move"):
+            sel_tool = self.tools.get("selection")
+            if sel_tool and sel_tool.selection_rect:
+                _l, _t, sw, sh = sel_tool.selection_rect
+                if sw > 0 or sh > 0:
+                    size_str = f"{sw}x{sh}"
+        elif hasattr(self, 'tool_size_mgr'):
             if self.current_tool == "brush":
                 size = self.tool_size_mgr.brush_size
                 size_str = f"{size}x{size}"

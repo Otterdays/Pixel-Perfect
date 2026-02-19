@@ -209,6 +209,7 @@ elif palette_name == "Old School RuneScape":
 5. **Kakele Online** - Warm, golden fantasy palette
 6. **Rucoy Online** - Grayscale with earth tones
 7. **Old School RuneScape** - Medieval fantasy with OSRS aesthetic
+8. **Skin Tones** - Natural human complexion (light to dark, Fitzpatrick-inspired)
 
 ## Troubleshooting
 
