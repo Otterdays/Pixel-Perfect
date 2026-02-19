@@ -544,18 +544,18 @@ class UIBuilder:
     def create_canvas_panel(self, canvas_frame, canvas_renderer, current_tool, tools, callbacks):
         """Create canvas display panel"""
         canvas_label = ctk.CTkLabel(canvas_frame, text="Canvas", font=ctk.CTkFont(size=16, weight="bold"))
-        canvas_label.pack(pady=10)
+        canvas_label.pack(pady=(5, 0))
 
-        # Canvas container
-        canvas_container = ctk.CTkFrame(canvas_frame)
-        canvas_container.pack(expand=True, fill="both", padx=20, pady=20)
+        # Canvas container (zero padding/radius so checkerboard fills edge-to-edge)
+        canvas_container = ctk.CTkFrame(canvas_frame, fg_color="transparent", corner_radius=0)
+        canvas_container.pack(expand=True, fill="both")
 
-        # Create tkinter Canvas for drawing (much simpler than pygame integration)
+        # Create tkinter Canvas for drawing
         drawing_canvas = ctk.CTkCanvas(
             canvas_container,
-            bg="lightgray",
-            highlightthickness=1,
-            highlightbackground="black"
+            bg="#e8e8e8",
+            highlightthickness=0,
+            borderwidth=0
         )
         drawing_canvas.pack(expand=True, fill="both")
         # Mouse and focus events are now bound by EventDispatcher

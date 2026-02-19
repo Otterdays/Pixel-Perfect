@@ -60,8 +60,7 @@ class CanvasRenderer:
     _CHECKER_TILE = 8
 
     def draw_checkerboard_background(self, x_offset, y_offset, widget_width, widget_height):
-        """Draw 8x8 checkerboard (two light greys) over the entire canvas widget.
-        Tiles from (x_offset, y_offset) so checkerboard aligns with grid lines."""
+        """Draw 8x8 checkerboard (two light greys) everywhere in the background. Tiles from work-area origin for grid alignment."""
         zoom = self.app.canvas.zoom
         tile_screen = self._CHECKER_TILE * zoom
         if tile_screen < 1:
@@ -104,7 +103,7 @@ class CanvasRenderer:
 
                 # Draw grid if enabled
                 if self.app.canvas.show_grid:
-                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height, width, height)
+                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
                 
                 # Draw symmetry axes
                 self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
@@ -154,8 +153,8 @@ class CanvasRenderer:
                 fill="#00FFFF", width=2, dash=(4, 4), tags="symmetry_axis"
             )
 
-    def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height, widget_width=0, widget_height=0):
-        """Draw grid lines on tkinter canvas. Extends across full widget to avoid dead zones."""
+    def draw_tkinter_grid(self, x_offset, y_offset, canvas_width, canvas_height):
+        """Draw grid lines on tkinter canvas, confined to the work area only."""
         theme = self.app.theme_manager.get_current_theme()
         
         # Handle paper texture mode
@@ -173,35 +172,19 @@ class CanvasRenderer:
             # Force light grid (visible on dark backgrounds)
             grid_color = "#e0e0e0"  # Light grey
 
-        zoom = self.app.canvas.zoom
-        # Extend grid across full widget; use widget size if provided, else pixel art bounds
-        if widget_width > 0 and widget_height > 0:
-            extent_left, extent_top = 0, 0
-            extent_right, extent_bottom = widget_width, widget_height
-            x_min = int((extent_left - x_offset) / zoom)
-            x_max = int((extent_right - x_offset) / zoom) + 1
-            y_min = int((extent_top - y_offset) / zoom)
-            y_max = int((extent_bottom - y_offset) / zoom) + 1
-        else:
-            extent_left, extent_top = x_offset, y_offset
-            extent_right = x_offset + canvas_width
-            extent_bottom = y_offset + canvas_height
-            x_min, x_max = 0, self.app.canvas.width + 1
-            y_min, y_max = 0, self.app.canvas.height + 1
-
-        for x in range(x_min, x_max):
-            screen_x = x_offset + (x * zoom)
+        for x in range(0, self.app.canvas.width + 1):
+            screen_x = x_offset + (x * self.app.canvas.zoom)
             self.app.drawing_canvas.create_line(
-                screen_x, extent_top,
-                screen_x, extent_bottom,
+                screen_x, y_offset,
+                screen_x, y_offset + canvas_height,
                 fill=grid_color, width=1, tags="grid"
             )
 
-        for y in range(y_min, y_max):
+        for y in range(0, self.app.canvas.height + 1):
             screen_y = y_offset + (y * self.app.canvas.zoom)
             self.app.drawing_canvas.create_line(
-                extent_left, screen_y,
-                extent_right, screen_y,
+                x_offset, screen_y,
+                x_offset + canvas_width, screen_y,
                 fill=grid_color, width=1, tags="grid"
             )
 
@@ -368,21 +351,19 @@ class CanvasRenderer:
                 # Clear cached photo references from previous render cycle
                 self._onion_photos = []
 
-                # Draw background FIRST (texture, checkerboard, or solid)
+                # Draw background: checkerboard everywhere, or texture/solid in work area
                 if self.app.canvas.background_mode == "texture":
+                    bg = self.get_background_color()
+                    self.app.drawing_canvas.create_rectangle(0, 0, width, height, fill=bg, outline="", tags="background")
                     self.draw_background_texture(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
                 elif getattr(self.app.canvas, "checkerboard", True):
                     self.draw_checkerboard_background(x_offset, y_offset, width, height)
                 else:
                     bg = self.get_background_color()
-                    self.app.drawing_canvas.create_rectangle(
-                        x_offset, y_offset,
-                        x_offset + canvas_pixel_width, y_offset + canvas_pixel_height,
-                        fill=bg, outline="", tags="background"
-                    )
+                    self.app.drawing_canvas.create_rectangle(0, 0, width, height, fill=bg, outline="", tags="background")
 
                 if self.app.canvas.show_grid:
-                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height, width, height)
+                    self.draw_tkinter_grid(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)
 
                 # Draw symmetry axes
                 self.draw_symmetry_axes(x_offset, y_offset, canvas_pixel_width, canvas_pixel_height)

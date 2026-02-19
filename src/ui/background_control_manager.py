@@ -44,8 +44,11 @@ class BackgroundControlManager:
         self.update_background_mode_button()
         
         # Immediately update canvas background color
-        bg_color = self.canvas_renderer.get_background_color()
-        self.main_window.drawing_canvas.configure(bg=bg_color)
+        if getattr(self.canvas, "checkerboard", False):
+            self.main_window.drawing_canvas.configure(bg="#e8e8e8")
+        else:
+            bg_color = self.canvas_renderer.get_background_color()
+            self.main_window.drawing_canvas.configure(bg=bg_color)
         
         # Also trigger canvas update for any other elements
         if self.force_canvas_update_callback:

@@ -463,12 +463,12 @@ class MainWindow:
         )
         self.left_panel.pack(side="left", fill="both", expand=True)
         
-        # Canvas area container
-        canvas_container = tk.Frame(self.paned_window, bg=self.theme_manager.get_current_theme().bg_primary)
+        # Canvas area container (bg matches checkerboard light grey to avoid dark gaps)
+        canvas_container = tk.Frame(self.paned_window, bg="#e8e8e8")
         self.paned_window.add(canvas_container, minsize=400, stretch="always")
         
-        # Canvas area
-        self.canvas_frame = ctk.CTkFrame(canvas_container)
+        # Canvas area (transparent + zero radius to avoid dark gaps around checkerboard)
+        self.canvas_frame = ctk.CTkFrame(canvas_container, corner_radius=0, fg_color="transparent")
         self.canvas_frame.pack(fill="both", expand=True, side="left")
         
         # Notes panel (hidden by default)

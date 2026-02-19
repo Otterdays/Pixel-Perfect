@@ -210,10 +210,13 @@ class ThemeDialogManager:
         self.main_window.main_frame.configure(fg_color=theme.bg_primary)
         self.main_window.toolbar.configure(fg_color=theme.bg_secondary)
         self.main_window.tool_frame.configure(fg_color=theme.bg_primary)
-        self.main_window.canvas_frame.configure(fg_color=theme.bg_primary)
+        self.main_window.canvas_frame.configure(fg_color="transparent")
         # Use background mode logic for canvas background
-        bg_color = self.main_window.canvas_renderer.get_background_color()
-        self.main_window.drawing_canvas.configure(bg=bg_color)
+        if getattr(self.main_window.canvas, "checkerboard", False):
+            self.main_window.drawing_canvas.configure(bg="#e8e8e8")
+        else:
+            bg_color = self.main_window.canvas_renderer.get_background_color()
+            self.main_window.drawing_canvas.configure(bg=bg_color)
         
         # Update panel containers and buttons
         self.main_window.left_container.configure(bg=theme.bg_primary)
