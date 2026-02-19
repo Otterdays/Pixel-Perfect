@@ -447,18 +447,17 @@ class FileOperationsManager:
                         "scale": scale_value,
                         "duration": max(10, int(duration_var.get()))
                     })
-                else:
-                    result.update({
-                        "scale": scale_value,
-                        "layout": layout_var.get(),
-                        "layout": layout_var.get(),
-                        "spacing": max(0, int(spacing_var.get()))
-                    })
                 elif format_name == "Godot Sprite Sheet":
                     result.update({
                         "scale": scale_value,
                         "fps": float(fps_entry.get()),
                         "loop": loop_var.get()
+                    })
+                else:
+                    result.update({
+                        "scale": scale_value,
+                        "layout": layout_var.get(),
+                        "spacing": max(0, int(spacing_var.get()))
                     })
                 close_dialog()
             except Exception:
@@ -512,7 +511,6 @@ class FileOperationsManager:
                     file_path,
                     scale=settings.get("scale", 8),
                     duration=settings.get("duration", 100)
-                )
                 )
             elif format_name == "Godot Sprite Sheet":
                 frames = [frame.pixels for frame in self.timeline.frames]

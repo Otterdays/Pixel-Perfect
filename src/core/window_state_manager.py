@@ -38,6 +38,7 @@ class WindowStateManager:
         self.right_panel_collapsed = False
         self.is_resizing_panels = False
         self.resize_timer = None
+        self.save_timer = None
         
         # Restore buttons (created on demand)
         self.left_restore_btn = None
@@ -55,13 +56,6 @@ class WindowStateManager:
     
     def save_state(self):
         """Save current window and panel state to config file"""
-        # #region agent log
-        try:
-            import json, time, os
-            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
-            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:save_state","message":"Saving state to disk","data":{},"timestamp":int(time.time()*1000),"hypothesisId":"A"})+"\n")
-        except Exception: pass
-        # #endregion
         try:
             state = {
                 'window_geometry': self.root.geometry(),
@@ -243,36 +237,36 @@ class WindowStateManager:
     
     def on_window_resize(self, event):
         """Handle window resize events to maintain grid centering"""
-        # #region agent log
-        try:
-            import json, time, os
-            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
-            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:on_window_resize","message":"Resize handler","data":{"is_resizing_panels":self.is_resizing_panels,"widget_is_root":event.widget==self.root},"timestamp":int(time.time()*1000),"hypothesisId":"B"})+"\n")
-        except Exception: pass
-        # #endregion
         if self.is_resizing_panels:
             return
             
         if event.widget == self.root:
+            # Debounce redraw: 250ms after last Configure
             if self.resize_timer is not None:
                 try:
                     self.root.after_cancel(self.resize_timer)
                 except Exception:
                     pass
+            self.resize_timer = self.root.after(400, self._delayed_redraw)
             
-            self.resize_timer = self.root.after(150, self._delayed_redraw)
+            # Debounce save: 500ms after last Configure (avoids disk I/O on every event)
+            if self.save_timer is not None:
+                try:
+                    self.root.after_cancel(self.save_timer)
+                except Exception:
+                    pass
+            self.save_timer = self.root.after(500, self._delayed_save)
     
     def _delayed_redraw(self):
         """Delayed redraw callback"""
-        # #region agent log
-        try:
-            import json, time, os
-            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
-            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"window_state_manager.py:_delayed_redraw","message":"Delayed redraw firing","data":{},"timestamp":int(time.time()*1000),"hypothesisId":"E"})+"\n")
-        except Exception: pass
-        # #endregion
+        self.resize_timer = None
         if self.redraw_callback:
             self.redraw_callback()
+    
+    def _delayed_save(self):
+        """Delayed save callback - runs only after resize settles"""
+        self.save_timer = None
+        self.save_state()
     
     def toggle_left_panel(self, show_loading_callback=None, finish_toggle_callback=None):
         """Collapse or expand the left panel"""

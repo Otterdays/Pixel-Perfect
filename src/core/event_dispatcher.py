@@ -92,36 +92,20 @@ class EventDispatcher:
     
     def on_sash_drag_end(self, event):
         """Called when user stops dragging panel divider"""
-        # #region agent log
-        try:
-            import json, time, os
-            p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
-            open(p, "a").write(json.dumps({"sessionId":"00503f","location":"event_dispatcher.py:on_sash_drag_end","message":"Sash drag ended","data":{"has_redraw":False},"timestamp":int(time.time()*1000),"hypothesisId":"B"})+"\n")
-        except Exception: pass
-        # #endregion
         self.main_window.window_state_manager.is_resizing_panels = False
         self.main_window.window_state_manager.save_state()
+        # Trigger redraw so canvas recenters after panel size change
+        if self.main_window.window_state_manager.redraw_callback:
+            self.main_window.window_state_manager.redraw_callback()
     
     def on_window_resize(self, event):
         """Handle window resize events"""
         # Only handle resize events for the root window
         if event.widget == self.main_window.root:
-            # #region agent log
-            try:
-                import json, time, os
-                p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "debug-00503f.log")
-                open(p, "a").write(json.dumps({"sessionId":"00503f","location":"event_dispatcher.py:on_window_resize","message":"Root Configure","data":{"w":event.width,"h":event.height},"timestamp":int(time.time()*1000),"hypothesisId":"C"})+"\n")
-            except Exception: pass
-            # #endregion
-            # Save window state after resize
             if hasattr(self.main_window, 'window_state_manager'):
-                self.main_window.window_state_manager.save_state()
-                # Call WindowStateManager's resize handler to trigger redraw
+                # Debounced: redraw + save only after resize settles (no disk I/O on every Configure)
                 self.main_window.window_state_manager.on_window_resize(event)
-            
-            # Still update cursor preview position after resize
-            if hasattr(self.main_window, 'canvas_renderer'):
-                self._update_cursor_preview_after_resize()
+            # Cursor preview updated in delayed redraw - skip here to avoid winfo/idletasks on every Configure
     
     def on_restore_btn_enter(self, button):
         """Handle mouse enter on restore button"""
@@ -197,8 +181,7 @@ class EventDispatcher:
                 self.main_window.drawing_canvas.delete("texture_preview")
                 self.main_window.drawing_canvas.delete("edge_preview")
                 
-        except Exception as e:
-            # Silently handle any errors during cursor update
+        except Exception:
             pass
     
     def on_window_close(self):

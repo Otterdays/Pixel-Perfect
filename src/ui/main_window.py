@@ -757,6 +757,9 @@ class MainWindow:
         """Redraw canvas after window/panel resize - delegates to canvas operations manager"""
         if hasattr(self, 'canvas_ops_mgr'):
             self.canvas_ops_mgr.redraw_canvas_after_resize()
+        # Update cursor preview once after redraw (avoids winfo/idletasks on every Configure)
+        if hasattr(self, 'event_dispatcher'):
+            self.event_dispatcher._update_cursor_preview_after_resize()
     
     def _get_ui_callbacks(self):
         """Returns a dictionary of callbacks for the UI builder."""
