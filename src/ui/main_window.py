@@ -1469,6 +1469,16 @@ class MainWindow:
         else:
             rgba_color = rgb_color
         
+        # If currently in wheel mode, ALWAYS set the color on the wheel
+        current_mode = self.view_mode_var.get() if hasattr(self, 'view_mode_var') else "grid"
+        if current_mode == "wheel":
+            if hasattr(self, 'color_wheel') and self.color_wheel:
+                try:
+                    self.color_wheel.set_color(rgb_color[0], rgb_color[1], rgb_color[2])
+                except (AttributeError, tk.TclError):
+                    pass
+            return
+        
         # First, try to find the color in the current palette
         found_in_current_palette = False
         for i, palette_color in enumerate(self.palette.colors):

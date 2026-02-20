@@ -1,3 +1,29 @@
+# Website Feature Planning Session - February 19, 2026 🌐
+
+## Current Session Goal
+Index the Pixel Perfect project and website (`WEBPAGE/`) to understand its state, then plan and implement new features / improvements for the landing page.
+
+## What Was Indexed
+- **App**: Python/CustomTkinter desktop app, v2.9.0, 14 drawing tools, layer system, animation, 5 themes, color wheel, 12 manager classes.
+- **WEBPAGE**: Single-page HTML/CSS/JS landing page. Sections: Hero, What's New (v2.7 hardcoded!), Themes, Perfect For, Features, Shortcuts, Stats, Quick Start, Requirements, FAQ, Download CTA, Footer.
+- **Known Gap**: Website says v2.7.4 but app is v2.9.0. Many features (Reference Panel, 3D Token Preview, Godot Export, 128/256 canvas, Mini Preview, Hex tooltips, Hair Colors palette) are missing from the site entirely.
+
+## Website Issues Found
+1. **Version mismatch** — Download badge says `v2.7.4`, "What's New" section targets `v2.7` features. App is `v2.9.0`.
+2. **Missing features** — 3D Token Preview, Reference Panel, Godot Export, Mini Preview, Right-click pan, Hair palettes, Hex tooltips, Eyedropper→Wheel sync all absent.
+3. **Stats out of date** — Palettes count says "10" but there are more. Needs updating.
+4. **No changelog/roadmap page** — Users have no way to see version history on the site.
+5. **No "Install" section for macOS/Linux** — Only mentions Windows exe, but source Python install is possible.
+
+## Planned Website Improvements (to discuss with user)
+1. Update version numbers to v2.9.0
+2. Update "What's New" section to v2.9 features
+3. Add missing feature cards (3D Token, Reference Panel, Godot Export, etc.)
+4. Update stat counts
+5. Add visual polish / new sections as user desires
+
+---
+
 # Godot Integration & Final Polish - February 19, 2026 🤖
 
 ## The "Godot Export" Strategy
@@ -9,7 +35,7 @@ The user asked for Godot compatibility. Instead of just dumping PNGs, I built a 
 ## What we accomplished this session:
 - **3D Token Preview**: Full software voxel engine (numpy+Pillow), interactive rotation, lighting, export.
 - **Reference Panel**: Load images, pan/zoom/opacity.
-- **Micro-features**: Mini preview window, Right-click pan.
+- **Micro-features**: Mini preview window, Right-click pan, Hair Colors Palette.
 - **Godot Export**: Dedicated pipeline for game-ready assets.
 - **Docs**: Massive update to `ARCHITECTURE`, `CHANGELOG`, `SUMMARY`, and new features docs.
 

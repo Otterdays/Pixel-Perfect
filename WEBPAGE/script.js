@@ -1,12 +1,12 @@
 // Smooth scroll animations
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Add scroll animations
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
 
-    const observer = new IntersectionObserver(function(entries) {
+    const observer = new IntersectionObserver(function (entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.style.opacity = '1';
@@ -28,7 +28,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const animateCounters = () => {
         const statNumbers = document.querySelectorAll('.stat-number');
         statNumbers.forEach(stat => {
-            const target = parseInt(stat.textContent);
+            const originalText = stat.textContent;
+            const target = parseInt(originalText);
+
+            // Skip animation for non-numeric values (like ∞)
+            if (isNaN(target)) {
+                stat.textContent = originalText;
+                return;
+            }
+
             let current = 0;
             const increment = target / 30;
             const timer = setInterval(() => {
@@ -60,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Download button click tracking (optional analytics)
     const downloadButtons = document.querySelectorAll('.download-btn');
     downloadButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             // Optional: Add analytics tracking here
             console.log('Download button clicked');
         });
@@ -68,42 +76,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add parallax effect to hero section
     let lastScroll = 0;
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', function () {
         const currentScroll = window.pageYOffset;
         const hero = document.querySelector('.hero');
-        
+
         if (hero && currentScroll < window.innerHeight) {
             const parallax = currentScroll * 0.5;
             hero.style.transform = `translateY(${parallax}px)`;
         }
-        
+
         lastScroll = currentScroll;
     });
 
     // Add hover effect to feature cards
     const featureCards = document.querySelectorAll('.feature-card');
     featureCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
+        card.addEventListener('mouseenter', function () {
             this.style.transition = 'all 0.3s ease';
         });
     });
 
     // Add click ripple effect to download buttons
     downloadButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
             const x = e.clientX - rect.left - size / 2;
             const y = e.clientY - rect.top - size / 2;
-            
+
             ripple.style.width = ripple.style.height = size + 'px';
             ripple.style.left = x + 'px';
             ripple.style.top = y + 'px';
             ripple.classList.add('ripple');
-            
+
             this.appendChild(ripple);
-            
+
             setTimeout(() => {
                 ripple.remove();
             }, 600);

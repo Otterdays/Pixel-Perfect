@@ -6,6 +6,7 @@ Displays user-saved colors with import/export functionality
 import customtkinter as ctk
 from tkinter import filedialog
 from typing import Callable, List, Optional
+from src.ui.tooltip import create_color_hex_tooltip
 
 
 class SavedView:
@@ -36,6 +37,7 @@ class SavedView:
         # UI components
         self.saved_color_buttons: List[ctk.CTkButton] = []
         self.view_created = False
+        self._hex_tooltips = []  # Keep references to prevent GC
         
         # View references (set later by main window)
         self.primary_view = None
@@ -145,6 +147,9 @@ class SavedView:
         if not self.saved_color_buttons:
             return
         
+        # Clear old tooltips before updating
+        self._hex_tooltips.clear()
+        
         for idx, btn in enumerate(self.saved_color_buttons):
             # Check if button still exists
             try:
@@ -166,6 +171,8 @@ class SavedView:
                         hover_color=hex_color,
                         command=lambda i=idx: self._on_saved_color_click(i)
                     )
+                    # Add hex tooltip for filled slot
+                    self._hex_tooltips.append(create_color_hex_tooltip(btn, saved_color))
                 else:
                     # Empty slot - configure as empty
                     btn.configure(

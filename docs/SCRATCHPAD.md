@@ -2,7 +2,32 @@
 
 **Last Updated**: February 19, 2026  
 **Current Version**: 2.9.0  
-**Status**: Production Ready - Canvas Expanded
+**Status**: Production Ready - Updating Website
+
+---
+
+## Website Update v2.9.0 (Current Task)
+**Status**: ✅ COMPLETE
+
+### 1. Content Refresh
+- [x] Update Version Badges (v2.7.4 → v2.9.0)
+- [x] Update "What's New" Section
+  - [x] 3D Token Preview
+  - [x] Reference Image Panel
+  - [x] Godot Export
+  - [x] 128x128 / 256x256 Canvas Support
+- [x] Update Statistics
+  - [x] Palettes (10 → 30+)
+  - [x] Tools (Add Spray, Dither, etc.)
+
+### 2. Feature Additions
+- [x] Add "Godot Ready" feature card
+- [x] Add "Reference Panel" feature card
+- [x] Add "3D Preview" feature card
+
+### 3. Visual Polish
+- [x] Verify responsiveness for new cards
+- [x] Ensure smooth animations for new elements
 
 ---
 
@@ -68,7 +93,17 @@
   - .tscn files create ready-to-use `AnimatedSprite2D` nodes
   - Uses `NEAREST` filtering for all scaling
 
+### 🎨 Hair Colors Palette
+- **New `hair_colors.json`**: 32 natural hair tones (Blondes, Browns, Reds, Blacks, Greys)
+- Automatically loaded by palette system
+
+### 🖌️ Eyedropper & Color UX
+- **Eyedropper → Wheel Sync**: Picking a color while in Wheel mode now sets it on the wheel instead of switching to Grid
+- **Hex Code Tooltips**: All color swatches across all views now show an instant `#RRGGBB` tooltip on hover
+- Affects: Grid, Primary, Constants, Saved, Recent, Custom Colors (color wheel)
+
 ### 📁 Files Created
+- `assets/palettes/hair_colors.json` – New hair color palette
 - `src/core/voxel_renderer.py` – Software 3D voxel engine
 - `src/ui/token_preview_panel.py` – Token preview panel UI
 - `src/ui/reference_panel.py` – Reference Image Panel class

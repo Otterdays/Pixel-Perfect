@@ -7,6 +7,7 @@ All Rights Reserved - Proprietary Software
 """
 
 import customtkinter as ctk
+from src.ui.tooltip import create_color_hex_tooltip
 
 
 class ColorViewManager:
@@ -273,6 +274,9 @@ class ColorViewManager:
                 command=lambda c=color: self._select_recent_color(c)
             )
             btn.grid(row=row, column=col, padx=3, pady=3)
+            
+            # Add hex code tooltip
+            create_color_hex_tooltip(btn, color)
         
         # Clear button
         clear_btn = ctk.CTkButton(

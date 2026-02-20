@@ -7,6 +7,7 @@ import customtkinter as ctk
 import math
 from typing import Tuple, Optional, Callable
 from PIL import Image, ImageDraw, ImageTk
+from src.ui.tooltip import create_color_hex_tooltip
 
 class ColorWheel:
     """HSV color wheel component for color selection"""
@@ -208,6 +209,7 @@ class ColorWheel:
         # Grid will be populated dynamically
         self.custom_color_buttons = []
         self.selected_custom_color = None  # Track selected color for deletion
+        self._hex_tooltips = []  # Keep references to prevent GC deletion
     
     def _get_bg_color_rgb(self):
         """Get background color as RGB tuple for PIL Image"""
@@ -613,6 +615,7 @@ class ColorWheel:
         for btn in self.custom_color_buttons:
             btn.destroy()
         self.custom_color_buttons.clear()
+        self._hex_tooltips.clear()
         
         # Reset selection if current selected color is not in the list
         if self.selected_custom_color and self.selected_custom_color not in colors:
@@ -652,6 +655,9 @@ class ColorWheel:
             btn.bind("<Button-1>", lambda e, c=color, b=btn: self._select_custom_color(c, b))
             
             self.custom_color_buttons.append(btn)
+            
+            # Add hex code tooltip
+            self._hex_tooltips.append(create_color_hex_tooltip(btn, color))
     
     def _select_custom_color(self, color, button):
         """Select a custom color from the grid"""

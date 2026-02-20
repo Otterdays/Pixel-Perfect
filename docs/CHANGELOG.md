@@ -57,6 +57,14 @@
 - **Import Guide**: Auto-creates `GODOT_IMPORT_README.txt` with optimal settings (Nearest filter, etc.)
 - **Format**: New "Godot Sprite Sheet" option in export manager
 
+### 🎨 Palettes
+- **Hair Colors**: Added `hair_colors.json` with 32 natural hair tones (Blondes, Browns, Reds, Blacks, Greys)
+
+### 🖌️ Eyedropper & Color UX
+- **Eyedropper → Wheel Sync**: When in Wheel mode, the eyedropper now always jumps the picked color onto the color wheel instead of switching to Grid view
+- **Hex Code Tooltips**: Hovering over any color swatch (Grid, Primary, Constants, Saved, Recent, Custom) now shows an instant tooltip with the hex code (e.g. `#FF8800`)
+
+
 ### 📁 Files Created
 - `src/core/voxel_renderer.py` – Software 3D voxel engine (numpy + Pillow rasterization)
 - `src/ui/token_preview_panel.py` – Token preview panel UI with controls and export

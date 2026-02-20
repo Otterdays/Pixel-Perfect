@@ -5,6 +5,7 @@ Displays colors currently used on the canvas
 
 import customtkinter as ctk
 from typing import Callable, List, Set, Tuple
+from src.ui.tooltip import create_color_hex_tooltip
 
 
 class ConstantsView:
@@ -32,6 +33,7 @@ class ConstantsView:
         
         # UI components
         self.color_buttons: List[ctk.CTkButton] = []
+        self._hex_tooltips = []  # Keep references to prevent GC
     
     def create(self):
         """Create the constants grid showing colors used on canvas"""
@@ -63,6 +65,7 @@ class ConstantsView:
         
         # Create buttons for each unique color
         self.color_buttons.clear()
+        self._hex_tooltips.clear()
         for idx, color in enumerate(used_colors):
             row = idx // 4
             col = idx % 4
@@ -87,6 +90,9 @@ class ConstantsView:
             )
             btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
             self.color_buttons.append(btn)
+            
+            # Add hex code tooltip
+            self._hex_tooltips.append(create_color_hex_tooltip(btn, color))
         
         # Show count label
         count_label = ctk.CTkLabel(

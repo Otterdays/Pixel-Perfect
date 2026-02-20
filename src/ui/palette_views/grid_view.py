@@ -5,6 +5,7 @@ Displays the main color palette in an 8-column grid
 
 import customtkinter as ctk
 from typing import Callable, List, Optional
+from src.ui.tooltip import create_color_hex_tooltip
 
 
 class GridView:
@@ -31,6 +32,7 @@ class GridView:
         # UI components
         self.color_frame = None
         self.color_buttons: List[ctk.CTkButton] = []
+        self._hex_tooltips = []  # Keep references to prevent GC
     
     def create(self):
         """Create the color grid view"""
@@ -44,6 +46,7 @@ class GridView:
         
         # Clear button references
         self.color_buttons.clear()
+        self._hex_tooltips.clear()
         
         colors = self.palette.colors
         cols = 8
@@ -72,6 +75,9 @@ class GridView:
             # Add hover effects
             btn.bind("<Enter>", lambda e, b=btn: self._on_color_hover_enter(b))
             btn.bind("<Leave>", lambda e, b=btn: self._on_color_hover_leave(b))
+            
+            # Add hex code tooltip
+            self._hex_tooltips.append(create_color_hex_tooltip(btn, color))
             
             # Highlight primary/secondary colors
             if i == self.palette.primary_color:

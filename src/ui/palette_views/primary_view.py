@@ -6,6 +6,7 @@ Displays primary colors and their variations
 import customtkinter as ctk
 import colorsys
 from typing import Callable, List, Tuple, Optional
+from src.ui.tooltip import create_color_hex_tooltip
 
 
 class PrimaryView:
@@ -39,6 +40,7 @@ class PrimaryView:
         self.primary_frame = None
         self.variations_frame = None
         self.variation_buttons: List[dict] = []
+        self._hex_tooltips = []  # Keep references to prevent GC
         
         # State
         self.mode = "primary"  # "primary" or "variations"
@@ -138,6 +140,7 @@ class PrimaryView:
         
         # Clear button references
         self.variation_buttons.clear()
+        self._hex_tooltips.clear()
         
         # Clear selection reference to prevent "bad window path name" errors
         self.selected_variation_button = None
@@ -169,6 +172,9 @@ class PrimaryView:
                 # Add hover effects
                 btn.bind("<Enter>", lambda e, b=btn: self._on_variation_hover_enter(b))
                 btn.bind("<Leave>", lambda e, b=btn: self._on_variation_hover_leave(b))
+                
+                # Add hex code tooltip
+                self._hex_tooltips.append(create_color_hex_tooltip(btn, color))
             
             # Configure grid to center the columns
             for col in range(cols):
