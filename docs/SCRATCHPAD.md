@@ -1,8 +1,31 @@
 # Pixel Perfect - Development Scratchpad
 
-**Last Updated**: February 19, 2026  
-**Current Version**: 2.9.0  
-**Status**: Production Ready - Updating Website
+**Last Updated**: February 23, 2026  
+**Current Version (Python)**: 2.9.0  
+**WPF Version**: 0.1.0 (Early Development)  
+**Status**: Python Production Ready — WPF Rewrite In Progress
+
+---
+
+## WPF Documentation Run (February 25, 2026)
+**Status**: ✅ COMPLETE
+
+- Created `Pix_Perf_C_WPF/DOCS/PARITY.md` — comprehensive feature parity tracker vs Python v2.9.0
+- Updated WPF SUMMARY, ARCHITECTURE, README with accurate project structure (UndoManager, FileService, Converters, 7 tools)
+- Updated CHANGELOG roadmap (removed outdated Shape Tools from planned; PNG export done)
+- Updated parent DOCS/SUMMARY.md C# WPF section (v0.1.3, 7 tools)
+
+---
+
+## WPF Project Documentation Audit (February 23, 2026)
+**Status**: ✅ COMPLETE
+
+- Audited all source files in `Pix_Perf_C_WPF/`
+- Created full `DOCS/` suite: SUMMARY, ARCHITECTURE, SCRATCHPAD, SBOM, CHANGELOG, REQUIREMENTS, My_Thoughts
+- Updated `Pix_Perf_C_WPF/README.md` with proper content
+- Added WPF rewrite notice to this file (parent Python `DOCS/SUMMARY.md`)
+- Documented known issues (broken color preview XAML converter, missing keyboard shortcuts, no layer active highlight)
+- Key next tasks: fix `Converter="{x:Null}"`, add keyboard shortcuts, implement undo/redo
 
 ---
 

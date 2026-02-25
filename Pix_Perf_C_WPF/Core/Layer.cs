@@ -14,6 +14,8 @@ public class Layer
     public double Opacity { get; set; } = 1.0;
     public bool IsLocked { get; set; } = false;
     
+    public event System.Action<Layer, int, int, PixelColor, PixelColor>? PixelChanged;
+    
     public Layer(string name, int width, int height)
     {
         Name = name;
@@ -35,7 +37,22 @@ public class Layer
     public void SetPixel(int x, int y, PixelColor color)
     {
         if (IsInBounds(x, y) && !IsLocked)
+        {
+            var oldColor = _pixels[y, x];
+            if (oldColor != color)
+            {
+                _pixels[y, x] = color;
+                PixelChanged?.Invoke(this, x, y, oldColor, color);
+            }
+        }
+    }
+
+    public void SetPixelRaw(int x, int y, PixelColor color)
+    {
+        if (IsInBounds(x, y))
+        {
             _pixels[y, x] = color;
+        }
     }
     
     public bool IsInBounds(int x, int y) =>

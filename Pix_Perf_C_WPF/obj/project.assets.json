@@ -59,19 +59,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\motor\\.nuget\\packages\\": {}
+    "C:\\Users\\home\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.0.0",
+    "version": "0.2.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\motor\\Desktop\\AI\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+      "projectUniqueName": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
       "projectName": "PixelPerfect",
-      "projectPath": "C:\\Users\\motor\\Desktop\\AI\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
-      "packagesPath": "C:\\Users\\motor\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\motor\\Desktop\\AI\\Pixel-Perfect\\Pix_Perf_C_WPF\\obj\\",
+      "projectPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+      "packagesPath": "C:\\Users\\home\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\motor\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\home\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows"
@@ -120,19 +120,19 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.22, 8.0.22]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
+            "version": "[8.0.24, 8.0.24]"
           }
         ],
         "frameworkReferences": {
@@ -143,7 +143,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

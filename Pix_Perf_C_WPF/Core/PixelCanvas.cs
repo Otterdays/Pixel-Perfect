@@ -13,6 +13,8 @@ public class PixelCanvas
     public ObservableCollection<Layer> Layers { get; } = new();
     public int ActiveLayerIndex { get; set; } = 0;
     
+    public event System.Action<Layer, int, int, PixelColor, PixelColor>? PixelChanged;
+    
     public Layer? ActiveLayer => 
         ActiveLayerIndex >= 0 && ActiveLayerIndex < Layers.Count 
             ? Layers[ActiveLayerIndex] 
@@ -30,6 +32,7 @@ public class PixelCanvas
     public Layer AddLayer(string name)
     {
         var layer = new Layer(name, Width, Height);
+        layer.PixelChanged += (l, x, y, oldC, newC) => PixelChanged?.Invoke(l, x, y, oldC, newC);
         Layers.Add(layer);
         ActiveLayerIndex = Layers.Count - 1;
         return layer;
@@ -64,18 +67,12 @@ public class PixelCanvas
     }
     
     /// <summary>
-    /// Flattens all visible layers into a single pixel array for rendering
+    /// Flattens all visible layers directly into a BGRA byte array (zero allocation)
     /// </summary>
-    public PixelColor[,] FlattenLayers()
+    public void FlattenToBuffer(byte[] buffer)
     {
-        var result = new PixelColor[Height, Width];
+        Array.Clear(buffer, 0, buffer.Length);
         
-        // Initialize with transparent
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
-                result[y, x] = PixelColor.Transparent;
-        
-        // Blend layers from bottom to top
         foreach (var layer in Layers)
         {
             if (!layer.IsVisible) continue;
@@ -83,35 +80,40 @@ public class PixelCanvas
             var pixels = layer.GetPixelArray();
             var opacity = layer.Opacity;
             
+            int offset = 0;
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
                     var src = pixels[y, x];
-                    if (src.IsTransparent) continue;
-                    
-                    var dst = result[y, x];
-                    var srcAlpha = src.A * opacity / 255.0;
-                    
-                    if (srcAlpha >= 1.0 || dst.IsTransparent)
+                    if (src.IsTransparent) 
                     {
-                        result[y, x] = new PixelColor(src.R, src.G, src.B, (byte)(srcAlpha * 255));
+                        offset += 4;
+                        continue;
+                    }
+                    
+                    var srcAlpha = src.A * opacity / 255.0;
+                    var dstA = buffer[offset + 3];
+                    
+                    if (srcAlpha >= 1.0 || dstA == 0)
+                    {
+                        buffer[offset] = src.B;
+                        buffer[offset + 1] = src.G;
+                        buffer[offset + 2] = src.R;
+                        buffer[offset + 3] = (byte)(srcAlpha * 255);
                     }
                     else
                     {
                         // Alpha blend
                         var invAlpha = 1.0 - srcAlpha;
-                        result[y, x] = new PixelColor(
-                            (byte)(src.R * srcAlpha + dst.R * invAlpha),
-                            (byte)(src.G * srcAlpha + dst.G * invAlpha),
-                            (byte)(src.B * srcAlpha + dst.B * invAlpha),
-                            (byte)Math.Min(255, dst.A + srcAlpha * 255)
-                        );
+                        buffer[offset] = (byte)(src.B * srcAlpha + buffer[offset] * invAlpha);
+                        buffer[offset + 1] = (byte)(src.G * srcAlpha + buffer[offset + 1] * invAlpha);
+                        buffer[offset + 2] = (byte)(src.R * srcAlpha + buffer[offset + 2] * invAlpha);
+                        buffer[offset + 3] = (byte)Math.Min(255, dstA + srcAlpha * 255);
                     }
+                    offset += 4;
                 }
             }
         }
-        
-        return result;
     }
 }

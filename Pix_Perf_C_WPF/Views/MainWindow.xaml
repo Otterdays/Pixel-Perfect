@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:PixelPerfect.ViewModels"
+        xmlns:converters="clr-namespace:PixelPerfect.Converters"
         mc:Ignorable="d"
         Title="Pixel Perfect" 
         Height="800" Width="1200"
@@ -11,10 +12,34 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundPrimary}">
     
-    <Window.DataContext>
-        <vm:MainViewModel/>
-    </Window.DataContext>
-    
+    <Window.Resources>
+        <converters:PixelColorToBrushConverter x:Key="PixelColorToBrushConverter"/>
+        <converters:NegateConverter x:Key="NegateConverter"/>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="B" Command="{Binding SelectBrushCommand}"/>
+        <KeyBinding Key="E" Command="{Binding SelectEraserCommand}"/>
+        <KeyBinding Key="F" Command="{Binding SelectFillCommand}"/>
+        <KeyBinding Key="I" Command="{Binding SelectEyedropperCommand}"/>
+        <KeyBinding Key="L" Command="{Binding SelectLineCommand}"/>
+        <KeyBinding Key="R" Command="{Binding SelectRectangleCommand}"/>
+        <KeyBinding Key="C" Command="{Binding SelectCircleCommand}"/>
+        <KeyBinding Key="G" Command="{Binding ToggleGridCommand}"/>
+        <KeyBinding Key="P" Command="{Binding SelectPanCommand}"/>
+        <KeyBinding Key="S" Command="{Binding SelectSelectionCommand}"/>
+        <KeyBinding Key="M" Command="{Binding SelectMoveCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="Z" Command="{Binding UndoCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="Y" Command="{Binding RedoCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding NewCanvasCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="C" Command="{Binding CopyCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="X" Command="{Binding CutCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="V" Command="{Binding PasteCommand}"/>
+        <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
+        <KeyBinding Key="Back" Command="{Binding DeleteCommand}"/>
+    </Window.InputBindings>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -27,9 +52,12 @@
             <StackPanel Orientation="Horizontal" Margin="8,4">
                 <Button Content="New" Style="{StaticResource ToolButton}" Command="{Binding NewCanvasCommand}" Margin="0,0,4,0"/>
                 <Button Content="Open" Style="{StaticResource ToolButton}" Margin="0,0,4,0"/>
-                <Button Content="Save" Style="{StaticResource ToolButton}" Margin="0,0,16,0"/>
+                <Button Content="Save" Style="{StaticResource ToolButton}" Margin="0,0,16,0" Command="{Binding SaveCommand}" ToolTip="Save to PNG (Ctrl+S)"/>
                 
                 <Separator Width="1" Background="{StaticResource BorderBrush}" Margin="0,4,16,4"/>
+
+                <Button Content="Grid" Style="{StaticResource ToolButton}" Command="{Binding ToggleGridCommand}"
+                        ToolTip="Toggle grid overlay (G)" Margin="0,0,16,0"/>
                 
                 <TextBlock Text="Zoom:" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox ItemsSource="{Binding ZoomLevels}" 
@@ -61,28 +89,49 @@
                                 ToolTip="Fill (F)" Width="36" Height="36" Margin="2"/>
                         <Button Content="💧" Style="{StaticResource ToolButton}" Command="{Binding SelectEyedropperCommand}" 
                                 ToolTip="Eyedropper (I)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="📏" Style="{StaticResource ToolButton}" Command="{Binding SelectLineCommand}" 
+                                ToolTip="Line (L)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="⬛" Style="{StaticResource ToolButton}" Command="{Binding SelectRectangleCommand}" 
+                                ToolTip="Rectangle (R)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="⚪" Style="{StaticResource ToolButton}" Command="{Binding SelectCircleCommand}" 
+                                ToolTip="Circle (C)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="✋" Style="{StaticResource ToolButton}" Command="{Binding SelectPanCommand}" 
+                                ToolTip="Pan (P)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="⬚" Style="{StaticResource ToolButton}" Command="{Binding SelectSelectionCommand}" 
+                                ToolTip="Selection (S)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="✥" Style="{StaticResource ToolButton}" Command="{Binding SelectMoveCommand}" 
+                                ToolTip="Move (M)" Width="36" Height="36" Margin="2"/>
                     </UniformGrid>
                     
                     <!-- Color Section -->
                     <TextBlock Text="Color" Foreground="{StaticResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
                     
-                    <Border Width="64" Height="64" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left">
-                        <Border.Background>
-                            <SolidColorBrush>
-                                <SolidColorBrush.Color>
-                                    <MultiBinding Converter="{x:Null}">
-                                        <!-- Would need a converter for proper RGBA display -->
-                                    </MultiBinding>
-                                </SolidColorBrush.Color>
-                            </SolidColorBrush>
-                        </Border.Background>
+                    <Border Width="64" Height="64" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left" Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}">
                     </Border>
                     
-                    <!-- Quick Colors -->
-                    <TextBlock Text="Quick Colors" Foreground="{StaticResource TextSecondary}" Margin="0,16,0,8"/>
-                    <UniformGrid Columns="8" Margin="0,0,0,8">
-                        <!-- Would populate with color swatches -->
-                    </UniformGrid>
+                    <!-- Palette Colors -->
+                    <TextBlock Text="Palette" Foreground="{StaticResource TextSecondary}" Margin="0,16,0,8"/>
+                    <ItemsControl ItemsSource="{Binding PaletteColors}" Margin="0,0,0,8">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="24" Height="24" Margin="2"
+                                        Background="{Binding Converter={StaticResource PixelColorToBrushConverter}}"
+                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.SelectPaletteColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                      CommandParameter="{Binding}"/>
+                                    </Border.InputBindings>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Grid>
             
@@ -126,7 +175,11 @@
                            MouseMove="CanvasImage_MouseMove"
                            MouseUp="CanvasImage_MouseUp">
                         <Image.LayoutTransform>
-                            <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
+                                <TranslateTransform X="{Binding PanOffsetX, Converter={StaticResource NegateConverter}}"
+                                                    Y="{Binding PanOffsetY, Converter={StaticResource NegateConverter}}"/>
+                            </TransformGroup>
                         </Image.LayoutTransform>
                     </Image>
                 </Grid>
@@ -146,15 +199,54 @@
                              Background="Transparent"
                              BorderThickness="0"
                              Margin="0,8,0,0">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" 
+                                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                                    Padding="{TemplateBinding Padding}" 
+                                                    SnapsToDevicePixels="true">
+                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="true">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#405060"/>
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6080A0"/>
+                                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
+                                                </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="true"/>
+                                                        <Condition Property="Selector.IsSelectionActive" Value="false"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter TargetName="Bd" Property="Background" Value="#304050"/>
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#507090"/>
+                                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
+                                                </MultiTrigger>
+                                                <Trigger Property="IsMouseOver" Value="true">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#203040"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,2">
+                                <Grid Margin="4,2">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <CheckBox IsChecked="{Binding IsVisible}" Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{StaticResource TextPrimary}"/>
+                                    <CheckBox IsChecked="{Binding IsVisible}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
