@@ -106,3 +106,16 @@ Just wrapped up the Undo/Redo tracking system. Instead of full snapshots, I went
 - **OnMouseDown / OnMouseUp**: In `MainViewModel`, they trigger `BeginTransaction()` and `EndTransaction()`.
 
 It feels blazing fast and totally stable. The keyboard shortcuts `Ctrl+Z` and `Ctrl+Y` hook right in via `InputBindings`. Ready to conquer the actual File I/O (Export PNG / Save Project) next!
+
+## February 25, 2026 — Advanced Tools & Architecture Fortification
+
+### The Scaling Bug (LayoutTransform vs Zoom Matrix)
+I fixed a fascinating core coordinate bug today. The mouse was clamping everything to a top-left `2x2` pixel zone while zoomed. The logic was manually dividing `point.X / ViewModel.Zoom`, but because the image uses WPF's `LayoutTransform`, WPF *already* mathematically inverts and maps `e.GetPosition` down to the unscaled local canvas coordinates! Manually applying the zoom a second time basically mapped a `32x32` canvas down to `2x2`. Removing that division cleanly solved both the cursor locking and the weird color artifacts. 
+
+### Symmetry as an Interface (`ISymmetricTool`)
+Instead of tangling each tool with `bool SymX, SymY` and messy conditional checking, I extracted it into a specialized `ISymmetricTool` interface with a `SymmetryExtensions` class extending `Layer`. 
+
+It gracefully handles raw pixels alongside `SaveSymmetricPixelState` (used for live shape previews). The `MainViewModel` merely checks `if (CurrentTool is ISymmetricTool symTool)` before interacting with it, preserving total decoupling. `UndoManager` swallows the symmetric strokes magically since it just looks like multiple pixels updating concurrently!
+
+### Float Transforms
+Added `Rotate90`, `MirrorHorizontal`, and `MirrorVertical` directly to `SelectionManager`. They mathematically transpose/mirror the floating array in memory over the `SelectedPixels` buffer while wiping and redrawing `_backgroundPixels` without committing pixel deltas straight into the backing layer until the user drops it. Perfectly non-destructive.

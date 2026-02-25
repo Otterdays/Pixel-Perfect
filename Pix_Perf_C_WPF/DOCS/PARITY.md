@@ -137,8 +137,9 @@
 | Feature | Python | WPF | Notes |
 |---------|--------|-----|------|
 | Dark theme | ✅ | ✅ | WPF: VS Code-inspired |
-| Light theme | ✅ | 🔲 | |
+| Light theme | ✅ | ✅ | Clean professional light |
 | Theme customization | ✅ | 🔲 | |
+| Multiple themes | 5 | 6 | WPF: Dark, Light, Nord, Gruvbox, Catppuccin, Retro |
 | Grid overlay toggle | G | 🔲 | |
 | Status bar | ✅ | ✅ | WPF: coords + messages |
 | Keyboard shortcuts | Full | Partial | WPF: B/E/F/I/L/R/C, Ctrl+Z/Y/S/N |

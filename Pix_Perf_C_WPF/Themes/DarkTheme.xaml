@@ -10,6 +10,9 @@
     <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
     <Color x:Key="TextSecondaryColor">#CCCCCC</Color>
     <Color x:Key="BorderColor">#3F3F46</Color>
+    <Color x:Key="SelectionBgColor">#405060</Color>
+    <Color x:Key="SelectionBorderColor">#6080A0</Color>
+    <Color x:Key="HoverBgColor">#203040</Color>
     
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundPrimary" Color="{StaticResource BackgroundPrimaryColor}"/>
@@ -20,6 +23,9 @@
     <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
     <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="SelectionBg" Color="{StaticResource SelectionBgColor}"/>
+    <SolidColorBrush x:Key="SelectionBorder" Color="{StaticResource SelectionBorderColor}"/>
+    <SolidColorBrush x:Key="HoverBg" Color="{StaticResource HoverBgColor}"/>
     
     <!-- Button Style -->
     <Style x:Key="ToolButton" TargetType="Button">

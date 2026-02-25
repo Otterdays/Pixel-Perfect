@@ -1,6 +1,6 @@
 # Pixel Perfect C# WPF — Architecture
 
-**Version**: 0.2.0  
+**Version**: 0.2.3  
 **Last Updated**: February 25, 2026  
 **Pattern**: MVVM (Model-View-ViewModel)
 
@@ -112,8 +112,9 @@ PixelCanvas
 ToolType (enum)
 ├── Brush, Eraser, Fill, Eyedropper
 ├── Line, Rectangle, Circle
-├── Selection, Move  (planned)
-└── Pan, Zoom  (planned)
+├── Selection, Move, MagicWand
+└── Pan, Spray, Dither
+    (Edge, Texture, Zoom planned)
 
 ITool (interface)
 ├── Type : ToolType
@@ -121,22 +122,29 @@ ITool (interface)
 ├── OnMouseDown(layer, x, y, color)
 ├── OnMouseMove(layer, x, y, color)
 └── OnMouseUp(layer, x, y, color)
+
+ISymmetricTool (interface)
+├── SymmetryX : bool
+└── SymmetryY : bool
 ```
 
-**Implemented Tools** (10 total):
+**Implemented Tools** (13 total):
 
 | Tool | Key Behavior |
 |------|-------------|
-| `BrushTool` | Variable size square brush, tracks `_isDrawing` state |
+| `BrushTool` | Variable size square brush, tracks `_isDrawing` state, implements `ISymmetricTool` |
 | `EraserTool` | Like brush but always writes `Transparent` |
 | `FillTool` | Scanline flood fill (stack-based, horizontal span optimization) |
 | `EyedropperTool` | Fires `ColorPicked` event with sampled color |
-| `LineTool` | Bresenham's algorithm with live preview via `SetPixelRaw` |
-| `RectangleTool` | Outline/fill with live preview |
-| `CircleTool` | Midpoint algorithm with 8-way symmetry, live preview |
+| `LineTool` | Bresenham's algorithm with live preview, ISymmetricTool compatible |
+| `RectangleTool` | Outline/fill with live preview, ISymmetricTool compatible |
+| `CircleTool` | Midpoint algorithm with 8-way symmetry, ISymmetricTool compatible |
 | `SelectionTool` | Rectangle selection, captures to SelectionManager |
 | `MoveTool` | Non-destructive move via SelectionManager |
 | `PanTool` | No-op; pan handled by View |
+| `SprayTool` | Random particle scattering within radius, implements `ISymmetricTool` |
+| `DitherTool` | Checkerboard drawing via `(x+y)%2=0`, implements `ISymmetricTool` |
+| `MagicWandTool` | Breadth-first contiguous matching for non-rectangular selections via SelectionManager `CaptureMaskedFromLayer` |
 
 **Fill algorithm**: Uses scanline optimization — finds full horizontal spans before pushing adjacent rows. This is significantly faster than naive 4-directional flood fill for large areas.
 
@@ -192,10 +200,10 @@ Window (1200×800, min 900×600)
 │   └── Zoom: ComboBox
 ├── Row 1: Main Content (fills)
 │   ├── Col 0: Left Panel (200px) — Tools & Color
-│   │   ├── Tools Section (4-column UniformGrid)
-│   │   │   └── ✏️ Brush | 🧹 Eraser | 🪣 Fill | 💧 Eyedropper
-│   │   ├── Color Preview (64×64 border)
-│   │   └── Quick Colors (8-column placeholder)
+│   │   ├── Tools Section — Size slider (1–32) + 4-column UniformGrid
+│   │   │   └── ✏️ Brush | 🧹 Eraser | 🪣 Fill | 💧 Eyedropper | …
+│   │   ├── Color Preview (64×64, hex tooltip)
+│   │   ├── Palette (dropdown + grid); Recent Colors (4×4, 16 slots)
 │   ├── Col 1: Canvas Area (fills)
 │   │   ├── Checkerboard Rectangle (transparency BG)
 │   │   └── Image (CanvasBitmap, NearestNeighbor, ScaleTransform)

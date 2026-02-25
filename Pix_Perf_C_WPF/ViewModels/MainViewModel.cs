@@ -67,10 +67,40 @@ public partial class MainViewModel : ObservableObject
     
     public UndoManager UndoManager { get; } = new();
 
+    /// <summary>Grid overlay line segments for WPF binding.</summary>
+    public ObservableCollection<GridLineSegment> GridOverlayLines { get; } = new();
+
+    // Theme names for dropdown
+    public IReadOnlyList<string> ThemeNames => Services.ThemeService.ThemeNames;
+
+    [ObservableProperty]
+    private string _selectedTheme = Services.ThemeService.CurrentTheme;
+
+    [ObservableProperty]
+    private bool _isDirty;
+
+    [ObservableProperty]
+    private int _brushSize = 1;
+    partial void OnBrushSizeChanged(int value)
+    {
+        int size = Math.Clamp(value, 1, 32);
+        BrushTool.Size = size;
+        EraserTool.Size = size;
+    }
+
     /// <summary>
     /// Callback to show New Canvas dialog. Set by the View. Returns (Width, Height) or null if cancelled.
     /// </summary>
     public Func<(int Width, int Height)?>? RequestNewCanvasSize { get; set; }
+
+    /// <summary>Callback to confirm discarding unsaved changes. Returns true to proceed, false to cancel.</summary>
+    public Func<string, string, bool>? ConfirmDiscardUnsaved { get; set; }
+
+    /// <summary>Callback to toggle fullscreen. Set by the View.</summary>
+    public Action? ToggleFullscreenRequested { get; set; }
+
+    /// <summary>Callback to get canvas area size for Fit zoom. Set by the View.</summary>
+    public Func<(double Width, double Height)>? GetCanvasAreaSize { get; set; }
 
     public MainViewModel()
     {
@@ -107,6 +137,21 @@ public partial class MainViewModel : ObservableObject
         
         // Initial render
         UpdateBitmap();
+        RefreshGridOverlay();
+    }
+
+    partial void OnCanvasChanged(PixelCanvas value) => RefreshGridOverlay();
+
+    private void RefreshGridOverlay()
+    {
+        GridOverlayLines.Clear();
+        if (!ShowGrid || Canvas == null) return;
+        int w = Canvas.Width;
+        int h = Canvas.Height;
+        for (int x = 1; x < w; x++)
+            GridOverlayLines.Add(new GridLineSegment(x, 0, x, h));
+        for (int y = 1; y < h; y++)
+            GridOverlayLines.Add(new GridLineSegment(0, y, w, y));
     }
     
     [RelayCommand]
@@ -139,13 +184,27 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SelectMove() => CurrentTool = MoveTool;
 
-    [RelayCommand]
+    private bool CanCopy() => SelectionManager.HasSelection;
+    private bool CanCut() => SelectionManager.HasSelection;
+    private bool CanPaste() => SelectionManager.ClipboardBuffer != null;
+    private bool CanDeleteSelection() => SelectionManager.HasSelection;
+
+    private void NotifyClipboardCommandsCanExecute()
+    {
+        CopyCommand.NotifyCanExecuteChanged();
+        CutCommand.NotifyCanExecuteChanged();
+        PasteCommand.NotifyCanExecuteChanged();
+        DeleteCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCopy))]
     private void Copy()
     {
         if (SelectionManager.HasSelection) SelectionManager.Copy();
+        PasteCommand.NotifyCanExecuteChanged();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanCut))]
     private void Cut()
     {
         if (!SelectionManager.HasSelection) return;
@@ -154,17 +213,18 @@ public partial class MainViewModel : ObservableObject
         SelectionManager.Copy();
         ClearSelectionPixels(layer);
         SelectionManager.ClearSelection();
+        NotifyClipboardCommandsCanExecute();
         UpdateBitmap();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanPaste))]
     private void Paste()
     {
         if (SelectionManager.ClipboardBuffer == null) return;
         EnterPasteMode();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDeleteSelection))]
     private void Delete()
     {
         if (!SelectionManager.HasSelection) return;
@@ -172,6 +232,7 @@ public partial class MainViewModel : ObservableObject
         if (layer == null) return;
         ClearSelectionPixels(layer);
         SelectionManager.ClearSelection();
+        NotifyClipboardCommandsCanExecute();
         UpdateBitmap();
     }
 
@@ -236,16 +297,26 @@ public partial class MainViewModel : ObservableObject
         CurrentTool = BrushTool;
     }
 
+    partial void OnSelectedThemeChanged(string value)
+    {
+        Services.ThemeService.ApplyTheme(value);
+    }
+
     [RelayCommand]
     private void ToggleGrid()
     {
         ShowGrid = !ShowGrid;
-        UpdateBitmap();
+        RefreshGridOverlay();
     }
     
     [RelayCommand]
     private void NewCanvas()
     {
+        if (IsDirty && ConfirmDiscardUnsaved != null)
+        {
+            if (!ConfirmDiscardUnsaved("Unsaved changes", "Discard changes and create new canvas?"))
+                return;
+        }
         var size = RequestNewCanvasSize?.Invoke();
         if (!size.HasValue) return;
         CreateCanvas(size.Value.Width, size.Value.Height);
@@ -264,6 +335,7 @@ public partial class MainViewModel : ObservableObject
         Canvas = new PixelCanvas(width, height);
         Canvas.PixelChanged += OnCanvasPixelChanged;
         UndoManager.Clear();
+        IsDirty = false;
 
         // Auto-zoom for larger canvases (match Python behavior)
         int maxDim = Math.Max(width, height);
@@ -308,8 +380,8 @@ public partial class MainViewModel : ObservableObject
         {
             try
             {
-                // Defaulting export scale to 1x for preview parity, we will add UI scale options later
                 FileService.ExportToPng(Canvas, saveFileDialog.FileName, 1);
+                IsDirty = false;
                 StatusText = $"Saved to {System.IO.Path.GetFileName(saveFileDialog.FileName)}";
             }
             catch (System.Exception ex)
@@ -376,6 +448,16 @@ public partial class MainViewModel : ObservableObject
         PanOffsetY += deltaY;
     }
 
+    /// <summary>Right-click eyedropper: pick composite color at canvas position.</summary>
+    public void HandleRightClick(int canvasX, int canvasY)
+    {
+        if (Canvas == null) return;
+        var color = Canvas.GetCompositePixel(canvasX, canvasY);
+        if (color.IsTransparent) return;
+        CurrentColor = color;
+        StatusText = $"Picked #{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
     public void HandleMouseUp(int canvasX, int canvasY)
     {
         var layer = Canvas.ActiveLayer;
@@ -413,11 +495,7 @@ public partial class MainViewModel : ObservableObject
         // Flatten layers directly into the byte array (0 allocations!)
         Canvas.FlattenToBuffer(_renderBuffer);
 
-        // Draw grid overlay if enabled
-        if (ShowGrid)
-        {
-            DrawGridOverlay(_renderBuffer, Canvas.Width, Canvas.Height, stride);
-        }
+        // Grid drawn as WPF overlay, not in pixel buffer
 
         // Draw selection overlay
         DrawSelectionOverlay(_renderBuffer, Canvas.Width, Canvas.Height, stride);
@@ -431,34 +509,6 @@ public partial class MainViewModel : ObservableObject
         CanvasBitmap.WritePixels(
             new System.Windows.Int32Rect(0, 0, Canvas.Width, Canvas.Height),
             _renderBuffer, stride, 0);
-    }
-
-    private static void DrawGridOverlay(byte[] buffer, int width, int height, int stride)
-    {
-        // Grid color: #646464 at 50% blend (BGRA) - draw at pixel boundaries
-        const byte gR = 0x64, gG = 0x64, gB = 0x64;
-        const double blend = 0.5;
-
-        // Vertical lines at x=1..width-1 (boundaries between columns)
-        for (int x = 1; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                int offset = y * stride + x * 4;
-                if (offset + 3 >= buffer.Length) continue;
-                BlendPixel(buffer, offset, gR, gG, gB, blend);
-            }
-        }
-        // Horizontal lines at y=1..height-1 (boundaries between rows)
-        for (int y = 1; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int offset = y * stride + x * 4;
-                if (offset + 3 >= buffer.Length) continue;
-                BlendPixel(buffer, offset, gR, gG, gB, blend);
-            }
-        }
     }
 
     private void DrawSelectionOverlay(byte[] buffer, int width, int height, int stride)
@@ -541,3 +591,6 @@ public partial class MainViewModel : ObservableObject
         buffer[offset + 2] = (byte)(buffer[offset + 2] * (1 - blend) + gr * blend);
     }
 }
+
+/// <summary>Line segment for grid overlay binding.</summary>
+public record GridLineSegment(double X1, double Y1, double X2, double Y2);

@@ -10,7 +10,7 @@
         Height="800" Width="1200"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundPrimary}">
+        Background="{DynamicResource BackgroundPrimary}">
     
     <Window.Resources>
         <converters:PixelColorToBrushConverter x:Key="PixelColorToBrushConverter"/>
@@ -48,21 +48,27 @@
         </Grid.RowDefinitions>
         
         <!-- Top Toolbar -->
-        <Grid Grid.Row="0" Background="{StaticResource BackgroundSecondary}" Height="40">
+        <Grid Grid.Row="0" Background="{DynamicResource BackgroundSecondary}" Height="40">
             <StackPanel Orientation="Horizontal" Margin="8,4">
-                <Button Content="New" Style="{StaticResource ToolButton}" Command="{Binding NewCanvasCommand}" Margin="0,0,4,0"/>
-                <Button Content="Open" Style="{StaticResource ToolButton}" Margin="0,0,4,0"/>
-                <Button Content="Save" Style="{StaticResource ToolButton}" Margin="0,0,16,0" Command="{Binding SaveCommand}" ToolTip="Save to PNG (Ctrl+S)"/>
+                <Button Content="New" Style="{DynamicResource ToolButton}" Command="{Binding NewCanvasCommand}" Margin="0,0,4,0"/>
+                <Button Content="Open" Style="{DynamicResource ToolButton}" Margin="0,0,4,0"/>
+                <Button Content="Save" Style="{DynamicResource ToolButton}" Margin="0,0,16,0" Command="{Binding SaveCommand}" ToolTip="Save to PNG (Ctrl+S)"/>
                 
-                <Separator Width="1" Background="{StaticResource BorderBrush}" Margin="0,4,16,4"/>
+                <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
 
-                <Button Content="Grid" Style="{StaticResource ToolButton}" Command="{Binding ToggleGridCommand}"
+                <Button Content="Grid" Style="{DynamicResource ToolButton}" Command="{Binding ToggleGridCommand}"
                         ToolTip="Toggle grid overlay (G)" Margin="0,0,16,0"/>
                 
-                <TextBlock Text="Zoom:" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="Zoom:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox ItemsSource="{Binding ZoomLevels}" 
                           SelectedItem="{Binding Zoom}" 
                           Width="60" VerticalAlignment="Center"/>
+                
+                <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
+                <TextBlock Text="Theme:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox ItemsSource="{Binding ThemeNames}" 
+                          SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" 
+                          Width="100" VerticalAlignment="Center" ToolTip="Switch UI theme"/>
             </StackPanel>
         </Grid>
         
@@ -75,42 +81,49 @@
             </Grid.ColumnDefinitions>
             
             <!-- Left Panel - Tools & Color -->
-            <Grid Grid.Column="0" Background="{StaticResource BackgroundSecondary}" Margin="4">
+            <Grid Grid.Column="0" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
                     <!-- Tools Section -->
-                    <TextBlock Text="Tools" Foreground="{StaticResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
-                    
+                    <TextBlock Text="Tools" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Size:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider Grid.Column="1" Minimum="1" Maximum="32" Value="{Binding BrushSize}" VerticalAlignment="Center" ToolTip="Brush/Eraser size (px)"/>
+                    </Grid>
                     <UniformGrid Columns="4" Margin="0,0,0,16">
-                        <Button Content="✏️" Style="{StaticResource ToolButton}" Command="{Binding SelectBrushCommand}" 
+                        <Button Content="✏️" Style="{DynamicResource ToolButton}" Command="{Binding SelectBrushCommand}" 
                                 ToolTip="Brush (B)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="🧹" Style="{StaticResource ToolButton}" Command="{Binding SelectEraserCommand}" 
+                        <Button Content="🧹" Style="{DynamicResource ToolButton}" Command="{Binding SelectEraserCommand}" 
                                 ToolTip="Eraser (E)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="🪣" Style="{StaticResource ToolButton}" Command="{Binding SelectFillCommand}" 
+                        <Button Content="🪣" Style="{DynamicResource ToolButton}" Command="{Binding SelectFillCommand}" 
                                 ToolTip="Fill (F)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="💧" Style="{StaticResource ToolButton}" Command="{Binding SelectEyedropperCommand}" 
+                        <Button Content="💧" Style="{DynamicResource ToolButton}" Command="{Binding SelectEyedropperCommand}" 
                                 ToolTip="Eyedropper (I)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="📏" Style="{StaticResource ToolButton}" Command="{Binding SelectLineCommand}" 
+                        <Button Content="📏" Style="{DynamicResource ToolButton}" Command="{Binding SelectLineCommand}" 
                                 ToolTip="Line (L)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⬛" Style="{StaticResource ToolButton}" Command="{Binding SelectRectangleCommand}" 
+                        <Button Content="⬛" Style="{DynamicResource ToolButton}" Command="{Binding SelectRectangleCommand}" 
                                 ToolTip="Rectangle (R)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⚪" Style="{StaticResource ToolButton}" Command="{Binding SelectCircleCommand}" 
+                        <Button Content="⚪" Style="{DynamicResource ToolButton}" Command="{Binding SelectCircleCommand}" 
                                 ToolTip="Circle (C)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="✋" Style="{StaticResource ToolButton}" Command="{Binding SelectPanCommand}" 
+                        <Button Content="✋" Style="{DynamicResource ToolButton}" Command="{Binding SelectPanCommand}" 
                                 ToolTip="Pan (P)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⬚" Style="{StaticResource ToolButton}" Command="{Binding SelectSelectionCommand}" 
+                        <Button Content="⬚" Style="{DynamicResource ToolButton}" Command="{Binding SelectSelectionCommand}" 
                                 ToolTip="Selection (S)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="✥" Style="{StaticResource ToolButton}" Command="{Binding SelectMoveCommand}" 
+                        <Button Content="✥" Style="{DynamicResource ToolButton}" Command="{Binding SelectMoveCommand}" 
                                 ToolTip="Move (M)" Width="36" Height="36" Margin="2"/>
                     </UniformGrid>
                     
                     <!-- Color Section -->
-                    <TextBlock Text="Color" Foreground="{StaticResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBlock Text="Color" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
                     
-                    <Border Width="64" Height="64" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left" Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}">
+                    <Border Width="64" Height="64" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left" Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}">
                     </Border>
                     
                     <!-- Palette Colors -->
-                    <TextBlock Text="Palette" Foreground="{StaticResource TextSecondary}" Margin="0,16,0,8"/>
+                    <TextBlock Text="Palette" Foreground="{DynamicResource TextSecondary}" Margin="0,16,0,8"/>
                     <ItemsControl ItemsSource="{Binding PaletteColors}" Margin="0,0,0,8">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -121,7 +134,7 @@
                             <DataTemplate>
                                 <Border Width="24" Height="24" Margin="2"
                                         Background="{Binding Converter={StaticResource PixelColorToBrushConverter}}"
-                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                         Cursor="Hand">
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick"
@@ -136,8 +149,8 @@
             </Grid>
             
             <!-- Center - Canvas Area -->
-            <Border Grid.Column="1" Background="{StaticResource BackgroundTertiary}" 
-                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Margin="4">
+            <Border Grid.Column="1" Background="{DynamicResource BackgroundTertiary}" 
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="4">
                 <Grid x:Name="CanvasArea" ClipToBounds="True">
                     <!-- Checkerboard background for transparency -->
                     <Rectangle>
@@ -164,33 +177,49 @@
                         </Rectangle.Fill>
                     </Rectangle>
                     
-                    <!-- Canvas Image -->
-                    <Image x:Name="CanvasImage" 
-                           Source="{Binding CanvasBitmap}"
-                           RenderOptions.BitmapScalingMode="NearestNeighbor"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Stretch="None"
-                           MouseDown="CanvasImage_MouseDown"
-                           MouseMove="CanvasImage_MouseMove"
-                           MouseUp="CanvasImage_MouseUp">
-                        <Image.LayoutTransform>
+                    <!-- Canvas Image + Grid Overlay -->
+                    <Grid Width="{Binding Canvas.Width, FallbackValue=32}" 
+                          Height="{Binding Canvas.Height, FallbackValue=32}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid.LayoutTransform>
                             <TransformGroup>
                                 <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
                                 <TranslateTransform X="{Binding PanOffsetX, Converter={StaticResource NegateConverter}}"
                                                     Y="{Binding PanOffsetY, Converter={StaticResource NegateConverter}}"/>
                             </TransformGroup>
-                        </Image.LayoutTransform>
-                    </Image>
+                        </Grid.LayoutTransform>
+                        <Image x:Name="CanvasImage" 
+                               Source="{Binding CanvasBitmap}"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Stretch="None"
+                               MouseDown="CanvasImage_MouseDown"
+                               MouseMove="CanvasImage_MouseMove"
+                               MouseUp="CanvasImage_MouseUp">
+                        </Image>
+                        <!-- Grid overlay: black lines at pixel boundaries -->
+                        <ItemsControl ItemsSource="{Binding GridOverlayLines}" IsHitTestVisible="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}"
+                                          Stroke="#404040" StrokeThickness="1"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </Grid>
             </Border>
             
             <!-- Right Panel - Layers -->
-            <Grid Grid.Column="2" Background="{StaticResource BackgroundSecondary}" Margin="4">
+            <Grid Grid.Column="2" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
                     <Grid>
-                        <TextBlock Text="Layers" Foreground="{StaticResource TextPrimary}" FontWeight="Bold"/>
-                        <Button Content="+" Style="{StaticResource ToolButton}" Command="{Binding AddLayerCommand}"
+                        <TextBlock Text="Layers" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold"/>
+                        <Button Content="+" Style="{DynamicResource ToolButton}" Command="{Binding AddLayerCommand}"
                                 HorizontalAlignment="Right" Width="24" Height="24"/>
                     </Grid>
                     
@@ -216,8 +245,8 @@
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsSelected" Value="true">
-                                                    <Setter TargetName="Bd" Property="Background" Value="#405060"/>
-                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6080A0"/>
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBg}"/>
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SelectionBorder}"/>
                                                     <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
                                                 </Trigger>
                                                 <MultiTrigger>
@@ -225,12 +254,12 @@
                                                         <Condition Property="IsSelected" Value="true"/>
                                                         <Condition Property="Selector.IsSelectionActive" Value="false"/>
                                                     </MultiTrigger.Conditions>
-                                                    <Setter TargetName="Bd" Property="Background" Value="#304050"/>
-                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#507090"/>
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BackgroundTertiary}"/>
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                                     <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
                                                 </MultiTrigger>
                                                 <Trigger Property="IsMouseOver" Value="true">
-                                                    <Setter TargetName="Bd" Property="Background" Value="#203040"/>
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBg}"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -246,7 +275,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <CheckBox IsChecked="{Binding IsVisible}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -256,8 +285,8 @@
         </Grid>
         
         <!-- Status Bar -->
-        <Grid Grid.Row="2" Background="{StaticResource BackgroundSecondary}" Height="24">
-            <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource TextSecondary}" 
+        <Grid Grid.Row="2" Background="{DynamicResource BackgroundSecondary}" Height="24">
+            <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondary}" 
                        Margin="8,0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>

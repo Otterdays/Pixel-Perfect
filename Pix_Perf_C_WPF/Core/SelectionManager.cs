@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PixelPerfect.Core;
 
@@ -54,6 +55,46 @@ public class SelectionManager
                 if (layer.IsInBounds(cx, cy))
                     SelectedPixels[y, x] = layer.GetPixel(cx, cy);
             }
+        }
+
+        SetSelectionRect(left, top, width, height);
+    }
+
+    public void CaptureMaskedFromLayer(Layer layer, HashSet<(int x, int y)> selectedPoints)
+    {
+        if (selectedPoints.Count == 0)
+        {
+            HasSelection = false;
+            return;
+        }
+
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+
+        foreach (var p in selectedPoints)
+        {
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
+        }
+
+        int left = minX;
+        int top = minY;
+        int width = maxX - minX + 1;
+        int height = maxY - minY + 1;
+
+        SelectedPixels = new PixelColor[height, width];
+        // Initialize all to transparent (which acts as the unselected mask)
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                SelectedPixels[y, x] = PixelColor.Transparent;
+
+        foreach (var p in selectedPoints)
+        {
+            int localX = p.x - left;
+            int localY = p.y - top;
+            SelectedPixels[localY, localX] = layer.GetPixel(p.x, p.y);
         }
 
         SetSelectionRect(left, top, width, height);
@@ -143,5 +184,120 @@ public class SelectionManager
         if (!IsMoving) return;
         IsMoving = false;
         _backgroundPixels = null;
+    }
+
+    public void MirrorHorizontal(Layer layer)
+    {
+        if (SelectedPixels == null) return;
+        
+        bool wasMoving = IsMoving;
+        if (wasMoving && _backgroundPixels != null)
+        {
+            // Erase preview
+            for (int y = 0; y < SelectionHeight; y++)
+                for (int x = 0; x < SelectionWidth; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, _backgroundPixels[y, x]);
+                }
+        }
+
+        int w = SelectionWidth, h = SelectionHeight;
+        var newPixels = new PixelColor[h, w];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                newPixels[y, x] = SelectedPixels[y, w - 1 - x];
+        SelectedPixels = newPixels;
+        
+        if (wasMoving)
+        {
+            // Redraw preview
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, SelectedPixels[y, x]);
+                }
+        }
+    }
+
+    public void MirrorVertical(Layer layer)
+    {
+        if (SelectedPixels == null) return;
+        
+        bool wasMoving = IsMoving;
+        if (wasMoving && _backgroundPixels != null)
+        {
+            // Erase preview
+            for (int y = 0; y < SelectionHeight; y++)
+                for (int x = 0; x < SelectionWidth; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, _backgroundPixels[y, x]);
+                }
+        }
+
+        int w = SelectionWidth, h = SelectionHeight;
+        var newPixels = new PixelColor[h, w];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                newPixels[y, x] = SelectedPixels[h - 1 - y, x];
+        SelectedPixels = newPixels;
+        
+        if (wasMoving)
+        {
+            // Redraw preview
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, SelectedPixels[y, x]);
+                }
+        }
+    }
+
+    public void Rotate90(Layer layer)
+    {
+        if (SelectedPixels == null) return;
+
+        bool wasMoving = IsMoving;
+        if (wasMoving && _backgroundPixels != null)
+        {
+            for (int y = 0; y < SelectionHeight; y++)
+                for (int x = 0; x < SelectionWidth; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, _backgroundPixels[y, x]);
+                }
+        }
+
+        int w = SelectionWidth, h = SelectionHeight;
+        var newPixels = new PixelColor[w, h]; // transposed
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                newPixels[x, h - 1 - y] = SelectedPixels[y, x];
+
+        SelectedPixels = newPixels;
+        SetSelectionRect(_lastDrawnLeft, _lastDrawnTop, h, w); // w and h swapped
+
+        if (wasMoving)
+        {
+            _backgroundPixels = new PixelColor[w, h];
+            for (int y = 0; y < w; y++)
+            {
+                for (int x = 0; x < h; x++)
+                {
+                    int cx = _lastDrawnLeft + x, cy = _lastDrawnTop + y;
+                    _backgroundPixels[y, x] = layer.IsInBounds(cx, cy) ? layer.GetPixel(cx, cy) : PixelColor.Transparent;
+                    if (layer.IsInBounds(cx, cy))
+                        layer.SetPixel(cx, cy, SelectedPixels[y, x]);
+                }
+            }
+        }
     }
 }

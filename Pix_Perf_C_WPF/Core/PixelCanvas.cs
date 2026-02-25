@@ -37,7 +37,17 @@ public class PixelCanvas
         ActiveLayerIndex = Layers.Count - 1;
         return layer;
     }
-    
+
+    /// <summary>
+    /// Inserts a layer at the given index. Used for duplicate.
+    /// </summary>
+    public void InsertLayer(int index, Layer layer)
+    {
+        layer.PixelChanged += (l, x, y, oldC, newC) => PixelChanged?.Invoke(l, x, y, oldC, newC);
+        Layers.Insert(index, layer);
+        ActiveLayerIndex = index;
+    }
+
     public void RemoveLayer(int index)
     {
         if (Layers.Count > 1 && index >= 0 && index < Layers.Count)
@@ -65,7 +75,54 @@ public class PixelCanvas
             ActiveLayerIndex = index + 1;
         }
     }
+
+    /// <summary>
+    /// Merges the active layer into the layer below (alpha blend), then removes the active layer.
+    /// </summary>
+    /// <returns>True if merge was performed.</returns>
+    public bool MergeDown(int index)
+    {
+        if (index <= 0 || index >= Layers.Count) return false;
+        var top = Layers[index];
+        var bottom = Layers[index - 1];
+        if (bottom.IsLocked) return false;
+
+        double opacity = top.Opacity;
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                var src = top.GetPixel(x, y);
+                if (src.IsTransparent) continue;
+                var srcBlended = opacity < 1.0 ? new PixelColor(src.R, src.G, src.B, (byte)(src.A * opacity)) : src;
+                var dst = bottom.GetPixel(x, y);
+                var blended = PixelColor.BlendOver(srcBlended, dst);
+                bottom.SetPixel(x, y, blended);
+            }
+        }
+        RemoveLayer(index);
+        return true;
+    }
     
+    /// <summary>
+    /// Returns the composited color at (x,y) from all visible layers. Returns Transparent if out of bounds.
+    /// </summary>
+    public PixelColor GetCompositePixel(int x, int y)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height) return PixelColor.Transparent;
+        PixelColor result = PixelColor.Transparent;
+        foreach (var layer in Layers)
+        {
+            if (!layer.IsVisible) continue;
+            var src = layer.GetPixel(x, y);
+            if (src.IsTransparent) continue;
+            result = PixelColor.BlendOver(
+                new PixelColor(src.R, src.G, src.B, (byte)(src.A * layer.Opacity)),
+                result);
+        }
+        return result;
+    }
+
     /// <summary>
     /// Flattens all visible layers directly into a BGRA byte array (zero allocation)
     /// </summary>

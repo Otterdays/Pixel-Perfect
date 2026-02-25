@@ -6,7 +6,9 @@ namespace PixelPerfect.Views;
 public partial class NewCanvasDialog : Window
 {
     private const string CustomPreset = "Custom...";
-    
+    private static int _lastCustomWidth = 32;
+    private static int _lastCustomHeight = 32;
+
     public int CanvasWidth { get; private set; } = 32;
     public int CanvasHeight { get; private set; } = 32;
     
@@ -38,8 +40,8 @@ public partial class NewCanvasDialog : Window
         if (PresetCombo.SelectedItem is string s && s == CustomPreset)
         {
             CustomSizePanel.Visibility = Visibility.Visible;
-            WidthBox.Text = "32";
-            HeightBox.Text = "32";
+            WidthBox.Text = _lastCustomWidth.ToString();
+            HeightBox.Text = _lastCustomHeight.ToString();
             WidthBox.Focus();
         }
         else
@@ -72,8 +74,10 @@ public partial class NewCanvasDialog : Window
             }
             CanvasWidth = w;
             CanvasHeight = h;
+            _lastCustomWidth = w;
+            _lastCustomHeight = h;
         }
-        
+
         DialogResult = true;
         Close();
     }

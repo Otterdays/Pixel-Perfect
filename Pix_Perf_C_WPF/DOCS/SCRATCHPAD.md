@@ -16,6 +16,10 @@
 - [x] Selection tool (rectangle select, Copy/Cut/Paste/Delete)
 - [x] Move tool (non-destructive, background preservation)
 
+### Completed (theme system)
+- [x] 6 themes: Dark, Light, Nord, Dracula, Retro, Catppuccin
+- [x] ThemeService + runtime switching via toolbar ComboBox
+
 ### Backlog
 - [ ] Color Wheel (HSV picker)
 - [ ] Recent Colors

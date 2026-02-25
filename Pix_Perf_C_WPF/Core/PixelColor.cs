@@ -40,4 +40,20 @@ public readonly struct PixelColor
         a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
     
     public static bool operator !=(PixelColor a, PixelColor b) => !(a == b);
+
+    /// <summary>Alpha-blends top over bottom (Porter-Duff Over).</summary>
+    public static PixelColor BlendOver(PixelColor top, PixelColor bottom)
+    {
+        if (top.A == 0) return bottom;
+        if (top.A == 255) return top;
+        double sa = top.A / 255.0, sb = bottom.A / 255.0;
+        double outA = sa + sb * (1.0 - sa);
+        if (outA <= 0) return Transparent;
+        double invOutA = 1.0 / outA;
+        byte r = (byte)((top.R * sa + bottom.R * sb * (1.0 - sa)) * invOutA);
+        byte g = (byte)((top.G * sa + bottom.G * sb * (1.0 - sa)) * invOutA);
+        byte b = (byte)((top.B * sa + bottom.B * sb * (1.0 - sa)) * invOutA);
+        byte a = (byte)(outA * 255);
+        return new PixelColor(r, g, b, a);
+    }
 }

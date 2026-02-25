@@ -39,7 +39,7 @@ The goal is to replicate all features of the Python version with cleaner archite
 | Zoom Control | ✅ | 1x–64x via dropdown, pixel-perfect NearestNeighbor scaling |
 | Grid Overlay | ✅ | Toggle with G key, toolbar button |
 | Color Picker | ✅ | SNES Classic 16-color palette grid |
-| Dark Theme | ✅ | VS Code-inspired dark UI with custom button styles |
+| Theme System | ✅ | 6 themes: Dark, Light, Nord, Dracula, Retro, Catppuccin; runtime switcher in toolbar |
 | Status Bar | ✅ | Shows cursor coordinates and tool status |
 | MVVM Architecture | ✅ | Clean ViewModel with RelayCommands |
 | Checkerboard BG | ✅ | Standard transparency indicator behind canvas |
@@ -87,7 +87,12 @@ Pix_Perf_C_WPF/
 │   ├── MainWindow.xaml          # UI layout (3-column: tools | canvas | layers)
 │   └── MainWindow.xaml.cs       # Mouse event handling (code-behind)
 ├── Themes/
-│   └── DarkTheme.xaml           # Color resources + button styles
+│   ├── DarkTheme.xaml           # VS Code-inspired dark
+│   ├── LightTheme.xaml          # Clean professional light
+│   ├── NordTheme.xaml           # Nordic cool palette
+│   ├── DraculaTheme.xaml        # Purple/pink accents
+│   ├── RetroTheme.xaml          # Phosphor amber terminal
+│   └── CatppuccinTheme.xaml     # Creamy pastel dark
 ├── App.xaml                     # Entry point, theme loading
 ├── App.xaml.cs                  # Application startup
 └── PixelPerfect.csproj          # .NET 8 project file

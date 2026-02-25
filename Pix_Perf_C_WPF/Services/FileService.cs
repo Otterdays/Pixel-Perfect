@@ -7,10 +7,79 @@ using PixelPerfect.Core;
 namespace PixelPerfect.Services;
 
 /// <summary>
-/// Handles exporting and saving projects
+/// Handles exporting, saving, and importing projects
 /// </summary>
 public static class FileService
 {
+    private const int MaxImportDimension = 512;
+
+    /// <summary>
+    /// Imports a PNG file into a new PixelCanvas. Scales down if larger than MaxImportDimension.
+    /// </summary>
+    public static PixelCanvas? ImportFromPng(string filePath)
+    {
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(System.IO.Path.GetFullPath(filePath), UriKind.Absolute);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
+
+            int w = bitmap.PixelWidth;
+            int h = bitmap.PixelHeight;
+            if (w <= 0 || h <= 0) return null;
+
+            int scale = 1;
+            while (w / scale > MaxImportDimension || h / scale > MaxImportDimension)
+                scale *= 2;
+
+            int outW = w / scale;
+            int outH = h / scale;
+
+            var canvas = new PixelCanvas(outW, outH);
+            var layer = canvas.ActiveLayer;
+            if (layer == null) return null;
+
+            var source = bitmap.Format == PixelFormats.Bgra32 || bitmap.Format == PixelFormats.Bgr32
+                ? bitmap
+                : (BitmapSource)new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+            CopyPixelsToLayer(source, layer, scale);
+
+            return canvas;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void CopyPixelsToLayer(BitmapSource source, Layer layer, int scale)
+    {
+        int w = source.PixelWidth;
+        int h = source.PixelHeight;
+        int stride = w * 4;
+        var buffer = new byte[h * stride];
+        source.CopyPixels(buffer, stride, 0);
+
+        for (int y = 0; y < layer.Height; y++)
+        {
+            for (int x = 0; x < layer.Width; x++)
+            {
+                int srcX = x * scale;
+                int srcY = y * scale;
+                if (srcX >= w || srcY >= h) continue;
+                int offset = (srcY * w + srcX) * 4;
+                byte b = buffer[offset];
+                byte g = buffer[offset + 1];
+                byte r = buffer[offset + 2];
+                byte a = buffer[offset + 3];
+                layer.SetPixel(x, y, new PixelColor(r, g, b, a));
+            }
+        }
+    }
+
     /// <summary>
     /// Exports a pixel canvas to a PNG file with an optional scale factor.
     /// Uses NearestNeighbor scaling to preserve crisp pixel edges.

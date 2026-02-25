@@ -5,7 +5,7 @@
         Width="320" Height="220"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BackgroundPrimary}">
+        Background="{DynamicResource BackgroundPrimary}">
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <TextBlock Text="Canvas Size" Foreground="{StaticResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
+        <TextBlock Text="Canvas Size" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
         
         <ComboBox x:Name="PresetCombo" Grid.Row="1" 
                   SelectedIndex="2"
@@ -29,16 +29,16 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Width:" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Text="Width:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <TextBox x:Name="WidthBox" Grid.Column="1" Width="60" VerticalAlignment="Center" Margin="0,0,16,0"/>
-            <TextBlock Grid.Column="2" Text="Height:" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="2" Text="Height:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <TextBox x:Name="HeightBox" Grid.Column="3" Width="60" VerticalAlignment="Center"/>
         </Grid>
         
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="OK" Style="{StaticResource ToolButton}" Width="80" Height="28" 
+            <Button Content="OK" Style="{DynamicResource ToolButton}" Width="80" Height="28" 
                     Click="OkButton_Click" IsDefault="True"/>
-            <Button Content="Cancel" Style="{StaticResource ToolButton}" Width="80" Height="28" 
+            <Button Content="Cancel" Style="{DynamicResource ToolButton}" Width="80" Height="28" 
                     Margin="8,0,0,0" IsCancel="True"/>
         </StackPanel>
     </Grid>

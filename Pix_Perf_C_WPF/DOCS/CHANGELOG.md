@@ -6,6 +6,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 ## [0.2.0] — February 2026 — Parity Features
 
 ### Added
+- **Theme System** — 6 themes with runtime switching: Dark (VS Code), Light, Nord, Dracula, Retro (phosphor amber), Catppuccin Mocha
+- **ThemeService** — Static service for swapping theme ResourceDictionaries at runtime
+- **Theme Selector** — Toolbar ComboBox to switch themes; uses DynamicResource for live updates
 - **Canvas Size Presets** — New Canvas dialog with presets (8×8 through 256×256) and custom size (1–512)
 - **Grid Overlay** — Toggle with G key and toolbar button; draws pixel boundaries
 - **Color Picker Panel** — SNES Classic 16-color palette grid; click to select and switch to Brush

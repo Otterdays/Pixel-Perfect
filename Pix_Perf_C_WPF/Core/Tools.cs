@@ -18,7 +18,12 @@ public enum ToolType
     Rectangle,
     Circle,
     Pan,
-    Zoom
+    Zoom,
+    Spray,
+    Dither,
+    MagicWand,
+    Edge,
+    Texture
 }
 
 /// <summary>
@@ -35,13 +40,56 @@ public interface ITool
 }
 
 /// <summary>
+/// Interface for tools that support symmetric drawing
+/// </summary>
+public interface ISymmetricTool
+{
+    bool SymmetryX { get; set; }
+    bool SymmetryY { get; set; }
+}
+
+public static class SymmetryExtensions
+{
+    public static void SetSymmetricPixel(this Layer layer, int x, int y, PixelColor color, bool symX, bool symY)
+    {
+        layer.SetPixel(x, y, color);
+        if (symX) layer.SetPixel(layer.Width - 1 - x, y, color);
+        if (symY) layer.SetPixel(x, layer.Height - 1 - y, color);
+        if (symX && symY) layer.SetPixel(layer.Width - 1 - x, layer.Height - 1 - y, color);
+    }
+
+    public static void SetSymmetricPixelRaw(this Layer layer, int x, int y, PixelColor color, bool symX, bool symY)
+    {
+        layer.SetPixelRaw(x, y, color);
+        if (symX) layer.SetPixelRaw(layer.Width - 1 - x, y, color);
+        if (symY) layer.SetPixelRaw(x, layer.Height - 1 - y, color);
+        if (symX && symY) layer.SetPixelRaw(layer.Width - 1 - x, layer.Height - 1 - y, color);
+    }
+    
+    public static void SaveSymmetricPixelState(this Layer layer, int x, int y, Dictionary<(int x, int y), PixelColor> saved, bool symX, bool symY)
+    {
+        void Save(int px, int py)
+        {
+            if (layer.IsInBounds(px, py) && !saved.ContainsKey((px, py)))
+                saved[(px, py)] = layer.GetPixel(px, py);
+        }
+        Save(x, y);
+        if (symX) Save(layer.Width - 1 - x, y);
+        if (symY) Save(x, layer.Height - 1 - y);
+        if (symX && symY) Save(layer.Width - 1 - x, layer.Height - 1 - y);
+    }
+}
+
+/// <summary>
 /// Brush tool for drawing pixels
 /// </summary>
-public class BrushTool : ITool
+public class BrushTool : ITool, ISymmetricTool
 {
     public ToolType Type => ToolType.Brush;
     public string Name => "Brush";
     public int Size { get; set; } = 1;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
     
     private bool _isDrawing;
     private int _lastX;
@@ -90,7 +138,7 @@ public class BrushTool : ITool
     {
         if (Size == 1)
         {
-            layer.SetPixel(x, y, color);
+            layer.SetSymmetricPixel(x, y, color, SymmetryX, SymmetryY);
         }
         else
         {
@@ -99,7 +147,7 @@ public class BrushTool : ITool
             {
                 for (int dx = -halfSize; dx <= halfSize; dx++)
                 {
-                    layer.SetPixel(x + dx, y + dy, color);
+                    layer.SetSymmetricPixel(x + dx, y + dy, color, SymmetryX, SymmetryY);
                 }
             }
         }
@@ -109,11 +157,13 @@ public class BrushTool : ITool
 /// <summary>
 /// Eraser tool for removing pixels
 /// </summary>
-public class EraserTool : ITool
+public class EraserTool : ITool, ISymmetricTool
 {
     public ToolType Type => ToolType.Eraser;
     public string Name => "Eraser";
     public int Size { get; set; } = 1;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
     
     private bool _isErasing;
     private int _lastX;
@@ -162,7 +212,7 @@ public class EraserTool : ITool
     {
         if (Size == 1)
         {
-            layer.SetPixel(x, y, PixelColor.Transparent);
+            layer.SetSymmetricPixel(x, y, PixelColor.Transparent, SymmetryX, SymmetryY);
         }
         else
         {
@@ -171,7 +221,7 @@ public class EraserTool : ITool
             {
                 for (int dx = -halfSize; dx <= halfSize; dx++)
                 {
-                    layer.SetPixel(x + dx, y + dy, PixelColor.Transparent);
+                    layer.SetSymmetricPixel(x + dx, y + dy, PixelColor.Transparent, SymmetryX, SymmetryY);
                 }
             }
         }
@@ -250,11 +300,10 @@ public class EyedropperTool : ITool
     
     public void OnMouseDown(Layer layer, int x, int y, PixelColor color)
     {
-        if (layer.IsInBounds(x, y))
-        {
-            var pickedColor = layer.GetPixel(x, y);
-            ColorPicked?.Invoke(pickedColor);
-        }
+        if (!layer.IsInBounds(x, y)) return;
+        var pickedColor = layer.GetPixel(x, y);
+        if (pickedColor.IsTransparent) return;
+        ColorPicked?.Invoke(pickedColor);
     }
     
     public void OnMouseMove(Layer layer, int x, int y, PixelColor color) { }
@@ -264,11 +313,13 @@ public class EyedropperTool : ITool
 /// <summary>
 /// Line tool using Bresenham's algorithm
 /// </summary>
-public class LineTool : ITool
+public class LineTool : ITool, ISymmetricTool
 {
     public ToolType Type => ToolType.Line;
     public string Name => "Line";
     public int Size { get; set; } = 1;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
 
     private int _startX, _startY;
     private bool _isDrawing;
@@ -318,13 +369,12 @@ public class LineTool : ITool
             {
                 if (isFinal)
                 {
-                    layer.SetPixel(x0, y0, color);
+                    layer.SetSymmetricPixel(x0, y0, color, SymmetryX, SymmetryY);
                 }
                 else
                 {
-                    if (!_savedPixels.ContainsKey((x0, y0)))
-                        _savedPixels[(x0, y0)] = layer.GetPixel(x0, y0);
-                    layer.SetPixelRaw(x0, y0, color);
+                    layer.SaveSymmetricPixelState(x0, y0, _savedPixels, SymmetryX, SymmetryY);
+                    layer.SetSymmetricPixelRaw(x0, y0, color, SymmetryX, SymmetryY);
                 }
             }
 
@@ -339,11 +389,13 @@ public class LineTool : ITool
 /// <summary>
 /// Rectangle shape tool
 /// </summary>
-public class RectangleTool : ITool
+public class RectangleTool : ITool, ISymmetricTool
 {
     public ToolType Type => ToolType.Rectangle;
     public string Name => "Rectangle";
     public bool Fill { get; set; } = false;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
 
     private int _startX, _startY;
     private bool _isDrawing;
@@ -399,13 +451,12 @@ public class RectangleTool : ITool
                 {
                     if (isFinal)
                     {
-                        layer.SetPixel(x, y, color);
+                        layer.SetSymmetricPixel(x, y, color, SymmetryX, SymmetryY);
                     }
                     else
                     {
-                        if (!_savedPixels.ContainsKey((x, y)))
-                            _savedPixels[(x, y)] = layer.GetPixel(x, y);
-                        layer.SetPixelRaw(x, y, color);
+                        layer.SaveSymmetricPixelState(x, y, _savedPixels, SymmetryX, SymmetryY);
+                        layer.SetSymmetricPixelRaw(x, y, color, SymmetryX, SymmetryY);
                     }
                 }
             }
@@ -416,11 +467,13 @@ public class RectangleTool : ITool
 /// <summary>
 /// Circle shape tool
 /// </summary>
-public class CircleTool : ITool
+public class CircleTool : ITool, ISymmetricTool
 {
     public ToolType Type => ToolType.Circle;
     public string Name => "Circle";
     public bool Fill { get; set; } = false;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
 
     private int _startX, _startY;
     private bool _isDrawing;
@@ -508,13 +561,12 @@ public class CircleTool : ITool
             {
                 if (isFinal)
                 {
-                    layer.SetPixel(p.Item1, p.Item2, color);
+                    layer.SetSymmetricPixel(p.Item1, p.Item2, color, SymmetryX, SymmetryY);
                 }
                 else
                 {
-                    if (!_savedPixels.ContainsKey((p.Item1, p.Item2)))
-                        _savedPixels[(p.Item1, p.Item2)] = layer.GetPixel(p.Item1, p.Item2);
-                    layer.SetPixelRaw(p.Item1, p.Item2, color);
+                    layer.SaveSymmetricPixelState(p.Item1, p.Item2, _savedPixels, SymmetryX, SymmetryY);
+                    layer.SetSymmetricPixelRaw(p.Item1, p.Item2, color, SymmetryX, SymmetryY);
                 }
             }
         }
@@ -639,4 +691,178 @@ public class MoveTool : ITool
             _isMoving = false;
         }
     }
+}
+
+/// <summary>
+/// Spray tool for random droplet particle drawing
+/// </summary>
+public class SprayTool : ITool, ISymmetricTool
+{
+    public ToolType Type => ToolType.Spray;
+    public string Name => "Spray";
+    public int Size { get; set; } = 8;
+    public int Density { get; set; } = 10;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
+
+    private bool _isSpraying;
+    private int _lastX, _lastY;
+    private Random _random = new();
+
+    public void OnMouseDown(Layer layer, int x, int y, PixelColor color)
+    {
+        _isSpraying = true;
+        _lastX = x; _lastY = y;
+        SprayAt(layer, x, y, color);
+    }
+
+    public void OnMouseMove(Layer layer, int x, int y, PixelColor color)
+    {
+        if (_isSpraying)
+        {
+            _lastX = x; _lastY = y;
+            SprayAt(layer, x, y, color);
+        }
+    }
+
+    public void OnMouseUp(Layer layer, int x, int y, PixelColor color)
+    {
+        _isSpraying = false;
+    }
+
+    private void SprayAt(Layer layer, int x, int y, PixelColor color)
+    {
+        for (int i = 0; i < Density; i++)
+        {
+            double angle = _random.NextDouble() * Math.PI * 2;
+            double radius = _random.NextDouble() * (Size / 2.0);
+            int px = x + (int)Math.Round(Math.Cos(angle) * radius);
+            int py = y + (int)Math.Round(Math.Sin(angle) * radius);
+
+            layer.SetSymmetricPixel(px, py, color, SymmetryX, SymmetryY);
+        }
+    }
+}
+
+/// <summary>
+/// Dither tool for checkerboard pattern drawing
+/// </summary>
+public class DitherTool : ITool, ISymmetricTool
+{
+    public ToolType Type => ToolType.Dither;
+    public string Name => "Dither";
+    public int Size { get; set; } = 1;
+    public bool SymmetryX { get; set; }
+    public bool SymmetryY { get; set; }
+
+    private bool _isDrawing;
+    private int _lastX, _lastY;
+
+    public void OnMouseDown(Layer layer, int x, int y, PixelColor color)
+    {
+        _isDrawing = true;
+        _lastX = x;
+        _lastY = y;
+        DrawDither(layer, x, y, color);
+    }
+
+    public void OnMouseMove(Layer layer, int x, int y, PixelColor color)
+    {
+        if (_isDrawing)
+        {
+            DrawLineToPoint(layer, _lastX, _lastY, x, y, color);
+            _lastX = x;
+            _lastY = y;
+        }
+    }
+
+    public void OnMouseUp(Layer layer, int x, int y, PixelColor color)
+    {
+        _isDrawing = false;
+    }
+
+    private void DrawLineToPoint(Layer layer, int x0, int y0, int x1, int y1, PixelColor color)
+    {
+        int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+        int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy, e2;
+
+        while (true)
+        {
+            DrawDither(layer, x0, y0, color);
+            if (x0 == x1 && y0 == y1) break;
+            e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x0 += sx; }
+            if (e2 <= dx) { err += dx; y0 += sy; }
+        }
+    }
+
+    private void DrawDither(Layer layer, int x, int y, PixelColor color)
+    {
+        if (Size == 1)
+        {
+            if ((x + y) % 2 == 0) layer.SetSymmetricPixel(x, y, color, SymmetryX, SymmetryY);
+        }
+        else
+        {
+            int halfSize = Size / 2;
+            for (int dy = -halfSize; dy <= halfSize; dy++)
+            {
+                for (int dx = -halfSize; dx <= halfSize; dx++)
+                {
+                    int px = x + dx;
+                    int py = y + dy;
+                    if ((px + py) % 2 == 0)
+                        layer.SetSymmetricPixel(px, py, color, SymmetryX, SymmetryY);
+                }
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Magic Wand tool for selecting contiguous pixels of the same color
+/// </summary>
+public class MagicWandTool : ITool
+{
+    public ToolType Type => ToolType.MagicWand;
+    public string Name => "Magic Wand";
+
+    public Action<Layer, HashSet<(int x, int y)>>? OnSelectionComplete { get; set; }
+
+    public void OnMouseDown(Layer layer, int x, int y, PixelColor color)
+    {
+        if (!layer.IsInBounds(x, y)) return;
+
+        var targetColor = layer.GetPixel(x, y);
+        var selectedPoints = new HashSet<(int x, int y)>();
+        
+        var stack = new Stack<(int x, int y)>();
+        stack.Push((x, y));
+        
+        while (stack.Count > 0)
+        {
+            var (cx, cy) = stack.Pop();
+            
+            if (!layer.IsInBounds(cx, cy)) continue;
+            if (selectedPoints.Contains((cx, cy))) continue;
+            if (layer.GetPixel(cx, cy) != targetColor) continue;
+            
+            selectedPoints.Add((cx, cy));
+            
+            // Push neighbors
+            if (cx > 0) stack.Push((cx - 1, cy));
+            if (cx < layer.Width - 1) stack.Push((cx + 1, cy));
+            if (cy > 0) stack.Push((cx, cy - 1));
+            if (cy < layer.Height - 1) stack.Push((cx, cy + 1));
+        }
+
+        if (selectedPoints.Count > 0)
+        {
+            OnSelectionComplete?.Invoke(layer, selectedPoints);
+        }
+    }
+
+    public void OnMouseMove(Layer layer, int x, int y, PixelColor color) { }
+    public void OnMouseUp(Layer layer, int x, int y, PixelColor color) { }
 }

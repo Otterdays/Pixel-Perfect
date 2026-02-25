@@ -17,31 +17,23 @@ This rewrite starts clean with:
 
 ---
 
-## Current State (v0.2.0)
+## Current State (v0.2.3)
 
 ✅ Working:
-- Brush, Eraser, Fill (scanline), and Eyedropper tools
-- Shape Tools (Line, Rectangle, Circle) with fluid preview
-- Selection Tool (S) — rectangle select, Copy/Cut/Paste/Delete
-- Move Tool (M) — non-destructive move with background preservation
-- Pan Tool (P) — middle mouse, spacebar, or Pan tool
-- Undo/Redo system (delta-based)
-- Multi-layer system with visibility toggle and alpha compositing
-- Canvas size presets (8×8–256×256) and custom size via New Canvas dialog
-- Grid overlay toggle (G key)
-- Color picker panel (SNES Classic 16-color palette)
-- Zoom control (1x–64x) with pixel-perfect NearestNeighbor rendering
-- Zero-allocation rendering pipeline
-- PNG export (Save to PNG)
-- Keyboard shortcuts (B, E, F, I, L, R, C, G, P, S, M, Ctrl+C/X/V, Del, Ctrl+S/Z/Y/N)
-- Checkerboard transparency background
-- Dark theme (VS Code-inspired)
-- Status bar with cursor coordinates
+- Brush, Eraser (size 1–32), Fill (scanline), Eyedropper; Shape tools (Line, Rectangle, Circle)
+- Selection, Move, Spray, Dither, Magic Wand; Transform (Rotate 90°, Mirror X/Y); Symmetry (Sym X, Sym Y)
+- Multi-layer: visibility, opacity, lock, reorder, duplicate, clear, merge down
+- Canvas presets (8×8–256×256), custom size (remembers last); Grid overlay (G)
+- Color: palette dropdown (JSON palettes), Recent Colors (16 slots), hex tooltip
+- Zoom 1×–64×, zoom to cursor (Ctrl+wheel), Fit/100%; PNG export (1×–8× scale), Quick Export (Ctrl+Shift+E)
+- Undo/Redo (with CanExecute); Copy/Cut/Paste/Delete (disabled when no selection/clipboard)
+- Right-click eyedropper (composite); Shift+Right-click = context menu
+- Window title with canvas size and " — Unsaved" when dirty; New Canvas asks to discard if dirty
+- Themes: Dark, Basic Grey, Light, Gemini, Claude
+- Status bar (coords, zoom %, tool name); keyboard shortcuts (B, E, F, I, L, R, C, G, P, S, M, Ctrl+Z/Y/S/N/C/X/V, F11, etc.)
 
 🔲 Coming next:
-- Save/Load .pixpf project format
-- Animation timeline
-- Spray and Dither tools
+- Save/Load .pixpf project format; Animation timeline; Color wheel (HSV)
 
 ---
 
@@ -123,15 +115,15 @@ Pix_Perf_C_WPF/
 
 ### Phase 1 — Core Features
 - [x] Undo/Redo (delta-based, 100 states)
-- [ ] Canvas size presets (8×8 → 256×256)
-- [ ] Selection tool + Move tool
-- [ ] Color picker panel
+- [x] Canvas size presets (8×8 → 256×256)
+- [x] Selection tool + Move tool
+- [x] Color picker panel
 - [x] PNG export
 
 ### Phase 2 — Advanced Features  
 - [x] Shape tools (Line, Rectangle, Circle)
 - [x] Keyboard shortcuts
-- [ ] Grid overlay
+- [x] Grid overlay
 - [ ] Animation timeline
 - [ ] GIF/Sprite Sheet export
 
