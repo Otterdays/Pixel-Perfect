@@ -7,6 +7,24 @@
 
 ---
 
+## WPF Flex Features (February 25, 2026)
+**Status**: Reference Image (✅ COMPLETE), 3D Tokenizer (✅ COMPLETE)
+
+Added the **Reference Photo Overlay** feature to the WPF port:
+- Added `ReferenceImageBitmap`, Opacity, Scale, OffsetX, OffsetY properties to `MainViewModel.cs`.
+- Created an Expander in the Right Panel.
+- Reference Image renders behind the grid overlay but on top of the checkerboard, independently scalable and movable.
+- Verified build and integration.
+
+Added the **3D Tokenizer** feature to the WPF port:
+- Implemented `TokenPreviewWindow.xaml` and `TokenPreviewWindow.xaml.cs`.
+- Renders the current canvas into an interactive 3D voxel model using WPF `Viewport3D`.
+- Supports dynamic Token Thickness adjustments, auto-spin animations, and mouse-drag rotation mapping.
+- Added a toolbar UI button (Gold text "3D") next to the Settings icon for easy launch.
+- Automatically handles transparent pixels. Minimum Memory footprint achieved through Dictionary color-grouped Mesh geometries.
+
+---
+
 ## WPF Settings Expansion Plan (February 25, 2026)
 **Status**: 📋 PLANNED — See `docs/features/2-25-2026-WPF-SETTINGS-ADDITIONS.md`
 

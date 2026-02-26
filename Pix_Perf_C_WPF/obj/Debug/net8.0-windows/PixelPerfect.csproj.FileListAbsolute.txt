@@ -89,3 +89,5 @@ C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Them
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\TokyoNightTheme.baml
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\MonokaiTheme.baml
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\OneDarkTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Views\TokenPreviewWindow.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Views\TokenPreviewWindow.g.cs

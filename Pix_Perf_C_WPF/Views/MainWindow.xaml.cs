@@ -44,6 +44,11 @@ public partial class MainWindow : Window
             var dialog = new SettingsDialog { Owner = this, DataContext = vm };
             dialog.ShowDialog();
         };
+        vm.RequestOpen3DTokenizer = () =>
+        {
+            var tokenWindow = new TokenPreviewWindow(vm.Canvas) { Owner = this };
+            tokenWindow.ShowDialog();
+        };
         DataContext = vm;
     }
     

@@ -43,6 +43,25 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _panOffsetY;
     
+    // Reference Image properties
+    [ObservableProperty]
+    private BitmapSource? _referenceImageBitmap;
+
+    [ObservableProperty]
+    private double _referenceOpacity = 0.5;
+
+    [ObservableProperty]
+    private double _referenceScale = 1.0;
+
+    [ObservableProperty]
+    private double _referenceOffsetX = 0.0;
+
+    [ObservableProperty]
+    private double _referenceOffsetY = 0.0;
+
+    [ObservableProperty]
+    private bool _showReference = true;
+    
     // Rendering state
     private byte[]? _renderBuffer;
     
@@ -101,6 +120,41 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isDirty;
+
+    [RelayCommand]
+    private void LoadReferenceImage()
+    {
+        var ofd = new OpenFileDialog
+        {
+            Filter = "Images (*.png;*.jpg;*.jpeg;*.gif)|*.png;*.jpg;*.jpeg;*.gif|All files (*.*)|*.*",
+            Title = "Load Reference Image"
+        };
+        if (ofd.ShowDialog() == true)
+        {
+            try
+            {
+                var bi = new BitmapImage(new Uri(ofd.FileName));
+                ReferenceImageBitmap = bi;
+                ReferenceScale = 1.0;
+                ReferenceOffsetX = 0;
+                ReferenceOffsetY = 0;
+                ReferenceOpacity = 0.5;
+                ShowReference = true;
+                StatusText = "Reference image loaded.";
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"Failed to load reference: {ex.Message}";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void ClearReferenceImage()
+    {
+        ReferenceImageBitmap = null;
+        StatusText = "Reference image cleared.";
+    }
 
     /// <summary>Secondary color for swap (X key).</summary>
     [ObservableProperty]
@@ -192,6 +246,15 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>Callback to show Settings dialog. Set by the View.</summary>
     public Action? RequestOpenSettings { get; set; }
+
+    /// <summary>Callback to show 3D Tokenizer dialog. Set by the View.</summary>
+    public Action? RequestOpen3DTokenizer { get; set; }
+
+    [RelayCommand]
+    private void Open3DTokenizer()
+    {
+        RequestOpen3DTokenizer?.Invoke();
+    }
 
     public MainViewModel()
     {

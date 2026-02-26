@@ -1,0 +1,13 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\Views\TokenPreviewWindow.xaml.cs(27,28): warning CS8622: Nullability of reference types in type of parameter 'sender' of 'void TokenPreviewWindow.Timer_Tick(object sender, EventArgs e)' doesn't match the target delegate 'EventHandler' (possibly because of nullability attributes). [C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\PixelPerfect_g1ykzjf0_wpftmp.csproj]
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\Views\TokenPreviewWindow.xaml.cs(41,40): error CS1061: 'PixelCanvas' does not contain a definition for 'GetFlattenedPixels' and no accessible extension method 'GetFlattenedPixels' accepting a first argument of type 'PixelCanvas' could be found (are you missing a using directive or an assembly reference?) [C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\PixelPerfect_g1ykzjf0_wpftmp.csproj]
+
+Build FAILED.
+
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\Views\TokenPreviewWindow.xaml.cs(27,28): warning CS8622: Nullability of reference types in type of parameter 'sender' of 'void TokenPreviewWindow.Timer_Tick(object sender, EventArgs e)' doesn't match the target delegate 'EventHandler' (possibly because of nullability attributes). [C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\PixelPerfect_g1ykzjf0_wpftmp.csproj]
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\Views\TokenPreviewWindow.xaml.cs(41,40): error CS1061: 'PixelCanvas' does not contain a definition for 'GetFlattenedPixels' and no accessible extension method 'GetFlattenedPixels' accepting a first argument of type 'PixelCanvas' could be found (are you missing a using directive or an assembly reference?) [C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\PixelPerfect_g1ykzjf0_wpftmp.csproj]
+    1 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:04.66

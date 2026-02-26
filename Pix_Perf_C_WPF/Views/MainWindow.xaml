@@ -17,6 +17,7 @@
         <converters:NegateConverter x:Key="NegateConverter"/>
         <converters:InverseZoomConverter x:Key="InverseZoomConverter"/>
         <converters:ColorSwatchToolTipConverter x:Key="ColorSwatchToolTipConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         
         <!-- Styled tooltip: title, short desc, nitty gritty -->
         <DataTemplate x:Key="ColorSwatchToolTipTemplate" DataType="converters:ColorSwatchToolTipContent">
@@ -140,6 +141,7 @@
                           Width="60" VerticalAlignment="Center"/>
                 <Button Content="Fit" Style="{DynamicResource ToolButton}" Command="{Binding FitToViewCommand}" Margin="4,0,2,0" Padding="6,2" ToolTip="Fit canvas to view"/>
                 <Button Content="100%" Style="{DynamicResource ToolButton}" Command="{Binding Zoom100Command}" Margin="0,0,8,0" Padding="6,2" ToolTip="Zoom to 100%"/>
+                <Button Content="3D" Style="{DynamicResource ToolButton}" Command="{Binding Open3DTokenizerCommand}" Margin="0,0,8,0" Padding="6,2" FontWeight="Bold" Foreground="Goldenrod" ToolTip="Open 3D Token Preview"/>
                 <Button Content="⚙" Style="{DynamicResource ToolButton}" Command="{Binding OpenSettingsCommand}" Margin="0,0,16,0" Padding="6,2" FontSize="14" ToolTip="Settings (grid, checkerboard, undo limit)"/>
                 
                 <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
@@ -325,6 +327,23 @@
                                                     Y="{Binding PanOffsetY, Converter={StaticResource NegateConverter}}"/>
                             </TransformGroup>
                         </Grid.LayoutTransform>
+
+                        <!-- Reference Image Overlay -->
+                        <Image x:Name="ReferenceImage"
+                               Source="{Binding ReferenceImageBitmap}"
+                               IsHitTestVisible="False"
+                               Opacity="{Binding ReferenceOpacity}"
+                               Visibility="{Binding ShowReference, Converter={StaticResource BooleanToVisibilityConverter}}"
+                               RenderOptions.BitmapScalingMode="Fant"
+                               Stretch="Uniform">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="{Binding ReferenceScale}" ScaleY="{Binding ReferenceScale}" CenterX="16" CenterY="16"/>
+                                    <TranslateTransform X="{Binding ReferenceOffsetX}" Y="{Binding ReferenceOffsetY}"/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+
                         <Image x:Name="CanvasImage" 
                                Source="{Binding CanvasBitmap}"
                                RenderOptions.BitmapScalingMode="NearestNeighbor"
@@ -365,6 +384,49 @@
             <!-- Right Panel - Layers -->
             <Grid Grid.Column="4" x:Name="RightPanel" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
+                    <!-- Reference Image Panel -->
+                    <Expander Header="Reference Image" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16" IsExpanded="False">
+                        <StackPanel Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <Button Content="Load" Style="{DynamicResource ToolButton}" Command="{Binding LoadReferenceImageCommand}" Margin="0,0,4,0"/>
+                                <Button Content="Clear" Style="{DynamicResource ToolButton}" Command="{Binding ClearReferenceImageCommand}"/>
+                                <CheckBox Content="Show" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding ShowReference}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Opacity:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Width="45"/>
+                                <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding ReferenceOpacity}" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Scale:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Width="45"/>
+                                <Slider Grid.Column="1" Minimum="0.1" Maximum="10.0" Value="{Binding ReferenceScale, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Off X:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Width="45"/>
+                                <Slider Grid.Column="1" Minimum="-500" Maximum="500" Value="{Binding ReferenceOffsetX}" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Off Y:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" Width="45"/>
+                                <Slider Grid.Column="1" Minimum="-500" Maximum="500" Value="{Binding ReferenceOffsetY}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </Expander>
+
                     <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

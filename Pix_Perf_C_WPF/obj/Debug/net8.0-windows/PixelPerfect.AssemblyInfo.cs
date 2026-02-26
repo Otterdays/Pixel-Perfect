@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Professional Pixel Art Editor")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.2.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.2.0+f785f590f61b79ff9591c438844cf6e0b1718eeb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.2.0+e75bc68887d8db091738abfd055a550e398533a6")]
 [assembly: System.Reflection.AssemblyProductAttribute("PixelPerfect")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PixelPerfect")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.2.0.0")]
