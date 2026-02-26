@@ -3,6 +3,22 @@
 All notable changes to the WPF rewrite will be documented here.  
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.3] — February 25, 2026 — Bug Report Audit (17/20 implemented)
+
+### Fixed (Bugs)
+- **Cut undo** — `Cut()` was missing `BeginTransaction/EndTransaction` around `ClearSelectionPixels`, making the pixel deletion non-undoable. Fixed to match `Delete()` and `Escape()` (#2 audit catch)
+
+### Optimized (Performance)
+- **Grid overlay batching** — `RefreshGridOverlay` now builds lines into a new `ObservableCollection` and assigns in a single `PropertyChanged` notification, replacing 510 individual `CollectionChanged` events for 256×256 canvases (#13)
+- **Render throttle (60fps)** — `HandleMouseMove` now gates `UpdateBitmap()` to ~60fps using `Environment.TickCount64`. `HandleMouseUp` always renders the final frame. Prevents 200+ renders/sec on fast mouse dragging (#14)
+
+### Not Implemented (Novel — Future)
+- **#16**: Dirty-region rendering — Major architectural change, requires row-level dirty tracking
+- **#17**: Async bitmap batching — Requires dispatcher queue refactoring
+- **#18**: Tool cursor preview Adorner — Requires new View-layer code
+
+---
+
 ## [0.2.2] — February 26, 2026 — Themes & Styling
 
 ### Added

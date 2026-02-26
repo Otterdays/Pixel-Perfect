@@ -90,7 +90,8 @@ public partial class MainViewModel : ObservableObject
     public UndoManager UndoManager { get; } = new();
 
     /// <summary>Grid overlay line segments for WPF binding.</summary>
-    public ObservableCollection<GridLineSegment> GridOverlayLines { get; } = new();
+    [ObservableProperty]
+    private ObservableCollection<GridLineSegment> _gridOverlayLines = new();
 
     // Theme names for dropdown
     public IReadOnlyList<string> ThemeNames => Services.ThemeService.ThemeNames;
@@ -263,14 +264,16 @@ public partial class MainViewModel : ObservableObject
 
     private void RefreshGridOverlay()
     {
-        GridOverlayLines.Clear();
-        if (!ShowGrid || Canvas == null) return;
+        if (!ShowGrid || Canvas == null) { GridOverlayLines = new(); return; }
         int w = Canvas.Width;
         int h = Canvas.Height;
+        // Build into new collection, assign once → 1 PropertyChanged vs (w+h-2) CollectionChanged events
+        var lines = new ObservableCollection<GridLineSegment>();
         for (int x = 1; x < w; x++)
-            GridOverlayLines.Add(new GridLineSegment(x, 0, x, h));
+            lines.Add(new GridLineSegment(x, 0, x, h));
         for (int y = 1; y < h; y++)
-            GridOverlayLines.Add(new GridLineSegment(0, y, w, y));
+            lines.Add(new GridLineSegment(0, y, w, y));
+        GridOverlayLines = lines;
     }
     
     partial void OnCurrentToolChanged(ITool value) => UpdateStatusWithTool(CurrentTool);
@@ -341,7 +344,9 @@ public partial class MainViewModel : ObservableObject
         var layer = Canvas.ActiveLayer;
         if (layer == null) return;
         SelectionManager.Copy();
+        UndoManager.BeginTransaction();
         ClearSelectionPixels(layer);
+        UndoManager.EndTransaction();
         SelectionManager.ClearSelection();
         NotifyClipboardCommandsCanExecute();
         UpdateBitmap();
@@ -761,6 +766,10 @@ public partial class MainViewModel : ObservableObject
         UpdateBitmap();
     }
     
+    // Render throttle — cap UpdateBitmap during drag to ~60fps
+    private long _lastRenderMs;
+    private const long RenderIntervalMs = 16; // ~60fps
+
     public void HandleMouseMove(int canvasX, int canvasY, bool isPressed)
     {
         if (_isPasteMode)
@@ -777,7 +786,12 @@ public partial class MainViewModel : ObservableObject
         if (isPressed)
         {
             CurrentTool.OnMouseMove(layer, canvasX, canvasY, CurrentColor);
-            UpdateBitmap();
+            long now = Environment.TickCount64;
+            if (now - _lastRenderMs >= RenderIntervalMs)
+            {
+                UpdateBitmap();
+                _lastRenderMs = now;
+            }
         }
         
         StatusText = $"({canvasX}, {canvasY}) | {Zoom * 100}%";

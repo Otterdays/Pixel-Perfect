@@ -2,8 +2,43 @@
 
 **Last Updated**: February 25, 2026  
 **Current Version (Python)**: 2.9.0  
-**WPF Version**: 0.2.1 (Code Review Fixes)  
+**WPF Version**: 0.2.3 (Bug Report Audit)  
 **Status**: Python Production Ready — WPF Rewrite In Progress
+
+---
+
+## WPF Settings Expansion Plan (February 25, 2026)
+**Status**: 📋 PLANNED — See `docs/features/2-25-2026-WPF-SETTINGS-ADDITIONS.md`
+
+Audited current Settings dialog (3 controls only) against Python MAX_SETTINGS catalog (127 items) and Pixelmator Pro feature research. Produced a scoped 22-setting expansion plan in 4 tiers:
+
+- **Tier 1 (Must-Have, 6)**: Default Canvas Size, Confirm on Exit, Auto-Save, Default Palette, Grid Opacity, Symmetry Toggles (unlocks existing dead code!)
+- **Tier 2 (Should-Have, 6)**: Major Grid Lines, Default Export Scale, Shape Fill Default, Checkerboard Tile Size, Default Brush Size, Pixel Cursor Highlight
+- **Tier 3 (Nice-to-Have, 5)**: Fill Tolerance, Eraser Mode, Pan Sensitivity, Recent Colors Count, Canvas Border
+- **Novel (WPF-Specific, 5)**: Tablet Pressure, Window Layout Persistence, Tile Preview Default, Color Format Display, Startup Behavior
+
+Key finding: **Symmetry drawing toggles (#6)** — `ISymmetricTool` with `SymmetryX`/`SymmetryY` already exists on Brush, Line, Rectangle, Circle tools but has **ZERO UI** to activate it. Dead feature waiting to be unlocked.
+
+Implementation phases: v0.3.0 (safety + workflow), v0.3.1 (polish), v0.3.2 (refinement), v0.4.0 (differentiation). Settings persistence via `%AppData%/PixelPerfect/settings.json` with a new `SettingsService` static class.
+
+---
+
+## WPF Bug Report Audit (February 25, 2026)
+**Status**: ✅ COMPLETE
+
+Audited all 20 items from the 25-02-2026 Code Review Report against actual source code. Found 1 missed bug and implemented 2 deferred performance fixes:
+
+### Fixes Applied (3)
+- **Cut undo (#2 audit catch)**: `Cut()` was marked as fixed but `BeginTransaction/EndTransaction` was never added around `ClearSelectionPixels`. Now wrapped to match `Delete()` and `Escape()`.
+- **Grid overlay batching (#13)**: `RefreshGridOverlay` now builds a new `ObservableCollection` and assigns it in 1 `PropertyChanged` notification (was 510 `CollectionChanged` events for 256×256).
+- **Render throttle (#14)**: `HandleMouseMove` gated to ~60fps via `Environment.TickCount64`. `HandleMouseUp` always renders final frame.
+
+### Not Implemented (Confirmed Future — 3 items)
+- #16: Dirty-region rendering (Novel — requires row-dirty tracking infrastructure)
+- #17: Async bitmap batching (Novel — requires dispatcher queue refactor)
+- #18: Tool cursor preview Adorner (Novel UX — requires new View-layer code)
+
+### Result: 17 of 20 items now implemented. Version bumped to 0.2.3.
 
 ---
 

@@ -453,12 +453,14 @@ MainViewModel.cs
 🟢 Minor	UX
 ---
 
-## ✅ Implementation Status (February 25, 2026)
+## ✅ Implementation Status (February 25, 2026 — Audited)
+
+**Status: ✅ 17 of 20 items IMPLEMENTED — Audit verified.**
 
 | # | Status | Notes |
 |---|--------|-------|
 | 1 | ✅ Fixed | `LinkedList<T>` replaces `List<T>` |
-| 2 | ✅ Fixed | Escape/Delete/Cut wrapped in undo transactions |
+| 2 | ✅ Fixed | Escape/Delete/Cut wrapped in undo transactions (**Cut fix confirmed in audit — was previously missed**) |
 | 3 | ✅ Fixed | Boundary-seeding scanline fill |
 | 4 | ✅ Fixed | MagicWand upgraded to scanline flood |
 | 5 | ✅ Fixed | Class-level HashSet + integer multiply |
@@ -469,14 +471,20 @@ MainViewModel.cs
 | 10 | ✅ Fixed | Dead code removed |
 | 11 | ✅ Fixed | ZoomLevels array snapping |
 | 12 | ✅ Fixed | Integer-only bit-shift alpha blend |
-| 13 | 🔲 Future | Grid overlay batching |
-| 14 | 🔲 Future | Render throttle (60fps cap) |
+| 13 | ✅ Fixed | Grid overlay: collection-swap batching (1 notification vs 510) |
+| 14 | ✅ Fixed | Render throttle: 60fps timestamp gate in HandleMouseMove |
 | 15 | ✅ Fixed | `Array.Copy` native memcpy |
-| 16 | 🔲 Future | Dirty-region rendering (Novel) |
-| 17 | 🔲 Future | Async bitmap batching (Novel) |
-| 18 | 🔲 Future | Tool cursor Adorner (Novel UX) |
+| 16 | 🔲 Future | Dirty-region rendering (Novel — major architectural change) |
+| 17 | 🔲 Future | Async bitmap batching (Novel — requires dispatcher refactor) |
+| 18 | 🔲 Future | Tool cursor Adorner (Novel UX — requires new View-layer code) |
 | 19 | ✅ Fixed | Palette dedup with `(2)` suffix |
 | 20 | ✅ Fixed | Palette click only switches from Eyedropper |
 
+**Audit Notes (February 25, 2026):**
+- **Bug #2 (Cut)**: Original fix session marked Cut as fixed, but the `UndoManager.BeginTransaction/EndTransaction` wrap was missing from `Cut()`. Fixed in audit.
+- **#13 (Grid batching)**: `RefreshGridOverlay` now builds lines into a new `ObservableCollection` and assigns it in a single `PropertyChanged` notification. For a 256×256 canvas this reduces 510 individual `CollectionChanged` events to 1.
+- **#14 (Render throttle)**: `HandleMouseMove` now uses `Environment.TickCount64` to cap `UpdateBitmap()` calls to ~60fps during mouse drag. `HandleMouseUp` always renders the final frame.
+- **#16–18 remain Future**: These are novel architectural and UX features requiring significant new code (dirty-region tracking, async dispatcher queue, Adorner layer). They don't fix bugs — they're enhancement opportunities.
+
 **Build:** `dotnet build` — ✅ Succeeded (0 errors, 0 warnings)
-**Version bumped to:** 0.2.1
+**Version bumped to:** 0.2.3
