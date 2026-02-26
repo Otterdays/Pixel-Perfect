@@ -8,6 +8,7 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25 — Section titles for all custom palettes**: Gems (Ruby, Sapphire, Emerald, etc.), Minerals (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), Crystals (Ice, Pink quartz, Frost, Blue, Cyan, Warm), and Cave (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep) now use `sections` in JSON so the palette UI shows titled groups. Ores already had sections. Section title styling: TextPrimary, 12pt SemiBold, bottom border.
 - **2026-02-25 — Palette section titles + styled tooltips**: Section titles use a thin bottom border and spacing. Palette swatches and tool buttons use structured tooltips: title (bold), short description, nitty gritty, in StyledToolTip (theme background, border, shadow). ColorSwatchToolTipConverter + ColorSwatchToolTipContent; tool resources for Brush, Eraser, Fill, etc.
 - **2026-02-25 — Website update**: Added C# WPF port section to WEBPAGE with c-wpf-v-0.1.png screenshot. GitHub Actions workflow (`.github/workflows/deploy-pages.yml`) deploys WEBPAGE to GitHub Pages. Sleek background: animated gradient mesh + pixel grid overlay in styles.css.
 - **2026-02-25 — Docs & repo cleanup**: README condensed — removed monetization section (moved to docs/MONETIZATION.md), kept last 5 versions in Latest Updates, replaced long version history with link to CHANGELOG. .gitignore updated with **/bin/ and **/obj/ for .NET build outputs. MONETIZATION.md added to docs index.

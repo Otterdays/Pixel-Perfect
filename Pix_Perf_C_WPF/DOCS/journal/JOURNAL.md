@@ -4,6 +4,30 @@ Dated log of changes, fixes, and notable work. New entries at top.
 
 ---
 
+## 2026-02-25 — Section titles for all palettes + docs
+
+**What**
+- Applied sectioned structure to every custom palette so the palette area shows titled groups (same behavior as Gems and Ores) for Minerals, Crystals, and Cave. Confirmed docs reflect the change.
+
+**Palette sections**
+- **Gems** (already done): Ruby, Sapphire, Emerald, Amethyst, Topaz, Diamond, Jade, Lapis.
+- **Minerals**: Quartz, Limestone, Sandstone, Granite, Obsidian, Slate (6×8 colors).
+- **Crystals**: Ice, Pink quartz, Frost, Blue, Cyan, Warm (6×8 colors).
+- **Cave**: Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep (7×8 colors).
+- **Ores**: Already had sections (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal).
+
+**Docs**
+- SCRATCHPAD: Note that all custom palettes use sections; section title styling (TextPrimary, 12pt).
+- CHANGELOG: Palette sections bullet updated to list all five palettes with their section names.
+- PARITY: Doc update line for palette section titles applied to all custom palettes.
+- JOURNAL: This entry.
+
+**Files**
+- `assets/palettes/minerals.json`, `crystals.json`, `cave.json` (converted from flat `colors` to `sections`).
+- DOCS: SCRATCHPAD.md, CHANGELOG.md, PARITY.md, journal/JOURNAL.md.
+
+---
+
 ## 2026-02-25 — QoL batch: Undo/Redo, Escape, Layers, Export, Fullscreen
 
 **What**

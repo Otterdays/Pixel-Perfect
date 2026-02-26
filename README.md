@@ -1,4 +1,4 @@
-<div align="center">
+<div align="center" markdown="1">
 
 # 🎨 Pixel Perfect
 ### Professional Retro Pixel Art Editor
@@ -63,7 +63,7 @@
 
 ## 🖼️ Screenshots
 
-<div align="center">
+<div align="center" markdown="1">
 
 <table>
 <tr>
@@ -125,7 +125,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ## 🚀 Quick Start
 
-<div align="center">
+<div align="center" markdown="1">
 
 ### ✨ Ready to Create Pixel Art?
 
@@ -139,7 +139,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 | **2️⃣** | **Extract** | Unzip the entire folder (includes EXE + assets + palettes + docs) |
 | **3️⃣** | **Create** | Double-click `PixelPerfect.exe` - Start drawing immediately! |
 
-<div align="center">
+<div align="center" markdown="1">
 
 **✅ No Installation • ✅ No Python Required • ✅ No Dependencies**
 
@@ -147,7 +147,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ### 🎯 Perfect For
 
-<div align="center">
+<div align="center" markdown="1">
 
 | 🎮 Game Developers | 🎨 Pixel Artists | 🚀 Indie Creators | 💖 Retro Enthusiasts |
 |:------------------:|:----------------:|:-----------------:|:--------------------:|
@@ -158,7 +158,7 @@ A **fully functional** desktop pixel art editor designed for creating 2D MMORPG 
 
 ---
 
-<div align="center">
+<div align="center" markdown="1">
 
 **Developed by Kirby • Designed by Semaj • Diamond Clad Studios**
 
@@ -488,7 +488,7 @@ This is proprietary software. All source code, documentation, assets, and relate
 
 ## 🎯 Future Roadmap
 
-<div align="center">
+<div align="center" markdown="1">
 
 **Organized by Difficulty & Implementation Priority**
 
@@ -563,7 +563,7 @@ This is proprietary software. All source code, documentation, assets, and relate
 
 ---
 
-<div align="center">
+<div align="center" markdown="1">
 
 ## 🆕 Latest Updates
 

@@ -9,6 +9,7 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25**: Palette section titles applied to all custom palettes (Gems, Minerals, Ores, Crystals, Cave); each shows titled tone groups in the palette area.
 - **2026-02-25**: Grid overlay — Fixed grey-box bug (grid lines use 1/Zoom thickness via `InverseZoomConverter`). Grid toolbar button is a ToggleButton bound to `ShowGrid` and stays lit when on.
 
 ---

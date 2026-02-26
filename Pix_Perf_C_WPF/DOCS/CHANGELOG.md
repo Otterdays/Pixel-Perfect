@@ -34,7 +34,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **NewCanvasDialog** — Modal dialog for canvas size selection
 - **NegateConverter** — XAML converter for pan offset binding
 - **Palette** — SNES Classic 16-color palette
-- **Palette sections** — Optional `sections` in palette JSON (`title` + `colors` per section); UI shows sleek section titles above each group of swatches. Ores palette uses sections (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal). Flat `colors`-only palettes display as one "Colors" section.
+- **Palette sections** — Optional `sections` in palette JSON (`title` + `colors` per section); UI shows sleek section titles above each group of swatches. All custom palettes now use sections: **Ores** (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal), **Gems** (Ruby, Sapphire, Emerald, Amethyst, Topaz, Diamond, Jade, Lapis), **Minerals** (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), **Crystals** (Ice, Pink quartz, Frost, Blue, Cyan, Warm), **Cave** (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep). Flat `colors`-only palettes still display as one "Colors" section.
 
 ### Changed
 - **MainWindow** — DataContext set in code-behind to wire RequestNewCanvasSize callback
