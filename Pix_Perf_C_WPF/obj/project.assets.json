@@ -18,24 +18,6 @@
           "buildTransitive/netstandard2.1/CommunityToolkit.Mvvm.targets": {}
         }
       }
-    },
-    "net8.0-windows7.0/win-x64": {
-      "CommunityToolkit.Mvvm/8.2.2": {
-        "type": "package",
-        "compile": {
-          "lib/net6.0/CommunityToolkit.Mvvm.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/CommunityToolkit.Mvvm.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "build": {
-          "buildTransitive/netstandard2.1/CommunityToolkit.Mvvm.targets": {}
-        }
-      }
     }
   },
   "libraries": {
@@ -82,11 +64,11 @@
   "project": {
     "version": "0.2.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+      "projectUniqueName": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj",
       "projectName": "PixelPerfect",
-      "projectPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+      "projectPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj",
       "packagesPath": "C:\\Users\\home\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\obj\\",
+      "outputPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\home\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -162,11 +144,6 @@
           }
         },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
-      }
-    },
-    "runtimes": {
-      "win-x64": {
-        "#import": []
       }
     }
   }

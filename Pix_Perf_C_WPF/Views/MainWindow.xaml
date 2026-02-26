@@ -95,6 +95,10 @@
         <KeyBinding Key="Back" Command="{Binding DeleteCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding EscapeCommand}"/>
         <KeyBinding Key="F11" Command="{Binding ToggleFullscreenCommand}"/>
+        <KeyBinding Key="X" Command="{Binding SwapColorsCommand}"/>
+        <KeyBinding Key="OemOpenBrackets" Command="{Binding BrushSizeDownCommand}"/>
+        <KeyBinding Key="OemCloseBrackets" Command="{Binding BrushSizeUpCommand}"/>
+        <KeyBinding Modifiers="Ctrl+Shift" Key="E" Command="{Binding QuickExportCommand}"/>
     </Window.InputBindings>
 
     <Grid>
@@ -118,6 +122,14 @@
                 
                 <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
 
+                <ToggleButton Content="◧" Style="{DynamicResource ToolToggleButton}" FontSize="16"
+                              IsChecked="True" Checked="LeftPanelToggle_Checked" Unchecked="LeftPanelToggle_Unchecked"
+                              ToolTip="Toggle Tools Panel" Margin="0,0,4,0"/>
+                              
+                <ToggleButton Content="◨" Style="{DynamicResource ToolToggleButton}" FontSize="16"
+                              IsChecked="True" Checked="RightPanelToggle_Checked" Unchecked="RightPanelToggle_Unchecked"
+                              ToolTip="Toggle Layers Panel" Margin="0,0,16,0"/>
+
                 <ToggleButton Content="Grid" Style="{DynamicResource ToolToggleButton}"
                               IsChecked="{Binding ShowGrid, Mode=TwoWay}"
                               ToolTip="Toggle grid overlay (G)" Margin="0,0,16,0"/>
@@ -126,6 +138,8 @@
                 <ComboBox ItemsSource="{Binding ZoomLevels}" 
                           SelectedItem="{Binding Zoom}" 
                           Width="60" VerticalAlignment="Center"/>
+                <Button Content="Fit" Style="{DynamicResource ToolButton}" Command="{Binding FitToViewCommand}" Margin="4,0,2,0" Padding="6,2" ToolTip="Fit canvas to view"/>
+                <Button Content="100%" Style="{DynamicResource ToolButton}" Command="{Binding Zoom100Command}" Margin="0,0,16,0" Padding="6,2" ToolTip="Zoom to 100%"/>
                 
                 <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
                 <TextBlock Text="Theme:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -138,13 +152,15 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="200" x:Name="LeftPanelColumn" MinWidth="170" MaxWidth="400"/>
+                <ColumnDefinition Width="4" x:Name="LeftSplitterColumn"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="4" x:Name="RightSplitterColumn"/>
+                <ColumnDefinition Width="200" x:Name="RightPanelColumn" MinWidth="170" MaxWidth="400"/>
             </Grid.ColumnDefinitions>
             
             <!-- Left Panel - Tools & Color -->
-            <Grid Grid.Column="0" Background="{DynamicResource BackgroundSecondary}" Margin="4">
+            <Grid Grid.Column="0" x:Name="LeftPanel" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
                     <!-- Tools Section -->
                     <TextBlock Text="Tools" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
@@ -191,9 +207,43 @@
                     
                     <!-- Color Section -->
                     <TextBlock Text="Color" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" Margin="0,0,0,8"/>
-                    
-                    <Border Width="64" Height="64" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left" Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}">
-                    </Border>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="48" Height="48" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2" CornerRadius="4" Margin="0,0,8,0"
+                                Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}"
+                                ToolTip="Primary color"/>
+                        <Border Grid.Column="1" Width="48" Height="48" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2" CornerRadius="4"
+                                Background="{Binding SecondaryColor, Converter={StaticResource PixelColorToBrushConverter}}" Cursor="Hand"
+                                ToolTip="Secondary (X to swap)">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SwapColorsCommand}"/>
+                            </Border.InputBindings>
+                        </Border>
+                    </Grid>
+                    <TextBlock Text="Recent" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
+                    <ItemsControl ItemsSource="{Binding RecentColors}" Margin="0,0,0,8">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="20" Height="20" Margin="1" Cursor="Hand"
+                                        Background="{Binding Converter={StaticResource PixelColorToBrushConverter}}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.SelectRecentColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}"/>
+                                    </Border.InputBindings>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     
                     <!-- Palette Colors (sectioned) -->
                     <TextBlock Text="Palette" Foreground="{DynamicResource TextSecondary}" Margin="0,16,0,4"/>
@@ -245,9 +295,20 @@
                 </StackPanel>
             </Grid>
             
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" Cursor="SizeWE" ShowsPreview="False">
+                <GridSplitter.Template>
+                    <ControlTemplate TargetType="GridSplitter">
+                        <Border Background="Transparent">
+                            <Border Width="2" Height="30" Background="{DynamicResource BorderBrush}" CornerRadius="1" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5"/>
+                        </Border>
+                    </ControlTemplate>
+                </GridSplitter.Template>
+            </GridSplitter>
+
             <!-- Center - Canvas Area -->
-            <Border Grid.Column="1" Background="{DynamicResource BackgroundTertiary}" 
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="4">
+            <Border Grid.Column="2" Background="{DynamicResource BackgroundTertiary}" 
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="4"
+                    PreviewMouseWheel="CanvasArea_PreviewMouseWheel">
                 <Grid x:Name="CanvasArea" ClipToBounds="True">
                     <!-- Checkerboard background for transparency -->
                     <Rectangle>
@@ -312,8 +373,18 @@
                 </Grid>
             </Border>
             
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" Cursor="SizeWE" ShowsPreview="False">
+                <GridSplitter.Template>
+                    <ControlTemplate TargetType="GridSplitter">
+                        <Border Background="Transparent">
+                            <Border Width="2" Height="30" Background="{DynamicResource BorderBrush}" CornerRadius="1" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5"/>
+                        </Border>
+                    </ControlTemplate>
+                </GridSplitter.Template>
+            </GridSplitter>
+
             <!-- Right Panel - Layers -->
-            <Grid Grid.Column="2" Background="{DynamicResource BackgroundSecondary}" Margin="4">
+            <Grid Grid.Column="4" x:Name="RightPanel" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
                     <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>

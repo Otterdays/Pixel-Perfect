@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj": {}
+    "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj": {}
   },
   "projects": {
-    "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj": {
+    "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj": {
       "version": "0.2.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+        "projectUniqueName": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj",
         "projectName": "PixelPerfect",
-        "projectPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+        "projectPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj",
         "packagesPath": "C:\\Users\\home\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\obj\\",
+        "outputPath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\home\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -87,11 +87,6 @@
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
         }
       }
     }

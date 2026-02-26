@@ -5,6 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.2.0] — February 2026 — Parity Features
 
+### Added (QoL batch 2 — Feb 2026)
+- **Recent Colors** — 8-slot grid of last picked colors (palette + eyedropper); click to select
+- **Swap colors (X)** — Primary/secondary color; X key or click secondary swatch to swap
+- **[ ] brush size** — OemOpenBrackets/OemCloseBrackets to decrease/increase brush size (1–32)
+- **Zoom to cursor** — Ctrl+wheel zooms centered on cursor position (pan adjusts to keep point under cursor)
+- **Fit / 100%** — Toolbar buttons to fit canvas to view or zoom to 100%
+- **Status bar tool name** — Shows e.g. "Brush (B)" when switching tools
+- **Quick Export (Ctrl+Shift+E)** — Export to Desktop with current scale, no dialog
+
 ### Added (QoL batch — Feb 2026)
 - **Undo/Redo toolbar buttons** — ↶ ↷ next to Save; CanExecute from UndoManager.StackChanged
 - **Escape** — Cancel paste mode or clear selection (priority order)
@@ -34,7 +43,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **NewCanvasDialog** — Modal dialog for canvas size selection
 - **NegateConverter** — XAML converter for pan offset binding
 - **Palette** — SNES Classic 16-color palette
-- **Palette sections** — Optional `sections` in palette JSON (`title` + `colors` per section); UI shows sleek section titles above each group of swatches. All custom palettes now use sections: **Ores** (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal), **Gems** (Ruby, Sapphire, Emerald, Amethyst, Topaz, Diamond, Jade, Lapis), **Minerals** (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), **Crystals** (Ice, Pink quartz, Frost, Blue, Cyan, Warm), **Cave** (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep), **Hair Colors** (Greys/Whites, Blondes, Light brown, Strawberry, Auburn, Dark brown, Blacks, Fantasy), **Skin Tones** (Cool, Neutral, Warm, Olive), **Grass** (Shade, Sun). Flat `colors`-only palettes still display as one "Colors" section.
+- **Fruit & Veggies palette** — 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root), 96 colors for food pixel art
+- **Palette sections** — Optional `sections` in palette JSON (`title` + `colors` per section); UI shows sleek section titles above each group of swatches. All custom palettes now use sections: **Ores** (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal), **Gems** (Ruby, Sapphire, Emerald, Amethyst, Topaz, Diamond, Jade, Lapis), **Minerals** (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), **Crystals** (Ice, Pink quartz, Frost, Blue, Cyan, Warm), **Cave** (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep), **Hair Colors** (Greys/Whites, Blondes, Light brown, Strawberry, Auburn, Dark brown, Blacks, Fantasy), **Skin Tones** (Cool, Neutral, Warm, Olive), **Grass** (Shade, Sun), **Fruit & Veggies** (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root). Flat `colors`-only palettes still display as one "Colors" section.
+- **Assets in build** — All JSON palettes from `../assets/palettes/*.json` are Content items with `CopyToOutputDirectory=PreserveNewest`; included in build and publish output. PaletteLoader reads from `assets/palettes/` next to the exe.
 
 ### Changed
 - **MainWindow** — DataContext set in code-behind to wire RequestNewCanvasSize callback

@@ -9,7 +9,7 @@
 
 ## Doc updates (add at top)
 
-- **2026-02-25**: Palette section titles applied to all custom palettes (Gems, Minerals, Ores, Crystals, Cave); each shows titled tone groups in the palette area.
+- **2026-02-25**: Palette section titles applied to all custom palettes (Gems, Minerals, Ores, Crystals, Cave, Hair Colors, Skin Tones, Grass, Fruit & Veggies). Assets/palettes included in build and publish output.
 - **2026-02-25**: Grid overlay — Fixed grey-box bug (grid lines use 1/Zoom thickness via `InverseZoomConverter`). Grid toolbar button is a ToggleButton bound to `ShowGrid` and stays lit when on.
 
 ---
@@ -59,7 +59,7 @@
 | Preset sizes | 8×8→256×256 | ✅ | New Canvas dialog: 8×8 through 256×256 |
 | Custom size | 1×512 dialog | ✅ | Custom option in New Canvas dialog |
 | Zoom | 0.25×–64× | 1×–64× | WPF: dropdown, NearestNeighbor |
-| Zoom to cursor | Ctrl+wheel | 🔲 | |
+| Zoom to cursor | Ctrl+wheel | ✅ | ZoomAtCursor adjusts pan so point under cursor stays put |
 | Fit/100% buttons | ✅ | 🔲 | |
 | Grid overlay | ✅ | ✅ | G key, toolbar; vector overlay, zoom-invariant 1px lines; toggle button stays lit when on |
 | Tile preview | 3×3 ghost | 🔲 | |
@@ -94,8 +94,8 @@
 | Color Wheel | HSV picker | 🔲 | |
 | Constants | Used colors only | 🔲 | |
 | Saved Colors | 24 slots | 🔲 | |
-| Recent Colors | Last 16 | 🔲 | |
-| JSON palettes | 30+ palettes | ✅ | PaletteLoader loads assets/palettes/*.json; ComboBox to switch |
+| Recent Colors | Last 16 | ✅ | 8 slots; from palette + eyedropper |
+| JSON palettes | 30+ palettes | ✅ | 16 palettes: SNES, Gems, Minerals, Ores, Crystals, Cave, Hair, Skin, Grass, Fruit & Veggies, game palettes; sectioned UI; assets copied to build output |
 | Custom colors | 32 user | 🔲 | |
 
 ---
@@ -111,7 +111,7 @@
 | Save (.pixpf) | Custom format | 🔲 | |
 | Load (.pixpf) | Full project | 🔲 | |
 | Import PNG | Auto-scale | 🔲 | |
-| Quick export | Ctrl+Shift+E | 🔲 | |
+| Quick export | Ctrl+Shift+E | ✅ | Exports to Desktop with current scale |
 
 ---
 
@@ -167,7 +167,7 @@
 3. **Spray Tool** — Radius/density, continuous droplets
 4. **Dither Tool** — Checkerboard pattern
 5. **Color Wheel** — HSV picker
-6. **JSON Palette Loading** — 30+ palettes from Python
+6. ~~**JSON Palette Loading**~~ — DONE: 16 palettes (SNES, Gems, Minerals, Ores, Crystals, Cave, Hair, Skin, Grass, Fruit & Veggies, game palettes) from assets/palettes
 
 ---
 

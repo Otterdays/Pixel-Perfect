@@ -2878,3 +2878,4 @@ User clicks "Yes" → Resize proceeds with pixel loss
 ### 🔧 Internal
 - Added right-button drag and release event routing in canvas event dispatcher
 - Ensured float-precision coordinate path for erasing
+* Added resizable and collapsible sidebar panels in WPF app using GridSplitters and toggle buttons.

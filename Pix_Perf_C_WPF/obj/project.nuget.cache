@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "IImOrCBSdOA=",
+  "dgSpecHash": "lLXonRfPMKU=",
   "success": true,
-  "projectFilePath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\Pix_Perf_C_WPF\\PixelPerfect.csproj",
+  "projectFilePath": "C:\\Users\\home\\Desktop\\Pixel-Perfect\\pix_perf_c_wpf\\PixelPerfect.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\home\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
     "C:\\Users\\home\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",

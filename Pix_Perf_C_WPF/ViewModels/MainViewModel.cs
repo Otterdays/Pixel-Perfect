@@ -98,6 +98,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDirty;
 
+    /// <summary>Secondary color for swap (X key).</summary>
+    [ObservableProperty]
+    private PixelColor _secondaryColor = new(255, 255, 255, 255);
+
+    /// <summary>Recent colors (last 8 picked).</summary>
+    public ObservableCollection<PixelColor> RecentColors { get; } = new();
+
     [ObservableProperty]
     private int _brushSize = 1;
     partial void OnBrushSizeChanged(int value)
@@ -152,7 +159,12 @@ public partial class MainViewModel : ObservableObject
         };
         
         // Hook up eyedropper
-        EyedropperTool.ColorPicked += color => CurrentColor = color;
+        EyedropperTool.ColorPicked += color =>
+        {
+            SecondaryColor = CurrentColor;
+            CurrentColor = color;
+            AddToRecentColors(color);
+        };
         
         // Default to first palette (SNES Classic)
         if (AvailablePalettes.Count > 0)
@@ -196,6 +208,17 @@ public partial class MainViewModel : ObservableObject
             GridOverlayLines.Add(new GridLineSegment(0, y, w, y));
     }
     
+    partial void OnCurrentToolChanged(ITool value) => UpdateStatusWithTool(CurrentTool);
+
+    private void UpdateStatusWithTool(ITool tool)
+    {
+        if (tool == null) return;
+        string key = tool == BrushTool ? "B" : tool == EraserTool ? "E" : tool == FillTool ? "F" : tool == EyedropperTool ? "I"
+            : tool == LineTool ? "L" : tool == RectangleTool ? "R" : tool == CircleTool ? "C" : tool == PanTool ? "P"
+            : tool == SelectionTool ? "S" : tool == MoveTool ? "M" : "";
+        StatusText = string.IsNullOrEmpty(key) ? tool.Name : $"{tool.Name} ({key})";
+    }
+
     [RelayCommand]
     private void SelectBrush() => CurrentTool = BrushTool;
     
@@ -335,8 +358,107 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SelectPaletteColor(PixelColor color)
     {
+        SecondaryColor = CurrentColor;
+        CurrentColor = color;
+        AddToRecentColors(color);
+        CurrentTool = BrushTool;
+    }
+
+    private void AddToRecentColors(PixelColor color)
+    {
+        // Remove if already present (move to front)
+        for (int i = RecentColors.Count - 1; i >= 0; i--)
+        {
+            if (RecentColors[i].Equals(color)) RecentColors.RemoveAt(i);
+        }
+        RecentColors.Insert(0, color);
+        while (RecentColors.Count > 8) RecentColors.RemoveAt(RecentColors.Count - 1);
+    }
+
+    [RelayCommand]
+    private void SwapColors()
+    {
+        (CurrentColor, SecondaryColor) = (SecondaryColor, CurrentColor);
+        StatusText = "Colors swapped (X)";
+    }
+
+    [RelayCommand]
+    private void SelectRecentColor(PixelColor color)
+    {
         CurrentColor = color;
         CurrentTool = BrushTool;
+        StatusText = $"Selected #{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    [RelayCommand]
+    private void BrushSizeUp()
+    {
+        BrushSize = Math.Min(32, BrushSize + 1);
+        StatusText = $"Brush size: {BrushSize}px";
+    }
+
+    [RelayCommand]
+    private void BrushSizeDown()
+    {
+        BrushSize = Math.Max(1, BrushSize - 1);
+        StatusText = $"Brush size: {BrushSize}px";
+    }
+
+    /// <summary>Zoom in/out centered on cursor. delta &gt; 0 = zoom in.</summary>
+    public void ZoomAtCursor(int delta, double cursorScreenX, double cursorScreenY)
+    {
+        int oldZoom = Zoom;
+        int newZoom = Math.Clamp(Zoom + (delta > 0 ? 1 : -1), 1, 64);
+        if (newZoom == oldZoom) return;
+        double ratio = (double)newZoom / oldZoom;
+        PanOffsetX = cursorScreenX * (ratio - 1) + PanOffsetX * ratio;
+        PanOffsetY = cursorScreenY * (ratio - 1) + PanOffsetY * ratio;
+        Zoom = newZoom;
+        StatusText = $"{Zoom * 100}%";
+    }
+
+    [RelayCommand]
+    private void FitToView()
+    {
+        var (w, h) = GetCanvasAreaSize?.Invoke() ?? (800, 600);
+        if (w <= 0 || h <= 0 || Canvas == null) return;
+        int cw = Canvas.Width;
+        int ch = Canvas.Height;
+        double scaleX = w / (double)cw;
+        double scaleY = h / (double)ch;
+        int fitZoom = (int)Math.Floor(Math.Min(scaleX, scaleY));
+        Zoom = Math.Clamp(Math.Max(1, fitZoom), 1, 64);
+        PanOffsetX = 0;
+        PanOffsetY = 0;
+        StatusText = $"Fit: {Zoom * 100}%";
+    }
+
+    [RelayCommand]
+    private void Zoom100()
+    {
+        Zoom = 1;
+        PanOffsetX = 0;
+        PanOffsetY = 0;
+        StatusText = "100%";
+    }
+
+    [RelayCommand]
+    private void QuickExport()
+    {
+        var path = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            $"Canvas {Canvas.Width}x{Canvas.Height}.png");
+        try
+        {
+            int scale = Math.Clamp(ExportScale, 1, 8);
+            FileService.ExportToPng(Canvas, path, scale);
+            IsDirty = false;
+            StatusText = $"Quick export {scale}× → Desktop";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Export failed: {ex.Message}";
+        }
     }
 
     partial void OnSelectedThemeChanged(string value)
@@ -575,7 +697,9 @@ public partial class MainViewModel : ObservableObject
         if (Canvas == null) return;
         var color = Canvas.GetCompositePixel(canvasX, canvasY);
         if (color.IsTransparent) return;
+        SecondaryColor = CurrentColor;
         CurrentColor = color;
+        AddToRecentColors(color);
         StatusText = $"Picked #{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 

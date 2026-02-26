@@ -38,7 +38,7 @@ The goal is to replicate all features of the Python version with cleaner archite
 | Layer Blending | ✅ | Alpha-composited layer flattening |
 | Zoom Control | ✅ | 1x–64x via dropdown, pixel-perfect NearestNeighbor scaling |
 | Grid Overlay | ✅ | Toggle with G key, toolbar button |
-| Color Picker | ✅ | SNES Classic 16-color palette grid |
+| Color Picker | ✅ | Palette ComboBox (SNES + 15 JSON palettes: Gems, Minerals, Ores, Crystals, Cave, Hair, Skin, Grass, Fruit & Veggies, game palettes); sectioned swatches |
 | Theme System | ✅ | 6 themes: Dark, Light, Nord, Dracula, Retro, Catppuccin; runtime switcher in toolbar |
 | Status Bar | ✅ | Shows cursor coordinates and tool status |
 | MVVM Architecture | ✅ | Clean ViewModel with RelayCommands |
@@ -47,6 +47,7 @@ The goal is to replicate all features of the Python version with cleaner archite
 | Keyboard Shortcuts | ✅ | B, E, F, I, L, R, C, G, P, S, M, Ctrl+C/X/V, Del, Ctrl+S/Z/Y/N |
 | Shape Tools | ✅ | Line, Rectangle, Circle (Bresenham/Midpoint) with fluid preview |
 | PNG Export | ✅ | Flattened canvas export to native Windows PNG |
+| Assets in build | ✅ | All `assets/palettes/*.json` copied to output; included in build and publish |
 
 ### 🔲 Not Yet Implemented (from Python v2.9.0)
 | Feature | Priority | Python Version Reference |
@@ -54,11 +55,7 @@ The goal is to replicate all features of the Python version with cleaner archite
 | Color Picker Full | 🟡 High | Primary, Wheel, Constants, Saved, Recent |
 | Save/Load (.pixpf) | 🟡 High | Custom project format |
 | Animation Timeline | 🟠 Medium | Frame management, playback, onion skinning |
-| Grid Overlay | 🟠 Medium | Toggleable grid lines on canvas |
-| Pan Tool | 🟠 Medium | Middle mouse / spacebar pan |
-| Theme System | 🟢 Low | Multiple themes with customization |
 | Symmetry Tools | 🟢 Low | X/Y/radial mirroring |
-| Color Palettes | 🟢 Low | JSON palette loading, 30+ palettes |
 | Spray/Dither Tools | 🟢 Low | Specialized drawing tools |
 | Tile Preview | 🟢 Low | 3×3 repeating pattern view |
 | Reference Panel | 🟢 Low | Load reference images |
@@ -78,7 +75,8 @@ Pix_Perf_C_WPF/
 │   ├── UndoManager.cs           # Delta-based undo/redo transactions
 │   └── Tools.cs                 # ITool interface + 7 tool implementations
 ├── Services/
-│   └── FileService.cs           # PNG export, save/load (planned)
+│   ├── FileService.cs          # PNG export
+│   └── PaletteLoader.cs        # Loads JSON palettes from assets/palettes
 ├── Converters/
 │   └── PixelColorToBrushConverter.cs  # PixelColor → SolidColorBrush for XAML
 ├── ViewModels/
@@ -109,7 +107,7 @@ Pix_Perf_C_WPF/
 
 ## Comparison to Python Version
 
-| Aspect | Python (v2.9.0) | C# WPF (v0.1.3) |
+| Aspect | Python (v2.9.0) | C# WPF (v0.2.0) |
 |--------|-----------------|-------------------|
 | Lines of Code | ~15,000+ | ~1000 |
 | Manager Classes | 12 | 1 (ViewModel) |

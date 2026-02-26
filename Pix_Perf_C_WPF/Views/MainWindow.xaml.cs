@@ -158,9 +158,7 @@ public partial class MainWindow : Window
         if (Keyboard.Modifiers != ModifierKeys.Control) return;
         e.Handled = true;
         var pos = e.GetPosition(CanvasArea);
-        double centerX = CanvasArea.ActualWidth / 2;
-        double centerY = CanvasArea.ActualHeight / 2;
-        ViewModel.Zoom += e.Delta > 0 ? 1 : -1;
+        ViewModel.ZoomAtCursor(e.Delta > 0 ? 1 : -1, pos.X, pos.Y);
     }
 
     private void StartPan(MouseEventArgs e)
@@ -185,6 +183,57 @@ public partial class MainWindow : Window
         // so tools like Brush/Eraser can perform flawless Bresenham-line interpolations
         // even if the user swiftly drags the mouse outside the canvas and curves back in.
         return (x, y);
+    }
+
+    private GridLength _leftPanelSavedWidth = new GridLength(200);
+    private GridLength _rightPanelSavedWidth = new GridLength(200);
+    private double _leftPanelSavedMinWidth = 170;
+    private double _rightPanelSavedMinWidth = 170;
+
+    private void LeftPanelToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        if (LeftPanelColumn != null)
+        {
+            LeftPanelColumn.MinWidth = _leftPanelSavedMinWidth;
+            LeftPanelColumn.Width = _leftPanelSavedWidth;
+            LeftSplitterColumn.Width = new GridLength(4);
+            LeftPanel.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void LeftPanelToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+        if (LeftPanelColumn != null)
+        {
+            _leftPanelSavedWidth = LeftPanelColumn.Width;
+            LeftPanelColumn.MinWidth = 0;
+            LeftPanelColumn.Width = new GridLength(0);
+            LeftSplitterColumn.Width = new GridLength(0);
+            LeftPanel.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void RightPanelToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        if (RightPanelColumn != null)
+        {
+            RightPanelColumn.MinWidth = _rightPanelSavedMinWidth;
+            RightPanelColumn.Width = _rightPanelSavedWidth;
+            RightSplitterColumn.Width = new GridLength(4);
+            RightPanel.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void RightPanelToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+        if (RightPanelColumn != null)
+        {
+            _rightPanelSavedWidth = RightPanelColumn.Width;
+            RightPanelColumn.MinWidth = 0;
+            RightPanelColumn.Width = new GridLength(0);
+            RightSplitterColumn.Width = new GridLength(0);
+            RightPanel.Visibility = Visibility.Collapsed;
+        }
     }
 
 }

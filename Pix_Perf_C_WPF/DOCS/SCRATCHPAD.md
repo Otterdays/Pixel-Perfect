@@ -8,6 +8,8 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25 — QoL batch 2**: Recent Colors (8 slots, from palette/eyedropper); Swap colors (X key, primary/secondary); [ ] brush size; Zoom to cursor (Ctrl+wheel); Fit/100% buttons; Status bar tool name; Quick Export (Ctrl+Shift+E to Desktop). Secondary color swatch next to primary; click secondary to swap.
+- **2026-02-25 — Assets in build**: All `assets/palettes/*.json` (16 palettes) are Content items with `CopyToOutputDirectory=PreserveNewest`. Included in `dotnet build` and `dotnet publish` output. PaletteLoader reads from exe dir + `assets/palettes/`. README notes this.
 - **2026-02-25 — Fruit & Veggies palette**: Added `assets/palettes/fruit_and_veggies.json` with 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root). 96 colors for food pixel art.
 - **2026-02-25 — Section titles for Hair, Skin, Grass**: Hair Colors (Greys/Whites, Blondes, Light brown, Strawberry, Auburn, Dark brown, Blacks, Fantasy), Skin Tones (Cool, Neutral, Warm, Olive), Grass (Shade, Sun) now use `sections` in JSON. All extended palettes now show titled tone groups.
 - **2026-02-25 — Section titles for all custom palettes**: Gems (Ruby, Sapphire, Emerald, etc.), Minerals (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), Crystals (Ice, Pink quartz, Frost, Blue, Cyan, Warm), and Cave (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep) now use `sections` in JSON so the palette UI shows titled groups. Ores already had sections. Section title styling: TextPrimary, 12pt SemiBold, bottom border.
@@ -49,8 +51,11 @@
 ---
 
 ## Recent Context (last 5 actions)
-1. 2026-02-25: Palette sections — section titles in palettes area (PaletteSection, PaletteSections binding, ores.json sections)
-2. 2026-02-25: Grid overlay fix — InverseZoomConverter for 1px grid lines at any zoom; Grid button → ToggleButton with ShowGrid binding so it stays lit when on
+1. 2026-02-25: Assets in build — verified all 16 palettes (incl. Fruit & Veggies) copy to bin/Release and publish/; README updated
+2. 2026-02-25: Fruit & Veggies palette — 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root); website + SCRATCHPAD updated
+3. 2026-02-25: Section titles for Hair, Skin, Grass — all extended palettes now show titled groups
+4. 2026-02-25: Palette sections — section titles in palettes area (PaletteSection, PaletteSections binding, ores.json sections)
+5. 2026-02-25: Grid overlay fix — InverseZoomConverter for 1px grid lines at any zoom; Grid button → ToggleButton with ShowGrid binding so it stays lit when on
 3. 2026-02-25: Implemented full parity plan — Canvas presets, Grid, Color picker, Pan, Selection, Move, Copy/Paste shortcuts
 4. 2026-02-25: Documentation run — created PARITY.md, updated SUMMARY/ARCHITECTURE/README/CHANGELOG/REQUIREMENTS for accurate parity tracking
 5. 2026-02-23: Initial documentation audit and creation for WPF project
@@ -60,7 +65,7 @@
 ## Known Issues
 - **~~Color preview~~** ~~binding in XAML uses `<MultiBinding Converter="{x:Null}">` — needs a proper `IValueConverter` to display the current `PixelColor` as a `SolidColorBrush`~~ (Fixed)
 - **~~Open/Save buttons~~** ~~in toolbar are not wired up (no commands bound)~~ (Fixed - Save bound to PNG export)
-- **Quick Colors** grid is empty (placeholder section)
+- ~~**Quick Colors** grid is empty~~ → Replaced by Recent Colors (8 slots)
 - **~~No keyboard shortcuts~~** ~~— all tool switching requires clicking buttons~~ (Fixed)
 - **~~Layer ListBox~~** ~~doesn't visually indicate the active layer (no highlight styling)~~ (Fixed)
 

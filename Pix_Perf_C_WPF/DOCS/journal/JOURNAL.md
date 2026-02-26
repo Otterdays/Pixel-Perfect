@@ -4,6 +4,46 @@ Dated log of changes, fixes, and notable work. New entries at top.
 
 ---
 
+## 2026-02-25 — QoL batch 2: Recent Colors, Swap, Zoom-to-cursor, Fit, Quick Export
+
+**What**
+- Implemented 7 QoL features for faster pixel art workflow.
+
+**Features**
+- **Recent Colors** — 8 slots, populated when picking from palette or eyedropper. Click to select.
+- **Swap colors (X)** — Primary + secondary color swatches. X key or click secondary to swap. Secondary updated when picking.
+- **[ ] brush size** — Bracket keys to adjust brush/eraser size (1–32).
+- **Zoom to cursor** — Ctrl+wheel zooms centered on cursor; pan adjusts so point under cursor stays put.
+- **Fit / 100%** — Toolbar buttons; Fit uses GetCanvasAreaSize to compute zoom.
+- **Status bar** — Shows tool name + hotkey when switching (e.g. "Brush (B)").
+- **Quick Export (Ctrl+Shift+E)** — Exports to Desktop with current scale, no dialog.
+
+**Files**
+- MainViewModel.cs (RecentColors, SecondaryColor, SwapColors, BrushSizeUp/Down, ZoomAtCursor, FitToView, Zoom100, QuickExport, OnCurrentToolChanged)
+- MainWindow.xaml (Recent Colors UI, secondary swatch, Fit/100% buttons, key bindings, PreviewMouseWheel)
+- MainWindow.xaml.cs (ZoomAtCursor with cursor position)
+
+---
+
+## 2026-02-25 — Fruit & Veggies palette + assets build verification + website
+
+**What**
+- Added Fruit & Veggies palette; verified all palettes are included in C# WPF build and publish; updated website palette list.
+
+**Fruit & Veggies**
+- `assets/palettes/fruit_and_veggies.json` — 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root), 96 colors.
+
+**Assets in build**
+- csproj: `Content Include="..\assets\palettes\*.json"` with `CopyToOutputDirectory=PreserveNewest`. Verified: all 16 palettes copy to bin/Debug, bin/Release, and publish output. PaletteLoader reads from exe dir + `assets/palettes/`.
+
+**Website**
+- index.html: Features section lists Hair Colors, Skin Tones, Gems, Minerals, Ores, Crystals, Cave, Grass, Fruit & Veggies. C# WPF card mentions "sectioned palettes (Gems, Minerals, Hair, Skin, etc.)".
+
+**Docs**
+- SCRATCHPAD, CHANGELOG, PARITY, SUMMARY, JOURNAL updated.
+
+---
+
 ## 2026-02-25 — Section titles for Hair, Skin, Grass
 
 **What**
