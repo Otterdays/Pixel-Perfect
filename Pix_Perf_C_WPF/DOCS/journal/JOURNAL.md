@@ -4,6 +4,21 @@ Dated log of changes, fixes, and notable work. New entries at top.
 
 ---
 
+## 2026-02-25 — Section titles for Hair, Skin, Grass
+
+**What**
+- Added sections to Hair Colors (Extended), Skin Tones (Extended), and Grass palettes so they show titled groups like Gems and Minerals.
+
+**Sections**
+- **Hair Colors**: Greys/Whites, Blondes, Light brown, Strawberry, Auburn, Dark brown, Blacks, Fantasy (8 sections, 90 colors).
+- **Skin Tones**: Cool, Neutral, Warm, Olive (4 sections, 88 colors).
+- **Grass**: Shade, Sun (2 sections, 16 colors).
+
+**Files**
+- `assets/palettes/hair_colors.json`, `skin_tones.json`, `grass.json`.
+
+---
+
 ## 2026-02-25 — Section titles for all palettes + docs
 
 **What**

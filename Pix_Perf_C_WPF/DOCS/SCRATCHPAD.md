@@ -8,6 +8,8 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25 — Fruit & Veggies palette**: Added `assets/palettes/fruit_and_veggies.json` with 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root). 96 colors for food pixel art.
+- **2026-02-25 — Section titles for Hair, Skin, Grass**: Hair Colors (Greys/Whites, Blondes, Light brown, Strawberry, Auburn, Dark brown, Blacks, Fantasy), Skin Tones (Cool, Neutral, Warm, Olive), Grass (Shade, Sun) now use `sections` in JSON. All extended palettes now show titled tone groups.
 - **2026-02-25 — Section titles for all custom palettes**: Gems (Ruby, Sapphire, Emerald, etc.), Minerals (Quartz, Limestone, Sandstone, Granite, Obsidian, Slate), Crystals (Ice, Pink quartz, Frost, Blue, Cyan, Warm), and Cave (Stone, Moss, Shadow, Underground, Rock, Moss stone, Deep) now use `sections` in JSON so the palette UI shows titled groups. Ores already had sections. Section title styling: TextPrimary, 12pt SemiBold, bottom border.
 - **2026-02-25 — Palette section titles + styled tooltips**: Section titles use a thin bottom border and spacing. Palette swatches and tool buttons use structured tooltips: title (bold), short description, nitty gritty, in StyledToolTip (theme background, border, shadow). ColorSwatchToolTipConverter + ColorSwatchToolTipContent; tool resources for Brush, Eraser, Fill, etc.
 - **2026-02-25 — Website update**: Added C# WPF port section to WEBPAGE with c-wpf-v-0.1.png screenshot. GitHub Actions workflow (`.github/workflows/deploy-pages.yml`) deploys WEBPAGE to GitHub Pages. Sleek background: animated gradient mesh + pixel grid overlay in styles.css.

@@ -11,6 +11,7 @@
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("crystals.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("curse_of_aros.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("definya.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("fruit_and_veggies.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("gems.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("grass.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hair_colors.json")]
