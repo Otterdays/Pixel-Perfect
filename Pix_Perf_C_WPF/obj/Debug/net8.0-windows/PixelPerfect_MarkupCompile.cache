@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 C:\Users\home\Desktop\Pixel-Perfect\pix_perf_c_wpf\App.xaml
-132129508743
+142072638891
 161245541677
-19224863422
+20-1276424470
 199-771336237
-Themes\BasicGreyTheme.xaml;Themes\CatppuccinTheme.xaml;Themes\ClaudeTheme.xaml;Themes\CommonStyles.xaml;Themes\DarkTheme.xaml;Themes\DraculaTheme.xaml;Themes\GeminiTheme.xaml;Themes\GruvboxTheme.xaml;Themes\LightTheme.xaml;Themes\NordTheme.xaml;Themes\RetroTheme.xaml;Views\MainWindow.xaml;Views\NewCanvasDialog.xaml;
+Themes\BasicGreyTheme.xaml;Themes\CatppuccinTheme.xaml;Themes\ClaudeTheme.xaml;Themes\CommonStyles.xaml;Themes\DarkTheme.xaml;Themes\DraculaTheme.xaml;Themes\GeminiTheme.xaml;Themes\GruvboxTheme.xaml;Themes\LightTheme.xaml;Themes\NordTheme.xaml;Themes\RetroTheme.xaml;Views\MainWindow.xaml;Views\NewCanvasDialog.xaml;Views\SettingsDialog.xaml;
 
 False
 

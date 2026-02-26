@@ -39,6 +39,11 @@ public partial class MainWindow : Window
         };
         vm.ConfirmDiscardUnsaved = (title, message) =>
             MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        vm.RequestOpenSettings = () =>
+        {
+            var dialog = new SettingsDialog { Owner = this, DataContext = vm };
+            dialog.ShowDialog();
+        };
         DataContext = vm;
     }
     

@@ -9,6 +9,7 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25**: Added Grid & Background and Settings sections. Documented gaps: grid color, checkerboard colors, undo limit config, settings panel. Python has grid_color, grid_mode, checkerboard colors, background_mode; WPF has hardcoded #404040 grid, #404040/#505050 checkerboard.
 - **2026-02-25**: Palette section titles applied to all custom palettes (Gems, Minerals, Ores, Crystals, Cave, Hair Colors, Skin Tones, Grass, Fruit & Veggies). Assets/palettes included in build and publish output.
 - **2026-02-25**: Grid overlay — Fixed grey-box bug (grid lines use 1/Zoom thickness via `InverseZoomConverter`). Grid toolbar button is a ToggleButton bound to `ShowGrid` and stays lit when on.
 
@@ -60,10 +61,12 @@
 | Custom size | 1×512 dialog | ✅ | Custom option in New Canvas dialog |
 | Zoom | 0.25×–64× | 1×–64× | WPF: dropdown, NearestNeighbor |
 | Zoom to cursor | Ctrl+wheel | ✅ | ZoomAtCursor adjusts pan so point under cursor stays put |
-| Fit/100% buttons | ✅ | 🔲 | |
+| Fit/100% buttons | ✅ | ✅ | Toolbar Fit and 100% buttons |
 | Grid overlay | ✅ | ✅ | G key, toolbar; vector overlay, zoom-invariant 1px lines; toggle button stays lit when on |
+| Grid color | configurable | ✅ | Settings: presets (Dark, Light, Contrast), bound to GridColorBrush |
+| Checkerboard BG | ✅ | ✅ | WPF: bound to CheckerboardBrush |
+| Checkerboard colors | configurable | ✅ | Settings: presets (Dark, Light, Contrast) |
 | Tile preview | 3×3 ghost | 🔲 | |
-| Checkerboard BG | ✅ | ✅ | WPF: XAML DrawingBrush |
 | Pan | Middle+Space+R | ✅ | Middle mouse, spacebar, Pan tool |
 
 ---
@@ -122,7 +125,7 @@
 | Delta-based | ✅ | ✅ | Both: pixel-level tracking |
 | Transaction grouping | ✅ | ✅ | WPF: BeginTransaction/EndTransaction |
 | Ctrl+Z / Ctrl+Y | ✅ | ✅ | WPF: InputBindings |
-| History limit | 50+ | 100 | WPF: configurable |
+| History limit | 50+ | 100 | WPF: Settings dialog; 50/100/200/500 options |
 
 ---
 
@@ -160,14 +163,39 @@
 
 ---
 
+## Grid & Background (Canvas Visuals)
+
+| Feature | Python | WPF | Notes |
+|----------|--------|-----|------|
+| Grid color | configurable | 🔲 | Python: grid_color in Canvas, theme_manager. WPF: #404040 hardcoded in Line Stroke |
+| Grid mode | auto/dark/light/paper | 🔲 | Python: adapts to theme |
+| Checkerboard colors | theme + mode | 🔲 | Python: _CHECKER_LIGHT, _CHECKER_DARK. WPF: #404040, #505050 hardcoded |
+| Background mode | auto/dark/light/texture | 🔲 | Python: solid vs checkerboard vs texture |
+| Checkerboard tile size | 8px | 16px | WPF: Viewport 16×16. Python: _CHECKER_TILE=8 |
+
+---
+
+## Settings Panel
+
+| Feature | Python | WPF | Notes |
+|---------|--------|-----|------|
+| Settings dialog/panel | ThemeCustomizer, MAX_SETTINGS | 🔲 | Python has theme customization; 127 settings cataloged in MAX_SETTINGS |
+| Grid/checkerboard config | ✅ | 🔲 | Would go in settings |
+| Undo history limit | configurable | 🔲 | WPF: 100 hardcoded; no UI |
+| Default canvas size | 🔲 | 🔲 | Both: New Canvas remembers last; no persistent default |
+| Default zoom | 🔲 | 🔲 | WPF: auto-zoom on CreateCanvas; no user preference |
+
+---
+
 ## Recommended Next Steps (Priority Order)
 
 1. **Save/Load .pixpf** — Project persistence
-2. **Animation Timeline** — Frame management, playback
-3. **Spray Tool** — Radius/density, continuous droplets
-4. **Dither Tool** — Checkerboard pattern
-5. **Color Wheel** — HSV picker
-6. ~~**JSON Palette Loading**~~ — DONE: 16 palettes (SNES, Gems, Minerals, Ores, Crystals, Cave, Hair, Skin, Grass, Fruit & Veggies, game palettes) from assets/palettes
+2. ~~**Settings panel (minimal)**~~ — DONE: Grid color, checkerboard colors, undo limit. Presets only; custom color picker later.
+3. **Animation Timeline** — Frame management, playback
+4. **Spray Tool** — Radius/density, continuous droplets
+5. **Dither Tool** — Checkerboard pattern
+6. **Color Wheel** — HSV picker
+7. ~~**JSON Palette Loading**~~ — DONE: 16 palettes from assets/palettes
 
 ---
 

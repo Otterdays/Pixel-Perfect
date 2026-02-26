@@ -5,6 +5,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.2.0] — February 2026 — Parity Features
 
+### Added (Settings panel — Feb 2026)
+- **Settings dialog** — ⚙ toolbar button opens Settings. Grid color, checkerboard colors (presets: Dark, Light, Contrast), undo history limit (50/100/200/500).
+- **Configurable grid color** — Grid overlay Stroke bound to GridColorBrush.
+- **Configurable checkerboard** — Canvas background Fill bound to CheckerboardBrush.
+- **UndoManager.MaxHistoryLimit** — Trims oldest entries when over limit.
+
 ### Added (QoL batch 2 — Feb 2026)
 - **Recent Colors** — 8-slot grid of last picked colors (palette + eyedropper); click to select
 - **Swap colors (X)** — Primary/secondary color; X key or click secondary swatch to swap

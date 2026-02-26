@@ -65,6 +65,9 @@ public partial class MainViewModel : ObservableObject
     // Export scale options for PNG
     public int[] ExportScaleOptions { get; } = { 1, 2, 4, 8 };
 
+    // Undo history limit options
+    public int[] UndoHistoryLimitOptions { get; } = { 50, 100, 200, 500 };
+
     [ObservableProperty]
     private int _exportScale = 1;
 
@@ -107,6 +110,54 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _brushSize = 1;
+
+    // Canvas settings (grid, checkerboard, undo)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GridColorBrush))]
+    [NotifyPropertyChangedFor(nameof(CheckerboardBrush))]
+    private Color _gridColor = Color.FromRgb(0x40, 0x40, 0x40);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CheckerboardBrush))]
+    [NotifyPropertyChangedFor(nameof(CheckerboardColor1Brush))]
+    private Color _checkerboardColor1 = Color.FromRgb(0x40, 0x40, 0x40);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CheckerboardBrush))]
+    [NotifyPropertyChangedFor(nameof(CheckerboardColor2Brush))]
+    private Color _checkerboardColor2 = Color.FromRgb(0x50, 0x50, 0x50);
+
+    [ObservableProperty]
+    private int _undoHistoryLimit = 100;
+    partial void OnUndoHistoryLimitChanged(int value)
+    {
+        UndoManager.MaxHistoryLimit = Math.Clamp(value, 10, 500);
+    }
+
+    public SolidColorBrush GridColorBrush => new SolidColorBrush(GridColor);
+    public SolidColorBrush CheckerboardColor1Brush => new SolidColorBrush(CheckerboardColor1);
+    public SolidColorBrush CheckerboardColor2Brush => new SolidColorBrush(CheckerboardColor2);
+
+    public Brush CheckerboardBrush =>
+        CreateCheckerboardBrush(CheckerboardColor1, CheckerboardColor2);
+
+    private static Brush CreateCheckerboardBrush(Color c1, Color c2)
+    {
+        var dg = new DrawingGroup();
+        dg.Children.Add(new GeometryDrawing(new SolidColorBrush(c1), null,
+            new RectangleGeometry(new System.Windows.Rect(0, 0, 16, 16))));
+        var light = new GeometryGroup();
+        light.Children.Add(new RectangleGeometry(new System.Windows.Rect(0, 0, 8, 8)));
+        light.Children.Add(new RectangleGeometry(new System.Windows.Rect(8, 8, 8, 8)));
+        dg.Children.Add(new GeometryDrawing(new SolidColorBrush(c2), null, light));
+        return new DrawingBrush(dg)
+        {
+            TileMode = TileMode.Tile,
+            Viewport = new System.Windows.Rect(0, 0, 16, 16),
+            ViewportUnits = BrushMappingMode.Absolute
+        };
+    }
+
     partial void OnBrushSizeChanged(int value)
     {
         int size = Math.Clamp(value, 1, 32);
@@ -127,6 +178,9 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>Callback to get canvas area size for Fit zoom. Set by the View.</summary>
     public Func<(double Width, double Height)>? GetCanvasAreaSize { get; set; }
+
+    /// <summary>Callback to show Settings dialog. Set by the View.</summary>
+    public Action? RequestOpenSettings { get; set; }
 
     public MainViewModel()
     {
@@ -170,6 +224,7 @@ public partial class MainViewModel : ObservableObject
         if (AvailablePalettes.Count > 0)
             SelectedPalette = AvailablePalettes[0];
         
+        UndoManager.MaxHistoryLimit = Math.Clamp(UndoHistoryLimit, 10, 500);
         UndoManager.StackChanged += NotifyUndoRedoCanExecute;
         NotifyUndoRedoCanExecute();
         Canvas.ActiveLayerIndexChanged += NotifyLayerCommandsCanExecute;
@@ -464,6 +519,12 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedThemeChanged(string value)
     {
         Services.ThemeService.ApplyTheme(value);
+    }
+
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        RequestOpenSettings?.Invoke();
     }
 
     [RelayCommand]

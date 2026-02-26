@@ -139,7 +139,8 @@
                           SelectedItem="{Binding Zoom}" 
                           Width="60" VerticalAlignment="Center"/>
                 <Button Content="Fit" Style="{DynamicResource ToolButton}" Command="{Binding FitToViewCommand}" Margin="4,0,2,0" Padding="6,2" ToolTip="Fit canvas to view"/>
-                <Button Content="100%" Style="{DynamicResource ToolButton}" Command="{Binding Zoom100Command}" Margin="0,0,16,0" Padding="6,2" ToolTip="Zoom to 100%"/>
+                <Button Content="100%" Style="{DynamicResource ToolButton}" Command="{Binding Zoom100Command}" Margin="0,0,8,0" Padding="6,2" ToolTip="Zoom to 100%"/>
+                <Button Content="⚙" Style="{DynamicResource ToolButton}" Command="{Binding OpenSettingsCommand}" Margin="0,0,16,0" Padding="6,2" FontSize="14" ToolTip="Settings (grid, checkerboard, undo limit)"/>
                 
                 <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
                 <TextBlock Text="Theme:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -311,29 +312,7 @@
                     PreviewMouseWheel="CanvasArea_PreviewMouseWheel">
                 <Grid x:Name="CanvasArea" ClipToBounds="True">
                     <!-- Checkerboard background for transparency -->
-                    <Rectangle>
-                        <Rectangle.Fill>
-                            <DrawingBrush TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
-                                <DrawingBrush.Drawing>
-                                    <DrawingGroup>
-                                        <GeometryDrawing Brush="#404040">
-                                            <GeometryDrawing.Geometry>
-                                                <RectangleGeometry Rect="0,0,16,16"/>
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                        <GeometryDrawing Brush="#505050">
-                                            <GeometryDrawing.Geometry>
-                                                <GeometryGroup>
-                                                    <RectangleGeometry Rect="0,0,8,8"/>
-                                                    <RectangleGeometry Rect="8,8,8,8"/>
-                                                </GeometryGroup>
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                    </DrawingGroup>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
+                    <Rectangle Fill="{Binding CheckerboardBrush}"/>
                     
                     <!-- Canvas Image + Grid Overlay -->
                     <Grid Width="{Binding Canvas.Width, FallbackValue=32}" 
@@ -364,7 +343,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}"
-                                          Stroke="#404040"
+                                          Stroke="{Binding DataContext.GridColorBrush, RelativeSource={RelativeSource AncestorType=Window}}"
                                           StrokeThickness="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseZoomConverter}}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

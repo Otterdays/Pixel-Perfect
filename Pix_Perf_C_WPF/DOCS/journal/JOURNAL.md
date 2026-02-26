@@ -4,6 +4,24 @@ Dated log of changes, fixes, and notable work. New entries at top.
 
 ---
 
+## 2026-02-25 — Settings panel: grid, checkerboard, undo limit
+
+**What**
+- Added Settings dialog (⚙ toolbar button) with configurable grid color, checkerboard colors, and undo history limit.
+
+**Features**
+- **Grid color** — Presets: Dark (#404040), Light (#808080), Contrast (#202020). Bound to grid overlay Stroke.
+- **Checkerboard** — Presets for both colors. Dark: #404040/#505050. Light: #c0c0c0/#d0d0d0. Contrast: #303030/#606060.
+- **Undo limit** — ComboBox: 50, 100, 200, 500. UndoManager.MaxHistoryLimit trims stack on EndTransaction.
+
+**Files**
+- MainViewModel.cs (GridColor, CheckerboardColor1/2, UndoHistoryLimit, brushes)
+- UndoManager.cs (MaxHistoryLimit, List for undo stack to support trim)
+- SettingsDialog.xaml, SettingsDialog.xaml.cs
+- MainWindow.xaml (CheckerboardBrush, GridColorBrush bindings; ⚙ button)
+
+---
+
 ## 2026-02-25 — QoL batch 2: Recent Colors, Swap, Zoom-to-cursor, Fit, Quick Export
 
 **What**

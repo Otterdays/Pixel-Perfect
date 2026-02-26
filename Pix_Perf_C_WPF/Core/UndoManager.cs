@@ -60,9 +60,12 @@ public class UndoTransaction
 
 public class UndoManager
 {
-    private readonly Stack<UndoTransaction> _undoStack = new();
+    private readonly List<UndoTransaction> _undoStack = new();
     private readonly Stack<UndoTransaction> _redoStack = new();
     private UndoTransaction? _currentTransaction;
+
+    /// <summary>Max undo steps. Excess oldest entries are dropped. Default 100.</summary>
+    public int MaxHistoryLimit { get; set; } = 100;
 
     /// <summary>Fired when undo/redo stacks change. Use to refresh command CanExecute.</summary>
     public event System.Action? StackChanged;
@@ -76,7 +79,9 @@ public class UndoManager
     {
         if (_currentTransaction != null && _currentTransaction.HasChanges)
         {
-            _undoStack.Push(_currentTransaction);
+            _undoStack.Insert(0, _currentTransaction);
+            while (_undoStack.Count > MaxHistoryLimit)
+                _undoStack.RemoveAt(_undoStack.Count - 1);
             _redoStack.Clear();
             StackChanged?.Invoke();
         }
@@ -95,7 +100,8 @@ public class UndoManager
     {
         if (CanUndo)
         {
-            var tx = _undoStack.Pop();
+            var tx = _undoStack[0];
+            _undoStack.RemoveAt(0);
             tx.Undo();
             _redoStack.Push(tx);
             StackChanged?.Invoke();
@@ -108,7 +114,7 @@ public class UndoManager
         {
             var tx = _redoStack.Pop();
             tx.Redo();
-            _undoStack.Push(tx);
+            _undoStack.Insert(0, tx);
             StackChanged?.Invoke();
         }
     }

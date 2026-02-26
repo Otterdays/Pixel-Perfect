@@ -8,6 +8,8 @@
 
 ## Doc updates (add at top)
 
+- **2026-02-25 — Settings panel**: Settings dialog (⚙ toolbar button) with grid color, checkerboard colors (presets: Dark, Light, Contrast), undo history limit (50/100/200/500). MainViewModel: GridColor, CheckerboardColor1/2, UndoHistoryLimit; GridColorBrush, CheckerboardBrush bound in MainWindow. UndoManager.MaxHistoryLimit trims stack on EndTransaction.
+- **2026-02-25 — PARITY: Settings, Grid, Undo gaps**: Added Grid & Background and Settings Panel sections. Gaps: grid color (hardcoded #404040), checkerboard colors (hardcoded), undo limit (100, no UI). Recommended: minimal settings panel for grid/checkerboard/undo. See docs/MAX_SETTINGS for full catalog.
 - **2026-02-25 — QoL batch 2**: Recent Colors (8 slots, from palette/eyedropper); Swap colors (X key, primary/secondary); [ ] brush size; Zoom to cursor (Ctrl+wheel); Fit/100% buttons; Status bar tool name; Quick Export (Ctrl+Shift+E to Desktop). Secondary color swatch next to primary; click secondary to swap.
 - **2026-02-25 — Assets in build**: All `assets/palettes/*.json` (16 palettes) are Content items with `CopyToOutputDirectory=PreserveNewest`. Included in `dotnet build` and `dotnet publish` output. PaletteLoader reads from exe dir + `assets/palettes/`. README notes this.
 - **2026-02-25 — Fruit & Veggies palette**: Added `assets/palettes/fruit_and_veggies.json` with 12 sections (Tomato, Orange, Lemon, Apple, Grape, Carrot, Lettuce, Broccoli, Corn, Eggplant, Pepper, Root). 96 colors for food pixel art.
@@ -39,8 +41,8 @@
 - [x] ThemeService + runtime switching via toolbar ComboBox
 
 ### Backlog
+- [ ] Color picker in Settings (custom grid/checkerboard colors)
 - [ ] Color Wheel (HSV picker)
-- [ ] Recent Colors
 - [ ] Animation timeline
 
 ---
