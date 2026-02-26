@@ -15,6 +15,61 @@
     <Window.Resources>
         <converters:PixelColorToBrushConverter x:Key="PixelColorToBrushConverter"/>
         <converters:NegateConverter x:Key="NegateConverter"/>
+        <converters:InverseZoomConverter x:Key="InverseZoomConverter"/>
+        <converters:ColorSwatchToolTipConverter x:Key="ColorSwatchToolTipConverter"/>
+        
+        <!-- Styled tooltip: title, short desc, nitty gritty -->
+        <DataTemplate x:Key="ColorSwatchToolTipTemplate" DataType="converters:ColorSwatchToolTipContent">
+            <StackPanel MaxWidth="260">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"
+                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding ShortDescription}" FontSize="11" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondary}" Opacity="0.95" Margin="0,0,0,6"/>
+                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,4" Opacity="0.6"/>
+                <TextBlock Text="{Binding Details}" FontSize="10" FontFamily="Consolas"
+                           Foreground="{DynamicResource TextSecondary}" Opacity="0.85"/>
+            </StackPanel>
+        </DataTemplate>
+        
+        <Style x:Key="StyledToolTip" TargetType="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="HasDropShadow" Value="True"/>
+        </Style>
+        
+        <!-- Tool tooltips: title, short desc, nitty gritty -->
+        <converters:ColorSwatchToolTipContent x:Key="BrushToolTipContent"
+            Title="Brush (B)" ShortDescription="Draw pixels. Click or drag on the canvas."
+            Details="Variable size (1–32px). Uses current color."/>
+        <converters:ColorSwatchToolTipContent x:Key="EraserToolTipContent"
+            Title="Eraser (E)" ShortDescription="Remove pixels. Makes them transparent."
+            Details="Variable size. Same hotkey as brush size."/>
+        <converters:ColorSwatchToolTipContent x:Key="FillToolTipContent"
+            Title="Fill (F)" ShortDescription="Flood-fill an area with the current color."
+            Details="Click inside a closed region. Replaces matching connected pixels."/>
+        <converters:ColorSwatchToolTipContent x:Key="EyedropperToolTipContent"
+            Title="Eyedropper (I)" ShortDescription="Pick a color from the canvas."
+            Details="Left-click: pick. Right-click: pick composite (all layers)."/>
+        <converters:ColorSwatchToolTipContent x:Key="LineToolTipContent"
+            Title="Line (L)" ShortDescription="Draw straight lines."
+            Details="Drag from start to end. Live preview."/>
+        <converters:ColorSwatchToolTipContent x:Key="RectangleToolTipContent"
+            Title="Rectangle (R)" ShortDescription="Draw rectangles. Outline or filled."
+            Details="Drag to set size. Toggle fill in options."/>
+        <converters:ColorSwatchToolTipContent x:Key="CircleToolTipContent"
+            Title="Circle (C)" ShortDescription="Draw circles/ellipses."
+            Details="Drag for radius. Outline or filled."/>
+        <converters:ColorSwatchToolTipContent x:Key="PanToolTipContent"
+            Title="Pan (P)" ShortDescription="Move the view without drawing."
+            Details="Drag canvas. Also: middle mouse or Space+drag."/>
+        <converters:ColorSwatchToolTipContent x:Key="SelectionToolTipContent"
+            Title="Selection (S)" ShortDescription="Select a rectangle to copy, cut, or move."
+            Details="Drag to select. Then Copy/Cut/Paste/Delete."/>
+        <converters:ColorSwatchToolTipContent x:Key="MoveToolTipContent"
+            Title="Move (M)" ShortDescription="Move the current selection."
+            Details="Drag selection. Non-destructive; keeps background."/>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -38,6 +93,8 @@
         <KeyBinding Modifiers="Ctrl" Key="V" Command="{Binding PasteCommand}"/>
         <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
         <KeyBinding Key="Back" Command="{Binding DeleteCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding EscapeCommand}"/>
+        <KeyBinding Key="F11" Command="{Binding ToggleFullscreenCommand}"/>
     </Window.InputBindings>
 
     <Grid>
@@ -52,12 +109,18 @@
             <StackPanel Orientation="Horizontal" Margin="8,4">
                 <Button Content="New" Style="{DynamicResource ToolButton}" Command="{Binding NewCanvasCommand}" Margin="0,0,4,0"/>
                 <Button Content="Open" Style="{DynamicResource ToolButton}" Margin="0,0,4,0"/>
-                <Button Content="Save" Style="{DynamicResource ToolButton}" Margin="0,0,16,0" Command="{Binding SaveCommand}" ToolTip="Save to PNG (Ctrl+S)"/>
+                <Button Content="Save" Style="{DynamicResource ToolButton}" Margin="0,0,4,0" Command="{Binding SaveCommand}" ToolTip="Save to PNG (Ctrl+S)"/>
+                <Button Content="↶" Style="{DynamicResource ToolButton}" Command="{Binding UndoCommand}" Margin="0,0,2,0" Width="28" ToolTip="Undo (Ctrl+Z)"/>
+                <Button Content="↷" Style="{DynamicResource ToolButton}" Command="{Binding RedoCommand}" Margin="0,0,4,0" Width="28" ToolTip="Redo (Ctrl+Y)"/>
+                <TextBlock Text="Export:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ComboBox ItemsSource="{Binding ExportScaleOptions}" SelectedItem="{Binding ExportScale, Mode=TwoWay}"
+                          Width="50" VerticalAlignment="Center" ToolTip="PNG export scale (1×–8×)"/>
                 
                 <Separator Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4,16,4"/>
 
-                <Button Content="Grid" Style="{DynamicResource ToolButton}" Command="{Binding ToggleGridCommand}"
-                        ToolTip="Toggle grid overlay (G)" Margin="0,0,16,0"/>
+                <ToggleButton Content="Grid" Style="{DynamicResource ToolToggleButton}"
+                              IsChecked="{Binding ShowGrid, Mode=TwoWay}"
+                              ToolTip="Toggle grid overlay (G)" Margin="0,0,16,0"/>
                 
                 <TextBlock Text="Zoom:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox ItemsSource="{Binding ZoomLevels}" 
@@ -94,26 +157,36 @@
                         <Slider Grid.Column="1" Minimum="1" Maximum="32" Value="{Binding BrushSize}" VerticalAlignment="Center" ToolTip="Brush/Eraser size (px)"/>
                     </Grid>
                     <UniformGrid Columns="4" Margin="0,0,0,16">
-                        <Button Content="✏️" Style="{DynamicResource ToolButton}" Command="{Binding SelectBrushCommand}" 
-                                ToolTip="Brush (B)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="🧹" Style="{DynamicResource ToolButton}" Command="{Binding SelectEraserCommand}" 
-                                ToolTip="Eraser (E)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="🪣" Style="{DynamicResource ToolButton}" Command="{Binding SelectFillCommand}" 
-                                ToolTip="Fill (F)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="💧" Style="{DynamicResource ToolButton}" Command="{Binding SelectEyedropperCommand}" 
-                                ToolTip="Eyedropper (I)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="📏" Style="{DynamicResource ToolButton}" Command="{Binding SelectLineCommand}" 
-                                ToolTip="Line (L)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⬛" Style="{DynamicResource ToolButton}" Command="{Binding SelectRectangleCommand}" 
-                                ToolTip="Rectangle (R)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⚪" Style="{DynamicResource ToolButton}" Command="{Binding SelectCircleCommand}" 
-                                ToolTip="Circle (C)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="✋" Style="{DynamicResource ToolButton}" Command="{Binding SelectPanCommand}" 
-                                ToolTip="Pan (P)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="⬚" Style="{DynamicResource ToolButton}" Command="{Binding SelectSelectionCommand}" 
-                                ToolTip="Selection (S)" Width="36" Height="36" Margin="2"/>
-                        <Button Content="✥" Style="{DynamicResource ToolButton}" Command="{Binding SelectMoveCommand}" 
-                                ToolTip="Move (M)" Width="36" Height="36" Margin="2"/>
+                        <Button Content="✏️" Style="{DynamicResource ToolButton}" Command="{Binding SelectBrushCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource BrushToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="🧹" Style="{DynamicResource ToolButton}" Command="{Binding SelectEraserCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource EraserToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="🪣" Style="{DynamicResource ToolButton}" Command="{Binding SelectFillCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource FillToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="💧" Style="{DynamicResource ToolButton}" Command="{Binding SelectEyedropperCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource EyedropperToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="📏" Style="{DynamicResource ToolButton}" Command="{Binding SelectLineCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource LineToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="⬛" Style="{DynamicResource ToolButton}" Command="{Binding SelectRectangleCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource RectangleToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="⚪" Style="{DynamicResource ToolButton}" Command="{Binding SelectCircleCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource CircleToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="✋" Style="{DynamicResource ToolButton}" Command="{Binding SelectPanCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource PanToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="⬚" Style="{DynamicResource ToolButton}" Command="{Binding SelectSelectionCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource SelectionToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
+                        <Button Content="✥" Style="{DynamicResource ToolButton}" Command="{Binding SelectMoveCommand}" Width="36" Height="36" Margin="2">
+                            <Button.ToolTip><ToolTip Style="{StaticResource StyledToolTip}" Content="{StaticResource MoveToolTipContent}" ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/></Button.ToolTip>
+                        </Button>
                     </UniformGrid>
                     
                     <!-- Color Section -->
@@ -122,29 +195,53 @@
                     <Border Width="64" Height="64" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2" CornerRadius="4" HorizontalAlignment="Left" Background="{Binding CurrentColor, Converter={StaticResource PixelColorToBrushConverter}}">
                     </Border>
                     
-                    <!-- Palette Colors -->
-                    <TextBlock Text="Palette" Foreground="{DynamicResource TextSecondary}" Margin="0,16,0,8"/>
-                    <ItemsControl ItemsSource="{Binding PaletteColors}" Margin="0,0,0,8">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="8"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="24" Height="24" Margin="2"
-                                        Background="{Binding Converter={StaticResource PixelColorToBrushConverter}}"
-                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                        Cursor="Hand">
-                                    <Border.InputBindings>
-                                        <MouseBinding MouseAction="LeftClick"
-                                                      Command="{Binding DataContext.SelectPaletteColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                      CommandParameter="{Binding}"/>
-                                    </Border.InputBindings>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- Palette Colors (sectioned) -->
+                    <TextBlock Text="Palette" Foreground="{DynamicResource TextSecondary}" Margin="0,16,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailablePalettes}"
+                              SelectedItem="{Binding SelectedPalette, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              Margin="0,0,0,8" VerticalAlignment="Center"
+                              ToolTip="Select color palette (SNES Classic + custom JSON from assets/palettes)"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320" Margin="0,0,0,8">
+                        <ItemsControl ItemsSource="{Binding PaletteSections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="0,0,0,6" Margin="0,0,0,6" Opacity="0.7">
+                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource TextSecondary}"
+                                                       FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <ItemsControl ItemsSource="{Binding Colors}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="8"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="24" Height="24" Margin="2"
+                                                            Background="{Binding Converter={StaticResource PixelColorToBrushConverter}}"
+                                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                                            Cursor="Hand">
+                                                        <Border.ToolTip>
+                                                            <ToolTip Style="{StaticResource StyledToolTip}"
+                                                                     Content="{Binding Converter={StaticResource ColorSwatchToolTipConverter}}"
+                                                                     ContentTemplate="{StaticResource ColorSwatchToolTipTemplate}"/>
+                                                        </Border.ToolTip>
+                                                        <Border.InputBindings>
+                                                            <MouseBinding MouseAction="LeftClick"
+                                                                          Command="{Binding DataContext.SelectPaletteColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                          CommandParameter="{Binding}"/>
+                                                        </Border.InputBindings>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </StackPanel>
             </Grid>
             
@@ -196,7 +293,7 @@
                                MouseMove="CanvasImage_MouseMove"
                                MouseUp="CanvasImage_MouseUp">
                         </Image>
-                        <!-- Grid overlay: black lines at pixel boundaries -->
+                        <!-- Grid overlay: lines at pixel boundaries; thickness 1/Zoom so they stay ~1px on screen -->
                         <ItemsControl ItemsSource="{Binding GridOverlayLines}" IsHitTestVisible="False">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -206,7 +303,8 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}"
-                                          Stroke="#404040" StrokeThickness="1"/>
+                                          Stroke="#404040"
+                                          StrokeThickness="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseZoomConverter}}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -217,10 +315,24 @@
             <!-- Right Panel - Layers -->
             <Grid Grid.Column="2" Background="{DynamicResource BackgroundSecondary}" Margin="4">
                 <StackPanel Margin="8">
-                    <Grid>
-                        <TextBlock Text="Layers" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold"/>
-                        <Button Content="+" Style="{DynamicResource ToolButton}" Command="{Binding AddLayerCommand}"
-                                HorizontalAlignment="Right" Width="24" Height="24"/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Layers" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Content="+" Style="{DynamicResource ToolButton}" Command="{Binding AddLayerCommand}"
+                                    Width="24" Height="24" Margin="0,0,2,0" ToolTip="Add layer"/>
+                            <Button Content="−" Style="{DynamicResource ToolButton}" Command="{Binding RemoveLayerCommand}"
+                                    Width="24" Height="24" Margin="0,0,2,0" ToolTip="Delete layer"/>
+                            <Button Content="⤴" Style="{DynamicResource ToolButton}" Command="{Binding MoveLayerUpCommand}"
+                                    Width="24" Height="24" Margin="0,0,2,0" ToolTip="Move layer up"/>
+                            <Button Content="⤵" Style="{DynamicResource ToolButton}" Command="{Binding MoveLayerDownCommand}"
+                                    Width="24" Height="24" Margin="0,0,2,0" ToolTip="Move layer down"/>
+                            <Button Content="⊕" Style="{DynamicResource ToolButton}" Command="{Binding DuplicateLayerCommand}"
+                                    Width="24" Height="24" ToolTip="Duplicate layer"/>
+                        </StackPanel>
                     </Grid>
                     
                     <ListBox ItemsSource="{Binding Canvas.Layers}" 

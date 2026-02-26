@@ -11,7 +11,19 @@ public class PixelCanvas
     public int Width { get; }
     public int Height { get; }
     public ObservableCollection<Layer> Layers { get; } = new();
-    public int ActiveLayerIndex { get; set; } = 0;
+    
+    private int _activeLayerIndex;
+    public int ActiveLayerIndex
+    {
+        get => _activeLayerIndex;
+        set
+        {
+            if (_activeLayerIndex == value) return;
+            _activeLayerIndex = value;
+            ActiveLayerIndexChanged?.Invoke();
+        }
+    }
+    public event System.Action? ActiveLayerIndexChanged;
     
     public event System.Action<Layer, int, int, PixelColor, PixelColor>? PixelChanged;
     

@@ -7,13 +7,18 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("cave.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("crystals.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("curse_of_aros.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("definya.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("gems.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("grass.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hair_colors.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("heartwood_online.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("kakele_online.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("minerals.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("old_school_runescape.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("ores.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("rucoy_online.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("skin_tones.json")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("snes_classic.json")]

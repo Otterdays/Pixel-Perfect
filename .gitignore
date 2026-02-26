@@ -124,6 +124,10 @@ BUILDER/*.spec
 BUILDER/release/
 BUILDER/dist/
 
+# .NET / C# build outputs (bin, obj, debug)
+**/bin/
+**/obj/
+
 # Executables - exclude from git (too large)
 *.exe
 

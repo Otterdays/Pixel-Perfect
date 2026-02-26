@@ -15,16 +15,16 @@
 | # | Feature | Effort | Category | Notes |
 |---|---------|--------|----------|-------|
 | 1 | Symmetry X/Y Toggle UI | DONE | Tools | Sym X, Sym Y ToggleButtons in MainWindow.xaml (lines 121–157) |
-| 2 | Undo/Redo Toolbar Buttons | Easy | UI | Shortcuts exist; add visible buttons next to Save |
-| 3 | PNG Export Scale Dropdown | Easy | Export | 1×, 2×, 4×, 8× — FileService already supports scale |
-| 4 | Escape to Cancel Paste | Easy | UX | KeyBinding when `_isPasteMode` |
-| 5 | Escape to Deselect | Easy | Selection | Clear selection when Escape pressed |
-| 6 | Layer Delete Button | Easy | Layers | PixelCanvas.RemoveLayer exists — add "-" button |
-| 7 | Layer Duplicate | Easy | Layers | Clone active layer, insert above |
-| 8 | Layer Reorder (Up/Down) | Easy | Layers | MoveLayerUp/Down exist — add ↑↓ buttons per layer |
+| 2 | Undo/Redo Toolbar Buttons | DONE | UI | ↶ ↷ buttons next to Save; CanExecute from UndoManager.StackChanged |
+| 3 | PNG Export Scale Dropdown | DONE | Export | ComboBox 1×–8× in toolbar; FileService.ExportToPng(scale) |
+| 4 | Escape to Cancel Paste | DONE | UX | EscapeCommand: cancel paste or deselect (priority order) |
+| 5 | Escape to Deselect | DONE | Selection | Part of EscapeCommand |
+| 6 | Layer Delete Button | DONE | Layers | − button in Layers header; RemoveLayerCommand |
+| 7 | Layer Duplicate | DONE | Layers | ⊕ button; DuplicateLayerCommand, InsertLayer |
+| 8 | Layer Reorder (Up/Down) | DONE | Layers | ⤴ ⤵ buttons in Layers header; MoveLayerUp/Down |
 | 9 | Eyedropper Ignore Transparent | Easy | Tools | Don't pick transparent; skip or use underlying |
-| 10 | Status Bar Zoom % | Easy | UI | Append " | 1600%" to status when zoomed |
-| 11 | Fullscreen (F11) | Easy | UI | Toggle WindowState |
+| 10 | Status Bar Zoom % | DONE | UI | StatusText includes " | {Zoom*100}%" on coord display |
+| 11 | Fullscreen (F11) | DONE | UI | KeyBinding F11 → ToggleFullscreenCommand |
 | 12 | Right-Click Context Menu | Medium | UX | Copy/Cut/Paste/Delete, tool switch, zoom fit |
 | 13 | Fit/100% Zoom Buttons | Medium | Canvas | Fit canvas to viewport; 100% = 1× zoom |
 | 14 | Zoom to Cursor (Ctrl+wheel) | DONE | Canvas | Ctrl+wheel zooms toward cursor (Feb 2026) |
@@ -39,7 +39,7 @@
 | 23 | Window title shows canvas size | DONE | UI | WindowTitle bound; updates on New/Open (Sprint 3 — Feb 2026) |
 | 24 | Current tool in status bar | DONE | UI | StatusDisplayText includes tool name (Sprint 3 — Feb 2026) |
 | 25 | Clear layer / Clear canvas | DONE | Canvas | ⌫ button in Layers panel; undoable (Sprint 3 — Feb 2026) |
-| 26 | Save default filename | DONE | File | SaveFileDialog.FileName = Canvas WxH.png (Sprint 3 — Feb 2026) |
+| 26 | Save default filename | DONE | File | SaveFileDialog.FileName = Canvas WxH.png (Feb 2026) |
 | 27 | Crosshair cursor on canvas | DONE | UX | CanvasCursor binding when drawing tool active (Sprint 3 — Feb 2026) |
 | 28 | Hex color in status or tooltip | DONE | Color | CurrentColorHex tooltip on color swatch (Sprint 3 — Feb 2026) |
 

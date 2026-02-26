@@ -1,5 +1,10 @@
 # Pixel Perfect - Changelog
 
+## Documentation & Repo Cleanup - February 25, 2026
+- **README condensed** — Last 5 versions in Latest Updates; full version history linked to CHANGELOG
+- **Monetization moved** — Removed from README; full content in [docs/MONETIZATION.md](MONETIZATION.md)
+- **.gitignore** — Added `**/bin/` and `**/obj/` for .NET build outputs
+
 ## Version 2.9.0 - Canvas Expanded
 **Date**: February 19, 2026  
 **Type**: Major Feature & Performance Release

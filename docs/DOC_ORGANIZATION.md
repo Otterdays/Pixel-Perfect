@@ -20,7 +20,8 @@ Located in `docs/` - These are the primary reference documents:
 7. **SUMMARY.md** - Feature summary and current status
 8. **SUGGESTIONS.md** - Feature suggestions and future enhancements
 9. **MAX_SETTINGS.md** - Comprehensive settings catalog (127 settings across 14 categories)
-10. **style_guide.md** - UI design system and patterns
+10. **MONETIZATION.md** - Future commercial licensing and pricing plans (internal)
+11. **style_guide.md** - UI design system and patterns
 
 ### Feature Documentation
 

@@ -20,18 +20,43 @@ public static class PaletteLoader
         AllowTrailingCommas = true
     };
 
+    /// <summary>One section within a palette (title + color list).</summary>
+    public sealed class PaletteSection
+    {
+        public string Title { get; }
+        public IReadOnlyList<PixelColor> Colors { get; }
+
+        public PaletteSection(string title, IReadOnlyList<PixelColor> colors)
+        {
+            Title = title ?? string.Empty;
+            Colors = colors ?? Array.Empty<PixelColor>();
+        }
+    }
+
     /// <summary>
-    /// Palette entry with name and colors
+    /// Palette entry with name, flat colors, and optional sections for UI grouping.
     /// </summary>
     public sealed class PaletteEntry
     {
         public string Name { get; }
         public IReadOnlyList<PixelColor> Colors { get; }
+        public IReadOnlyList<PaletteSection> Sections { get; }
 
         public PaletteEntry(string name, IReadOnlyList<PixelColor> colors)
         {
             Name = name;
-            Colors = colors;
+            Colors = colors ?? Array.Empty<PixelColor>();
+            Sections = new List<PaletteSection> { new PaletteSection("Colors", Colors) };
+        }
+
+        public PaletteEntry(string name, IReadOnlyList<PaletteSection> sections)
+        {
+            Name = name;
+            var list = new List<PixelColor>();
+            foreach (var s in sections ?? Array.Empty<PaletteSection>())
+                list.AddRange(s.Colors);
+            Colors = list;
+            Sections = sections ?? Array.Empty<PaletteSection>();
         }
     }
 
@@ -85,7 +110,8 @@ public static class PaletteLoader
 
     /// <summary>
     /// Loads a single palette from a JSON file.
-    /// Expected format: {"name":"...","colors":[[r,g,b,a],...]}
+    /// Format: {"name":"...","colors":[[r,g,b,a],...]} or
+    /// {"name":"...","sections":[{"title":"Section Name","colors":[[r,g,b,a],...]},...]}
     /// </summary>
     public static PaletteEntry? LoadFromFile(string filePath)
     {
@@ -97,9 +123,31 @@ public static class PaletteLoader
             ? nameProp.GetString() ?? Path.GetFileNameWithoutExtension(filePath)
             : Path.GetFileNameWithoutExtension(filePath);
 
+        if (root.TryGetProperty("sections", out var sectionsProp))
+        {
+            var sections = new List<PaletteSection>();
+            foreach (var secEl in sectionsProp.EnumerateArray())
+            {
+                var title = secEl.TryGetProperty("title", out var t) ? t.GetString() ?? "Colors" : "Colors";
+                if (!secEl.TryGetProperty("colors", out var secColors))
+                    continue;
+                var colors = ParseColorArray(secColors);
+                if (colors.Count > 0)
+                    sections.Add(new PaletteSection(title, colors));
+            }
+            if (sections.Count > 0)
+                return new PaletteEntry(name, sections);
+        }
+
         if (!root.TryGetProperty("colors", out var colorsProp))
             return null;
 
+        var flat = ParseColorArray(colorsProp);
+        return flat.Count > 0 ? new PaletteEntry(name, flat) : null;
+    }
+
+    private static List<PixelColor> ParseColorArray(JsonElement colorsProp)
+    {
         var colors = new List<PixelColor>();
         foreach (var arr in colorsProp.EnumerateArray())
         {
@@ -114,7 +162,6 @@ public static class PaletteLoader
                     a));
             }
         }
-
-        return colors.Count > 0 ? new PaletteEntry(name, colors) : null;
+        return colors;
     }
 }

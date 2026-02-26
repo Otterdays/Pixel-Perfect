@@ -62,8 +62,27 @@ public partial class MainViewModel : ObservableObject
     // Zoom levels
     public int[] ZoomLevels { get; } = { 1, 2, 4, 8, 16, 24, 32, 48, 64 };
 
-    // Palette for color picker
-    public IReadOnlyList<PixelColor> PaletteColors => Palette.SnesClassic;
+    // Export scale options for PNG
+    public int[] ExportScaleOptions { get; } = { 1, 2, 4, 8 };
+
+    [ObservableProperty]
+    private int _exportScale = 1;
+
+    // Palette for color picker — load from PaletteLoader (SNES Classic + assets/palettes/*.json)
+    public IReadOnlyList<PaletteLoader.PaletteEntry> AvailablePalettes { get; } = new List<PaletteLoader.PaletteEntry>(PaletteLoader.LoadAll());
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PaletteColors))]
+    [NotifyPropertyChangedFor(nameof(PaletteSections))]
+    private PaletteLoader.PaletteEntry? _selectedPalette;
+
+    public IReadOnlyList<PixelColor> PaletteColors => SelectedPalette?.Colors ?? Palette.SnesClassic;
+
+    /// <summary>Palette grouped by sections for UI (title + colors per section).</summary>
+    public IReadOnlyList<PaletteLoader.PaletteSection> PaletteSections =>
+        SelectedPalette != null
+            ? SelectedPalette.Sections
+            : new List<PaletteLoader.PaletteSection> { new PaletteLoader.PaletteSection("Colors", Palette.SnesClassic) };
     
     public UndoManager UndoManager { get; } = new();
 
@@ -135,12 +154,35 @@ public partial class MainViewModel : ObservableObject
         // Hook up eyedropper
         EyedropperTool.ColorPicked += color => CurrentColor = color;
         
+        // Default to first palette (SNES Classic)
+        if (AvailablePalettes.Count > 0)
+            SelectedPalette = AvailablePalettes[0];
+        
+        UndoManager.StackChanged += NotifyUndoRedoCanExecute;
+        NotifyUndoRedoCanExecute();
+        Canvas.ActiveLayerIndexChanged += NotifyLayerCommandsCanExecute;
+        NotifyLayerCommandsCanExecute();
+        
         // Initial render
         UpdateBitmap();
         RefreshGridOverlay();
     }
 
-    partial void OnCanvasChanged(PixelCanvas value) => RefreshGridOverlay();
+    partial void OnCanvasChanged(PixelCanvas value)
+    {
+        RefreshGridOverlay();
+        if (value != null)
+            value.ActiveLayerIndexChanged += NotifyLayerCommandsCanExecute;
+    }
+
+    partial void OnShowGridChanged(bool value) => RefreshGridOverlay();
+
+    private void NotifyLayerCommandsCanExecute()
+    {
+        RemoveLayerCommand.NotifyCanExecuteChanged();
+        MoveLayerUpCommand.NotifyCanExecuteChanged();
+        MoveLayerDownCommand.NotifyCanExecuteChanged();
+    }
 
     private void RefreshGridOverlay()
     {
@@ -352,18 +394,52 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"New canvas created ({width}×{height})";
     }
 
-    [RelayCommand]
+    private bool CanUndo() => UndoManager.CanUndo;
+    private bool CanRedo() => UndoManager.CanRedo;
+    private void NotifyUndoRedoCanExecute()
+    {
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
     {
         UndoManager.Undo();
         UpdateBitmap();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     private void Redo()
     {
         UndoManager.Redo();
         UpdateBitmap();
+    }
+
+    [RelayCommand]
+    private void Escape()
+    {
+        if (_isPasteMode)
+        {
+            _isPasteMode = false;
+            StatusText = "Paste cancelled";
+            UpdateBitmap();
+        }
+        else if (SelectionManager.HasSelection)
+        {
+            var layer = Canvas.ActiveLayer;
+            if (layer != null) ClearSelectionPixels(layer);
+            SelectionManager.ClearSelection();
+            NotifyClipboardCommandsCanExecute();
+            StatusText = "Selection cleared";
+            UpdateBitmap();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleFullscreen()
+    {
+        ToggleFullscreenRequested?.Invoke();
     }
 
     [RelayCommand]
@@ -373,16 +449,18 @@ public partial class MainViewModel : ObservableObject
         {
             Filter = "PNG Image (*.png)|*.png|All Files (*.*)|*.*",
             DefaultExt = "png",
-            Title = "Export Image"
+            Title = "Export Image",
+            FileName = $"Canvas {Canvas.Width}x{Canvas.Height}.png"
         };
 
         if (saveFileDialog.ShowDialog() == true)
         {
             try
             {
-                FileService.ExportToPng(Canvas, saveFileDialog.FileName, 1);
+                int scale = Math.Clamp(ExportScale, 1, 8);
+                FileService.ExportToPng(Canvas, saveFileDialog.FileName, scale);
                 IsDirty = false;
-                StatusText = $"Saved to {System.IO.Path.GetFileName(saveFileDialog.FileName)}";
+                StatusText = $"Saved {scale}× to {System.IO.Path.GetFileName(saveFileDialog.FileName)}";
             }
             catch (System.Exception ex)
             {
@@ -401,6 +479,49 @@ public partial class MainViewModel : ObservableObject
     {
         Canvas.AddLayer($"Layer {Canvas.Layers.Count + 1}");
         StatusText = $"Added layer {Canvas.Layers.Count}";
+    }
+
+    private bool CanRemoveLayer() => Canvas?.Layers.Count > 1;
+
+    [RelayCommand(CanExecute = nameof(CanRemoveLayer))]
+    private void RemoveLayer()
+    {
+        if (Canvas.Layers.Count <= 1) return;
+        Canvas.RemoveLayer(Canvas.ActiveLayerIndex);
+        StatusText = "Layer removed";
+        UpdateBitmap();
+    }
+
+    [RelayCommand]
+    private void DuplicateLayer()
+    {
+        var layer = Canvas.ActiveLayer;
+        if (layer == null) return;
+        var clone = layer.Clone();
+        clone.Name = $"Layer {Canvas.Layers.Count + 1} (copy)";
+        Canvas.InsertLayer(Canvas.ActiveLayerIndex + 1, clone);
+        StatusText = "Layer duplicated";
+        UpdateBitmap();
+    }
+
+    private bool CanMoveLayerUp() => Canvas?.ActiveLayerIndex > 0;
+
+    [RelayCommand(CanExecute = nameof(CanMoveLayerUp))]
+    private void MoveLayerUp()
+    {
+        if (Canvas.ActiveLayerIndex <= 0) return;
+        Canvas.MoveLayerUp(Canvas.ActiveLayerIndex);
+        StatusText = "Layer moved up";
+    }
+
+    private bool CanMoveLayerDown() => Canvas != null && Canvas.ActiveLayerIndex >= 0 && Canvas.ActiveLayerIndex < Canvas.Layers.Count - 1;
+
+    [RelayCommand(CanExecute = nameof(CanMoveLayerDown))]
+    private void MoveLayerDown()
+    {
+        if (Canvas.ActiveLayerIndex >= Canvas.Layers.Count - 1) return;
+        Canvas.MoveLayerDown(Canvas.ActiveLayerIndex);
+        StatusText = "Layer moved down";
     }
     
     public void HandleMouseDown(int canvasX, int canvasY)
@@ -427,7 +548,7 @@ public partial class MainViewModel : ObservableObject
             _pastePreviewX = canvasX;
             _pastePreviewY = canvasY;
             UpdateBitmap();
-            StatusText = $"Click to place at ({canvasX}, {canvasY})";
+            StatusText = $"Click to place at ({canvasX}, {canvasY}) | {Zoom * 100}%";
             return;
         }
         var layer = Canvas.ActiveLayer;
@@ -439,7 +560,7 @@ public partial class MainViewModel : ObservableObject
             UpdateBitmap();
         }
         
-        StatusText = $"({canvasX}, {canvasY})";
+        StatusText = $"({canvasX}, {canvasY}) | {Zoom * 100}%";
     }
     
     public void AddPanDelta(double deltaX, double deltaY)

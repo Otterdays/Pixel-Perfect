@@ -75,3 +75,8 @@ C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\refi
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\PixelPerfect.pdb
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\PixelPerfect.genruntimeconfig.cache
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\ref\PixelPerfect.dll
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\assets\palettes\cave.json
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\assets\palettes\crystals.json
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\assets\palettes\gems.json
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\assets\palettes\minerals.json
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\assets\palettes\ores.json

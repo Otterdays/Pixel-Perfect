@@ -5,6 +5,20 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.2.0] — February 2026 — Parity Features
 
+### Added (QoL batch — Feb 2026)
+- **Undo/Redo toolbar buttons** — ↶ ↷ next to Save; CanExecute from UndoManager.StackChanged
+- **Escape** — Cancel paste mode or clear selection (priority order)
+- **Fullscreen (F11)** — KeyBinding toggles WindowState
+- **Layer panel** — Delete (−), Duplicate (⊕), Move Up (⤴), Move Down (⤵) buttons
+- **PNG export scale** — ComboBox 1×–8× in toolbar; default filename `Canvas WxH.png`
+- **Status bar zoom %** — Coord display includes `| 1600%` when zoomed
+- **UndoManager.StackChanged** — Event for command CanExecute refresh
+- **PixelCanvas.ActiveLayerIndexChanged** — Event for layer command refresh
+
+### Fixed
+- **Grid overlay** — Grid no longer appears as a solid grey box at high zoom. Line thickness is now 1/Zoom in canvas space (`InverseZoomConverter`) so lines stay ~1 pixel on screen at any zoom level.
+- **Grid button state** — Toolbar Grid control is now a `ToggleButton` with `IsChecked` bound to `ShowGrid` and `ToolToggleButton` style so it stays visually highlighted when grid is on. G key still toggles via command.
+
 ### Added
 - **Theme System** — 6 themes with runtime switching: Dark (VS Code), Light, Nord, Dracula, Retro (phosphor amber), Catppuccin Mocha
 - **ThemeService** — Static service for swapping theme ResourceDictionaries at runtime
@@ -20,6 +34,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - **NewCanvasDialog** — Modal dialog for canvas size selection
 - **NegateConverter** — XAML converter for pan offset binding
 - **Palette** — SNES Classic 16-color palette
+- **Palette sections** — Optional `sections` in palette JSON (`title` + `colors` per section); UI shows sleek section titles above each group of swatches. Ores palette uses sections (Iron & neutrals, Copper, Gold, Bronze, Silver, Coal). Flat `colors`-only palettes display as one "Colors" section.
 
 ### Changed
 - **MainWindow** — DataContext set in code-behind to wire RequestNewCanvasSize callback

@@ -64,6 +64,9 @@ public class UndoManager
     private readonly Stack<UndoTransaction> _redoStack = new();
     private UndoTransaction? _currentTransaction;
 
+    /// <summary>Fired when undo/redo stacks change. Use to refresh command CanExecute.</summary>
+    public event System.Action? StackChanged;
+
     public void BeginTransaction()
     {
         _currentTransaction = new UndoTransaction();
@@ -75,6 +78,7 @@ public class UndoManager
         {
             _undoStack.Push(_currentTransaction);
             _redoStack.Clear();
+            StackChanged?.Invoke();
         }
         _currentTransaction = null;
     }
@@ -94,6 +98,7 @@ public class UndoManager
             var tx = _undoStack.Pop();
             tx.Undo();
             _redoStack.Push(tx);
+            StackChanged?.Invoke();
         }
     }
 
@@ -104,6 +109,7 @@ public class UndoManager
             var tx = _redoStack.Pop();
             tx.Redo();
             _undoStack.Push(tx);
+            StackChanged?.Invoke();
         }
     }
 
@@ -112,5 +118,6 @@ public class UndoManager
         _undoStack.Clear();
         _redoStack.Clear();
         _currentTransaction = null;
+        StackChanged?.Invoke();
     }
 }

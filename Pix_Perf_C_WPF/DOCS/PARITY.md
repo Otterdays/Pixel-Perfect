@@ -7,6 +7,12 @@
 
 ---
 
+## Doc updates (add at top)
+
+- **2026-02-25**: Grid overlay — Fixed grey-box bug (grid lines use 1/Zoom thickness via `InverseZoomConverter`). Grid toolbar button is a ToggleButton bound to `ShowGrid` and stays lit when on.
+
+---
+
 ## Parity Overview
 
 | Category | Python v2.9.0 | WPF v0.2.0 | Parity % |
@@ -54,7 +60,7 @@
 | Zoom | 0.25×–64× | 1×–64× | WPF: dropdown, NearestNeighbor |
 | Zoom to cursor | Ctrl+wheel | 🔲 | |
 | Fit/100% buttons | ✅ | 🔲 | |
-| Grid overlay | ✅ | ✅ | G key, toolbar |
+| Grid overlay | ✅ | ✅ | G key, toolbar; vector overlay, zoom-invariant 1px lines; toggle button stays lit when on |
 | Tile preview | 3×3 ghost | 🔲 | |
 | Checkerboard BG | ✅ | ✅ | WPF: XAML DrawingBrush |
 | Pan | Middle+Space+R | ✅ | Middle mouse, spacebar, Pan tool |
@@ -65,14 +71,14 @@
 
 | Feature | Python | WPF | Notes |
 |---------|--------|-----|------|
-| Add/Remove | ✅ | ✅ | WPF: always keep ≥1 |
+| Add/Remove | ✅ | ✅ | WPF: + − buttons; always keep ≥1 |
 | Visibility toggle | ✅ | ✅ | WPF: checkbox per layer |
 | Opacity | ✅ | ✅ | WPF: 0.0–1.0 |
 | Lock | ✅ | ✅ | WPF: IsLocked |
-| Reorder | ✅ | ✅ | WPF: MoveLayerUp/Down |
+| Reorder | ✅ | ✅ | WPF: ⤴ ⤵ buttons; MoveLayerUp/Down |
 | Active highlight | ✅ | ✅ | WPF: ItemContainerStyle |
 | Alpha compositing | ✅ | ✅ | Both: bottom-to-top blend |
-| Clone | ✅ | 🔲 | |
+| Clone | ✅ | ✅ | WPF: ⊕ Duplicate layer button |
 | Layer naming | ✅ | ✅ | WPF: default "Layer N" |
 
 ---
@@ -82,13 +88,13 @@
 | Feature | Python | WPF | Notes |
 |---------|--------|-----|------|
 | Current color preview | ✅ | ✅ | WPF: PixelColorToBrushConverter |
-| Grid view | 4-col palette | ✅ | SNES Classic 16-color palette |
+| Grid view | 4-col palette | ✅ | ComboBox to switch palettes; SNES Classic + assets/palettes/*.json |
 | Primary + variations | 8 mains + 24 var | 🔲 | |
 | Color Wheel | HSV picker | 🔲 | |
 | Constants | Used colors only | 🔲 | |
 | Saved Colors | 24 slots | 🔲 | |
 | Recent Colors | Last 16 | 🔲 | |
-| JSON palettes | 30+ palettes | 🔲 | |
+| JSON palettes | 30+ palettes | ✅ | PaletteLoader loads assets/palettes/*.json; ComboBox to switch |
 | Custom colors | 32 user | 🔲 | |
 
 ---
@@ -97,7 +103,7 @@
 
 | Feature | Python | WPF | Notes |
 |---------|--------|-----|------|
-| PNG export | 1×–8× scale | ✅ 1× | WPF: SaveCommand → FileService |
+| PNG export | 1×–8× scale | ✅ | Export scale dropdown (1×–8×); default filename Canvas WxH.png |
 | GIF export | Animated | 🔲 | |
 | Sprite sheet | H/V/Grid + JSON | 🔲 | |
 | Godot export | .tres/.tscn | 🔲 | |
@@ -147,9 +153,9 @@
 | Mini preview | Shift+P | 🔲 | |
 | Reference panel | Shift+R | 🔲 | |
 | 3D token preview | Shift+T | 🔲 | |
-| Fullscreen | F11 | 🔲 | |
+| Fullscreen | F11 | ✅ | KeyBinding F11 → ToggleFullscreenCommand |
 | Right-click context | ✅ | 🔲 | |
-| Copy/Paste shortcuts | Ctrl+C/V/X | 🔲 | |
+| Copy/Paste shortcuts | Ctrl+C/V/X | ✅ | Copy, Cut, Paste, Delete, Escape (cancel/deselect) |
 
 ---
 
