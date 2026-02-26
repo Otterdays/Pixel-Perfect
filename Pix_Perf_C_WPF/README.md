@@ -54,6 +54,8 @@ dotnet build      # Compile
 dotnet run        # Launch the application
 ```
 
+**Assets included in build:** All JSON palettes from `../assets/palettes/*.json` are copied to the output folder (`assets/palettes/` next to the exe) via the project's Content items. This includes SNES Classic, Gems, Minerals, Ores, Crystals, Cave, Hair Colors, Skin Tones, Grass, Fruit & Veggies, and game palettes (Curse of Aros, Definya, etc.). `dotnet publish` includes them in the publish output.
+
 ---
 
 ## Project Structure
