@@ -8,7 +8,7 @@
 
 ## Doc updates (add at top)
 
-- **2026-02-25 — GitHub Pages (no Actions)**: Site files (index.html, styles.css, script.js, assets/) copied to repo root. `.nojekyll` added to disable Jekyll. Removed `deploy-pages.yml` workflow. Use Settings > Pages > Source: **Deploy from a branch** (main, / (root)) — no Actions cost.
+- **2026-02-25 — GitHub Pages (no Actions)**: Site files (index.html, styles.css, script.js, assets/) in repo root. `.nojekyll` disables Jekyll. Removed `deploy-pages.yml` and `WEBPAGE/` folder. Use Settings > Pages > Source: **Deploy from a branch** (main, / (root)) — no Actions cost.
 - **2026-02-25 — Settings panel**: Settings dialog (⚙ toolbar button) with grid color, checkerboard colors (presets: Dark, Light, Contrast), undo history limit (50/100/200/500). MainViewModel: GridColor, CheckerboardColor1/2, UndoHistoryLimit; GridColorBrush, CheckerboardBrush bound in MainWindow. UndoManager.MaxHistoryLimit trims stack on EndTransaction.
 - **2026-02-25 — PARITY: Settings, Grid, Undo gaps**: Added Grid & Background and Settings Panel sections. Gaps: grid color (hardcoded #404040), checkerboard colors (hardcoded), undo limit (100, no UI). Recommended: minimal settings panel for grid/checkerboard/undo. See docs/MAX_SETTINGS for full catalog.
 - **2026-02-25 — QoL batch 2**: Recent Colors (8 slots, from palette/eyedropper); Swap colors (X key, primary/secondary); [ ] brush size; Zoom to cursor (Ctrl+wheel); Fit/100% buttons; Status bar tool name; Quick Export (Ctrl+Shift+E to Desktop). Secondary color swatch next to primary; click secondary to swap.
