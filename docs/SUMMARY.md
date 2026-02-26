@@ -1,14 +1,14 @@
 # Pixel Perfect - Project Summary
 
-## 🔄 C# WPF Rewrite In Progress
+## 🔄 C# WPF Rewrite
 **Location**: [`Pix_Perf_C_WPF/`](../Pix_Perf_C_WPF/)  
-**Status**: 🟡 Foundation Built (v0.2.3) — Parity In Progress  
+**Status**: 🟢 Primary Application (v3.1.0) — Feature Parity Advanced  
 **Last Updated**: February 25, 2026  
-A clean-slate C# / WPF rebuild targeting parity with Python v2.9.0. **10 tools** (Brush, Eraser, Fill, Eyedropper, Line, Rectangle, Circle, Selection, Move, Pan), canvas size presets, grid overlay, color picker, Copy/Cut/Paste/Delete, layer system, undo/redo, zoom, pan, PNG export, fully skinned dark-mode templates, **14 themes**, MVVM. See `Pix_Perf_C_WPF/DOCS/PARITY.md` for full parity tracker.
+A clean-slate C# / WPF rebuild. Includes **10 tools** (Brush, Eraser, Fill, Eyedropper, Line, Rectangle, Circle, Selection, Move, Pan), canvas size presets, grid overlay, color picker, Copy/Cut/Paste/Delete, layer system, undo/redo, zoom, pan, PNG export, fully skinned dark-mode templates, **14 themes**, MVVM, **Reference Photo Overlays**, and a fully interactive **3D Voxel Tokenizer**. See `Pix_Perf_C_WPF/DOCS/PARITY.md` for full parity tracker.
 
 ---
 
-## Python Version Status: PRODUCTION READY ✅
+## Python Version Status: LEGACY
 **Version**: 2.9.0  
 **Last Updated**: February 19, 2026 - Canvas Expanded
 

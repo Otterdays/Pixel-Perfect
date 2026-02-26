@@ -1,13 +1,36 @@
 # Pixel Perfect - Changelog
 
+## Version 3.1.0 (WPF Edition) - Flex Features Update
+**Date**: February 25, 2026
+**Type**: Major Feature Release
+
+### 🪙 3D Voxel Tokenizer
+- **Software voxel renderer**: Turns your canvas into an interactive 3D voxel model dynamically.
+- **Hardware Accelerated**: Fully utilizes WPF Viewport3D for performant rendering even with large canvases.
+- **Smart Grouping**: Color-grouped meshes eliminate draw calls, bypassing structural WPF limitations on thousands of elements.
+- **Zero-Allocation Ready**: Takes advantage of `FlattenToBuffer` rendering, seamlessly discarding transparent pixels.
+- **Live Rotation & Auto Spin**: Includes Y-axis animation and mouse X/Y tracking for free-cam view of the token.
+- **Adjustable Thickness**: Slider to dynamically raise and lower your voxel height instantly.
+
+### 🖼️ Reference Photo Overlay
+- **Seamless Backdrop**: Load any PNG/JPG into a unified semi-transparent canvas backdrop.
+- **Dedicated Controls**: A native Right Panel element provides independent scale, opacity, and X/Y offset sliders.
+
 ## Documentation & Repo Cleanup - February 25, 2026
 - **README condensed** — Last 5 versions in Latest Updates; full version history linked to CHANGELOG
 - **Monetization moved** — Removed from README; full content in [docs/MONETIZATION.md](MONETIZATION.md)
 - **.gitignore** — Added `**/bin/` and `**/obj/` for .NET build outputs
 
+## Version 3.0.0 (WPF Edition) - Foundation
+**Date**: February 25, 2026
+**Type**: Major Framework Rewrite
+
+### ⚡ .NET 8 / WPF Rewrite
+- **Complete transition from Python to C# WPF**.
+- **Hardware Accelerated**: Butterly-smooth continuous 60+ FPS on massive canvases.
+- **Native Experience**: Native Windows 10 & 11 integrations.
+
 ## Version 2.9.0 - Canvas Expanded
-**Date**: February 19, 2026  
-**Type**: Major Feature & Performance Release
 
 ### 📐 Bigger Canvas Sizes (New Presets)
 - **128×128 (HUGE)**: For scene tiles, large sprites, and tile sheets
