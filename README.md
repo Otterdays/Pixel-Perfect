@@ -7,7 +7,7 @@
 
 **by Diamond Clad Studios**
 
-**🔧 Core Stack**
+**🔧 Core Stack (Python)**
 
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Tkinter](https://img.shields.io/badge/Tkinter-Built--in-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/library/tkinter.html)
@@ -15,12 +15,27 @@
 [![Pillow](https://img.shields.io/badge/Pillow-Latest-4B8BBE?style=for-the-badge&logo=python&logoColor=white)](https://python-pillow.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-Latest-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
 
+**⚡ Core Stack (C# WPF Port)**
+
+[![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![.NET](https://img.shields.io/badge/.NET_8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![WPF](https://img.shields.io/badge/WPF-UI_Framework-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/)
+[![MVVM](https://img.shields.io/badge/MVVM_Toolkit-8.2.2-0078D4?style=for-the-badge&logo=nuget&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
+
 **💻 Platform & Tools**
 
 [![Windows](https://img.shields.io/badge/Windows-11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![PyInstaller](https://img.shields.io/badge/PyInstaller-6.0+-00BFFF?style=for-the-badge&logo=python&logoColor=white)](https://pyinstaller.org/)
 [![Git](https://img.shields.io/badge/Git-Version_Control-F05032?style=for-the-badge&logo=git&logoColor=white)](https://git-scm.com/)
 [![VS Code](https://img.shields.io/badge/VS_Code-Editor-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
+
+**🌐 Web & Integrations**
+
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Godot](https://img.shields.io/badge/Godot_Engine-478CBF?style=for-the-badge&logo=godotengine&logoColor=white)](https://godotengine.org/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
 
 **📦 Build & Deployment**
 
