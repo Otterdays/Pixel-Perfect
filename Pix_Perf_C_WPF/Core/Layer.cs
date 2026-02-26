@@ -1,3 +1,5 @@
+using System;
+
 namespace PixelPerfect.Core;
 
 /// <summary>
@@ -60,9 +62,8 @@ public class Layer
     
     public void Clear()
     {
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
-                _pixels[y, x] = PixelColor.Transparent;
+        // PixelColor is a struct where all-zeros == Transparent (A=0)
+        Array.Clear(_pixels);
     }
     
     /// <summary>
@@ -77,9 +78,7 @@ public class Layer
             IsLocked = IsLocked
         };
         
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
-                clone._pixels[y, x] = _pixels[y, x];
+        Array.Copy(_pixels, clone._pixels, _pixels.Length);
         
         return clone;
     }

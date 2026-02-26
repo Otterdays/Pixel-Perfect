@@ -814,14 +814,14 @@ kbd {
 
 .c-wpf-badge {
     font-size: 0.75rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    background: rgba(0, 120, 214, 0.2);
-    border: 1px solid rgba(0, 120, 214, 0.4);
-    border-radius: 4px;
-    color: var(--accent-blue);
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border: none;
 }
 
 /* Features Section */

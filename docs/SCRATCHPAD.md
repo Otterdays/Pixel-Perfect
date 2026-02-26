@@ -1,9 +1,63 @@
 # Pixel Perfect - Development Scratchpad
 
-**Last Updated**: February 23, 2026  
+**Last Updated**: February 25, 2026  
 **Current Version (Python)**: 2.9.0  
-**WPF Version**: 0.1.0 (Early Development)  
+**WPF Version**: 0.2.1 (Code Review Fixes)  
 **Status**: Python Production Ready — WPF Rewrite In Progress
+
+---
+
+## WPF Code Review & Fix Session (February 25, 2026)
+**Status**: ✅ COMPLETE
+
+Performed full codebase review of all C# WPF source files. Identified 20 issues across bugs, performance, and UX categories. Implemented 14 fixes in a single session:
+
+### Bugs Fixed (5)
+- Escape/Delete/Cut now wrap pixel deletion in undo transactions (data loss prevention)
+- FillTool scanline boundary-seeding (O(n²) → O(n) stack usage)
+- MagicWandTool upgraded from naïve BFS to scanline flood
+- Dead `TransformedBitmap` allocation removed from FileService export
+- Palette de-duplication now uses `(2)`, `(3)` suffixes
+
+### Performance Optimizations (8)
+- UndoManager: `List<T>` → `LinkedList<T>` (O(1) push/pop)
+- FlattenToBuffer: `double` → integer-only alpha blending (`>>8`)
+- CircleTool: class-level HashSet + integer multiply vs `Math.Pow`
+- SelectionManager: reuse `_backgroundPixels` during drag
+- Brush caching: `GridColorBrush`/`CheckerboardBrush` cached
+- `Layer.Clear()`: `Array.Clear` native memset
+- `Layer.Clone()`: `Array.Copy` native memcpy
+- MergeDown: `SetPixelRaw` to skip events
+
+### UX Improvements (2)
+- ZoomAtCursor snaps through ZoomLevels array (1,2,4,8,16…64)
+- Palette click no longer force-switches to Brush mid-workflow
+
+### Files Modified
+- `Core/UndoManager.cs` — LinkedList refactor
+- `Core/PixelCanvas.cs` — Integer alpha blend, SetPixelRaw in MergeDown
+- `Core/Layer.cs` — Array.Clear/Copy, added `using System`
+- `Core/Tools.cs` — FillTool, CircleTool, MagicWandTool fixes
+- `Core/SelectionManager.cs` — Background array reuse
+- `ViewModels/MainViewModel.cs` — Undo wrapping, brush caching, zoom levels, palette UX
+- `Services/FileService.cs` — Dead code removal
+- `Services/PaletteLoader.cs` — De-duplication with suffix
+- `DOCS/CHANGELOG.md` — v0.2.1 entry
+
+### Remaining (Not Implemented — Tracked for Future)
+- #13: RefreshGridOverlay ObservableCollection batching
+- #14: Render throttle on mouse drag (60fps cap)
+- #16: Dirty-region rendering (Novel)
+- #17: Async bitmap write with batching (Novel)
+- #18: Tool cursor preview Adorner layer (Novel UX)
+
+### Themes & Styling Refinement
+- **Theme Stability**: Fixed `ThemeService.cs` so swapping themes no longer drops `CommonStyles.xaml`.
+- **New Themes**: Added Monokai, One Dark, Tokyo Night, Solarized Dark, Solarized Light, Rose Pine to the WPF port.
+- **Control Templating**: Overhauled WPF basic controls in `CommonStyles.xaml` so they stop using default bright-white Windows chrome in dark themes:
+  - `ComboBox`: Full `ControlTemplate` with themed `Popup` and `ToggleButton`.
+  - `ScrollBar`: Full `ControlTemplate` for dark, minimalist scrollbars on all scrollable elements.
+  - `Slider`: Clean Track/Thumb template matching the accent colors.
 
 ---
 

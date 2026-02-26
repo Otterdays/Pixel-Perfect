@@ -83,3 +83,9 @@ C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\bin\Debug\net8.0-windows\asse
 C:\Users\home\Desktop\Pixel-Perfect\pix_perf_c_wpf\bin\Debug\net8.0-windows\assets\palettes\fruit_and_veggies.json
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Views\SettingsDialog.baml
 C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Views\SettingsDialog.g.cs
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\RosePineTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\SolarizedDarkTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\SolarizedLightTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\TokyoNightTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\MonokaiTheme.baml
+C:\Users\home\Desktop\Pixel-Perfect\Pix_Perf_C_WPF\obj\Debug\net8.0-windows\Themes\OneDarkTheme.baml

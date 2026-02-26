@@ -1,17 +1,18 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Gemini - Google Blue accents -->
-    <Color x:Key="BackgroundPrimaryColor">#1D2025</Color>
-    <Color x:Key="BackgroundSecondaryColor">#282C34</Color>
-    <Color x:Key="BackgroundTertiaryColor">#3A4049</Color>
-    <Color x:Key="AccentColor">#4285F4</Color>
-    <Color x:Key="AccentHoverColor">#8AB4F8</Color>
-    <Color x:Key="TextPrimaryColor">#E6E6E6</Color>
-    <Color x:Key="TextSecondaryColor">#B0B0B0</Color>
-    <Color x:Key="BorderColor">#3A4049</Color>
-    <Color x:Key="SelectionBgColor">#2F3945</Color>
-    <Color x:Key="SelectionBorderColor">#4285F4</Color>
-    <Color x:Key="HoverBgColor">#323844</Color>
+
+    <!-- Tokyo Night - deep navy + neon accents -->
+    <Color x:Key="BackgroundPrimaryColor">#1A1B26</Color>
+    <Color x:Key="BackgroundSecondaryColor">#24283B</Color>
+    <Color x:Key="BackgroundTertiaryColor">#2F334D</Color>
+    <Color x:Key="AccentColor">#7AA2F7</Color>
+    <Color x:Key="AccentHoverColor">#BB9AF7</Color>
+    <Color x:Key="TextPrimaryColor">#C0CAF5</Color>
+    <Color x:Key="TextSecondaryColor">#A9B1D6</Color>
+    <Color x:Key="BorderColor">#414868</Color>
+    <Color x:Key="SelectionBgColor">#2A3A60</Color>
+    <Color x:Key="SelectionBorderColor">#7AA2F7</Color>
+    <Color x:Key="HoverBgColor">#2B2F45</Color>
 
     <SolidColorBrush x:Key="BackgroundPrimary" Color="{StaticResource BackgroundPrimaryColor}"/>
     <SolidColorBrush x:Key="BackgroundSecondary" Color="{StaticResource BackgroundSecondaryColor}"/>
@@ -24,4 +25,5 @@
     <SolidColorBrush x:Key="SelectionBg" Color="{StaticResource SelectionBgColor}"/>
     <SolidColorBrush x:Key="SelectionBorder" Color="{StaticResource SelectionBorderColor}"/>
     <SolidColorBrush x:Key="HoverBg" Color="{StaticResource HoverBgColor}"/>
+
 </ResourceDictionary>

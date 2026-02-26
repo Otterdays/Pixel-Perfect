@@ -273,16 +273,21 @@ public class FillTool : ITool
             while (right < layer.Width - 1 && layer.GetPixel(right + 1, cy) == target)
                 right++;
             
-            // Fill the line
+            // Fill the line and push seeds only at boundary transitions
+            bool inAbove = false, inBelow = false;
             for (int i = left; i <= right; i++)
             {
                 layer.SetPixel(i, cy, replacement);
                 
-                // Check above and below
-                if (cy > 0 && layer.GetPixel(i, cy - 1) == target)
-                    stack.Push((i, cy - 1));
-                if (cy < layer.Height - 1 && layer.GetPixel(i, cy + 1) == target)
-                    stack.Push((i, cy + 1));
+                // Check above — only push at the start of a contiguous run
+                bool above = cy > 0 && layer.GetPixel(i, cy - 1) == target;
+                if (above && !inAbove) stack.Push((i, cy - 1));
+                inAbove = above;
+                
+                // Check below — only push at the start of a contiguous run
+                bool below = cy < layer.Height - 1 && layer.GetPixel(i, cy + 1) == target;
+                if (below && !inBelow) stack.Push((i, cy + 1));
+                inBelow = below;
             }
         }
     }
@@ -478,6 +483,7 @@ public class CircleTool : ITool, ISymmetricTool
     private int _startX, _startY;
     private bool _isDrawing;
     private Dictionary<(int x, int y), PixelColor> _savedPixels = new();
+    private readonly HashSet<(int, int)> _points = new();  // reused per draw
 
     public void OnMouseDown(Layer layer, int x, int y, PixelColor color)
     {
@@ -517,18 +523,18 @@ public class CircleTool : ITool, ISymmetricTool
         int x = r, y = 0;
         int err = 1 - x;
         
-        HashSet<(int, int)> points = new();
+        _points.Clear();  // reuse instead of re-allocating
 
         while (x >= y)
         {
-            points.Add((x + x0, y + y0));
-            points.Add((y + x0, x + y0));
-            points.Add((-x + x0, y + y0));
-            points.Add((-y + x0, x + y0));
-            points.Add((-x + x0, -y + y0));
-            points.Add((-y + x0, -x + y0));
-            points.Add((x + x0, -y + y0));
-            points.Add((y + x0, -x + y0));
+            _points.Add((x + x0, y + y0));
+            _points.Add((y + x0, x + y0));
+            _points.Add((-x + x0, y + y0));
+            _points.Add((-y + x0, x + y0));
+            _points.Add((-x + x0, -y + y0));
+            _points.Add((-y + x0, -x + y0));
+            _points.Add((x + x0, -y + y0));
+            _points.Add((y + x0, -x + y0));
             y++;
             if (err < 0)
             {
@@ -543,19 +549,21 @@ public class CircleTool : ITool, ISymmetricTool
 
         if (Fill && r > 0)
         {
+            int rSq = r * r;
             for (int cy = y0 - r; cy <= y0 + r; cy++)
             {
                 for (int cx = x0 - r; cx <= x0 + r; cx++)
                 {
-                    if (Math.Pow(cx - x0, 2) + Math.Pow(cy - y0, 2) <= r * r)
+                    int dx2 = cx - x0, dy2 = cy - y0;
+                    if (dx2 * dx2 + dy2 * dy2 <= rSq)
                     {
-                        points.Add((cx, cy));
+                        _points.Add((cx, cy));
                     }
                 }
             }
         }
 
-        foreach (var p in points)
+        foreach (var p in _points)
         {
             if (layer.IsInBounds(p.Item1, p.Item2))
             {
@@ -837,6 +845,7 @@ public class MagicWandTool : ITool
         var targetColor = layer.GetPixel(x, y);
         var selectedPoints = new HashSet<(int x, int y)>();
         
+        // Scanline-based flood for O(n) stack usage
         var stack = new Stack<(int x, int y)>();
         stack.Push((x, y));
         
@@ -848,13 +857,27 @@ public class MagicWandTool : ITool
             if (selectedPoints.Contains((cx, cy))) continue;
             if (layer.GetPixel(cx, cy) != targetColor) continue;
             
-            selectedPoints.Add((cx, cy));
+            // Find left/right extent of this run
+            int left = cx, right = cx;
+            while (left > 0 && !selectedPoints.Contains((left - 1, cy)) && layer.GetPixel(left - 1, cy) == targetColor)
+                left--;
+            while (right < layer.Width - 1 && !selectedPoints.Contains((right + 1, cy)) && layer.GetPixel(right + 1, cy) == targetColor)
+                right++;
             
-            // Push neighbors
-            if (cx > 0) stack.Push((cx - 1, cy));
-            if (cx < layer.Width - 1) stack.Push((cx + 1, cy));
-            if (cy > 0) stack.Push((cx, cy - 1));
-            if (cy < layer.Height - 1) stack.Push((cx, cy + 1));
+            // Mark the entire span and push seeds at boundary transitions
+            bool inAbove = false, inBelow = false;
+            for (int i = left; i <= right; i++)
+            {
+                selectedPoints.Add((i, cy));
+                
+                bool above = cy > 0 && !selectedPoints.Contains((i, cy - 1)) && layer.GetPixel(i, cy - 1) == targetColor;
+                if (above && !inAbove) stack.Push((i, cy - 1));
+                inAbove = above;
+                
+                bool below = cy < layer.Height - 1 && !selectedPoints.Contains((i, cy + 1)) && layer.GetPixel(i, cy + 1) == targetColor;
+                if (below && !inBelow) stack.Push((i, cy + 1));
+                inBelow = below;
+            }
         }
 
         if (selectedPoints.Count > 0)

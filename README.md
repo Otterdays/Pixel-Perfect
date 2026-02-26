@@ -84,34 +84,21 @@
 
 ## 🆕 Latest Updates
 
-### Version 2.7.4 - Smart Layer Caching
-- **⚡ Smart Layer Caching**: Intelligent layer compositor caching with multi-factor change detection
-- **Performance boost**: Eliminates redundant layer blending operations for faster multi-layer rendering
-- **Automatic detection**: Catches pixel changes through all code paths (version tracking + pixel hashing)
+### 🚀 C# WPF Port (v0.2.2) 
+- **⚡ Native Windows Build**: A fast, zero-allocation C# rewrite using WPF and MVVM Toolkit.
+- **🎨 14 Custom Themes**: Full dark-mode and light-mode themes with deeply skinned control templates.
+- **🛠️ Production Ready Features**: 10 drawing tools, lightning fast Undo engine, Settings, Layers, Quick Export. 
 
-### Version 2.7.3 - Theme, Tools & UI Polish
-- **🎨 Claude Theme**: New bright, warm theme (cream + coral) in theme dropdown.
-- **🖌️ Dither/Spray Previews**: Canvas checkerboard preview for Dither; spray circular outline.
-- **✏️ Eraser Right-Click**: Delete edge lines on canvas (right-click or right-drag).
-- **🧩 Minimalistic Panel Buttons**: Collapse/expand use small ‹/› chevrons; restore buttons centered.
-- **🐛 Canvas Recenter Fix**: Grid no longer stays off-center when opening panels after close.
+### Python Version 2.9.0 - Massive Canvases & 3D Tokens
+- **📏 128x128 & 256x256 Support**: Upgraded Pillow rendering engine allowing for massive sprite sheets.
+- **🪙 3D Token Preview**: Visualize your pixel art as interactive 3D voxel tokens. 
+- **🖼️ Reference Image Panel**: Load any image with adjustable opacity, pan, and zoom support to trace or reference.
+- **🤖 Godot Ready**: Auto-generate zero-spacing sprite sheets and `.tres` resources for instant Godot Engine use.
 
-### Version 2.7.2 - Quality of Life Enhancements
-- **🔍 Zoom to Cursor**: Ctrl+wheel now zooms while keeping cursor position centered in view.
-- **📐 Fit/100% View**: New toolbar buttons for quick canvas fitting and 100% zoom reset.
-- **📦 Export Presets**: Saveable export settings (scale, transparency, duration, layout) with JSON persistence.
-- **⚡ Quick Export**: Ctrl+Shift+E uses last export settings for instant re-export.
-- **🎨 Recent Colors**: Improved color selection reliability from Recent palette view.
-
-### Version 2.7.1 - Dither Tool & Recent Colors
-- **🏁 Dither Tool**: New checkerboard pattern brush for retro shading (draws pixels in `(x+y)%2` pattern).
-- **🎨 Recent Colors**: New palette view that tracks your last 16 used colors automatically.
-- **🔧 Undo System Refinements**: Critical fixes for transparent pixel restoration and edge tool support.
-
-### Version 2.7.0 - Performance & Features
-- **🧠 Delta-Based Undo**: 95% memory reduction for undo history (stores only changed pixels).
-- **⚡ Scanline Flood Fill**: 5-20x faster fill operations using optimized algorithms.
-- **⚡ Event Throttling**: Smoother mouse interactions and reduced CPU usage.
+### Python Version 2.8.0 - Dither & Reference
+- **🏁 Dither Tool**: Checkerboard pattern brush for authentic retro shading.
+- **🎨 Claude Theme**: Warm cream backgrounds with coral accents inspired by Anthropic's design language.
+- **🖱️ Right-Click Pan**: Hold + Drag right-click to natively pan the camera.
 
 ---
 

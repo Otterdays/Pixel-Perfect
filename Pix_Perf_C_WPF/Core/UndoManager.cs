@@ -60,7 +60,7 @@ public class UndoTransaction
 
 public class UndoManager
 {
-    private readonly List<UndoTransaction> _undoStack = new();
+    private readonly LinkedList<UndoTransaction> _undoStack = new();
     private readonly Stack<UndoTransaction> _redoStack = new();
     private UndoTransaction? _currentTransaction;
 
@@ -79,9 +79,9 @@ public class UndoManager
     {
         if (_currentTransaction != null && _currentTransaction.HasChanges)
         {
-            _undoStack.Insert(0, _currentTransaction);
+            _undoStack.AddFirst(_currentTransaction);  // O(1)
             while (_undoStack.Count > MaxHistoryLimit)
-                _undoStack.RemoveAt(_undoStack.Count - 1);
+                _undoStack.RemoveLast();                // O(1) trim oldest
             _redoStack.Clear();
             StackChanged?.Invoke();
         }
@@ -100,8 +100,8 @@ public class UndoManager
     {
         if (CanUndo)
         {
-            var tx = _undoStack[0];
-            _undoStack.RemoveAt(0);
+            var tx = _undoStack.First!.Value;
+            _undoStack.RemoveFirst();               // O(1)
             tx.Undo();
             _redoStack.Push(tx);
             StackChanged?.Invoke();
@@ -114,7 +114,7 @@ public class UndoManager
         {
             var tx = _redoStack.Pop();
             tx.Redo();
-            _undoStack.Insert(0, tx);
+            _undoStack.AddFirst(tx);                // O(1)
             StackChanged?.Invoke();
         }
     }

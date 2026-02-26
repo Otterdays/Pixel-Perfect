@@ -146,7 +146,7 @@
                 <TextBlock Text="Theme:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox ItemsSource="{Binding ThemeNames}" 
                           SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" 
-                          Width="100" VerticalAlignment="Center" ToolTip="Switch UI theme"/>
+                          Width="140" VerticalAlignment="Center" ToolTip="Switch UI theme"/>
             </StackPanel>
         </Grid>
         

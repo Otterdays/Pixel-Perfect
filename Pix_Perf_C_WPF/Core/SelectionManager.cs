@@ -154,6 +154,7 @@ public class SelectionManager
     {
         if (!IsMoving || SelectedPixels == null || _backgroundPixels == null) return;
         int w = SelectionWidth, h = SelectionHeight;
+        // Erase old preview
         for (int y = 0; y < h; y++)
         {
             for (int x = 0; x < w; x++)
@@ -163,7 +164,7 @@ public class SelectionManager
                     layer.SetPixel(cx, cy, _backgroundPixels[y, x]);
             }
         }
-        _backgroundPixels = new PixelColor[h, w];
+        // Capture background at new position (reuse existing array — no allocation)
         for (int y = 0; y < h; y++)
         {
             for (int x = 0; x < w; x++)

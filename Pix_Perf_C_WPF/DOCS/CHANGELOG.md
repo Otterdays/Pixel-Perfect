@@ -3,6 +3,40 @@
 All notable changes to the WPF rewrite will be documented here.  
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.2] — February 26, 2026 — Themes & Styling
+
+### Added
+- **New Themes** — Added Monokai, One Dark, Tokyo Night, Solarized Dark, Solarized Light, and Rose Pine (total of 14 themes).
+- **Deep Control Skinned Templates** — Added full `ControlTemplate` overrides for `ComboBox`, `ScrollBar`, and `Slider` to `CommonStyles.xaml` so they no longer rely on default bright-white Windows chrome, ensuring a cohesive dark-mode experience.
+- **Theme Stability** — Fixed `ThemeService.cs` so swapping themes preserves the shared `CommonStyles.xaml` dictionary.
+
+---
+
+## [0.2.1] — February 25, 2026 — Code Review Fixes (14 items)
+
+### Fixed (Bugs)
+- **Escape/Delete/Cut undo** — `ClearSelectionPixels` now wrapped in `BeginTransaction()` / `EndTransaction()`; pixel deletions are undoable (#2)
+- **FillTool O(n²) stack** — Scanline flood fill now only pushes seeds at span boundary transitions, not every pixel (#3)
+- **MagicWandTool stack overflow risk** — Upgraded from per-pixel BFS to scanline flood with boundary-seed optimization (#4)
+- **Dead `TransformedBitmap` in FileService** — Removed unused allocation that was immediately overwritten (#10)
+- **Palette de-duplication silent drop** — Duplicate palette names now get `(2)`, `(3)` suffix instead of being skipped (#19)
+
+### Optimized (Performance)
+- **UndoManager O(1)** — Swapped `List<T>` (O(n) `Insert(0)`) to `LinkedList<T>` (O(1) `AddFirst/RemoveFirst`) (#1)
+- **FlattenToBuffer integer alpha** — Replaced `double` division in hot render loop with integer-only bit-shift (`>>8`), ~5-10× faster (#12)
+- **CircleTool zero alloc** — `HashSet<>` lifted to class-level (`.Clear()` per frame), `Math.Pow` replaced with integer multiply (#5)
+- **SelectionManager move drag** — `_backgroundPixels` array reused instead of re-allocated every mouse-move (#6)
+- **Brush caching** — `GridColorBrush`, `CheckerboardBrush`, etc. cached and only rebuilt when source color changes (#7)
+- **Layer.Clear()** — `Array.Clear` native memset instead of double loop (#8)
+- **Layer.Clone()** — `Array.Copy` native memcpy instead of double loop (#15)
+- **MergeDown** — Uses `SetPixelRaw` to skip unnecessary `PixelChanged` events (#9)
+
+### Changed (UX)
+- **ZoomAtCursor** — Now snaps through `ZoomLevels` array (1,2,4,8,16,24,32,48,64) instead of +/-1 linear steps (#11)
+- **Palette click** — No longer force-switches to Brush tool mid-workflow; only auto-switches when Eyedropper is active (#20)
+
+---
+
 ## [0.2.0] — February 2026 — Parity Features
 
 ### Added (Settings panel — Feb 2026)

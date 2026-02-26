@@ -1,6 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
+
     <!-- Gruvbox Theme — Warm, retro, cozy (gruvbox community) -->
     <Color x:Key="BackgroundPrimaryColor">#282828</Color>
     <Color x:Key="BackgroundSecondaryColor">#3C3836</Color>
@@ -10,9 +10,10 @@
     <Color x:Key="TextPrimaryColor">#EBDBB2</Color>
     <Color x:Key="TextSecondaryColor">#D5C4A1</Color>
     <Color x:Key="BorderColor">#665C54</Color>
-    <Color x:Key="SelectionBackgroundColor">#504945</Color>
+    <Color x:Key="SelectionBgColor">#504945</Color>
     <Color x:Key="SelectionBorderColor">#8EC07C</Color>
-    
+    <Color x:Key="HoverBgColor">#3C3836</Color>
+
     <SolidColorBrush x:Key="BackgroundPrimary" Color="{StaticResource BackgroundPrimaryColor}"/>
     <SolidColorBrush x:Key="BackgroundSecondary" Color="{StaticResource BackgroundSecondaryColor}"/>
     <SolidColorBrush x:Key="BackgroundTertiary" Color="{StaticResource BackgroundTertiaryColor}"/>
@@ -21,43 +22,8 @@
     <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
     <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
-    <SolidColorBrush x:Key="SelectionBackground" Color="{StaticResource SelectionBackgroundColor}"/>
+    <SolidColorBrush x:Key="SelectionBg" Color="{StaticResource SelectionBgColor}"/>
     <SolidColorBrush x:Key="SelectionBorder" Color="{StaticResource SelectionBorderColor}"/>
-    
-    <Style x:Key="ToolButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource BackgroundTertiary}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,4"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource Accent}"/>
-                            <Setter Property="Foreground" Value="#282828"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource AccentHover}"/>
-                            <Setter Property="Foreground" Value="#282828"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    
-    <Style TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource BackgroundPrimary}"/>
-    </Style>
-    
+    <SolidColorBrush x:Key="HoverBg" Color="{StaticResource HoverBgColor}"/>
+
 </ResourceDictionary>

@@ -110,12 +110,7 @@ public static class FileService
         // Scale if needed
         if (scale > 1)
         {
-            var scaleTransform = new ScaleTransform(scale, scale);
-            // NearestNeighbor logic is guaranteed by TransformedBitmap when using RenderOptions, but we can also do:
-            finalSource = new TransformedBitmap(writeableBitmap, scaleTransform);
-            
-            // Note: TransformedBitmap might antialias depending on WPF internals if we aren't careful, 
-            // but the safest approach for pixel art scale up is writing an explicit scaled buffer:
+            // Manual nearest-neighbor scaling \u2014 pixel-perfect for pixel art
             byte[] scaledBuffer = new byte[scaledWidth * scaledHeight * 4];
             for (int y = 0; y < scaledHeight; y++)
             {

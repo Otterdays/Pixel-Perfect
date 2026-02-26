@@ -2,9 +2,9 @@
 
 ## 🔄 C# WPF Rewrite In Progress
 **Location**: [`Pix_Perf_C_WPF/`](../Pix_Perf_C_WPF/)  
-**Status**: 🟡 Foundation Built (v0.2.0) — Parity In Progress  
-**Last Updated**: February 25, 2026  
-A clean-slate C# / WPF rebuild targeting parity with Python v2.9.0. **10 tools** (Brush, Eraser, Fill, Eyedropper, Line, Rectangle, Circle, Selection, Move, Pan), canvas size presets, grid overlay, color picker, Copy/Cut/Paste/Delete, layer system, undo/redo, zoom, pan, PNG export, dark theme, MVVM. See `Pix_Perf_C_WPF/DOCS/PARITY.md` for full parity tracker.
+**Status**: 🟡 Foundation Built (v0.2.2) — Parity In Progress  
+**Last Updated**: February 26, 2026  
+A clean-slate C# / WPF rebuild targeting parity with Python v2.9.0. **10 tools** (Brush, Eraser, Fill, Eyedropper, Line, Rectangle, Circle, Selection, Move, Pan), canvas size presets, grid overlay, color picker, Copy/Cut/Paste/Delete, layer system, undo/redo, zoom, pan, PNG export, fully skinned dark-mode templates, **14 themes**, MVVM. See `Pix_Perf_C_WPF/DOCS/PARITY.md` for full parity tracker.
 
 ---
 

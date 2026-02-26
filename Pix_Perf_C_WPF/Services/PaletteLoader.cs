@@ -96,8 +96,20 @@ public static class PaletteLoader
             try
             {
                 var entry = LoadFromFile(file);
-                if (entry != null && entry.Colors.Count > 0 && seen.Add(entry.Name))
+                if (entry != null && entry.Colors.Count > 0)
+                {
+                    // De-duplicate names with (2), (3), etc. suffix
+                    string name = entry.Name;
+                    if (!seen.Add(name))
+                    {
+                        int suffix = 2;
+                        while (!seen.Add($"{name} ({suffix})"))
+                            suffix++;
+                        name = $"{name} ({suffix})";
+                        entry = new PaletteEntry(name, entry.Sections);
+                    }
                     result.Add(entry);
+                }
             }
             catch
             {

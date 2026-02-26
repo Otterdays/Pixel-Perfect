@@ -134,12 +134,22 @@ public partial class MainViewModel : ObservableObject
         UndoManager.MaxHistoryLimit = Math.Clamp(value, 10, 500);
     }
 
-    public SolidColorBrush GridColorBrush => new SolidColorBrush(GridColor);
-    public SolidColorBrush CheckerboardColor1Brush => new SolidColorBrush(CheckerboardColor1);
-    public SolidColorBrush CheckerboardColor2Brush => new SolidColorBrush(CheckerboardColor2);
+    // Cached brushes — rebuilt only when source color changes
+    private SolidColorBrush? _gridColorBrushCache;
+    public SolidColorBrush GridColorBrush => _gridColorBrushCache ??= new SolidColorBrush(GridColor);
 
-    public Brush CheckerboardBrush =>
-        CreateCheckerboardBrush(CheckerboardColor1, CheckerboardColor2);
+    private SolidColorBrush? _cb1Cache;
+    public SolidColorBrush CheckerboardColor1Brush => _cb1Cache ??= new SolidColorBrush(CheckerboardColor1);
+
+    private SolidColorBrush? _cb2Cache;
+    public SolidColorBrush CheckerboardColor2Brush => _cb2Cache ??= new SolidColorBrush(CheckerboardColor2);
+
+    private Brush? _checkerboardBrushCache;
+    public Brush CheckerboardBrush => _checkerboardBrushCache ??= CreateCheckerboardBrush(CheckerboardColor1, CheckerboardColor2);
+
+    partial void OnGridColorChanged(Color value) { _gridColorBrushCache = null; }
+    partial void OnCheckerboardColor1Changed(Color value) { _cb1Cache = null; _checkerboardBrushCache = null; }
+    partial void OnCheckerboardColor2Changed(Color value) { _cb2Cache = null; _checkerboardBrushCache = null; }
 
     private static Brush CreateCheckerboardBrush(Color c1, Color c2)
     {
@@ -350,7 +360,9 @@ public partial class MainViewModel : ObservableObject
         if (!SelectionManager.HasSelection) return;
         var layer = Canvas.ActiveLayer;
         if (layer == null) return;
+        UndoManager.BeginTransaction();
         ClearSelectionPixels(layer);
+        UndoManager.EndTransaction();
         SelectionManager.ClearSelection();
         NotifyClipboardCommandsCanExecute();
         UpdateBitmap();
@@ -416,7 +428,9 @@ public partial class MainViewModel : ObservableObject
         SecondaryColor = CurrentColor;
         CurrentColor = color;
         AddToRecentColors(color);
-        CurrentTool = BrushTool;
+        // Only auto-switch to Brush when coming from Eyedropper (don't interrupt Line/Circle/etc.)
+        if (CurrentTool == EyedropperTool)
+            CurrentTool = BrushTool;
     }
 
     private void AddToRecentColors(PixelColor color)
@@ -459,11 +473,29 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"Brush size: {BrushSize}px";
     }
 
-    /// <summary>Zoom in/out centered on cursor. delta &gt; 0 = zoom in.</summary>
+    /// <summary>Zoom in/out centered on cursor. delta &gt; 0 = zoom in. Snaps through ZoomLevels.</summary>
     public void ZoomAtCursor(int delta, double cursorScreenX, double cursorScreenY)
     {
         int oldZoom = Zoom;
-        int newZoom = Math.Clamp(Zoom + (delta > 0 ? 1 : -1), 1, 64);
+        int newZoom = oldZoom;
+
+        if (delta > 0)
+        {
+            // Find next zoom level up
+            foreach (var z in ZoomLevels)
+            {
+                if (z > oldZoom) { newZoom = z; break; }
+            }
+        }
+        else
+        {
+            // Find next zoom level down
+            for (int i = ZoomLevels.Length - 1; i >= 0; i--)
+            {
+                if (ZoomLevels[i] < oldZoom) { newZoom = ZoomLevels[i]; break; }
+            }
+        }
+
         if (newZoom == oldZoom) return;
         double ratio = (double)newZoom / oldZoom;
         PanOffsetX = cursorScreenX * (ratio - 1) + PanOffsetX * ratio;
@@ -611,7 +643,12 @@ public partial class MainViewModel : ObservableObject
         else if (SelectionManager.HasSelection)
         {
             var layer = Canvas.ActiveLayer;
-            if (layer != null) ClearSelectionPixels(layer);
+            if (layer != null)
+            {
+                UndoManager.BeginTransaction();
+                ClearSelectionPixels(layer);
+                UndoManager.EndTransaction();
+            }
             SelectionManager.ClearSelection();
             NotifyClipboardCommandsCanExecute();
             StatusText = "Selection cleared";

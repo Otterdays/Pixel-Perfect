@@ -17,7 +17,7 @@ This rewrite starts clean with:
 
 ---
 
-## Current State (v0.2.3)
+## Current State (v0.2.2)
 
 ✅ Working:
 - Brush, Eraser (size 1–32), Fill (scanline), Eyedropper; Shape tools (Line, Rectangle, Circle)
@@ -26,10 +26,9 @@ This rewrite starts clean with:
 - Canvas presets (8×8–256×256), custom size (remembers last); Grid overlay (G)
 - Color: palette dropdown (JSON palettes), Recent Colors (16 slots), hex tooltip
 - Zoom 1×–64×, zoom to cursor (Ctrl+wheel), Fit/100%; PNG export (1×–8× scale), Quick Export (Ctrl+Shift+E)
-- Undo/Redo (with CanExecute); Copy/Cut/Paste/Delete (disabled when no selection/clipboard)
-- Right-click eyedropper (composite); Shift+Right-click = context menu
-- Window title with canvas size and " — Unsaved" when dirty; New Canvas asks to discard if dirty
-- Themes: Dark, Basic Grey, Light, Gemini, Claude
+- Undo/Redo (with O(1) Undo engine); Copy/Cut/Paste/Delete
+- Fully skinned basic controls (ComboBox, ScrollBar, Slider) for pristine dark-mode visuals
+- 14 Built-In Themes: Dark, Light, Nord, Dracula, Retro, Catppuccin, Gruvbox, Basic Grey, Gemini, Claude, Tokyo Night, Solarized Dark, Solarized Light, Rose Pine, Monokai, One Dark.
 - Status bar (coords, zoom %, tool name); keyboard shortcuts (B, E, F, I, L, R, C, G, P, S, M, Ctrl+Z/Y/S/N/C/X/V, F11, etc.)
 
 🔲 Coming next:
